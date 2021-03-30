@@ -22,15 +22,15 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v2
 
-      - name: Install packages
-        run: |
-            install.packages(c("devtools"))
-        shell: Rscript {0}
-
       - name: Setup R
         uses: r-lib/actions/setup-r@v1
         with:
           r-version: ${{ matrix.R }}
+      
+      - name: Install packages
+        run: |
+            install.packages(c("devtools"))
+        shell: Rscript {0}
 
       - name: Run check
         run: |
