@@ -39,11 +39,13 @@ jobs:
         with:
           path: |
             ${R_LIBS_USER}
-          key: ${{ runner.os }}-${{ matrix.R }}-devtools
+          key: ${{ runner.os }}-${{ matrix.R }}-${{ hashFiles('DESCRIPTION') }}
       
       - name: Install packages
         run: |
           install.packages(c("devtools"))
+          library(devtools)
+          install_deps(dependencies=c("Depends", "Suggests"))
         shell: Rscript {0}
 
       - name: Run check
