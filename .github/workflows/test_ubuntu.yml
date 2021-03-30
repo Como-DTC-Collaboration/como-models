@@ -53,3 +53,9 @@ jobs:
           library(devtools)
           check()
         shell: Rscript {0}
+
+      - name: Run tests
+        run: |
+          library(devtools)
+          test()
+        shell: Rscript {0}
