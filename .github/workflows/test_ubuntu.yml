@@ -45,7 +45,7 @@ jobs:
         run: |
           install.packages(c("devtools"))
           library(devtools)
-          install_deps(dependencies=c("Depends", "Suggests"))
+          install()
         shell: Rscript {0}
 
       - name: Run check
