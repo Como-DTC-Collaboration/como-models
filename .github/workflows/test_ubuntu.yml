@@ -27,10 +27,19 @@ jobs:
         uses: r-lib/actions/setup-r@v1
         with:
           r-version: ${{ matrix.R }}
+          Ncpus: 2
+      
+      - name: cache R installed packages
+        uses: actions/cache@v2
+        id: cache
+        with:
+          path: |
+            ${R_LIBS_USER}
+          key: ${{ runner.os }}-${{ matrix.R }}-${{ devtools }}
       
       - name: Install packages
         run: |
-            install.packages(c("devtools"))
+          install.packages(c("devtools"))
         shell: Rscript {0}
 
       - name: Run check
