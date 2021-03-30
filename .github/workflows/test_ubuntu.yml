@@ -22,6 +22,10 @@ jobs:
 
       - name: Checkout repository
         uses: actions/checkout@v2
+      
+      - name: Install build dependencies
+        run: |
+          sudo apt install libcurl4-openssl-dev
 
       - name: Setup R
         uses: r-lib/actions/setup-r@v1
