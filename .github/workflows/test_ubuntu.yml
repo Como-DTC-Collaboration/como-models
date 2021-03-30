@@ -34,6 +34,6 @@ jobs:
 
       - name: Run check
         run: |
-            check()
+          library(devtools)
+          check()
         shell: Rscript {0}
-
