@@ -1,0 +1,33 @@
+name: "Unit tests: Ubuntu"
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+
+  test:
+    name: tests on Ubuntu with R ${{ matrix.R }}
+    runs-on: ubuntu-20.04
+    strategy:
+      matrix:
+        R: [ '3.6.3', '4.0.4' ]
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v2
+
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v1
+        with:
+          r-version: ${{ matrix.R }}
+
+      - name: Run check
+        run: |
+            check()
+        shell: Rscript {0}
