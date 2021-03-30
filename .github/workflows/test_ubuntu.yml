@@ -14,6 +14,7 @@ jobs:
     name: tests on Ubuntu with R ${{ matrix.R }}
     runs-on: ubuntu-20.04
     strategy:
+      fail-fast: false
       matrix:
         R: [ '3.6.3', '4.0.4' ]
 
