@@ -47,6 +47,7 @@ jobs:
           library(devtools)
           install()
         shell: Rscript {0}
+        if: steps.cache.outputs.cache-hit != 'true'
 
       - name: Run check
         run: |
