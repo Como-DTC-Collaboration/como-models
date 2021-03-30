@@ -2,7 +2,7 @@ Package: comomodels
 Title: What the Package Does (One Line, Title Case)
 Version: 0.0.0.9000
 Authors@R: c(
-    person("Sumali", "Bajaj", email = "email", role = c("aut", "cre")),
+    person("Sumali", "Bajaj", email = "email", role = c("aut")),
     person("Fergus", "Cooper", email = "fergus.cooper@cs.ox.ac.uk", role = c("aut", "cre")))
 Description: What the package does (one paragraph).
 License: MIT + file LICENSE
