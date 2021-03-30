@@ -38,8 +38,8 @@ jobs:
         id: cache
         with:
           path: |
-            ${R_LIBS_USER}
-          key: ${{ runner.os }}-${{ matrix.R }}-${{ hashFiles('DESCRIPTION') }}
+            /home/runner/work/_temp/Library
+          key: ${{ runner.os }}-R${{ matrix.R }}-${{ hashFiles('DESCRIPTION') }}
       
       - name: Install packages
         run: |
