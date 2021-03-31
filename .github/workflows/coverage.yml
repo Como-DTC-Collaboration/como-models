@@ -11,8 +11,12 @@ on:
 jobs:
 
   test:
-    name: coverage on Ubuntu with R 4.0.4
+    name: tests on Ubuntu with R ${{ matrix.R }}
     runs-on: ubuntu-20.04
+    strategy:
+      fail-fast: false
+      matrix:
+        R: [ '4.0.4' ]
 
     steps:
 
