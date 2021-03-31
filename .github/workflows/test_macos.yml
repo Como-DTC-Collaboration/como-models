@@ -11,7 +11,7 @@ on:
 jobs:
 
   test:
-    name: tests on Ubuntu with R ${{ matrix.R }}
+    name: tests on macOS with R ${{ matrix.R }}
     runs-on: macos-latest
     strategy:
       fail-fast: false
