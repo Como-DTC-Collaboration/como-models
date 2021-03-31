@@ -1,4 +1,4 @@
-name: "Unit tests: Ubuntu"
+name: "Unit tests: Windows"
 
 on:
   push:
