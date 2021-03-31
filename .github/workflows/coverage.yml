@@ -1,0 +1,59 @@
+name: "Coverage"
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+
+  test:
+    name: coverage on Ubuntu with R 4.0.4
+    runs-on: ubuntu-20.04
+
+    steps:
+
+      - name: Checkout repository
+        uses: actions/checkout@v2
+      
+      - name: Install build dependencies
+        run: |
+          sudo apt install libcurl4-openssl-dev
+
+      - name: Setup R
+        uses: r-lib/actions/setup-r@v1
+        with:
+          r-version: 4.0.4
+          Ncpus: 2
+          
+      - name: Query dependencies
+        run: |
+          install.packages('remotes')
+          saveRDS(remotes::dev_package_deps(dependencies = TRUE), ".github/depends.Rds", version = 2)
+        shell: Rscript {0}
+        
+      - name: cache R installed packages
+        uses: actions/cache@v2
+        id: cache
+        with:
+          path: |
+            ${{ env.R_LIBS_USER }}
+          key: ${{ runner.os }}-R${{ matrix.R }}-2-${{ hashFiles('.github/depends.Rds') }}
+          restore-keys: ${{ runner.os }}-R${{ matrix.R }}-2-
+      
+      - name: Install packages
+        run: |
+          install.packages(c("devtools"))
+          remotes::install_deps(dependencies = TRUE)
+          remotes::install_cran("covr")
+        shell: Rscript {0}
+
+      - name: Coverage
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+        run: |
+          covr::codecov()
+        shell: Rscript {0}
