@@ -32,32 +32,38 @@ jobs:
         with:
           r-version: ${{ matrix.R }}
           Ncpus: 2
-      
+          
+      - name: Query dependencies
+        run: |
+          install.packages('remotes')
+          saveRDS(remotes::dev_package_deps(dependencies = TRUE), ".github/depends.Rds", version = 2)
+        shell: Rscript {0}
+        
       - name: cache R installed packages
         uses: actions/cache@v2
         id: cache
         with:
           path: |
-            /home/runner/work/_temp/Library
-          key: ${{ runner.os }}-R${{ matrix.R }}-${{ hashFiles('DESCRIPTION') }}
+            ${{ env.R_LIBS_USER }}
+          key: ${{ runner.os }}-R${{ matrix.R }}-2-${{ hashFiles('.github/depends.Rds') }}
+          restore-keys: ${{ runner.os }}-R${{ matrix.R }}-2-
       
       - name: Install packages
         run: |
           install.packages(c("devtools"))
-          library(devtools)
-          install()
+          remotes::install_deps(dependencies = TRUE)
+          remotes::install_cran("rcmdcheck")
         shell: Rscript {0}
-        if: steps.cache.outputs.cache-hit != 'true'
 
-      - name: Run check
+      - name: Check
+        env:
+          _R_CHECK_CRAN_INCOMING_REMOTE_: false
         run: |
-          library(devtools)
-          check()
+          options(crayon.enabled = TRUE)
+          rcmdcheck::rcmdcheck(args = c("--no-manual", "--as-cran"), error_on = "warning", check_dir = "check")
         shell: Rscript {0}
 
-      - name: Run tests
-        run: |
-          library(devtools)
-          test()
-        shell: Rscript {0}
-
+      - name: Show testthat output
+        if: always()
+        run: find check -name 'testthat.Rout*' -exec cat '{}' \; || true
+        shell: bash
