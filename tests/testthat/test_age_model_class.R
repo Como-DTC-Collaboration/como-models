@@ -42,6 +42,8 @@ test_that("can set new parameters for the age_model", {
   
   # Test input errors
   expect_error({
+    my_model <- set_parameters(my_model, c(0.4, 0, 0.4), c(0, 0), c(0.5, 0.15),
+                               c(0, 0), 1, 0.5, 0.5)
     my_model <- set_parameters(my_model, c(0.4, 0, 0.4), c(0, 0), c(0.05, 0.15),
                                c(0, 0), 1, 0.5, 0.5)
     my_model <- set_parameters(my_model, c(0.4, 0.4), c(0, 0, 0), c(0.05, 0.15),

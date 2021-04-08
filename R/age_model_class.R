@@ -83,7 +83,7 @@ setGeneric(
 setMethod(
   'set_parameters', 'age_model',
   function(object, S0, E0, I0, R0, a, b, c) {
-    
+
     # check that ICs are valid
     if (sum(S0, E0, I0, R0) != 1) {
       stop('Invalid initial conditions. Must add up to 1.')
@@ -103,6 +103,9 @@ setMethod(
               compartments.'))}
       if(!is.double(params[[p]])){
         stop(glue('{p} storage format must be a vector.'))}
+    }
+    if(sum(S0, E0, I0, R0) != 1){
+      stop('All comparmtnets need to sum up to 1.')
     }
 
     #check format of parameters a and b
