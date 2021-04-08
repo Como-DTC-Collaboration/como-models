@@ -7,7 +7,6 @@
 #' @slot parameter_names list of names of parameters (characters). Default is
 #'       list("S0", "E0", "I0", "R0", "b", "k", "g")
 #' @slot parameters list of parameter values (double). Default is a list of 1s.
-library(deSolve)
 
 setClass("SEIR_model",
          # slots
@@ -94,7 +93,7 @@ setMethod(
 #' of ODEs should be returned.
 #'
 #' @return a dataframe with the time steps, and solutions for S, E, I and R.
-#' @exportMethod simulate
+
 setGeneric(name = "simulate",
            def = function(object, times) {
              standardGeneric("simulate")
