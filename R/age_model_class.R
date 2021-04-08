@@ -1,22 +1,22 @@
-library(methods)
-library(deSolve)
-library(glue)
-library(ggplot2)
+#' Defines an age-structured simple SEIR model.
+#' Slots of this class are as follows:
+#' @slot name character representing name of model
+#' @slot output_names names of the compartments which are used by the
+#'     model.
+#' @slot parameter_names names of the initial conditions and parameters
+#'     which are used by the model.
+#' @slot parameters named list containing parameters of the model.
+#'     Initial values for each compartment, S0, E0, I0, R0.
+#'     Other parameters: a, b, c which represent the rates of changes
+#'     between the compartments.
+#' @slot n_age_categories number of age categories.
+#' 
+#' @import methods
+#' @import deSolve
+#' @import glue
+#' @import ggplot2
 
 setClass('age_model',
-         #' Defines an age-structured simple SEIR model.
-         #' Slots of this class are as follows:
-         #' 1. `name` character representing name of model
-         #' 2. `output_names` names of the compartments which are used by the
-         #'     model.
-         #' 3. `parameter_names` names of the initial conditions and parameters
-         #'     which are used by the model.
-         #' 4. `parameters` named list containing parameters of the model.
-         #'     Initial values for each compartment, S0, E0, I0, R0.
-         #'     Other parameters: a, b, c which represent the rates of changes
-         #'     between the compartments.
-         #' 5. `n_age_categories` number of age categories.
-
          #slots
          slots = c(
            name = 'character',
@@ -43,7 +43,7 @@ setGeneric('get_parameters', function(object) standardGeneric('get_parameters'))
 setMethod(
   'get_parameters', 'age_model',
   function(object){
-    #' Retrieves parameters for an age-structured simple SEIR model.
+    #' @describeIn Retrieves parameters for an age-structured simple SEIR model.
 
     return(object@parameters)})
 
@@ -56,7 +56,7 @@ setGeneric(
 setMethod(
   'set_parameters', 'age_model',
   function(object, S0, E0, I0, R0, a, b, c) {
-    #' Sets parameters for an age-structured simple SEIR model.
+    #' @describeIn Sets parameters for an age-structured simple SEIR model.
     #' 
     #' Default parameters a = 1, b = 1 and c = 1.
     #' If the initial conditions provided to do not sum to 1 or of different
@@ -108,7 +108,7 @@ setGeneric(name = 'simulate',
 setMethod(
   'simulate', 'age_model',
   function(object, times, is_plot) {
-    #' Solves an age-structured simple SEIR model.
+    #' @describeIn Solves an age-structured simple SEIR model.
     #' 
     #' Default time series is seq(0, 100, by = 1).
     #' This function relies on the packages deSolve and ggplot2. 

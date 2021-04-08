@@ -1,8 +1,3 @@
-library(methods)
-library(deSolve)
-library(glue)
-library(ggplot2)
-
 test_that("age_model gets instantiated", {
   my_model <- new('age_model', name = 'my_model', n_age_categories = 2)
   
