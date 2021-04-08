@@ -1,5 +1,6 @@
 #' Defines an age-structured simple SEIR model.
-#' Slots of this class are as follows:
+#' Slots of this class are as follows
+#' 
 #' @slot name character representing name of model
 #' @slot output_names names of the compartments which are used by the
 #'     model.
@@ -11,7 +12,6 @@
 #'     between the compartments.
 #' @slot n_age_categories number of age categories.
 #' 
-#' @import methods
 #' @import deSolve
 #' @import glue
 #' @import ggplot2
@@ -38,15 +38,42 @@ setClass('age_model',
          )
 )
 
+#' @describeIn Retrieves parameters for an age-structured simple SEIR model.
+#' 
+#' @param object An object of the class age_model.
 setGeneric('get_parameters', function(object) standardGeneric('get_parameters'))
 
 setMethod(
   'get_parameters', 'age_model',
-  function(object){
-    #' @describeIn Retrieves parameters for an age-structured simple SEIR model.
+  function(object) object@parameters
+)
 
-    return(object@parameters)})
-
+#' @describeIn Sets parameters for an age-structured simple SEIR model.
+#' 
+#' Default parameters a = 1, b = 1 and c = 1.
+#' If the initial conditions provided to do not sum to 1 or of different
+#' sizes compared to the number of age groups, an error is thrown.
+#' 
+#' @param object An object of the class age_model.
+#' @param S0 initial fraction of the population that is susceptible
+#'           by age group.
+#' @param E0 initial fraction of the population that has been exposed
+#'           by age group.
+#' @param I0 initial fraction of the population that is infected
+#'           by age group.
+#' @param R0 initial fraction of the population that has recovered
+#'           by age group.
+#'  
+#' All initial conditions must sum up to 1.
+#' 
+#' @param a rate at which an infected individual exposes susceptible
+#' @param b rate at which exposed individuals become infected
+#' @param c rate at which infected individuals recover
+#' 
+#' All rates of change between compartments are equal regardless of
+#' age group.
+#' 
+#' @return updated version of the age-structured SEIR model.
 setGeneric(
   'set_parameters',
   function(object, S0, E0, I0, R0, a = 1, b = 1, c = 1){
@@ -56,16 +83,6 @@ setGeneric(
 setMethod(
   'set_parameters', 'age_model',
   function(object, S0, E0, I0, R0, a, b, c) {
-    #' @describeIn Sets parameters for an age-structured simple SEIR model.
-    #' 
-    #' Default parameters a = 1, b = 1 and c = 1.
-    #' If the initial conditions provided to do not sum to 1 or of different
-    #' sizes compared to the number of age groups, an error is thrown.
-    #' 
-    #' @param params parameters of the model: a, b, and c.
-    #' @param ICs initial conditions of the model, must add to 1.
-    #' 
-    #' @return updated version of the age-structured SEIR model.
     
     # check that ICs are valid
     if (sum(S0, E0, I0, R0) != 1) {
@@ -105,24 +122,24 @@ setGeneric(name = 'simulate',
            }
 )
 
+#' @describeIn Solves an age-structured simple SEIR model.
+#' 
+#' Default time series is seq(0, 100, by = 1).
+#' This function relies on the packages deSolve and ggplot2. 
+#' This function creates a plot of the variables over time and returns a
+#' vectors of the incidence numbers for each age group.
+#'
+#' @param object An object of the class age_model.
+#' @param times (vector) time sequence over which to solve the model.
+#'        Must be of the form seq(t_start,t_end,by=t_step).
+#' @param is_plot (logical) whether plots for the compartments for the
+#'        different age groups are drawn.
+#'
+#' @return data frame of time and outputs with incidence numbers for each
+#'         age group.
 setMethod(
   'simulate', 'age_model',
   function(object, times, is_plot) {
-    #' @describeIn Solves an age-structured simple SEIR model.
-    #' 
-    #' Default time series is seq(0, 100, by = 1).
-    #' This function relies on the packages deSolve and ggplot2. 
-    #' This function creates a plot of the variables over time and returns a
-    #' vectors of the incidence numbers for each age group.
-    #'
-    #' @param times (vector) time sequence over which to solve the model.
-    #'        Must be of the form seq(t_start,t_end,by=t_step).
-    #' @param is_plot (logical) whether plots for the compartments for the
-    #'        different age groups are drawn.
-    #'
-    #' @return data frame of time and outputs with incidence numbers for each
-    #'         age group.
-
     if(!is.double(times)){
       stop('Evaluation times of the model storage format must be a vector.')
     }
