@@ -2,3 +2,5 @@
 
 export(fbind)
 export(fcount)
+import(deSolve)
+import(glue)

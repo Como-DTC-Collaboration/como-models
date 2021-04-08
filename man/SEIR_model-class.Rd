@@ -10,12 +10,20 @@
 \usage{
 get_parameters(object)
 
-set_parameters(object, s0, e0, i0, r0, b, k, g)
+set_parameters(object, S0, E0, I0, R0, b, k, g)
 
 simulate(object, times)
 }
 \arguments{
 \item{object}{an object of the class SEIR_model}
+
+\item{S0}{initial fraction of the population that is susceptible}
+
+\item{E0}{initial fraction of the population that has been exposed}
+
+\item{I0}{initial fraction of the population that is infected}
+
+\item{R0}{initial fraction of the population that has recovered}
 
 \item{b}{rate at which an infected individual exposes susceptible}
 
@@ -25,14 +33,6 @@ simulate(object, times)
 
 \item{times}{a sequence of time points at which the solution to the system
 of ODEs should be returned.}
-
-\item{S0}{initial fraction of the population that is susceptible}
-
-\item{E0}{initial fraction of the population that has been exposed}
-
-\item{I0}{initial fraction of the population that is infected}
-
-\item{R0}{initial fraction of the population that has recovered}
 }
 \value{
 object of class SEIR_model with initial conditions and parameter

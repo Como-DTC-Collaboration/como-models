@@ -7,6 +7,9 @@
 #' @slot parameter_names list of names of parameters (characters). Default is
 #'       list("S0", "E0", "I0", "R0", "b", "k", "g")
 #' @slot parameters list of parameter values (double). Default is a list of 1s.
+#' 
+#' @import deSolve
+#' @import glue
 
 setClass("SEIR_model",
          # slots
@@ -22,7 +25,7 @@ setClass("SEIR_model",
            parameter_names = list("S0", "E0", "I0", "R0", "b", "k", "g"),
            parameters = as.list(rep(1, 7))
          )
-) 
+)
 
 #' @describeIn SEIR_model prints the parameters of the SEIR model in object.
 #'
@@ -47,15 +50,15 @@ setMethod("get_parameters", "SEIR_model", function(object) object@parameters)
 #' values assigned.
 setGeneric(
   "set_parameters",
-  function(object, s0, e0, i0, r0, b, k, g) {
+  function(object, S0, E0, I0, R0, b, k, g) {
     standardGeneric("set_parameters")
   })
 setMethod(
   "set_parameters", "SEIR_model",
-  function(object, s0, e0, i0, r0, b, k, g) {
+  function(object, S0, E0, I0, R0, b, k, g) {
 
     # create list of parameter values
-    params <- list(s0, e0, i0, r0, b, k, g)
+    params <- list(S0, E0, I0, R0, b, k, g)
 
     # add names to each value
     names(params) <- object@parameter_names
@@ -73,7 +76,7 @@ setMethod(
     }
 
     # check that the initial conditions are properly normalized
-    if (s0 + e0 + i0 + r0 != 1) {
+    if (S0 + E0 + I0 + R0 != 1) {
       stop("Initial conditions do not add up to 1.")
     }
 
