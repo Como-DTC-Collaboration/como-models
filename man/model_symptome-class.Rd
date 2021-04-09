@@ -79,7 +79,7 @@ An object of class model_symptome or a string of error message
 }
 \description{
 model diagram:
---> S --(lam)--> E --(gamma), (ihr),((phs))--> \link{I, HA, VentA, ICUA} --((nu))--> R
+--> S --(lam)--> E --(gamma), (ihr),((phs))--> (I, HA, VentA, ICUA) --((nu))--> R
 |                                                                               |
 |_____________________________________(omega)___________________________________|
 }

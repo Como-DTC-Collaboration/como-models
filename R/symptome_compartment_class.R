@@ -1,7 +1,7 @@
 #' SEIR basic model for compartments of symptome
 #'
 #' model diagram:
-#'  --> S --(lam)--> E --(gamma), (ihr),((phs))--> [I, HA, VentA, ICUA] --((nu))--> R
+#'  --> S --(lam)--> E --(gamma), (ihr),((phs))--> (I, HA, VentA, ICUA) --((nu))--> R
 #'  |                                                                               |
 #'  |_____________________________________(omega)___________________________________|
 #'
