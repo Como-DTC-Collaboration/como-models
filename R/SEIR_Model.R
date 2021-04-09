@@ -7,9 +7,10 @@
 #' @slot parameter_names list of names of parameters (characters). Default is
 #'       list("S0", "E0", "I0", "R0", "b", "k", "g")
 #' @slot parameters list of parameter values (double). Default is a list of 1s.
-#' 
+#'
 #' @import deSolve
 #' @import glue
+#' @import ggplot2
 
 setClass("SEIR_model",
          # slots
@@ -38,13 +39,13 @@ setMethod("get_parameters", "SEIR_model", function(object) object@parameters)
 #' I0, R0, and parameters b, k, g) of the SEIR model contained in object.
 #'
 #' @param object an object of the class SEIR_model
-#' @param S0 initial fraction of the population that is susceptible
-#' @param E0 initial fraction of the population that has been exposed
-#' @param I0 initial fraction of the population that is infected
-#' @param R0 initial fraction of the population that has recovered
-#' @param b rate at which an infected individual exposes susceptible
-#' @param k rate at which exposed individuals become infected
-#' @param g rate at which infected individuals recover
+#' @param S0 (double) initial fraction of the population that is susceptible
+#' @param E0 (double) initial fraction of the population that has been exposed
+#' @param I0 (double) initial fraction of the population that is infected
+#' @param R0 (double) initial fraction of the population that has recovered
+#' @param b (double) rate at which an infected individual exposes susceptible
+#' @param k (double) rate at which exposed individuals become infected
+#' @param g (double) rate at which infected individuals recover
 #'
 #' @return object of class SEIR_model with initial conditions and parameter
 #' values assigned.
@@ -66,11 +67,11 @@ setMethod(
     # raise errors if initial state and parameter values are not doubles
      for (p in list("S0", "E0", "I0", "R0")) {
       if (!is.double(params[[p]])) {
-        stop(glue("{p} storage format must be a vector."))
+        stop(glue("{p} must be of type double."))
         }
     }
 
-    # check format of parameters a and b
+    # check format of parameters b, k, and g
     if (any(length(b) != 1 | length(k) != 1 | length(g) != 1)) {
       stop("The rates of change between compartments are 1-dimensional.")
     }
@@ -92,21 +93,28 @@ setMethod(
 #' for the time points specified in times.
 #'
 #' @param object an object of the class SEIR_model
-#' @param times a sequence of time points at which the solution to the system
-#' of ODEs should be returned.
+#' @param times (double) a sequence of time points at which the solution to
+#' the system of ODEs should be returned.
+#' @param is_plot (logical) indicates whether the solutions to the ODEs will
+#' be plotted. Default is TRUE.
 #'
-#' @return a dataframe with the time steps, and solutions for S, E, I and R.
+#' @return a dataframe with the time steps, and solutions for S, E, I and R,
+#' and a plot if is_plot is TRUE.
 
 setGeneric(name = "simulate",
-           def = function(object, times) {
+           def = function(object, times = seq(0, 100, by = 1), is_plot = TRUE) {
              standardGeneric("simulate")
            }
 )
 setMethod(
   "simulate", "SEIR_model",
-  function(object, times) {
+  function(object, times, is_plot) {
     if (!is.double(times)) {
       stop("Evaluation times of the model storage format must be a vector.")
+    }
+
+    if (!is.logical(is_plot)) {
+      stop("is_plot must be of type logical.")
     }
 
     # set initial state vector
@@ -137,8 +145,25 @@ setMethod(
     }
 
     # call ode solver
-    output <- ode(
+    out <- ode(
       y = state, times = times, func = right_hand_side, parms = parameters)
 
-    return(as.data.frame(output))
+    output <- as.data.frame(out)
+
+    if (is_plot == TRUE) {
+      col <- c("cS" = "blue", "cE" = "green", "cI" = "yellow", "cR" = "red")
+      SEIRplot <- ggplot(output, aes(x = time)) +
+          geom_line(aes(y = S, color = "cS"), size = 1.5) +
+          geom_line(aes(y = E, color = "cE"), size = 1.5) +
+          geom_line(aes(y = I, color = "cI"), size = 1.5) +
+          geom_line(aes(y = R, color = "cR"), size = 1.5) +
+          labs(x = "time", y = "fraction of the population",
+               title = glue("SEIR model")) +
+          theme(legend.position = "right") +
+          scale_color_manual(values = col)
+        #show plot
+        print(SEIRplot)
+    }
+
+    return(output)
   })

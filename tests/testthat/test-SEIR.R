@@ -12,7 +12,7 @@ test_that("Errors are raised properly", {
 
   # Check error is raised when initial states are not doubles
   expect_error(set_parameters(my_model, "a", 0, 0.1, 0, 0.1, 0.2, 0.3),
-               "S0 storage format must be a vector.")
+               "S0 must be of type double.")
 
   # Check error is raised when rates of changes are not 1-dimensional
   expect_error(set_parameters(my_model, 0.9, 0, 0.1, 0,
