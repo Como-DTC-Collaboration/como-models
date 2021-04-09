@@ -2,3 +2,8 @@
 
 export(fbind)
 export(fcount)
+import(deSolve)
+import(ggplot2)
+import(magrittr)
+import(plyr)
+import(reshape2)
