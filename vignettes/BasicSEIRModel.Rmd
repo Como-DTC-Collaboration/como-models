@@ -1,0 +1,69 @@
+---
+title: "The basic SEIR model"
+author: "Solveig A. van der Vegt"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{The basic SEIR model}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(comomodels)
+```
+
+## Introduction
+This document explains the basics behind the SEIR model. This model describes
+how populations of susceptible, exposed, infected and recovered
+individuals evolve over time. Each population is described by a simple
+ordinary differential equation. The S4 object class "SEIR_Model" let's the user
+define and simulate such a model, choosing the initial conditions and parameter values.
+
+## The SEIR Model
+This SEIR model consists of four ODEs describing the four populations. Susceptible
+individuals ($S$) have not been exposed to the virus. Exposed individuals ($E$) have been
+exposed to the virus and have been infected but are not yet infectious to others.
+Infected individuals ($I$) are infectious, and recovered individuals ($R$) are no longer
+infectious, and, in this model, have acquired immunity as they do not return
+to the susceptible population. Births and deaths are not considered in this model.
+The variables are normalized, so the populations always sum to one.
+$$\frac{\text{d}S}{\text{d}t} = -\beta S I,$$
+$$\frac{\text{d}E}{\text{d}t} = \beta S I -\kappa E,$$
+$$\frac{\text{d}I}{\text{d}t} = \kappa E - \gamma I,$$
+$$\frac{\text{d}R}{\text{d}t} = -\gamma I,$$
+where $\beta$, $\kappa$ and $\gamma$ are positive parameters.
+The rate at which susceptible individuals are exposed depends on the fraction
+of the population that is susceptible, the fraction of the population that is
+infected, and the probability of that an infected individual infects a
+susceptible individual, $\beta$. This is represented in the
+first terms on the right-hand side of $\text{d}S/ \text{d}t$ and $\text{d}I/ \text{d}t$.
+Exposed individuals become infected at rate $\kappa$. $1/ \kappa$ is
+the incubation time of the virus, i.e. how many days after exposure the individual
+becomes infected, and infectious to others. Finally, an infection lasts $1/ \gamma$
+days, thus individuals recover at rate $\gamma$.
+
+The system is closed by specifying the initial conditions
+$$S(0) = S_0,\ E(0) = E_0,\ I(0) = I_0,\ R(0) = R_0.$$
+From the above equations, it is easy to derive that the system reaches a steady
+state when $E = 0$ and $I = 0$. $S$ and $R$ are free. This makes sense based on
+the biology, because as long as their are (soon to be) infectious individuals
+in the population, they will infect susceptibles (unless $S = 0$ of course).
+
+Because we build on this basic model to develop more complex epidemiological models,
+we solve the ODEs over time instead of just solving for the steady states. The
+next section shows an example of how to use the SEIR_model class.
+
+## The SEIR_model class
+In this section we will walk through an example of how to use the SEIR_model
+class. This model is contained in the package comomodels.
+
+
+
+
