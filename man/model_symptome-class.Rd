@@ -4,30 +4,29 @@
 \name{ggplot-class}
 \alias{ggplot-class}
 \alias{model_symptome-class}
-\alias{check_init}
 \alias{set_init}
+\alias{check_init}
 \alias{ode_simulate}
 \alias{plot_ode_output}
-\title{SEIR basic model for compartments of symptome}
+\title{An SEIR model for compartments of different symptoms}
 \usage{
-check_init(object)
-
 set_init(
   object,
   S = NA_real_,
   E = NA_real_,
   I = NA_real_,
   HA = NA_real_,
-  ICUA = NA_real_,
-  VentA = NA_real_,
   R = NA_real_,
+  CM = NA_real_,
   lam = NA_real_,
   gamma = NA_real_,
   omega = NA_real_,
   ihr = NA_real_,
-  phs = list(),
-  nu = list()
+  nu = list(),
+  pdeath = list()
 )
+
+check_init(object)
 
 ode_simulate(object, times, method = "lsoda")
 
@@ -40,91 +39,75 @@ plot_ode_output(object)
 
 \item{E}{Numeric, initial population of the exposed}
 
-\item{I}{Numeric, initial population of the infectious with mild/no symptome}
+\item{I}{Numeric, initial population of the infected with mild/no symptom}
 
-\item{HA}{Numeric, initial population of the infectious with severe symptomes
-that need normal hospitalization}
-
-\item{ICUA}{Numeric, initial population of the infectious with severe symptomes that need icu}
-
-\item{VentA}{Numeric, initial population of the infectious with severe symptomes
-that need venticulartor}
+\item{HA}{Numeric, initial population of the infected with severe symptoms
+that need further hospitalization}
 
 \item{R}{Numeric, initial population of the recovered}
 
-\item{lam}{Numeric}
+\item{CM}{Numeric, initial cumulative mortality}
 
-\item{gamma}{Numeric}
+\item{lam}{Numeric, rate at which an infected individual exposes susceptible}
 
-\item{omega}{Numeric}
+\item{gamma}{Numeric, rate at which exposed individuals become infected}
 
-\item{ihr}{Numeric}
+\item{omega}{Numeric, rate at which recovered individuals become susceptible}
 
-\item{phs}{Numeric list}
+\item{ihr}{Numeric, fraction of infected individuals develop severe symptoms}
 
-\item{nu}{Numeric list}
+\item{nu}{Numeric vector, rate at which each infected group recover}
+
+\item{pdeath}{Numeric vector, rate of disease-caused mortality of each infected group}
 
 \item{times}{A list of time points of the simulation period}
 
-\item{method}{A string indicating which ode integrator to use. Default is set to 'lsoda'.}
+\item{method}{A string indicating which ode integrator to use. Default is set to 'lsoda'}
 }
 \value{
-TRUE or a string explaining the error message
+An object of class model_symptome with initial population and parameters
 
-An object of class model_symptome
+TRUE if passing all checks, or an error message if any check fails
 
-An object of class model_symptome
+An object of class model_symptome with a dataframe of simulation output
 
-An object of class model_symptome or a string of error message
+An object of class model_symptome with a plot showing the ode simulation outcome
 }
 \description{
-model diagram:
---> S --(lam)--> E --(gamma), (ihr),((phs))--> (I, HA, VentA, ICUA) --((nu))--> R
-|                                                                               |
-|_____________________________________(omega)___________________________________|
+Note:
+\enumerate{
+\item Sum of poulation equals to 1 at any time point.
+An error will be reported the sum of initial population is not equal to 1.
+\item At this stage, we only consider disease-caused death cases
+calculating mortality.
+}
 }
 \details{
-Population groups:
-
-S - suspeptable,
-E - effective,
-R - recovered
-I - infectious with mild/no symptome
-HA - infectious with severe symptomes that need normal hospitalization (no need for icu/vent, H+HC)
-VentA - infectious with severe symptomes that need venticulartor (Vent+VentC+HCV+ICUCV)
-ICUA - infectious with severe symptomes that need icu (ICU+ICUC+HCICU)
-
-Notice:
-\enumerate{
-\item I, HA, VentA, ICUA - compartments of infectious population groups based on symptomes
-\item Sum of the population at each time point are normalized to 1.
-Error will be reported if the sum of initial population is not equal to 1.
-}
-
-Parameters:
-lam - Numeric(range(0,1)), rate from S to E
-gamma - Numeric(range(0,1)),rate from E to become infectious
-omega - Numeric(range(0,1)),rate from R to S
-ihr - Numeric(range(0,1)),rate from E to infectious groups that have severe symptome (HA+VentA+ICUA)
-phs$phs_icua - Numeric(range(0,1)),rate from E to ICUA
-phs$phs_venta - Numeric(range(0,1)),rate from severe symptomes to VentA
-nu - Numeric vector (range(0,1)) , rate of recovery for each infectious group.
+model structure:
+---------------------------(omega)---------------------------------
+|                                                                 |
+|                                                                 |
+--> S --(lam)--> E --(gamma) ------(1-ihr)-------> I ---(nu.i)--> R <--
+|                     |                  |
+|                 (pdeath.i)             |
+|                     |                  |
+|            --> CM <--                  |
+|            |                           |
+|      (pdeath.hsa)                      |
+|            |                           |
+-- (ihr)---> HA --(nu.hsa)----------------
 }
 \section{Functions}{
 \itemize{
-\item \code{ggplot-class}: of dependent classes
+\item \code{ggplot-class}: to set up dependent classes for model_symptome
+
+\item \code{set_init}: set initial population sizes (in fraction) and parameters
 
 \item \code{check_init}: to check validity of the settings of the parameters and initial conditions
 
-\item \code{set_init}: to set initial population sizes (in fraction) and parameters
-
 \item \code{ode_simulate}: to solve the ode system.
-Notice that the population is normalized to 1 for each time point.
 
 \item \code{plot_ode_output}: to plot the outcome of the ode similuation
-\itemize{
-\item the population change of each group by time.
-}
 }}
 
 \section{Slots}{
@@ -138,6 +121,6 @@ Notice that the population is normalized to 1 for each time point.
 
 \item{\code{output}}{A dataframe holding the ode simulation output, with columns as population groups and rows as simulation time points}
 
-\item{\code{plot_output}}{A list holding the plot of the ode simulation output}
+\item{\code{plot_output}}{A ggplot holding the plot of the ode simulation output}
 }}
 
