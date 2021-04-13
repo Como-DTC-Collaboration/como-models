@@ -56,13 +56,13 @@ setMethod(
 #'
 #' @param object An object of the class age_model.
 #' @param S0 initial fraction of the population that is susceptible
-#'           by age group.
+#'           by age group. Data can be provided as a list or vector of doubles.
 #' @param E0 initial fraction of the population that has been exposed
-#'           by age group.
+#'           by age group.  Data can be provided as a list or vector of doubles.
 #' @param I0 initial fraction of the population that is infected
-#'           by age group.
+#'           by age group.  Data can be provided as a list or vector of doubles.
 #' @param R0 initial fraction of the population that has recovered
-#'           by age group.
+#'           by age group. Data can be provided as a list or vector of doubles.
 #'
 #' All initial conditions must sum up to 1.
 #'
@@ -82,7 +82,7 @@ setGeneric(
 
 setMethod(
   'set_parameters', 'age_model',
-  function(object, S0, E0, I0, R0, a, b, c) {
+  function(object, S0, E0, I0, R0, b, k, g) {
 
     # check that ICs are valid
     if (sum(S0, E0, I0, R0) != 1) {
@@ -105,7 +105,7 @@ setMethod(
         stop(glue('{p} storage format must be a vector.'))}
     }
     if(sum(S0, E0, I0, R0) != 1){
-      stop('All comparmtnets need to sum up to 1.')
+      stop('All compartments need to sum up to 1.')
     }
 
     #check format of parameters a and b
