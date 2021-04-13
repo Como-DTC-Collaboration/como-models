@@ -9,7 +9,7 @@ test_that("age_model gets instantiated", {
                list('S', 'E', 'I', 'R', 'Incidence'))
 
   expect_equal(my_model@parameter_names,
-               list('S0', 'E0', 'I0', 'R0', 'a', 'b', 'c'))
+               list('S0', 'E0', 'I0', 'R0', 'b', 'k', 'g'))
 
   expect_length(my_model@parameters, 7)
 
@@ -33,9 +33,9 @@ test_that("can set new parameters for the age_model", {
                              'E0'=c(0, 0),
                              'I0'=c(0.05, 0.15),
                              'R0'=c(0, 0),
-                             'a'=1,
-                             'b'=0.5,
-                             'c'=0.5)
+                             'b'=1,
+                             'k'=0.5,
+                             'g'=0.5)
 
   expect_equal(get_parameters(my_model),
                expected_parameters)
