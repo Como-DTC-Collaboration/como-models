@@ -41,10 +41,10 @@ $$\frac{\text{d}R}{\text{d}t} = -\gamma I,$$
 where $\beta$, $\kappa$ and $\gamma$ are positive parameters.
 The rate at which susceptible individuals are exposed depends on the fraction
 of the population that is susceptible, the fraction of the population that is
-infected, and the probability of that an infected individual infects a
+infectious, and the probability of that an infected individual infects a
 susceptible individual, $\beta$. This is represented in the
 first terms on the right-hand side of $\text{d}S/ \text{d}t$ and $\text{d}I/ \text{d}t$.
-Exposed individuals become infected at rate $\kappa$. $1/ \kappa$ is
+Exposed individuals become infectious at rate $\kappa$. $1/ \kappa$ is
 the incubation time of the virus, i.e. how many days after exposure the individual
 becomes infectious to others. Finally, an infection lasts $1/ \gamma$
 days, thus individuals recover at rate $\gamma$.

@@ -1,7 +1,7 @@
 #' An S4 object representing the SEIR_model.
 #'
 #' This class represents the SEIR model, showing how populations of susceptible,
-#' exposed, infected and recovered individuals evolve over time.
+#' exposed, infectious and recovered individuals evolve over time.
 #'
 #' @slot name character representing name of model
 #' @slot parameter_names list of names of parameters (characters). Default is
@@ -43,10 +43,10 @@ setMethod("get_parameters", "SEIR_model", function(object) object@parameters)
 #' @param object an object of the class SEIR_model
 #' @param S0 (double) initial fraction of the population that is susceptible
 #' @param E0 (double) initial fraction of the population that has been exposed
-#' @param I0 (double) initial fraction of the population that is infected
+#' @param I0 (double) initial fraction of the population that is infectious
 #' @param R0 (double) initial fraction of the population that has recovered
 #' @param b (double) rate at which an infected individual exposes susceptible
-#' @param k (double) rate at which exposed individuals become infected
+#' @param k (double) rate at which exposed individuals become infectious
 #' @param g (double) rate at which infected individuals recover
 #'
 #' @return object of class SEIR_model with initial conditions and parameter
