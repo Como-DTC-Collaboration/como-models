@@ -56,11 +56,14 @@ setMethod(
 #'
 #' @param object An object of the class age_model.
 #' @param S0 initial fraction of the population that is susceptible
-#'           by age group. Data can be provided as a list or vector of doubles.
+#'           by age group. Data can be provided as a list or vector of doubles
+#'           each element corresponding to the fraction for a single age group.
 #' @param E0 initial fraction of the population that has been exposed
-#'           by age group.  Data can be provided as a list or vector of doubles.
+#'           by age group.  Data can be provided as a list or vector of doubles
+#'           each element corresponding to the fraction for a single age group.
 #' @param I0 initial fraction of the population that is infected
-#'           by age group.  Data can be provided as a list or vector of doubles.
+#'           by age group.  Data can be provided as a list or vector of doubles
+#'           each element corresponding to the fraction for a single age group.
 #' @param R0 initial fraction of the population that has recovered
 #'           by age group. Data can be provided as a list or vector of doubles.
 #'
