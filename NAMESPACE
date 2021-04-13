@@ -2,6 +2,9 @@
 
 export(fbind)
 export(fcount)
+export(get_parameters)
+export(set_parameters)
+export(simulate)
 import(deSolve)
 import(ggplot2)
 import(glue)

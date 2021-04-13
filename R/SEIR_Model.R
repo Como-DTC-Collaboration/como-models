@@ -31,6 +31,8 @@ setClass("SEIR_model",
 #' @describeIn SEIR_model prints the parameters of the SEIR model in object.
 #'
 #' @param object An object of the class SEIR_model.
+#' @export
+
 setGeneric("get_parameters", function(object) standardGeneric("get_parameters"))
 setMethod("get_parameters", "SEIR_model", function(object) object@parameters)
 
@@ -49,6 +51,8 @@ setMethod("get_parameters", "SEIR_model", function(object) object@parameters)
 #'
 #' @return object of class SEIR_model with initial conditions and parameter
 #' values assigned.
+#' @export
+
 setGeneric(
   "set_parameters",
   function(object, S0, E0, I0, R0, b, k, g) {
@@ -100,6 +104,7 @@ setMethod(
 #'
 #' @return a dataframe with the time steps, and solutions for S, E, I and R,
 #' and a plot if is_plot is TRUE.
+#' @export
 
 setGeneric(name = "simulate",
            def = function(object, times = seq(0, 100, by = 1), is_plot = TRUE) {
