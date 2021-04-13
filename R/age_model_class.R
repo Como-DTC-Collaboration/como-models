@@ -31,7 +31,7 @@ setClass('age_model',
          prototype = list(
            name = NA_character_,
            output_names = list('S', 'E', 'I', 'R', 'Incidence'),
-           parameter_names = list('S0', 'E0', 'I0', 'R0', 'a', 'b', 'c'),
+           parameter_names = list('S0', 'E0', 'I0', 'R0', 'b', 'k', 'g'),
            parameters = vector(mode = "list", length = 7),
            n_age_categories = NA_real_
 
@@ -50,7 +50,7 @@ setMethod(
 
 #' @describeIn Sets parameters for an age-structured simple SEIR model.
 #'
-#' Default parameters a = 1, b = 1 and c = 1.
+#' Default parameters b = 1, k = 1 and g = 1.
 #' If the initial conditions provided to do not sum to 1 or of different
 #' sizes compared to the number of age groups, an error is thrown.
 #'
@@ -66,9 +66,9 @@ setMethod(
 #'
 #' All initial conditions must sum up to 1.
 #'
-#' @param a rate at which an infected individual exposes susceptible
-#' @param b rate at which exposed individuals become infected
-#' @param c rate at which infected individuals recover
+#' @param b rate at which an infected individual exposes susceptible
+#' @param k rate at which exposed individuals become infected
+#' @param g rate at which infected individuals recover
 #'
 #' All rates of change between compartments are equal regardless of
 #' age group.
@@ -90,7 +90,7 @@ setMethod(
     }
 
     #create list of parameter values
-    params <- list(S0, E0, I0, R0, a, b, c)
+    params <- list(S0, E0, I0, R0, b, k, g)
 
     #add names to each value
     names(params) = object@parameter_names
@@ -109,7 +109,7 @@ setMethod(
     }
 
     #check format of parameters a and b
-    if(any(length(a) != 1 | length(b) != 1 | length(c) != 1)){
+    if(any(length(b) != 1 | length(k) != 1 | length(g) != 1)){
       stop('The rates of change between compartments are 1-dimensional.')
     }
 
@@ -158,9 +158,9 @@ setMethod(
                R = get_parameters(object)$R0)
 
     #set parameters vector
-    parameters <- c(a = get_parameters(object)$a,
-                    b = get_parameters(object)$b,
-                    c = get_parameters(object)$c)
+    parameters <- c(b = get_parameters(object)$b,
+                    k = get_parameters(object)$k,
+                    g = get_parameters(object)$g)
 
     #function for RHS of ode system
     right_hand_side <- function(t, state, parameters) {
@@ -172,10 +172,10 @@ setMethod(
           I <- state[(2*age+1):(3*age)]
           R <- state[(3*age+1):(4*age)]
           # rate of change
-          dS <- -a*S*I
-          dE <- a*S*I - b*E
-          dI <- b*E - c*I
-          dR <- c*I
+          dS <- -b*S*I
+          dE <- b*S*I - k*E
+          dI <- k*E - g*I
+          dR <- g*I
           # return the rate of change
           list(c(dS, dE, dI, dR))
         })
