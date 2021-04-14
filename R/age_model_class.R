@@ -1,4 +1,6 @@
-#' Defines an age-structured simple SEIR model.
+#' Defines an age-structured SEIR model and solves the set of ordinary
+#' differential equations of the model with a chosen method of numerical
+#' integration.
 #'
 #' @slot name character representing name of model
 #' @slot output_names names of the compartments which are used by the
@@ -119,8 +121,10 @@ setMethod(
     return(object)
   })
 
+
 setGeneric(name = 'simulate_SEIRAge',
-           def = function(object, times = seq(0, 100, by = 1)){
+           def = function(object, times = seq(0, 100, by = 1),
+                          solve_method = 'lsoda'){
              standardGeneric('simulate_SEIRAge')
            }
 )
@@ -142,13 +146,16 @@ setGeneric(name = 'simulate_SEIRAge',
 #' is seq(0, 100, by = 1).
 #' @param times (vector) time sequence over which to solve the model.
 #'        Must be of the form seq(t_start,t_end,by=t_step).
+#' @param solve_method A string indicating the chosen numerical integration
+#' method for solving the ode system. Default is 'lsoda' which is also the
+#' default for the ode function in the desolve package used in this function.
 #'
 #' @return data frame containing the time vector and time series of S, R and I
 #'  population fractions for each age group outputs with incidence numbers
 #'  for each age group.
 setMethod(
   'simulate_SEIRAge', 'SEIRAge',
-  function(object, times) {
+  function(object, times, solve_method = 'lsoda') {
 
     # error if times is not a vector or list of doubles
     if(!is.double(times)){
@@ -189,7 +196,8 @@ setMethod(
 
     # call ode solver
     out <- ode(
-      y = state, times = times, func = right_hand_side, parms = parameters)
+      y = state, times = times, func = right_hand_side,
+      parms = parameters, method = solve_method)
 
     # output as a dataframe
     output <- as.data.frame.array(out)
