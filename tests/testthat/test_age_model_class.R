@@ -1,5 +1,5 @@
-test_that("age_model gets instantiated", {
-  my_model <- new('age_model', name = 'my_model', n_age_categories = 2)
+test_that("SEIRAge gets instantiated", {
+  my_model <- new('SEIRAge', name = 'my_model', n_age_categories = 2)
 
   # Test output is correct
   expect_equal(my_model@name,
@@ -16,15 +16,15 @@ test_that("age_model gets instantiated", {
   expect_equal(my_model@n_age_categories, 2)
 })
 
-test_that("can retrieve age_model parameters", {
-  my_model <- new('age_model', name = 'my_model', n_age_categories = 2)
+test_that("can retrieve SEIRAge parameters", {
+  my_model <- new('SEIRAge', name = 'my_model', n_age_categories = 2)
 
   expect_equal(get_parameters(my_model),
                vector(mode = "list", length = 7))
 })
 
-test_that("can set new parameters for the age_model", {
-  my_model <- new('age_model', name = 'my_model', n_age_categories = 2)
+test_that("can set new parameters for the SEIRAge", {
+  my_model <- new('SEIRAge', name = 'my_model', n_age_categories = 2)
   my_model <- set_parameters(my_model, c(0.4, 0.4), c(0, 0), c(0.05, 0.15),
                              c(0, 0), 1, 0.5, 0.5)
 
@@ -69,8 +69,8 @@ test_that("can set new parameters for the age_model", {
   })
 })
 
-test_that("can run simulation for the age_model", {
-  my_model <- new('age_model', name = 'my_model', n_age_categories = 2)
+test_that("can run simulation for the SEIRAge", {
+  my_model <- new('SEIRAge', name = 'my_model', n_age_categories = 2)
   my_model <- set_parameters(my_model, c(0.6, 0.4), c(0, 0), c(0, 0),
                              c(0, 0), 1, 0.5, 0.5)
 
@@ -86,19 +86,15 @@ test_that("can run simulation for the age_model", {
   expected_output$Incidence <- cbind(rep(0,3), rep(0,3))
 
   # Test output is correct
-  expect_equal(simulate(my_model, seq(0, 2, by = 1)),
+  expect_equal(simulate_SEIRAge(my_model, seq(0, 2, by = 1)),
                expected_output)
 
   # Test input errors
   expect_error({
-    simulate(my_model, '0')
-    simulate(my_model, seq(0, 2, by = 1), is_plot = c(0, 0))})
+    simulate_SEIRAge(my_model, '0')
+    simulate_SEIRAge(my_model, seq(0, 2, by = 1))})
 
-  # Snapshot testing to check that plotting routines are called correctly.
-  # case with plotting on
-  expect_snapshot_output(simulate(my_model, seq(0, 2, by = 1)))
-
-  # case with plotting off
-  expect_snapshot_output(simulate(my_model, seq(0, 2, by = 1), FALSE))
+  # Snapshot testing to check that outputs to the command line as expected
+  expect_snapshot_output(simulate_SEIRAge(my_model, seq(0, 2, by = 1)))
 
 })
