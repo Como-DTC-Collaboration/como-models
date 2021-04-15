@@ -20,8 +20,10 @@ setClass('SEIRAge',
          slots = c(
            name = 'character',
            output_names = 'list',
-           parameter_names = 'list',
-           parameters = 'list',
+           initial_condition_names = 'list',
+           transmission_parameter_names = 'list',
+           initial_conditions = 'list',
+           transmission_parameters = 'list',
            n_age_categories = 'numeric'
          ),
 
@@ -30,20 +32,36 @@ setClass('SEIRAge',
          prototype = list(
            name = NA_character_,
            output_names = list('S', 'E', 'I', 'R', 'Incidence'),
-           parameter_names = list('S0', 'E0', 'I0', 'R0', 'b', 'k', 'g'),
-           parameters = vector(mode = "list", length = 7),
+           initial_condition_names = list('S0', 'E0', 'I0', 'R0'),
+           transmission_parameter_names = list('b', 'k', 'g'),
+           initial_conditions = vector(mode = "list", length = 4),
+           transmission_parameters = vector(mode = "list", length = 3),
            n_age_categories = NA_real_
 
          )
 )
 
-#' @describeIn Retrieves parameters for an age-structured simple SEIR model.
+#' @describeIn Retrieves initial_conditions for an age-structured simple
+#' SEIR model.
 #'
 #' @param object An object of the class SEIRAge.
-setGeneric('get_parameters', function(object) standardGeneric('get_parameters'))
-setMethod('get_parameters', 'SEIRAge', function(object) object@parameters)
+setGeneric('initial_conditions',
+           function(object) standardGeneric('initial_conditions'))
 
-#' @describeIn Setter and getter methods for parameters of
+setMethod('initial_conditions', 'SEIRAge',
+          function(object) object@initial_conditions)
+
+#' @describeIn Retrieves transmission_parameters for an age-structured simple
+#' SEIR model.
+#'
+#' @param object An object of the class SEIRAge.
+setGeneric('transmission_parameters',
+           function(object) standardGeneric('transmission_parameters'))
+
+setMethod('transmission_parameters', 'SEIRAge',
+          function(object) object@transmission_parameters)
+
+#' @describeIn Setter and getter methods for initial_conditions of
 #'  an age-structured simple SEIR model.
 #'
 #' If the initial conditions provided to do not sum to 1 or of different
@@ -64,6 +82,53 @@ setMethod('get_parameters', 'SEIRAge', function(object) object@parameters)
 #'
 #' All initial conditions must sum up to 1.
 #'
+#' @return updated version of the age-structured SEIR model.
+setGeneric(
+  'initial_conditions<-',
+  function(object, S0, E0, I0, R0){
+    standardGeneric('initial_conditions<-')
+  })
+
+setMethod(
+  'initial_conditions<-', 'SEIRAge',
+  function(object, S0, E0, I0, R0) {
+    
+    # check that ICs are valid
+    if (sum(S0, E0, I0, R0) != 1) {
+      stop('Invalid initial conditions. Must add up to 1.')
+    }
+    
+    # create list of parameter values
+    ic <- list(S0, E0, I0, R0)
+    
+    # add names to each value
+    names(ic) = object@initial_condition_names
+    
+    # raise errors if age category dimensions do not match initial state vectors
+    # also raise errors if initial state and parameter values are not doubles
+    for (p in list('S0', 'E0', 'I0', 'R0')){
+      if(length(ic[[p]]) != object@n_age_categories){
+        stop(glue('Wrong number of age groups for {p}
+              compartments.'))}
+      if(!is.numeric(ic[[p]])){
+        stop(glue('{p} format must be numeric'))}
+    }
+    if(sum(S0, E0, I0, R0) != 1){
+      stop('All compartments need to sum up to 1.')
+    }
+    
+    # if all above tests are passed, assign the ic namelist to the object
+    object@initial_conditions <- ic
+    
+    return(object)
+  })
+
+#' @describeIn Setter and getter methods for transmission_parameters of
+#'  an age-structured simple SEIR model.
+#'
+#' If the transmission parameters provided to are not 1-dimensional an error is
+#' thrown.
+#' 
 #' @param b rate at which an infected individual exposes susceptible.
 #' @param k rate at which exposed individuals become infected.
 #' @param g rate at which infected individuals recover.
@@ -73,46 +138,29 @@ setMethod('get_parameters', 'SEIRAge', function(object) object@parameters)
 #'
 #' @return updated version of the age-structured SEIR model.
 setGeneric(
-  'set_parameters',
-  function(object, S0, E0, I0, R0, b, k, g){
-    standardGeneric('set_parameters')
+  'transmission_parameters<-',
+  function(object, b, k, g){
+    standardGeneric('transmission_parameters<-')
   })
 
 setMethod(
-  'set_parameters', 'SEIRAge',
-  function(object, S0, E0, I0, R0, b, k, g) {
-
-    # check that ICs are valid
-    if (sum(S0, E0, I0, R0) != 1) {
-      stop('Invalid initial conditions. Must add up to 1.')
-    }
+  'transmission_parameters<-', 'SEIRAge',
+  function(object, b, k, g) {
 
     # create list of parameter values
-    params <- list(S0, E0, I0, R0, b, k, g)
+    trans_params <- list(b, k, g)
 
     # add names to each value
-    names(params) = object@parameter_names
+    names(trans_params) = object@transmission_parameter_names
 
-    # raise errors if age category dimensions do not match initial state vectors
-    # also raise errors if initial state and parameter values are not doubles
-    for (p in list('S0', 'E0', 'I0', 'R0')){
-      if(length(params[[p]]) != object@n_age_categories){
-        stop(glue('Wrong number of age groups for {p}
-              compartments.'))}
-      if(!is.numeric(params[[p]])){
-        stop(glue('{p} format must be numeric'))}
-    }
-    if(sum(S0, E0, I0, R0) != 1){
-      stop('All compartments need to sum up to 1.')
-    }
-
-    # check format of parameters a and b
+    # check format of parameters b, k and g
     if(length(b) != 1 | length(k) != 1 | length(g) != 1){
       stop('The parameter values should be 1-dimensional.')
     }
 
-    # if all above tests are passed, assign the params namelist to the object
-    object@parameters <- params
+    # if all above tests are passed, assign the trans_params namelist to the
+    # object
+    object@transmission_parameters <- trans_params
 
     return(object)
   })
@@ -127,7 +175,7 @@ setGeneric(name = 'simulate_SEIRAge',
 
 #' @describeIn Solves a system to ODEs which form an
 #' age-structured simple SEIR model. The system of equations for the time
-#' evolution of population fractions in susceptable (S), Exposed (E), Infected
+#' evolution of population fractions in Susceptible (S), Exposed (E), Infected
 #' (I) and Recovered (R) groups in a given age group indexed by i
 #' is given by
 #'
@@ -161,15 +209,15 @@ setMethod(
     age <- object@n_age_categories
 
     # set initial state vector
-    state <- c(S = get_parameters(object)$S0,
-               E = get_parameters(object)$E0,
-               I = get_parameters(object)$I0,
-               R = get_parameters(object)$R0)
+    state <- c(S = initial_conditions(object)$S0,
+               E = initial_conditions(object)$E0,
+               I = initial_conditions(object)$I0,
+               R = initial_conditions(object)$R0)
 
     # set parameters vector
-    parameters <- c(b = get_parameters(object)$b,
-                    k = get_parameters(object)$k,
-                    g = get_parameters(object)$g)
+    parameters <- c(b = transmission_parameters(object)$b,
+                    k = transmission_parameters(object)$k,
+                    g = transmission_parameters(object)$g)
 
     # function for RHS of ode system
     right_hand_side <- function(t, state, parameters) {
