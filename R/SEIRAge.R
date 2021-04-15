@@ -1,16 +1,22 @@
-#' Defines an age-structured SEIR model and solves the set of ordinary
-#' differential equations of the model with a chosen method of numerical
-#' integration.
+#' @name SEIRAge
+#' @title SEIRAge-class
+#' 
+#' @description Defines an age-structured SEIR model and solves the set of
+#' ordinary differential equations of the model with a chosen method of
+#' numerical integration.
 #'
 #' @slot name character representing name of model
 #' @slot output_names names of the compartments which are used by the
 #'     model.
-#' @slot parameter_names names of the initial conditions and parameters
-#'     which are used by the model.
-#' @slot parameters named list containing parameters of the model.
-#'     Initial values for each compartment, S0, E0, I0, R0.
-#'     Other parameters: b, k, g which represent the rates of changes
-#'     between the compartments.
+#' @slot initial_condition_names names of the initial conditions used by the
+#'     model.
+#' @slot transmission_parameter_names names of the transmission parameters used
+#'     by the model.
+#' @slot initial_conditions named list containing the initial conditions of the
+#'     model. Initial values for each compartment, S0, E0, I0, R0.
+#' @slot transmission_parameters named list containing the transmission
+#'     parameters of the model. Transmission parameters b, k, g represent the
+#'     rates of changes between the compartments.
 #' @slot n_age_categories number of age categories.
 #' @import deSolve
 #' @import glue
@@ -41,28 +47,25 @@ setClass('SEIRAge',
          )
 )
 
-#' @describeIn Retrieves initial_conditions for an age-structured simple
-#' SEIR model.
+# Setter and getter methods for transmission_parameters of an age-structured
+# SEIR model.
+
+#' @rdname SEIRAge 
+#' @description Retrieves initial_conditions for an
+#' age-structured SEIR model.
 #'
 #' @param object An object of the class SEIRAge.
+#' 
+#' @return Initial conditions of SEIRAge model.
 setGeneric('initial_conditions',
            function(object) standardGeneric('initial_conditions'))
 
 setMethod('initial_conditions', 'SEIRAge',
           function(object) object@initial_conditions)
 
-#' @describeIn Retrieves transmission_parameters for an age-structured simple
+#' @rdname SEIRAge 
+#' @description Sets initial_conditions of an age-structured
 #' SEIR model.
-#'
-#' @param object An object of the class SEIRAge.
-setGeneric('transmission_parameters',
-           function(object) standardGeneric('transmission_parameters'))
-
-setMethod('transmission_parameters', 'SEIRAge',
-          function(object) object@transmission_parameters)
-
-#' @describeIn Setter and getter methods for initial_conditions of
-#'  an age-structured simple SEIR model.
 #'
 #' If the initial conditions provided to do not sum to 1 or of different
 #' sizes compared to the number of age groups, an error is thrown.
@@ -82,7 +85,7 @@ setMethod('transmission_parameters', 'SEIRAge',
 #'
 #' All initial conditions must sum up to 1.
 #'
-#' @return updated version of the age-structured SEIR model.
+#' @return Updated version of the age-structured SEIR model.
 setGeneric(
   'initial_conditions<-',
   function(object, S0, E0, I0, R0){
@@ -123,9 +126,26 @@ setMethod(
     return(object)
   })
 
-#' @describeIn Setter and getter methods for transmission_parameters of
-#'  an age-structured simple SEIR model.
+# Setter and getter methods for transmission_parameters of an age-structured
+# SEIR model.
+
+#' @rdname  SEIRAge 
+#' @description Retrieves transmission_parameters for an
+#' age-structured SEIR model.
 #'
+#' @param object An object of the class SEIRAge.
+#' 
+#' @return Transmission parameters of SEIRAge model.
+setGeneric('transmission_parameters',
+           function(object) standardGeneric('transmission_parameters'))
+
+setMethod('transmission_parameters', 'SEIRAge',
+          function(object) object@transmission_parameters)
+
+#' @rdname  SEIRAge 
+#' @description Sets transmission_parameters of an
+#' age-structured SEIR model.
+#' 
 #' If the transmission parameters provided to are not 1-dimensional an error is
 #' thrown.
 #' 
@@ -136,7 +156,7 @@ setMethod(
 #' All rates of change between compartments are equal regardless of
 #' age group.
 #'
-#' @return updated version of the age-structured SEIR model.
+#' @return Updated version of the age-structured SEIR model.
 setGeneric(
   'transmission_parameters<-',
   function(object, b, k, g){
@@ -165,7 +185,32 @@ setMethod(
     return(object)
   })
 
+# Method to simulate output using from SEIRAge model.
 
+#' @rdname SEIRAge
+#' @description Solves a system to ODEs which form an
+#' age-structured simple SEIR model. The system of equations for the time
+#' evolution of population fractions in Susceptible (S), Exposed (E), Infected
+#' (I) and Recovered (R) groups in a given age group indexed by i is given by
+#'
+#' \deqn{\frac{dS_i(t)}{dt} = - b S_i(t) I_i(t)}
+#' \deqn{\frac{dE_i(t)}{dt} =  b S_i(t) I_i(t) - k E_i(t)}
+#' \deqn{\frac{dI_i(t)}{dt} = k E_i(t) - g I_i(t)}
+#' \deqn{\frac{dR_i(t)}{dt} = g I_i(t)}
+#'
+#' This function relies on the package deSolve.
+#'
+#' @param object An object of the class SEIRAge. Default time series
+#' is seq(0, 100, by = 1).
+#' @param times (vector) time sequence over which to solve the model.
+#'        Must be of the form seq(t_start,t_end,by=t_step).
+#' @param solve_method A string indicating the chosen numerical integration
+#' method for solving the ode system. Default is `lsoda` which is also the
+#' default for the ode function in the deSolve package used in this function.
+#'
+#' @return data frame containing the time vector and time series of S, R and I
+#' population fractions for each age group outputs with incidence numbers
+#' for each age group.
 setGeneric(name = 'simulate_SEIRAge',
            def = function(object, times = seq(0, 100, by = 1),
                           solve_method = 'lsoda'){
@@ -173,30 +218,6 @@ setGeneric(name = 'simulate_SEIRAge',
            }
 )
 
-#' @describeIn Solves a system to ODEs which form an
-#' age-structured simple SEIR model. The system of equations for the time
-#' evolution of population fractions in Susceptible (S), Exposed (E), Infected
-#' (I) and Recovered (R) groups in a given age group indexed by i
-#' is given by
-#'
-#' \deqn{\frac{dS_i(t)}{dt} = - b S_i(t) I_i(t)
-#' \deqn{\frac{dE_i(t)}{dt} =  b S_i(t) I_i(t) - k E_i(t)
-#' \deqn{\frac{dI_i(t)}{dt} = k E_i(t) - g I_i(t)
-#' \deqn{\frac{dR_i(t)}{dt} = g I_i(t)
-#'
-#' This function relies on the packages deSolve and ggplot2.
-#'
-#' @param object An object of the class SEIRAge. Default time series
-#' is seq(0, 100, by = 1).
-#' @param times (vector) time sequence over which to solve the model.
-#'        Must be of the form seq(t_start,t_end,by=t_step).
-#' @param solve_method A string indicating the chosen numerical integration
-#' method for solving the ode system. Default is 'lsoda' which is also the
-#' default for the ode function in the desolve package used in this function.
-#'
-#' @return data frame containing the time vector and time series of S, R and I
-#'  population fractions for each age group outputs with incidence numbers
-#'  for each age group.
 setMethod(
   'simulate_SEIRAge', 'SEIRAge',
   function(object, times, solve_method = 'lsoda') {
