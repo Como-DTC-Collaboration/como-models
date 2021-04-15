@@ -1,37 +1,17 @@
-#' An SEIR model for compartments of different symptoms
+#' An SEIR model for compartments of different symptoms, 
 #'
-#' Note:
-#' 1) Sum of poulation equals to 1 at any time point.
-#' An error will be reported the sum of initial population is not equal to 1.
-#' 2) At this stage, we only consider disease-caused death cases
-#' calculating mortality.
-#'
-#' model structure:
-#'    ---------------------------(omega)---------------------------------
-#'    |                                                                 |
-#'    |                                                                 |
-#'    --> S --(lam)--> E --(gamma) ------(1-ihr)-------> I ---(nu.i)--> R <--
-#'                                 |                     |                  |
-#'                                 |                 (pdeath.i)             |
-#'                                 |                     |                  |
-#'                                 |            --> CM <--                  |
-#'                                 |            |                           |
-#'                                 |      (pdeath.hsa)                      |
-#'                                 |            |                           |
-#'                                 -- (ihr)---> HA --(nu.hsa)----------------
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Class definitions
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-#' @describeIn model_symptome to set up dependent classes for model_symptome
-setClass("ggplot")
+#' @noRd
 setClass("gg")
 
-#' An S4 class of an basic SEIR model with compartments of different symptomes
+#' An S4 class of a basic SEIR model with infected population of different symptome compartments: asymptomatic, mild and severe.
 #'
 #' @slot name A string gives the name of the model
-#' @slot initial_population A list of the initial population size of each group
-#' @slot parameters A list of the model parameters
+#' @slot initial_population A named list of the initial population size of each group with names: "S", "E", "I_asymptomatic", "I_mild", "I_severe", "R", "D_cumulative" 
+#' @slot parameters A named list of the model parameters with names: "lam", "gamma", "omega", "e2i", "i2r", "pdeath"
 #' @slot output A dataframe holding the ode simulation output, with columns as population groups and rows as simulation time points
 #' @slot plot_output A ggplot holding the plot of the ode simulation output
 #'
@@ -40,8 +20,12 @@ setClass("gg")
 #' @import reshape2
 #' @import plyr
 #' @import magrittr
+#' 
+#' @note
+#' 1. Total initial population size is normalised to 1
+#' 2. The current model does not include natural death or birth.
 
-setClass(Class = "model_symptome",
+setClass(Class = "SEIaImIsR",
          slots = c(
            name = "character",
            initial_population = "list",
@@ -51,41 +35,45 @@ setClass(Class = "model_symptome",
          ),
          prototype = list(
            name = NA_character_,
-           initial_population = vector(mode = "list", length = 6) %>%
-             setNames(list("S", "E", "I", "HA", "R", "CM")),
+           initial_population = vector(mode = "list", length = 7) %>%
+             setNames(list("S", "E", "I_asymptomatic", "I_mild", "I_severe", "R", "D_cumulative")),
            parameters = vector(mode = "list", length = 6) %>%
-             setNames(list("lam", "gamma", "omega", "ihr", "nu", "pdeath")),
+             setNames(list("lam", "gamma", "omega", "e2i", "i2r", "pdeath")),
            output = data.frame(),
-           plot_output = ggplot()
+           plot_output = ggplot2::ggplot()
          ))
+
+
               
-#' @describeIn model_symptome set initial population sizes (in fraction) and parameters
+#' @describeIn SEIaImIsR set initial population sizes (in fraction) and parameters
 #'
-#' @param object An object of class model_symptome
+#' @param object An object of class SEIaImIsR
 #' @param S Numeric, initial population of the susceptible
 #' @param E Numeric, initial population of the exposed
-#' @param I Numeric, initial population of the infected with mild/no symptom
-#' @param HA Numeric, initial population of the infected with severe symptoms
+#' @param I_asymptomatic Numeric, initial population of the infected with no symptom
+#' @param I_mild Numeric, initial population of the infected with mild symptoms
+#' @param I_severe Numeric, initial population of the infected with severe symptoms
 #' that need further hospitalization
-#' @param CM Numeric, initial cumulative mortality
+#' @param D_cumulative Numeric, initial cumulative mortality
 #' @param R Numeric, initial population of the recovered
 #' @param lam Numeric, rate at which an infected individual exposes susceptible
 #' @param gamma Numeric, rate at which exposed individuals become infected
 #' @param omega Numeric, rate at which recovered individuals become susceptible
-#' @param ihr Numeric, fraction of infected individuals develop severe symptoms
-#' @param nu Numeric vector, rate at which each infected group recover
+#' @param e2i Numeric vector, fractions of different symptome compartments (I_asymptomic, I_mild, I_severe)
+#' @param i2r Numeric vector, rate at which each infected group recover
 #' @param pdeath Numeric vector, rate of disease-caused mortality of each infected group
-#' @return An object of class model_symptome with initial population and parameters
+#' @return An object of class SEIaImIsR with initial population and parameters
 #'
 setGeneric(name = "set_init",
-           def = function(object, S=NA_real_, E=NA_real_, I=NA_real_,
-                          HA=NA_real_, R=NA_real_, CM=NA_real_,
+           def = function(object, S=NA_real_, E=NA_real_,
+                          I_asymptomatic=NA_real_, I_mild=NA_real_, I_severe=NA_real_,
+                          R=NA_real_, D_cumulative=NA_real_,
                           lam=NA_real_, gamma=NA_real_, omega=NA_real_,
-                          ihr=NA_real_, nu=list(), pdeath=list()) standardGeneric("set_init"))
-setMethod("set_init", signature(object = "model_symptome"),
-          function(object, S, E, I, HA, R, CM, lam, gamma, omega, ihr, nu, pdeath) {
-            param_list <- list(lam, gamma, omega, ihr, nu, pdeath)
-            init_pop_list <- list(S, E, I, HA, R, CM)
+                          e2i=list(), i2r=list(), pdeath=list()) standardGeneric("set_init"))
+setMethod("set_init", signature(object = "SEIaImIsR"),
+          function(object, S, E, I_asymptomatic, I_mild, I_severe, R, D_cumulative, lam, gamma, omega, e2i, i2r, pdeath) {
+            param_list <- list(lam, gamma, omega, e2i, i2r, pdeath)
+            init_pop_list <- list(S, E, I_asymptomatic, I_mild, I_severe, R, D_cumulative)
             names(param_list) <- names(object@parameters)
             names(init_pop_list) <- names(object@initial_population)
             object@initial_population <- init_pop_list
@@ -97,13 +85,13 @@ setMethod("set_init", signature(object = "model_symptome"),
             else stop(paste(check, ", please check and rerun set_init.\n"))
           })
 
-#' @describeIn model_symptome to check validity of the settings of the parameters and initial conditions
+#' @describeIn SEIaImIsR to check validity of the settings of the parameters and initial conditions
 #'
-#' @param object An object of class model_symptome
+#' @param object An object of class SEIaImIsR
 #' @return TRUE if passing all checks, or an error message if any check fails
 #'
 setGeneric(name = "check_init", def = function(object) standardGeneric("check_init"))
-setMethod("check_init", signature(object = "model_symptome"),
+setMethod("check_init", signature(object = "SEIaImIsR"),
           function(object) {
             errors <- character()
             # check whether all required parameters are set
@@ -129,62 +117,73 @@ setMethod("check_init", signature(object = "model_symptome"),
                 errors <- c(errors, msg)
               }
             }
-            # check whether the lengths of nu and pdeath correspond to the number of infected groups
-            n_nu <- length(object@parameters$nu)
-            if (n_nu != 2) {
+            # check whether the lengths of i2r and pdeath correspond to the i2rmber of infected groups
+            n_i2r <- length(object@parameters$i2r)
+            if (n_i2r != 3) {
               msg <- paste0(
-                "Length of parameter nu,", n_nu, ", is not equal to the setting ", 2)
+                "Length of parameter i2r,", n_i2r, ", is not equal to the setting ", 3)
               errors <- c(errors, msg)
             }
             n_pdeath <- length(object@parameters$pdeath)
-            if (n_pdeath != 2) {
+            if (n_pdeath != 3) {
               msg <- paste0(
-                "Length of parameter pdeath,", n_pdeath, ", is not equal to the setting ", 2)
+                "Length of parameter pdeath,", n_pdeath, ", is not equal to the setting ", 3)
               errors <- c(errors, msg)
             }
             if (length(errors) == 0) TRUE else errors
           })
 
 
-#' @describeIn model_symptome to solve the ode system.
+#' @describeIn SEIaImIsR to solve the ode system.
 #'
-#' @param object An object of class model_symptome
+#' Model:
+#' \deqn{\frac{dS}{dt} = -\lambda S(I_mild+I_severe) + \omega R}
+#' \deqn{\frac{dE}/{dt} = \lambda S(I_mild+I_severe) - \gamma E}
+#' \deqn{\frac{dI_asymptomatic}{dt} = e2i.i_asymptomic \gamma E - i2r.i_asymptomatic I_asymptomatic - pdeath.i_asymptomatic I_asymptomatic}
+#' \deqn{\frac{dI_mild}{dt} = e2i.i_mild\gamma E - i2r.i_mild I_mild - pdeath.i_mild I_mild}
+#' \deqn{\frac{dI_severe}{dt} = e2i.i_severe\gamma E - i2r.i_severe I_severe  - pdeath.i_severe I_severe}
+#' \deqn{\frac{dR}{dt} = -\omega R + i2r.i_mild I_mild + i2r.i_severe I_severe}
+#' \deqn{\frac{dD_cumulative}{dt} =  pdeath.i_mild  I_mild + pdeath.i_severe I_severe}
+#'
+#' @param object An object of class SEIaImIsR
 #' @param times A list of time points of the simulation period
 #' @param method A string indicating which ode integrator to use. Default is set to 'lsoda'
-#' @return An object of class model_symptome with a dataframe of simulation output
+#' @return An object of class SEIaImIsR with a dataframe of simulation output
 #'
 setGeneric(name = "ode_simulate",
            def = function(object, times, method = "lsoda") standardGeneric("ode_simulate"))
 
-setMethod("ode_simulate", signature(object = "model_symptome"),
+setMethod("ode_simulate", signature(object = "SEIaImIsR"),
   function(object, times, method) {
     # initial population groups
     pop_groups <- c(S = object@initial_population$S,
                     E = object@initial_population$E,
-                    I = object@initial_population$I,
-                    HA = object@initial_population$HA,
+                    I_asymptomatic = object@initial_population$I_asymptomatic,
+                    I_mild = object@initial_population$I_mild,
+                    I_severe = object@initial_population$I_severe,
                     R = object@initial_population$R,
-                    CM = object@initial_population$CM)
+                    D_cumulative = object@initial_population$D_cumulative)
     # parameters
     params <- c(lam = object@parameters$lam,
                 gamma = object@parameters$gamma,
                 omega = object@parameters$omega,
-                ihr = object@parameters$ihr,
-                nu = object@parameters$nu,
+                e2i = object@parameters$e2i,
+                i2r = object@parameters$i2r,
                 pdeath = object@parameters$pdeath)
 
     # ODE system RHS
     ode_symptome_rhs <- function(t, pop_groups, parameters) {
       with(
         as.list(c(pop_groups, params)), {
-          dS <- -lam * S * (I + HA) + omega * R
-          dE <- lam * S * (I + HA) - gamma * E
-          dI <- (1.0 - ihr) * gamma * E - nu.i * I  - pdeath.i * I
-          dHA <- ihr * gamma * E - nu.hsa * HA  - pdeath.hsa * HA
-          dR <- -omega * R + nu.i * I + nu.hsa * HA
-          dCM <-  pdeath.i * I + pdeath.hsa * HA
-          # return the rate of change
-          list(c(dS, dE, dI, dHA, dR, dCM))
+          dS <- -lam * S * (I_asymptomatic + I_mild + I_severe) + omega * R
+          dE <- lam * S * (I_asymptomatic + I_mild + I_severe) - gamma * E
+          dI_asymptomatic <- (1.0 - e2i.i_mild - e2i.i_severe) * gamma * E - i2r.i_asymptomatic * I_asymptomatic  - pdeath.i_asymptomatic * I_asymptomatic
+          dI_mild <- e2i.i_mild * gamma * E - i2r.i_mild * I_mild  - pdeath.i_mild * I_mild
+          dI_severe <- e2i.i_severe * gamma * E - i2r.i_severe * I_severe  - pdeath.i_severe * I_severe
+          dR <- -omega * R + i2r.i_asymptomatic * I_asymptomatic + i2r.i_mild * I_mild + i2r.i_severe * I_severe
+          dD_cumulative <-  pdeath.i_asymptomatic * I_asymptomatic + pdeath.i_mild * I_mild + pdeath.i_severe * I_severe
+          # return the rate of cI_severenge
+          list(c(dS, dE, dI_asymptomatic, dI_mild, dI_severe, dR, dD_cumulative))
         })
     }
     # solving ode
@@ -198,14 +197,14 @@ setMethod("ode_simulate", signature(object = "model_symptome"),
     return(object)
     })
 
-#' @describeIn model_symptome to plot the outcome of the ode similuation
+#' @describeIn SEIaImIsR to plot the outcome of the ode similuation
 #'
-#' @param object An object of class model_symptome
-#' @return An object of class model_symptome with a plot showing the ode simulation outcome
+#' @param object An object of class SEIaImIsR
+#' @return An object of class SEIaImIsR with a plot showing the ode simulation outcome
 #'
 setGeneric(name = "plot_ode_output",
            def = function(object) standardGeneric("plot_ode_output"))
-setMethod("plot_ode_output", signature(object = "model_symptome"),
+setMethod("plot_ode_output", signature(object = "SEIaImIsR"),
           function(object) {
             output <- object@output
             if (empty(output)) {
