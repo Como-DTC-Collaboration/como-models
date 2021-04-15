@@ -78,7 +78,7 @@ setMethod(
 #' @return updated version of the age-structured SEIR model.
 setGeneric(
   'set_parameters',
-  function(object, S0, E0, I0, R0, b = 1, k = 1, g = 1){
+  function(object, S0, E0, I0, R0, b, k, g){
     standardGeneric('set_parameters')
   })
 
