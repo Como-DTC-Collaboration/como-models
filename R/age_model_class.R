@@ -16,7 +16,7 @@
 #' @import glue
 
 setClass('SEIRAge',
-         #slots
+         # slots
          slots = c(
            name = 'character',
            output_names = 'list',
@@ -25,8 +25,8 @@ setClass('SEIRAge',
            n_age_categories = 'numeric'
          ),
 
-         #prototypes for the slots, automatically set output and param
-         #names
+         # prototypes for the slots, automatically set output and param
+         # names
          prototype = list(
            name = NA_character_,
            output_names = list('S', 'E', 'I', 'R', 'Incidence'),
@@ -106,12 +106,12 @@ setMethod(
       stop('All compartments need to sum up to 1.')
     }
 
-    #check format of parameters a and b
+    # check format of parameters a and b
     if(any(length(b) != 1 | length(k) != 1 | length(g) != 1)){
       stop('The parameter values should be 1-dimensional.')
     }
 
-    #if all above tests are passed, assign the params namelist to the object
+    # if all above tests are passed, assign the params namelist to the object
     object@parameters <- params
 
     return(object)
