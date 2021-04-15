@@ -41,15 +41,11 @@ setClass('SEIRAge',
 #'
 #' @param object An object of the class SEIRAge.
 setGeneric('get_parameters', function(object) standardGeneric('get_parameters'))
+setMethod('get_parameters', 'SEIRAge', function(object) object@parameters)
 
-setMethod(
-  'get_parameters', 'SEIRAge',
-  function(object) object@parameters
-)
-
-#' @describeIn Sets parameters for an age-structured simple SEIR model.
+#' @describeIn Setter and getter methods for parameters of
+#'  an age-structured simple SEIR model.
 #'
-#' Default parameters b = 1, k = 1 and g = 1.
 #' If the initial conditions provided to do not sum to 1 or of different
 #' sizes compared to the number of age groups, an error is thrown.
 #'
@@ -78,7 +74,7 @@ setMethod(
 #' @return updated version of the age-structured SEIR model.
 setGeneric(
   'set_parameters',
-  function(object, S0, E0, I0, R0, b = 1, k = 1, g = 1){
+  function(object, S0, E0, I0, R0, b, k, g){
     standardGeneric('set_parameters')
   })
 
