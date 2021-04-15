@@ -1,7 +1,4 @@
-#' @name SEIRAge
-#' @title SEIRAge-class
-#' 
-#' @description Defines an age-structured SEIR model and solves the set of
+#' Defines an age-structured SEIR model and solves the set of
 #' ordinary differential equations of the model with a chosen method of
 #' numerical integration.
 #'
@@ -18,8 +15,10 @@
 #'     parameters of the model. Transmission parameters b, k, g represent the
 #'     rates of changes between the compartments.
 #' @slot n_age_categories number of age categories.
+#' 
 #' @import deSolve
 #' @import glue
+#' 
 
 setClass('SEIRAge',
          # slots
@@ -50,8 +49,7 @@ setClass('SEIRAge',
 # Setter and getter methods for transmission_parameters of an age-structured
 # SEIR model.
 
-#' @rdname SEIRAge 
-#' @description Retrieves initial_conditions for an
+#' @describeIn SEIRAge Retrieves initial_conditions for an
 #' age-structured SEIR model.
 #'
 #' @param object An object of the class SEIRAge.
@@ -63,8 +61,7 @@ setGeneric('initial_conditions',
 setMethod('initial_conditions', 'SEIRAge',
           function(object) object@initial_conditions)
 
-#' @rdname SEIRAge 
-#' @description Sets initial_conditions of an age-structured
+#' @describeIn SEIRAge Sets initial_conditions of an age-structured
 #' SEIR model.
 #'
 #' If the initial conditions provided to do not sum to 1 or of different
@@ -129,8 +126,7 @@ setMethod(
 # Setter and getter methods for transmission_parameters of an age-structured
 # SEIR model.
 
-#' @rdname  SEIRAge 
-#' @description Retrieves transmission_parameters for an
+#' @describeIn SEIRAge Retrieves transmission_parameters for an
 #' age-structured SEIR model.
 #'
 #' @param object An object of the class SEIRAge.
@@ -142,7 +138,7 @@ setGeneric('transmission_parameters',
 setMethod('transmission_parameters', 'SEIRAge',
           function(object) object@transmission_parameters)
 
-#' @rdname  SEIRAge 
+#' @describeIn  SEIRAge 
 #' @description Sets transmission_parameters of an
 #' age-structured SEIR model.
 #' 
@@ -187,8 +183,7 @@ setMethod(
 
 # Method to simulate output using from SEIRAge model.
 
-#' @rdname SEIRAge
-#' @description Solves a system to ODEs which form an
+#' @describeIn SEIRAge Solves a system to ODEs which form an
 #' age-structured simple SEIR model. The system of equations for the time
 #' evolution of population fractions in Susceptible (S), Exposed (E), Infected
 #' (I) and Recovered (R) groups in a given age group indexed by i is given by
@@ -200,10 +195,10 @@ setMethod(
 #'
 #' This function relies on the package deSolve.
 #'
-#' @param object An object of the class SEIRAge. Default time series
-#' is seq(0, 100, by = 1).
+#' @param object An object of the class SEIRAge.
 #' @param times (vector) time sequence over which to solve the model.
-#'        Must be of the form seq(t_start,t_end,by=t_step).
+#'        Must be of the form seq(t_start,t_end,by=t_step). Default time series
+#'        is seq(0, 100, by = 1).
 #' @param solve_method A string indicating the chosen numerical integration
 #' method for solving the ode system. Default is `lsoda` which is also the
 #' default for the ode function in the deSolve package used in this function.
