@@ -40,17 +40,12 @@ setClass("SEIR_model",
 #'
 #' @param object An object of the class SEIR_model.
 
-setGeneric("initial_conditions",
-           function(object) standardGeneric("initial_conditions"))
-
 setMethod("initial_conditions", "SEIR_model",
           function(object) object@initial_conditions)
 
 #' @describeIn SEIR_model retrieves transmission parameters for SEIR model.
 #'
 #' @param object An object of the class SEIR_model.
-setGeneric("transmission_parameters",
-           function(object) standardGeneric("transmission_parameters"))
 
 setMethod("transmission_parameters", "SEIR_model",
           function(object) object@transmission_parameters)
@@ -69,18 +64,12 @@ setMethod("transmission_parameters", "SEIR_model",
 #' @return object of class SEIR_model with initial conditions assigned.
 #' @export
 
-setGeneric(
-  "initial_conditions<-",
-  function(object, S0, E0, I0, R0){
-    standardGeneric("initial_conditions<-")
-  })
-
 setMethod(
   "initial_conditions<-", "SEIR_model",
-  function(object, S0, E0, I0, R0) {
+  function(object, value) {
     
     # create list of parameter values
-    init_cond <- list(S0, E0, I0, R0)
+    init_cond <- value
     
     # add names to each value
     names(init_cond) = object@initial_condition_names
@@ -93,7 +82,7 @@ setMethod(
     }
     
     # check that the initial conditions are properly normalized
-    if (sum(S0, E0, I0, R0) != 1) {
+    if (sum(value$S0, value$E0, value$I0, value$R0) != 1) {
       stop("Invalid initial conditions. Must add up to 1.")
     }
     
@@ -117,24 +106,18 @@ setMethod(
 #' assigned.
 #' @export
 
-setGeneric(
-  "transmission_parameters<-",
-  function(object, b, k, g){
-    standardGeneric("transmission_parameters<-")
-  })
-
 setMethod(
   "transmission_parameters<-", "SEIR_model",
-  function(object, b, k, g) {
+  function(object, value) {
     
     # create list of parameter values
-    trans_params <- list(b, k, g)
+    trans_params <- value
     
     # add names to each value
     names(trans_params) = object@transmission_parameter_names
     
     # check format of parameters b, k and g
-    if(length(b) != 1 | length(k) != 1 | length(g) != 1){
+    if(length(value$b) != 1 | length(value$k) != 1 | length(value$g) != 1){
       stop("The parameter values should be 1-dimensional.")
     }
     
