@@ -47,6 +47,7 @@ setClass("SEIDR",
 #' @describeIn SEIDR retrieves initial conditions for SEIR model.
 #'
 #' @param object An object of the class SEIDR.
+#' @export
 
 setGeneric("initial_conditions",
            function(object) standardGeneric("initial_conditions"))
@@ -57,6 +58,7 @@ setMethod("initial_conditions", "SEIDR",
 #' @describeIn SEIDR retrieves initial cases and deaths for SEIDR model.
 #'
 #' @param object An object of the class SEIDR.
+#' @export
 
 setGeneric("initial_cases_deaths",
            function(object) standardGeneric("initial_cases_deaths"))
@@ -67,6 +69,7 @@ setMethod("initial_cases_deaths", "SEIDR",
 #' @describeIn SEIDR retrieves transmission parameters for SEIR model.
 #'
 #' @param object An object of the class SEIDR.
+#' @export
 setGeneric("transmission_parameters",
            function(object) standardGeneric("transmission_parameters"))
 

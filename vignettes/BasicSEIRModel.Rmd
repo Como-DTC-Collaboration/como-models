@@ -36,9 +36,9 @@ to the susceptible population. Births and deaths are not considered in this mode
 The variables are normalized, so the populations always sum to one.
 $$\frac{\text{d}S}{\text{d}t} = -\beta S I,$$
 $$\frac{\text{d}E}{\text{d}t} = \beta S I -\kappa E,$$
-$$\frac{\text{d}I}{\text{d}t} = \kappa E - \gamma I,$$
+$$\frac{\text{d}I}{\text{d}t} = \kappa E - (\gamma + \mu) I,$$
 $$\frac{\text{d}R}{\text{d}t} = -\gamma I,$$
-where $\beta$, $\kappa$ and $\gamma$ are positive parameters.
+where $\beta$, $\kappa$, $\gamma$ and $\mu$ are positive parameters.
 The rate at which susceptible individuals are exposed depends on the fraction
 of the population that is susceptible, the fraction of the population that is
 infectious, and the probability of that an infected individual infects a
@@ -46,15 +46,27 @@ susceptible individual, $\beta$. This is represented in the
 first terms on the right-hand side of $\text{d}S/ \text{d}t$ and $\text{d}I/ \text{d}t$.
 Exposed individuals become infectious at rate $\kappa$. $1/ \kappa$ is
 the incubation time of the virus, i.e. how many days after exposure the individual
-becomes infectious to others. Finally, an infection lasts $1/ \gamma$
-days, thus individuals recover at rate $\gamma$.
+becomes infectious to others. Infectious individuals can either recover or die
+because of the disease. An infection lasts $1/ \gamma$
+days, thus individuals recover at rate $\gamma$. The death rate is $\mu$.
+
+In addition to these four main ODEs, the model also keeps track of the number 
+of cases ($C$) and the number of disease-related deaths ($D$) over time
+$$\frac{\text{d}C}{\text{d}t} = \beta S I,$$
+$$\frac{\text{d}D}{\text{d}t} = \mu I.$$
 
 The system is closed by specifying the initial conditions
-$$S(0) = S_0,\ E(0) = E_0,\ I(0) = I_0,\ R(0) = R_0.$$
-From the above equations, it is easy to derive that the system reaches a steady
-state when $E = 0$ and $I = 0$. $S$ and $R$ are free. This makes sense based on
-the biology, because as long as there are (soon to be) infectious individuals
-in the population, they will infect susceptibles (unless $S = 0$ of course).
+$$S(0) = S_0,\ E(0) = E_0,\ I(0) = I_0,\ D(0) = D_0,\ R(0) = R_0,\ C(0) = C_0,$$
+where $C_0 = E_0 + I_0 + R_0$ to ensure the cases that occur before $t=0$ are
+also counted.
+
+Steady states of the system described above are computed by setting the right-hand
+sides of the ODEs equal to zero. The system reaches a steady
+state when $E = 0$ and $I = 0$. $S$, $R$, $C$ and $D$ can then take on any value,
+as long as $S + E + I + D + R = 0$.
+This makes sense based on the biology, because as long as there are (soon to be)
+infectious individuals in the population, they will infect susceptibles 
+(unless $S = 0$ of course).
 
 Because we build on this basic model to develop more complex epidemiological models,
 we solve the ODEs over time instead of just solving for the steady states. The
@@ -64,38 +76,40 @@ next section shows an example of how to use the SEIR_model class.
 In this section we will walk through an example of how to use the `SEIR_model`
 class. This model is contained in the package comomodels.
 
-To create a new `SEIR_model` object, run:
+To create a new `SEIDR` object, run:
 ```{r}
-my_model <- new("SEIR_model", name = "my_model")
+my_model <- new("SEIDR")
 ```
-You can assign any name you would like for the model to the 'name' argument. You can also assign names to variables and parameters at the third argument as list. For example, `parameter_names = list("S0", "E0", "I0", "R0","beta", "kappa", "gamma")`.
 
-Next, we set the initial conditions and parameter values:
+Next, we set the parameter values for $\beta$, $\kappa$, $\gamma$ and $\mu$:
 ```{r}
-my_model <- set_parameters(my_model, 0.9, 0, 0.1, 0, 1, 1, 1)
+transmission_parameters(my_model) <- c(1, 0.5, 0.5, 0.1)
 ```
-The first parameter in the function `set_parameters` indicates the model object
+The first parameter in the function `transmission_parameters<-` indicates the model object
 to which the parameter settings are to be applied. The next four values indicate
-that $S(0) = 0.9$, $E(0) = 0$, $I(0) = 0.1$, $R(0) = 0$, i.e. 90% of the
-population is susceptible, 10% is infected and infectious and none is
-in the incubation period or recovered. The initial conditions must add up to one.
-The last three values are assigned to $\beta$, $\kappa$, and $\gamma$, respectively.
+the values of $\beta$, $\kappa$, and $\gamma$, respectively.
+
 To check that the parameters have been set correctly, we call
 ```{r}
-get_parameters(my_model)
+transmission_parameters(my_model)
 ```
 
-
-Now we can simulate the system, with an option to produce a graph.
+We now need to set the initial conditions for the model. We only set the initial
+conditions $S(0)$, $E(0)$, $I(0)$ and $R(0)$. The value of $C(0)$ is computed
+automatically and $D(0)=0$ always.
 ```{r}
-out_df <- simulate(my_model, seq(0, 10, by = 0.1))
+initial_conditions(my_model) <- list(0.9, 0, 0.1, 0)
+```
+The values after the model object are assigned to $S(0)$, $E(0)$, $I(0)$ and $R(0)$,
+respectively. The initial conditions must sum to one. If they do not, an error is thrown.
+
+
+Now we can simulate the system.
+```{r}
+out_df <- simulate_SEIDR(my_model, seq(0, 10, by = 0.1))
 ```
 
-The function `simulate` solves `my_model` from the initial conditions specified
-by `set_parameters` over the time sequence `seq(0, 10, by = 0.1)`. There is an option
-here to add a third argument, `is_plot`. If `is_plot = TRUE`, a graph will be produced.
-If it is `FALSE`, no graph will be produced. If not specified, the default value
-for `is_plot` is `TRUE`. The output from the function simulate is a dataframe which 
-contains the time sequence specified in the function call and the values of each
-of the four variables at those time points.
+The function `simulate_SEIDR` solves `my_model` from the initial conditions specified
+previously, over the time sequence `seq(0, 10, by = 0.1)`. The function returns
+a data frame where the columns are the time sequence, $S$, $E$, $I$, $R$, $C$ and $D$.
 
