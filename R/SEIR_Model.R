@@ -39,6 +39,7 @@ setClass("SEIR_model",
 #' @describeIn SEIR_model retrieves initial conditions for SEIR model.
 #'
 #' @param object An object of the class SEIR_model.
+
 setGeneric("initial_conditions",
            function(object) standardGeneric("initial_conditions"))
 
@@ -150,10 +151,10 @@ setMethod(
 #' for the time points specified in times and integration method specified in 
 #' solve_method.
 #'
-#' \deqn{\frac{dS(t)}{dt} = - b S(t) I(t)
-#' \deqn{\frac{dE(t)}{dt} =  b S(t) I(t) - k E(t)
-#' \deqn{\frac{dI(t)}{dt} = k E(t) - g I(t)
-#' \deqn{\frac{dR(t)}{dt} = g I(t)
+#' \deqn{\frac{dS(t)}{dt} = - b S(t) I(t)}
+#' \deqn{\frac{dE(t)}{dt} =  b S(t) I(t) - k E(t)}
+#' \deqn{\frac{dI(t)}{dt} = k E(t) - g I(t)}
+#' \deqn{\frac{dR(t)}{dt} = g I(t)}
 #'
 #' This function relies on the package deSolve.
 #'
@@ -172,9 +173,7 @@ setMethod(
 setGeneric(name = "simulate_SEIR",
            def = function(object, times = seq(0, 100, by = 1),
                           solve_method = "lsoda") {
-             standardGeneric("simulate_SEIR")
-           }
-)
+             standardGeneric("simulate_SEIR")})
 
 setMethod(
   "simulate_SEIR", "SEIR_model",
@@ -219,10 +218,10 @@ setMethod(
     output <- as.data.frame.array(out)
     
     # compute incidence number
-    total_inf <- out_df$I + out_df$R
+    total_inf <- output$I + output$R
     n_inc <- c(0,total_inf[2:length(total_inf)]-total_inf[1:length(total_inf)-1])
 
-    output$Incidence <- unname(as.matrix(n_inc))
+    output$Incidence <- n_inc
     
     return(output)
   })

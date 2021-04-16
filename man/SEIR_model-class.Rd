@@ -3,16 +3,22 @@
 \docType{class}
 \name{SEIR_model-class}
 \alias{SEIR_model-class}
-\alias{get_parameters}
-\alias{set_parameters}
-\alias{simulate}
+\alias{initial_conditions}
+\alias{transmission_parameters}
+\alias{initial_conditions<-}
+\alias{transmission_parameters<-}
+\alias{simulate_SEIR}
 \title{An S4 object representing the SEIR_model.}
 \usage{
-get_parameters(object)
+initial_conditions(object)
 
-set_parameters(object, S0, E0, I0, R0, b, k, g)
+transmission_parameters(object)
 
-simulate(object, times = seq(0, 100, by = 1), is_plot = TRUE)
+initial_conditions(object, S0, E0, I0, R0) <- value
+
+transmission_parameters(object, b, k, g) <- value
+
+simulate_SEIR(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
 }
 \arguments{
 \item{object}{an object of the class SEIR_model}
@@ -21,52 +27,81 @@ simulate(object, times = seq(0, 100, by = 1), is_plot = TRUE)
 
 \item{E0}{(double) initial fraction of the population that has been exposed}
 
-\item{I0}{(double) initial fraction of the population that is infected}
+\item{I0}{(double) initial fraction of the population that is infectious}
 
-\item{R0}{(double) initial fraction of the population that has recovered}
+\item{R0}{(double) initial fraction of the population that has recovered#' All initial conditions must sum up to 1.}
 
 \item{b}{(double) rate at which an infected individual exposes susceptible}
 
-\item{k}{(double) rate at which exposed individuals become infected}
+\item{k}{(double) rate at which exposed individuals become infectious}
 
 \item{g}{(double) rate at which infected individuals recover}
 
 \item{times}{(double) a sequence of time points at which the solution to
-the system of ODEs should be returned.}
+the system of ODEs should be returned. Must be of the form
+seq(t_start, t_end, by=t_step). Default time series is seq(0, 100, by = 1).}
 
-\item{is_plot}{(logical) indicates whether the solutions to the ODEs will
-be plotted. Default is TRUE.}
+\item{solve_method}{(string) a string of chosen numerical integration method
+for solving the ode system. Default is "lsoda" which is also the default for
+the ode function in the deSolve package used in this function.}
 }
 \value{
-object of class SEIR_model with initial conditions and parameter
-values assigned.
+object of class SEIR_model with initial conditions assigned.
 
-a dataframe with the time steps, and solutions for S, E, I and R,
-and a plot if is_plot is TRUE.
+object of class SEIR_model with transmission parameter values
+assigned.
+
+a dataframe with the time steps, time series of S, E, I and R
+population fractions and incidence numbers of the SEIR model.
 }
 \description{
 This class represents the SEIR model, showing how populations of susceptible,
-exposed, infected and recovered individuals evolve over time.
+exposed, infectious and recovered individuals evolve over time.
 }
 \section{Functions}{
 \itemize{
-\item \code{get_parameters}: prints the parameters of the SEIR model in object.
+\item \code{initial_conditions}: retrieves initial conditions for SEIR model.
 
-\item \code{set_parameters}: sets the parameter values (initial conditions S0, E0,
-I0, R0, and parameters b, k, g) of the SEIR model contained in object.
+\item \code{transmission_parameters}: retrieves transmission parameters for SEIR model.
 
-\item \code{simulate}: solves the ODEs of the SEIR_model specified in object
-for the time points specified in times.
+\item \code{initial_conditions<-}: setter and getter method for initial conditions (S0,
+E0, I0 and R0) of the SEIR model.
+
+If the initial conditions provided to do not sum to 1, an error is thrown.
+
+\item \code{transmission_parameters<-}: setter and getter method for transmission parameters
+(b, k and g) of the SEIR model.
+
+If the transmission parameters provided to are not 1-dimensional an error is
+thrown.
+
+\item \code{simulate_SEIR}: solves ODEs of the SEIR_model specified in object
+for the time points specified in times and integration method specified in
+solve_method.
+
+\deqn{\frac{dS(t)}{dt} = - b S(t) I(t)}
+\deqn{\frac{dE(t)}{dt} =  b S(t) I(t) - k E(t)}
+\deqn{\frac{dI(t)}{dt} = k E(t) - g I(t)}
+\deqn{\frac{dR(t)}{dt} = g I(t)}
+
+This function relies on the package deSolve.
 }}
 
 \section{Slots}{
 
 \describe{
-\item{\code{name}}{character representing name of model}
+\item{\code{output_names}}{list of compartments name which are used by the model and
+incidence.}
 
-\item{\code{parameter_names}}{list of names of parameters (characters). Default is
-list("S0", "E0", "I0", "R0", "b", "k", "g")}
+\item{\code{initial_condition_names}}{list of names of initial conditions
+(characters). Default is list("S0", "E0", "I0", "R0").}
 
-\item{\code{parameters}}{list of parameter values (double). Default is a list of 1s.}
+\item{\code{transmission_parameter_names}}{list of names of transmission parameters
+(characters). Default is list("b", "k", "g").}
+
+\item{\code{initial_conditions}}{list of values for initial conditions(double).}
+
+\item{\code{transmission_parameters}}{list of values for transmission parameters
+(double).}
 }}
 
