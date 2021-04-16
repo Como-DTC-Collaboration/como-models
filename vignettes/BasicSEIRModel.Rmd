@@ -83,7 +83,7 @@ my_model <- new("SEIDR")
 
 Next, we set the parameter values for $\beta$, $\kappa$, $\gamma$ and $\mu$:
 ```{r}
-transmission_parameters(my_model) <- c(1, 0.5, 0.5, 0.1)
+transmission_parameters(my_model) <- list(1, 0.5, 0.5, 0.1)
 ```
 The first parameter in the function `transmission_parameters<-` indicates the model object
 to which the parameter settings are to be applied. The next four values indicate

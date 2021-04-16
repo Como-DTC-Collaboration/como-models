@@ -83,29 +83,27 @@ setMethod("transmission_parameters", "SEIDR",
 #' If the initial conditions provided to do not sum to 1, an error is thrown.
 #'
 #' @param object an object of the class SEIDR
-#' @param S0 (double) initial fraction of the population that is susceptible
-#' @param E0 (double) initial fraction of the population that has been exposed
-#' @param I0 (double) initial fraction of the population that is infectious
-#' @param R0 (double) initial fraction of the population that has recovered
+#' @param value (list) list of initial conditions S0, E0, I0, R0.
 #'
 #' @return object of class SEIDR with initial conditions assigned.
 #' @export
 
 setGeneric(
   "initial_conditions<-",
-  function(object, S0, E0, I0, R0) {
+  function(object, value) {
     standardGeneric("initial_conditions<-")
   })
 
 setMethod(
   "initial_conditions<-", "SEIDR",
-  function(object, S0, E0, I0, R0) {
+  function(object, value) {
 
     # create list of parameter values
-    init_cond <- list(S0, E0, I0, R0)
+    init_cond <- value
 
     # add names to each value
     names(init_cond) <- object@initial_condition_names
+    
 
     # raise errors if age category dimensions do not match initial state vectors
     # also raise errors if initial state and parameter values are not doubles
@@ -116,14 +114,14 @@ setMethod(
     }
 
     # check that the initial conditions are properly normalized
-    if (sum(S0, E0, I0, R0) != 1) {
+    if (init_cond$S0 + init_cond$E0 + init_cond$I0 + init_cond$R0 != 1) {
       stop("Invalid initial conditions. Must add up to 1.")
     }
 
     # if all above tests are passed, assign the init_cond namelist to the object
     # and assign initial cases and deaths
     object@initial_conditions <- init_cond
-    init_C0_D0 <- list(E0 + I0 + R0, 0)
+    init_C0_D0 <- list(init_cond$E0 + init_cond$I0 + init_cond$R0, 0)
     names(init_C0_D0) <- object@initial_cases_deaths_names
 
     object@initial_cases_deaths <- init_C0_D0
@@ -136,11 +134,9 @@ setMethod(
 #'
 #' If the transmission parameters provided to are not 1-dimensional an error is
 #' thrown.
-#'
-#' @param b (double) rate at which an infected individual exposes susceptible
-#' @param k (double) rate at which exposed individuals become infectious
-#' @param g (double) rate at which infected individuals recover
-#' @param m (double) rate at which infected individuals die from the disease
+#' 
+#' @param object (SEIDR model)
+#' @param value (list) list of values for b, k, g, m, respectively.
 #'
 #' @return object of class SEIDR with transmission parameter values
 #' assigned.
@@ -148,22 +144,22 @@ setMethod(
 
 setGeneric(
   "transmission_parameters<-",
-  function(object, b, k, g, m) {
+  function(object, value) {
     standardGeneric("transmission_parameters<-")
   })
 
 setMethod(
   "transmission_parameters<-", "SEIDR",
-  function(object, b, k, g, m) {
+  function(object, value) {
 
     # create list of parameter values
-    trans_params <- list(b, k, g, m)
+    trans_params <- value
 
     # add names to each value
     names(trans_params) <- object@transmission_parameter_names
 
     # check format of parameters b, k and g
-    if (length(b) != 1 | length(k) != 1 | length(g) != 1 | length(m) != 1) {
+    if (length(trans_params$b) != 1 | length(trans_params$k) != 1 | length(trans_params$g) != 1 | length(trans_params$m) != 1) {
       stop("The parameter values should be 1-dimensional.")
     }
 
@@ -257,3 +253,9 @@ setMethod(
 
     return(output)
   })
+
+# test code: WORKS
+#my_model <- new("SEIDR")
+#transmission_parameters(my_model) <- list(1, 0.5, 0.5, 0.1)
+#initial_conditions(my_model) <- list(0.9, 0, 0.1, 0)
+#out <- simulate_SEIDR(my_model, seq(0,100,by=1))

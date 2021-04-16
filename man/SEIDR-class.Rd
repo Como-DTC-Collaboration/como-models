@@ -26,20 +26,6 @@ simulate_SEIDR(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
 \arguments{
 \item{object}{an object of the class SEIDR}
 
-\item{S0}{(double) initial fraction of the population that is susceptible}
-
-\item{E0}{(double) initial fraction of the population that has been exposed}
-
-\item{I0}{(double) initial fraction of the population that is infectious}
-
-\item{R0}{(double) initial fraction of the population that has recovered}
-
-\item{b}{(double) rate at which an infected individual exposes susceptible}
-
-\item{k}{(double) rate at which exposed individuals become infectious}
-
-\item{g}{(double) rate at which infected individuals recover}
-
 \item{times}{(double) a sequence of time points at which the solution to
 the system of ODEs should be returned. Must be of the form
 seq(t_start, t_end, by=t_step). Default time series is seq(0, 100, by = 1).}
@@ -48,7 +34,7 @@ seq(t_start, t_end, by=t_step). Default time series is seq(0, 100, by = 1).}
 for solving the ode system. Default is "lsoda" which is also the default for
 the ode function in the deSolve package used in this function.}
 
-\item{m}{(double) rate at which infected individuals die from the disease}
+\item{value}{(list) list of values for b, k, g, m, respectively.}
 }
 \value{
 object of class SEIDR with initial conditions assigned.
