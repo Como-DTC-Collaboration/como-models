@@ -1,6 +1,6 @@
 ---
 title: "The basic SEIR model"
-author: "Solveig A. van der Vegt"
+author: "Hui Jia Farm and Solveig A. van der Vegt"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{The basic SEIR model}
@@ -17,38 +17,43 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(comomodels)
+library(ggplot2)
+library(glue)
 ```
 
 ## Introduction
-This document explains the basics behind the SEIR model. This model describes
+This document explains the basics of the SEIR model. The model describes
 how populations of susceptible, exposed, infectious and recovered
-individuals evolve over time. Each transition between populations is described by a simple
-ordinary differential equation (ODE). The S4 object class `SEIR_Model` lets the user
-define and simulate such a model, choose the initial conditions and parameter values.
+individuals evolve over time. A simple
+ordinary differential equation (ODE) is defined for each of the populations.
+The S4 object class `SEIDR` lets the user
+define and simulate such a model, choosing the initial conditions and parameter values.
 
 ## The SEIR Model
-This SEIR model consists of four ODEs describing the four populations. Susceptible
+The SEIR model consists of four ODEs describing the four populations. Susceptible
 individuals ($S$) have not been exposed to the virus. Exposed individuals ($E$) have been
-exposed to the virus and have been infected but are not yet infectious to others.
-Infectious individuals ($I$) can spread the virus to others, and recovered individuals ($R$) are no longer
+exposed to the virus and have been infected but are not yet infectious to others; they are 
+in the incubation period. Infectious individuals ($I$) can spread the virus to 
+others. Recovered individuals ($R$) are no longer
 infectious, and, in this model, have acquired immunity as they do not return
 to the susceptible population. Births and deaths are not considered in this model.
-The variables are normalized, so the populations always sum to one.
+The ODEs describing how these four populations evolve over time are
 $$\frac{\text{d}S}{\text{d}t} = -\beta S I,$$
 $$\frac{\text{d}E}{\text{d}t} = \beta S I -\kappa E,$$
 $$\frac{\text{d}I}{\text{d}t} = \kappa E - (\gamma + \mu) I,$$
-$$\frac{\text{d}R}{\text{d}t} = -\gamma I,$$
+$$\frac{\text{d}R}{\text{d}t} = \gamma I,$$
 where $\beta$, $\kappa$, $\gamma$ and $\mu$ are positive parameters.
-The rate at which susceptible individuals are exposed depends on the fraction
+The rate at which susceptible individuals are infected depends on the fraction
 of the population that is susceptible, the fraction of the population that is
-infectious, and the probability of that an infected individual infects a
+infectious, and the probability of an infectious individual infecting a 
 susceptible individual, $\beta$. This is represented in the
 first terms on the right-hand side of $\text{d}S/ \text{d}t$ and $\text{d}I/ \text{d}t$.
 Exposed individuals become infectious at rate $\kappa$. $1/ \kappa$ is
 the incubation time of the virus, i.e. how many days after exposure the individual
 becomes infectious to others. Infectious individuals can either recover or die
-because of the disease. An infection lasts $1/ \gamma$
-days, thus individuals recover at rate $\gamma$. The death rate is $\mu$.
+because of the disease. Infectious individuals recover in $1/ \gamma$
+days, thus individuals recover at rate $\gamma$. Similarly, infectious
+individuals die due to the infection after $1/ \mu$ days, making the death rate $\mu$.
 
 In addition to these four main ODEs, the model also keeps track of the number 
 of cases ($C$) and the number of disease-related deaths ($D$) over time
@@ -56,14 +61,16 @@ $$\frac{\text{d}C}{\text{d}t} = \beta S I,$$
 $$\frac{\text{d}D}{\text{d}t} = \mu I.$$
 
 The system is closed by specifying the initial conditions
-$$S(0) = S_0,\ E(0) = E_0,\ I(0) = I_0,\ D(0) = D_0,\ R(0) = R_0,\ C(0) = C_0,$$
+$$S(0) = S_0,\ E(0) = E_0,\ I(0) = I_0,\ R(0) = R_0,\ C(0) = C_0,\ D(0) = D_0,$$
 where $C_0 = E_0 + I_0 + R_0$ to ensure the cases that occur before $t=0$ are
 also counted.
+In the implementation in this package, the variables are normalized so 
+$S(t) + E(t) + I(t) + R(t) + D(t) \equiv 1$ for any given $t$.
 
 Steady states of the system described above are computed by setting the right-hand
 sides of the ODEs equal to zero. The system reaches a steady
 state when $E = 0$ and $I = 0$. $S$, $R$, $C$ and $D$ can then take on any value,
-as long as $S + E + I + D + R = 0$.
+as long as $S + E + I + D + R = 1$.
 This makes sense based on the biology, because as long as there are (soon to be)
 infectious individuals in the population, they will infect susceptibles 
 (unless $S = 0$ of course).
@@ -72,8 +79,8 @@ Because we build on this basic model to develop more complex epidemiological mod
 we solve the ODEs over time instead of just solving for the steady states. The
 next section shows an example of how to use the SEIR_model class.
 
-## The `SEIR_model` class
-In this section we will walk through an example of how to use the `SEIR_model`
+## The `SEIDR` class
+In this section we will walk through an example of how to use the `SEIDR`
 class. This model is contained in the package comomodels.
 
 To create a new `SEIDR` object, run:
@@ -86,9 +93,8 @@ Next, we set the parameter values for $\beta$, $\kappa$, $\gamma$ and $\mu$:
 transmission_parameters(my_model) <- list(1, 0.5, 0.5, 0.1)
 ```
 
-The first parameter in the function `transmission_parameters<-` indicates the model object
-to which the parameter settings are to be applied. The next four values indicate
-the values of $\beta$, $\kappa$, and $\gamma$, respectively.
+The four values in the list on the right-hand side are assigned to $\beta$,
+$\kappa$, $\gamma$, and $\mu$, respectively.
 
 To check that the parameters have been set correctly, we call
 ```{r}
@@ -101,16 +107,35 @@ automatically and $D(0)=0$ always.
 ```{r}
 initial_conditions(my_model) <- list(0.9, 0, 0.1, 0)
 ```
-The values after the model object are assigned to $S(0)$, $E(0)$, $I(0)$ and $R(0)$,
+The values in the list on the right-hand side are assigned to $S(0)$, $E(0)$, $I(0)$ and $R(0)$,
 respectively. The initial conditions must sum to one. If they do not, an error is thrown.
 
 
 Now we can simulate the system.
 ```{r}
-out_df <- simulate_SEIDR(my_model, seq(0, 10, by = 0.1))
+out_df <- simulate_SEIDR(my_model, seq(0, 50, by = 0.1))
 ```
 
 The function `simulate_SEIDR` solves `my_model` from the initial conditions specified
-previously, over the time sequence `seq(0, 10, by = 0.1)`. The function returns
+previously, over the time sequence `seq(0, 50, by = 0.1)`. This particular simulation
+goes out to 50 days. The function returns
 a data frame where the columns are the time sequence, $S$, $E$, $I$, $R$, $C$ and $D$.
+Lastly, we visualize the results, plotting the six variables against time.
+```{r fig1, fig.height = 5, fig.width = 7}
+col <- c("Susceptibles" = "blue", "Exposed" = "green", "Infectious" = "yellow", "Recovered" = "red", "Cases" = "gray", "Deaths" = "black")
+SEIRplot <- ggplot(out_df, aes(x = time)) +
+    geom_line(aes(y = S, color = "Susceptibles"), size = 1.5) +
+    geom_line(aes(y = E, color = "Exposed"), size = 1.5) +
+    geom_line(aes(y = I, color = "Infectious"), size = 1.5) +
+    geom_line(aes(y = R, color = "Recovered"), size = 1.5) +
+    geom_line(aes(y = C, color = "Cases"), size = 1.5) +
+    geom_line(aes(y = D, color = "Deaths"), size = 1.5) +
+    labs(x = "time", y = "fraction of the population",
+         title = glue("SEIDR model")) +
+    theme(legend.position = "right") +
+    scale_color_manual(values = col)
+
+print(SEIRplot)
+
+```
 
