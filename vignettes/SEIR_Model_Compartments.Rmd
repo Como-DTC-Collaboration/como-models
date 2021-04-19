@@ -1,0 +1,137 @@
+---
+title: "SEIaImIsR model"
+author: "Liangti Dai and David Seiferth"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{SEIaImIsR model}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(comomodels)
+library(ggplot2)
+library(glue)
+```
+
+## Introduction
+This document explains the basics of the SEIaImIsR model. The model describes
+how populations of susceptible ($S$), exposed ($E$), infectious and recovered ($R$)
+individuals evolve over time. The infected population is split into different 
+symptom compartments: asymptomatic ($I_a$), mild ($I_m$) and severe ($I_s$). 
+An ordinary differential equation (ODE) is defined for each of the populations.
+
+The object class `SEIaImIsR` lets the user define and simulate such a model, 
+choosing the initial conditions and parameter values.
+
+## The SEIaImIsR Model
+The SEIaImIsR model consists of six ODEs describing the six populations. Susceptible
+individuals ($S$) have not been exposed to the virus. Exposed individuals ($E$) have been
+exposed to the virus and have been infected but are not yet infectious to others; they are 
+in the incubation period. Infectious individuals can spread the virus to others. 
+The total initial population size is normalised to 1.
+The current model does not include natural death or birth.	
+The ODEs describing how these six populations evolve over time are
+$$\frac{\text{d}S}{\text{d}t} = -\lambda S (I_{\text{a}} + I_{\text{m}} + I_{\text{s}}) + \omega R,$$
+where $\lamda$ denotes the rate, at which an infected individual exposes susceptible individuals,
+and $\omega$ denotes the rate, at which recovered individuals become susceptible.
+$$\frac{\text{d}E}{\text{d}t} = \lambda S (I_{\text{a}} + I_{\text{m}} + I_{\text{s}}) -\gamma E,$$
+where $\gamma$ denotes the rate at which exposed individuals become infected.
+$$\frac{\text{d}I_{\text{a}}}{\text{d}t} = (1-\alpha_{E->I_m} -\alpha_{E->I_s}) \gamma E - \beta_{I_a->R}  I_{\text{a}} - \mu_{I_a->D} * I_{a},$$
+where $\alpha_{E->I_m}$ denotes the fraction of exposed individuals that develop mild symptoms and  $\alpha_{E->I_s}$ denotes the corresponding fraction with severe symptoms (in the code the fraction is denoted by 'e2i').
+The rate, at which each infected group recovers, is denoted by $\beta{I->R}$
+(in the code the rate $\beta$ is denoted by 'i2r').
+The rate of disease-caused mortality of each infected group is denoted by $\mu_{I->D}$
+(in the code the rate $\mu$ is denoted by 'pdeath').
+
+$$\frac{\text{d}I_{\text{m}}}{\text{d}t} = \alpha_{E->I_m} \gamma E - \beta_{I_m->R}  I_{\text{m}} - \mu_{I_m->D}  * I_{m},$$         
+$$\frac{\text{d}I_{\text{s}}}{\text{d}t} = \alpha_{E->I_s} \gamma E - \beta_{I_s->R}  I_{\text{s}} - \mu_{I_s->D}  * I_{s},$$  
+$$\frac{\text{d}R}{\text{d}t} = - \omega R +\mu_{I_a->D}  * I_{a} + \mu_{I_m->D}  * I_{m} + \mu_{I_s->D}  * I_{s}.$$
+
+The rate at which susceptible individuals are infected depends on the fraction
+of the population that is susceptible, the fraction of the population that is
+infectious, and the probability of an infectious individual infecting a 
+susceptible individual, $\lambda$. This is represented in the
+first terms on the right-hand side of $\text{d}S/ \text{d}t$ and $\text{d}I/ \text{d}t$.
+Exposed individuals become infectious at rate $\gamma$. The reciprocal value $1/ \gamma$ is
+the incubation time of the virus, i.e. how many days after exposure the individual
+becomes infectious to others. Infectious individuals can either recover or die
+because of the disease. Infectious individuals in group $i\in {a,m,s}$ recover in $1/ \beta_i$
+days, thus individuals recover at rate $\beta_i$. Similarly, infectious
+individuals die due to the infection after $1/ \mu_i$ days, making the death rate $\mu_i$.
+
+In addition to these six main ODEs, the model also keeps track the number of 
+disease-related deaths ($D$) over time
+$$\frac{\text{d}D}{\text{d}t} = - \mu_{I_a->D} * I_{a} +  \mu_{I_m->D} * I_{m} +  \mu_{I_s->D} * I_{s},$$
+
+The system is closed by specifying the initial conditions
+$$S(0) = S_0,\ E(0) = E_0,\ I(0) = I_0,\ R(0) = R_0,\ C(0) = C_0,\ D(0) = D_0,$$
+In the implementation in this package, the variables are normalized so 
+$S(t) + E(t) + I_a(t) + I_m(t) + I_s(t) + R(t) + D(t) \equiv 1$ for any given $t$.
+
+Steady states of the system described above are computed by setting the right-hand
+sides of the ODEs equal to zero. 
+
+Because we build on this basic model to develop more complex epidemiological models,
+we solve the ODEs over time instead of just solving for the steady states. The
+next section shows an example of how to use the SEIR_model class.
+
+## The `SEIaImIsR` class
+In this section we will walk through an example of how to use the `SEIaImIsR`
+class.
+
+To create a new `SEIaImIsR` object, run:
+```{r}
+model <- new("SEIaImIsR", name = "model")
+```
+
+Next, we assign values for the fractions of the population.
+The initial conditions must sum to one.
+```{r}
+S <- 0.9
+E <- 0.1
+I_asymptomatic <- 0
+I_mild <- 0
+I_severe <- 0
+R <- 0
+D_cumulative <- 0
+```
+
+Then, we define the transition rates:
+```{r}
+lam <- 1.0
+gamma <- 0.5
+omega <- 0.01
+e2i <- list(i_mild = 0.35, i_severe = 0.05)
+i2r <- list(i_asymptomatic = 0.9, i_mild = 0.5, i_severe = 0.05)
+pdeath <- list(i_asymptomatic = 0.005, i_mild = 0.05, i_severe = 0.3)
+# simulation period: 3000 time points (to relaxation)
+t <- seq(0, 3000, by = 1)
+```
+
+And, we set time for the simulation:
+```{r}
+t <- seq(0, 3000, by = 1)
+```
+
+We initialise our model with the parameters defined above:
+```{r}
+model <- set_init(object = model, S = S, E = E, I_asymptomatic = I_asymptomatic, I_mild = I_mild,
+                    I_severe = I_severe, R = R, D_cumulative = D_cumulative,
+                    lam = lam, gamma = gamma, omega = omega,
+                    e2i = e2i, i2r = i2r, pdeath = pdeath)
+```
+
+We use the ode solver and then plot the relaxation into the steady state:
+```{r}
+model <- ode_simulate(model, t)
+model <- plot_ode_output(model)
+```
+

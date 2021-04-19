@@ -137,8 +137,8 @@ setMethod("check_init", signature(object = "SEIaImIsR"),
 #' @describeIn SEIaImIsR to solve the ode system.
 #'
 #' Model:
-#' \deqn{\frac{dS}{dt} = -\lambda S(I_mild+I_severe) + \omega R}
-#' \deqn{\frac{dE}/{dt} = \lambda S(I_mild+I_severe) - \gamma E}
+#' \deqn{\frac{dS}{dt} = -\lambda S(I_asymptomatic + I_mild + I_severe) + \omega R}
+#' \deqn{\frac{dE}/{dt} = \lambda S(I_asymptomatic + I_mild + I_severe) - \gamma E}
 #' \deqn{\frac{dI_asymptomatic}{dt} = e2i.i_asymptomic \gamma E - i2r.i_asymptomatic I_asymptomatic - pdeath.i_asymptomatic I_asymptomatic}
 #' \deqn{\frac{dI_mild}{dt} = e2i.i_mild\gamma E - i2r.i_mild I_mild - pdeath.i_mild I_mild}
 #' \deqn{\frac{dI_severe}{dt} = e2i.i_severe\gamma E - i2r.i_severe I_severe  - pdeath.i_severe I_severe}
