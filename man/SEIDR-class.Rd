@@ -17,14 +17,16 @@ initial_cases_deaths(object)
 
 transmission_parameters(object)
 
-initial_conditions(object, S0, E0, I0, R0) <- value
+initial_conditions(object) <- value
 
-transmission_parameters(object, b, k, g) <- value
+transmission_parameters(object) <- value
 
 simulate_SEIDR(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
 }
 \arguments{
 \item{object}{an object of the class SEIDR}
+
+\item{value}{(list) list of values for b, k, g, m, respectively.}
 
 \item{times}{(double) a sequence of time points at which the solution to
 the system of ODEs should be returned. Must be of the form
@@ -33,8 +35,6 @@ seq(t_start, t_end, by=t_step). Default time series is seq(0, 100, by = 1).}
 \item{solve_method}{(string) a string of chosen numerical integration method
 for solving the ode system. Default is "lsoda" which is also the default for
 the ode function in the deSolve package used in this function.}
-
-\item{value}{(list) list of values for b, k, g, m, respectively.}
 }
 \value{
 object of class SEIDR with initial conditions assigned.
@@ -43,7 +43,7 @@ object of class SEIDR with transmission parameter values
 assigned.
 
 a dataframe with the time steps, time series of S, E, I and R
-population fractions and incidence numbers of the SEIR model.
+population fractions, and incidence numbers and deaths of the SEIDR model.
 }
 \description{
 This class represents the SEIR model, showing how populations of susceptible,
@@ -57,7 +57,7 @@ exposed, infectious and recovered individuals evolve over time.
 
 \item \code{transmission_parameters}: retrieves transmission parameters for SEIR model.
 
-\item \code{initial_conditions<-}: setter and getter method for initial conditions (S0,
+\item \code{initial_conditions<-}: setter method for initial conditions (S0,
 E0, I0 and R0) of the SEIR model.
 
 All initial conditions must sum up to 1.
