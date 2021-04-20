@@ -70,13 +70,14 @@ setMethod("initial_cases_deaths", "SEIDR",
 #'
 #' @param object An object of the class SEIDR.
 #' @export
+
 setGeneric("transmission_parameters",
            function(object) standardGeneric("transmission_parameters"))
 
 setMethod("transmission_parameters", "SEIDR",
           function(object) object@transmission_parameters)
 
-#' @describeIn SEIDR setter and getter method for initial conditions (S0,
+#' @describeIn SEIDR setter method for initial conditions (S0,
 #' E0, I0 and R0) of the SEIR model.
 #'
 #' All initial conditions must sum up to 1.
@@ -84,7 +85,7 @@ setMethod("transmission_parameters", "SEIDR",
 #'
 #' @param object an object of the class SEIDR
 #' @param value (list) list of initial conditions S0, E0, I0, R0.
-#'
+#' 
 #' @return object of class SEIDR with initial conditions assigned.
 #' @export
 
@@ -103,7 +104,6 @@ setMethod(
 
     # add names to each value
     names(init_cond) <- object@initial_condition_names
-    
 
     # raise errors if age category dimensions do not match initial state vectors
     # also raise errors if initial state and parameter values are not doubles
@@ -121,10 +121,10 @@ setMethod(
     # if all above tests are passed, assign the init_cond namelist to the object
     # and assign initial cases and deaths
     object@initial_conditions <- init_cond
-    init_C0_D0 <- list(init_cond$E0 + init_cond$I0 + init_cond$R0, 0)
-    names(init_C0_D0) <- object@initial_cases_deaths_names
+    init_c0_d0 <- list(init_cond$E0 + init_cond$I0 + init_cond$R0, 0)
+    names(init_c0_d0) <- object@initial_cases_deaths_names
 
-    object@initial_cases_deaths <- init_C0_D0
+    object@initial_cases_deaths <- init_c0_d0
 
     return(object)
   })
@@ -134,7 +134,7 @@ setMethod(
 #'
 #' If the transmission parameters provided to are not 1-dimensional an error is
 #' thrown.
-#' 
+#'
 #' @param object (SEIDR model)
 #' @param value (list) list of values for b, k, g, m, respectively.
 #'
@@ -159,7 +159,10 @@ setMethod(
     names(trans_params) <- object@transmission_parameter_names
 
     # check format of parameters b, k and g
-    if (length(trans_params$b) != 1 | length(trans_params$k) != 1 | length(trans_params$g) != 1 | length(trans_params$m) != 1) {
+    if (length(trans_params$b) != 1
+        | length(trans_params$k) != 1
+        | length(trans_params$g) != 1
+        | length(trans_params$m) != 1) {
       stop("The parameter values should be 1-dimensional.")
     }
 
@@ -194,7 +197,7 @@ setMethod(
 #' the ode function in the deSolve package used in this function.
 #'
 #' @return a dataframe with the time steps, time series of S, E, I and R
-#' population fractions and incidence numbers of the SEIR model.
+#' population fractions, and incidence numbers and deaths of the SEIDR model.
 #' @export
 
 setGeneric(name = "simulate_SEIDR",
@@ -248,14 +251,15 @@ setMethod(
       y = state, times = times, func = right_hand_side,
       parms = parameters, method = solve_method)
 
-    # output as a dataframe
     output <- as.data.frame.array(out)
 
+    # Compute incidences and deaths
+    output$C[2:length(output$C)] <- output$C[
+      2:length(output$C)] - output$C[1:(length(output$C) - 1)]
+    output$C[1] <- 0
+    output$D[2:length(output$D)] <- output$D[
+      2:length(output$D)] - output$D[1:(length(output$D) - 1)]
+
+    colnames(output) <- c("time", object@output_names)
     return(output)
   })
-
-# test code: WORKS
-#my_model <- new("SEIDR")
-#transmission_parameters(my_model) <- list(1, 0.5, 0.5, 0.1)
-#initial_conditions(my_model) <- list(0.9, 0, 0.1, 0)
-#out <- simulate_SEIDR(my_model, seq(0,100,by=1))
