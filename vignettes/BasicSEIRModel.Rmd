@@ -90,7 +90,7 @@ my_model <- new("SEIDR")
 
 Next, we set the parameter values for $\beta$, $\kappa$, $\gamma$ and $\mu$:
 ```{r}
-transmission_parameters(my_model) <- list(1, 0.5, 0.5, 0.1)
+transmission_parameters(my_model) <- list(1, 0.9, 0.5, 0.1)
 ```
 
 The four values in the list on the right-hand side are assigned to $\beta$,
@@ -128,8 +128,6 @@ SEIRplot <- ggplot(out_df, aes(x = time)) +
     geom_line(aes(y = E, color = "Exposed"), size = 1.5) +
     geom_line(aes(y = I, color = "Infectious"), size = 1.5) +
     geom_line(aes(y = R, color = "Recovered"), size = 1.5) +
-    geom_line(aes(y = C, color = "Cases"), size = 1.5) +
-    geom_line(aes(y = D, color = "Deaths"), size = 1.5) +
     labs(x = "time", y = "fraction of the population",
          title = glue("SEIDR model")) +
     theme(legend.position = "right") +
@@ -138,4 +136,15 @@ SEIRplot <- ggplot(out_df, aes(x = time)) +
 print(SEIRplot)
 
 ```
+```{r fig2, fig.height = 5, fig.width = 7}
+inc_plot <- ggplot(out_df, aes(x = time)) +
+    geom_line(aes(y = Incidences, color = "Cases"), size = 1.5) +
+    geom_line(aes(y = Deaths, color = "Deaths"), size = 1.5) +
+    labs(x = "time", y = "fraction of the population",
+         title = glue("Incidences and deaths ")) +
+    theme(legend.position = "right") +
+    scale_color_manual(values = col)
 
+print(inc_plot)
+
+```
