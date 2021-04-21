@@ -232,9 +232,6 @@ setGeneric(name = "simulate_SEIDR",
                           solve_method = "lsoda") {
              standardGeneric("simulate_SEIDR")})
 
-#' @describeIn SEIDR Simulate the SEIDR model defined in object over the
-#' time sequence defined in times, with the solver solve_method (default lsoda)
-#' 
 #' @rdname simulate_SEIDR-method
 #' @aliases simulate_SEIDR,ANY,ANY-method
 #' @export
