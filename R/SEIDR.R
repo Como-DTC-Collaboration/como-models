@@ -43,42 +43,64 @@ setClass("SEIDR",
            transmission_parameters = vector(mode = "list", length = 4)
          )
 )
-
-#' @describeIn SEIDR retrieves initial conditions for SEIR model.
+#' Retrieves initial conditions for SEIDR model.
 #'
 #' @param object An object of the class SEIDR.
+#' @rdname initial_conditions-method
 #' @export
 
 setGeneric("initial_conditions",
            function(object) standardGeneric("initial_conditions"))
 
+#' Retrieves initial conditions for SEIDR model
+#' 
+#' @rdname initial_conditions-method
+#' @aliases initial_conditions,ANY,ANY-method
+#' @param object An object of the class SEIDR.
+#' @export
+
 setMethod("initial_conditions", "SEIDR",
           function(object) object@initial_conditions)
 
-#' @describeIn SEIDR retrieves initial cases and deaths for SEIDR model.
+#' Retrieves initial cases and deaths for SEIDR model.
 #'
 #' @param object An object of the class SEIDR.
+#' @rdname initial_cases_deaths-method
 #' @export
 
 setGeneric("initial_cases_deaths",
            function(object) standardGeneric("initial_cases_deaths"))
 
+#' Retrieves initial cases and deaths for SEIDR model.
+#'
+#' @param object An object of the class SEIDR.
+#' @rdname initial_cases_deaths-method
+#' @aliases initial_cases_deaths,ANY,ANY-method
+#' @export
+
 setMethod("initial_cases_deaths", "SEIDR",
           function(object) object@initial_cases_deaths)
 
-#' @describeIn SEIDR retrieves transmission parameters for SEIR model.
+#' Retrieves transmission parameters for SEIR model.
 #'
 #' @param object An object of the class SEIDR.
+#' @rdname transmission_parameters-method
 #' @export
 
 setGeneric("transmission_parameters",
            function(object) standardGeneric("transmission_parameters"))
 
+#' Retrieves transmission parameters for SEIR model.
+#'
+#' @param object An object of the class SEIDR.
+#' @rdname transmission_parameters-method
+#' @aliases transmission_parameters,ANY,ANY-method
+#' @export
+
 setMethod("transmission_parameters", "SEIDR",
           function(object) object@transmission_parameters)
 
-#' @describeIn SEIDR setter method for initial conditions (S0,
-#' E0, I0 and R0) of the SEIR model.
+#' Setter method for initial conditions (S0, E0, I0 and R0) of the SEIR model.
 #'
 #' All initial conditions must sum up to 1.
 #' If the initial conditions provided to do not sum to 1, an error is thrown.
@@ -87,6 +109,8 @@ setMethod("transmission_parameters", "SEIDR",
 #' @param value (list) list of initial conditions S0, E0, I0, R0.
 #' 
 #' @return object of class SEIDR with initial conditions assigned.
+#' 
+#' @rdname initial_conditions-method
 #' @export
 
 setGeneric(
@@ -94,6 +118,20 @@ setGeneric(
   function(object, value) {
     standardGeneric("initial_conditions<-")
   })
+
+#' Setter method for initial conditions (S0, E0, I0 and R0) of the SEIR model.
+#'
+#' All initial conditions must sum up to 1.
+#' If the initial conditions provided to do not sum to 1, an error is thrown.
+#'
+#' @param object an object of the class SEIDR
+#' @param value (list) list of initial conditions S0, E0, I0, R0.
+#' 
+#' @return object of class SEIDR with initial conditions assigned.
+#' 
+#' @rdname initial_conditions-method
+#' @aliases initial_conditions<-,ANY,ANY-method
+#' @export
 
 setMethod(
   "initial_conditions<-", "SEIDR",
@@ -129,7 +167,7 @@ setMethod(
     return(object)
   })
 
-#' @describeIn SEIDR setter method for transmission parameters
+#' Setter method for transmission parameters
 #' (b, k, g and m) of the SEIR model.
 #'
 #' If the transmission parameters provided to are not 1-dimensional an error is
@@ -140,6 +178,7 @@ setMethod(
 #'
 #' @return object of class SEIDR with transmission parameter values
 #' assigned.
+#' @rdname transmission_parameters-method
 #' @export
 
 setGeneric(
@@ -147,6 +186,21 @@ setGeneric(
   function(object, value) {
     standardGeneric("transmission_parameters<-")
   })
+
+#' Setter method for transmission parameters
+#' (b, k, g and m) of the SEIR model.
+#'
+#' If the transmission parameters provided to are not 1-dimensional an error is
+#' thrown.
+#'
+#' @param object (SEIDR model)
+#' @param value (list) list of values for b, k, g, m, respectively.
+#'
+#' @return object of class SEIDR with transmission parameter values
+#' assigned.
+#' @rdname transmission_parameters-method
+#' @aliases transmission_parameters<-,ANY,ANY-method
+#' @export
 
 setMethod(
   "transmission_parameters<-", "SEIDR",
@@ -175,7 +229,7 @@ setMethod(
 
 # SEIDR class specific functions
 
-#' @describeIn SEIDR solves ODEs of the SEIDR specified in object
+#' Solves ODEs of the SEIDR specified in object
 #' for the time points specified in times and integration method specified in
 #' solve_method.
 #'
@@ -198,12 +252,40 @@ setMethod(
 #'
 #' @return a dataframe with the time steps, time series of S, E, I and R
 #' population fractions, and incidence numbers and deaths of the SEIDR model.
+#' @rdname simulate_SEIDR-method
 #' @export
 
 setGeneric(name = "simulate_SEIDR",
            def = function(object, times = seq(0, 100, by = 1),
                           solve_method = "lsoda") {
              standardGeneric("simulate_SEIDR")})
+
+#' Solves ODEs of the SEIDR specified in object
+#' for the time points specified in times and integration method specified in
+#' solve_method.
+#'
+#' \deqn{\frac{dS(t)}{dt} = - b S(t) I(t)}
+#' \deqn{\frac{dE(t)}{dt} =  b S(t) I(t) - k E(t)}
+#' \deqn{\frac{dI(t)}{dt} = k E(t) - (g + m) I(t)}
+#' \deqn{\frac{dR(t)}{dt} = g I(t)}
+#' \deqn{\frac{dC(t)}{dt} = b S(t) I(t)}
+#' \deqn{\frac{dD(t)}{dt} = m I(t)}
+#'
+#' This function relies on the package deSolve.
+#'
+#' @param object an object of the class SEIDR
+#' @param times (double) a sequence of time points at which the solution to
+#' the system of ODEs should be returned. Must be of the form
+#' seq(t_start, t_end, by=t_step). Default time series is seq(0, 100, by = 1).
+#' @param solve_method (string) a string of chosen numerical integration method
+#' for solving the ode system. Default is "lsoda" which is also the default for
+#' the ode function in the deSolve package used in this function.
+#'
+#' @return a dataframe with the time steps, time series of S, E, I and R
+#' population fractions, and incidence numbers and deaths of the SEIDR model.
+#' @rdname simulate_SEIDR-method
+#' @aliases simulate_SEIDR,ANY,ANY-method
+#' @export
 
 setMethod(
   "simulate_SEIDR", "SEIDR",

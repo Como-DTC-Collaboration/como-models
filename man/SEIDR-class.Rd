@@ -3,86 +3,11 @@
 \docType{class}
 \name{SEIDR-class}
 \alias{SEIDR-class}
-\alias{initial_conditions}
-\alias{initial_cases_deaths}
-\alias{transmission_parameters}
-\alias{initial_conditions<-}
-\alias{transmission_parameters<-}
-\alias{simulate_SEIDR}
 \title{An S4 object representing the SEIDR.}
-\usage{
-initial_conditions(object)
-
-initial_cases_deaths(object)
-
-transmission_parameters(object)
-
-initial_conditions(object) <- value
-
-transmission_parameters(object) <- value
-
-simulate_SEIDR(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
-}
-\arguments{
-\item{object}{an object of the class SEIDR}
-
-\item{value}{(list) list of values for b, k, g, m, respectively.}
-
-\item{times}{(double) a sequence of time points at which the solution to
-the system of ODEs should be returned. Must be of the form
-seq(t_start, t_end, by=t_step). Default time series is seq(0, 100, by = 1).}
-
-\item{solve_method}{(string) a string of chosen numerical integration method
-for solving the ode system. Default is "lsoda" which is also the default for
-the ode function in the deSolve package used in this function.}
-}
-\value{
-object of class SEIDR with initial conditions assigned.
-
-object of class SEIDR with transmission parameter values
-assigned.
-
-a dataframe with the time steps, time series of S, E, I and R
-population fractions, and incidence numbers and deaths of the SEIDR model.
-}
 \description{
 This class represents the SEIR model, showing how populations of susceptible,
 exposed, infectious and recovered individuals evolve over time.
 }
-\section{Functions}{
-\itemize{
-\item \code{initial_conditions}: retrieves initial conditions for SEIR model.
-
-\item \code{initial_cases_deaths}: retrieves initial cases and deaths for SEIDR model.
-
-\item \code{transmission_parameters}: retrieves transmission parameters for SEIR model.
-
-\item \code{initial_conditions<-}: setter method for initial conditions (S0,
-E0, I0 and R0) of the SEIR model.
-
-All initial conditions must sum up to 1.
-If the initial conditions provided to do not sum to 1, an error is thrown.
-
-\item \code{transmission_parameters<-}: setter method for transmission parameters
-(b, k, g and m) of the SEIR model.
-
-If the transmission parameters provided to are not 1-dimensional an error is
-thrown.
-
-\item \code{simulate_SEIDR}: solves ODEs of the SEIDR specified in object
-for the time points specified in times and integration method specified in
-solve_method.
-
-\deqn{\frac{dS(t)}{dt} = - b S(t) I(t)}
-\deqn{\frac{dE(t)}{dt} =  b S(t) I(t) - k E(t)}
-\deqn{\frac{dI(t)}{dt} = k E(t) - (g + m) I(t)}
-\deqn{\frac{dR(t)}{dt} = g I(t)}
-\deqn{\frac{dC(t)}{dt} = b S(t) I(t)}
-\deqn{\frac{dD(t)}{dt} = m I(t)}
-
-This function relies on the package deSolve.
-}}
-
 \section{Slots}{
 
 \describe{
