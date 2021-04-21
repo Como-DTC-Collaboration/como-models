@@ -25,14 +25,8 @@ transmission_parameters(object) <- value
 \value{
 object of class SEIDR with transmission parameter values
 assigned.
-
-object of class SEIDR with transmission parameter values
-assigned.
 }
 \description{
-If the transmission parameters provided to are not 1-dimensional an error is
-thrown.
-
 If the transmission parameters provided to are not 1-dimensional an error is
 thrown.
 }

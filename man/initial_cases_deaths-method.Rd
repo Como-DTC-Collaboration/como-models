@@ -15,6 +15,4 @@ initial_cases_deaths(object)
 }
 \description{
 Retrieves initial cases and deaths for SEIDR model.
-
-Retrieves initial cases and deaths for SEIDR model.
 }

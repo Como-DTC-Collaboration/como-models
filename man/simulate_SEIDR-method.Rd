@@ -26,9 +26,6 @@ the ode function in the deSolve package used in this function.}
 \value{
 a dataframe with the time steps, time series of S, E, I and R
 population fractions, and incidence numbers and deaths of the SEIDR model.
-
-a dataframe with the time steps, time series of S, E, I and R
-population fractions, and incidence numbers and deaths of the SEIDR model.
 }
 \description{
 \deqn{\frac{dS(t)}{dt} = - b S(t) I(t)}
@@ -37,16 +34,7 @@ population fractions, and incidence numbers and deaths of the SEIDR model.
 \deqn{\frac{dR(t)}{dt} = g I(t)}
 \deqn{\frac{dC(t)}{dt} = b S(t) I(t)}
 \deqn{\frac{dD(t)}{dt} = m I(t)}
-
-\deqn{\frac{dS(t)}{dt} = - b S(t) I(t)}
-\deqn{\frac{dE(t)}{dt} =  b S(t) I(t) - k E(t)}
-\deqn{\frac{dI(t)}{dt} = k E(t) - (g + m) I(t)}
-\deqn{\frac{dR(t)}{dt} = g I(t)}
-\deqn{\frac{dC(t)}{dt} = b S(t) I(t)}
-\deqn{\frac{dD(t)}{dt} = m I(t)}
 }
 \details{
-This function relies on the package deSolve.
-
 This function relies on the package deSolve.
 }

@@ -24,13 +24,8 @@ initial_conditions(object) <- value
 }
 \value{
 object of class SEIDR with initial conditions assigned.
-
-object of class SEIDR with initial conditions assigned.
 }
 \description{
-All initial conditions must sum up to 1.
-If the initial conditions provided to do not sum to 1, an error is thrown.
-
 All initial conditions must sum up to 1.
 If the initial conditions provided to do not sum to 1, an error is thrown.
 }
