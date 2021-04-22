@@ -130,5 +130,10 @@ parameters of the model. Transmission parameters b, k, g represent the
 rates of changes between the compartments.}
 
 \item{\code{n_age_categories}}{number of age categories.}
+
+\item{\code{age_ranges}}{list of string characters representing the range of ages of
+people in each age category. This object must have length
+\code{n_age_categories} (otherwise an error is returned) and each element
+must be formatted as 'age1-age2'.}
 }}
 

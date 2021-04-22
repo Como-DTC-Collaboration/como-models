@@ -15,10 +15,16 @@
 #'     parameters of the model. Transmission parameters b, k, g represent the
 #'     rates of changes between the compartments.
 #' @slot n_age_categories number of age categories.
-#' 
+#' @slot age_ranges list of string characters representing the range of ages of
+#' people in each age category. This object must have length
+#' \code{n_age_categories} (otherwise an error is returned) and each element
+#' must be formatted as 'age1-age2'.
+#'
 #' @import deSolve
 #' @import glue
-#' 
+#' @import tidyverse
+
+#'
 
 setClass('SEIRAge',
          # slots
@@ -29,6 +35,7 @@ setClass('SEIRAge',
            transmission_parameter_names = 'list',
            initial_conditions = 'list',
            transmission_parameters = 'list',
+           age_ranges = 'list',
            n_age_categories = 'numeric'
          ),
 
@@ -41,6 +48,7 @@ setClass('SEIRAge',
            transmission_parameter_names = list('b', 'k', 'g'),
            initial_conditions = vector(mode = "list", length = 4),
            transmission_parameters = vector(mode = "list", length = 3),
+           age_ranges = vector(mode = 'list'),
            n_age_categories = NA_real_
 
          )
@@ -53,7 +61,7 @@ setClass('SEIRAge',
 #' age-structured SEIR model.
 #'
 #' @param object An object of the class SEIRAge.
-#' 
+#'
 #' @return Initial conditions of SEIRAge model.
 setGeneric('initial_conditions',
            function(object) standardGeneric('initial_conditions'))
@@ -92,18 +100,18 @@ setGeneric(
 setMethod(
   'initial_conditions<-', 'SEIRAge',
   function(object, S0, E0, I0, R0) {
-    
+
     # check that ICs are valid
     if (sum(S0, E0, I0, R0) != 1) {
       stop('Invalid initial conditions. Must add up to 1.')
     }
-    
+
     # create list of parameter values
     ic <- list(S0, E0, I0, R0)
-    
+
     # add names to each value
     names(ic) = object@initial_condition_names
-    
+
     # raise errors if age category dimensions do not match initial state vectors
     # also raise errors if initial state and parameter values are not doubles
     for (p in list('S0', 'E0', 'I0', 'R0')){
@@ -116,10 +124,10 @@ setMethod(
     if(sum(S0, E0, I0, R0) != 1){
       stop('All compartments need to sum up to 1.')
     }
-    
+
     # if all above tests are passed, assign the ic namelist to the object
     object@initial_conditions <- ic
-    
+
     return(object)
   })
 
@@ -130,7 +138,7 @@ setMethod(
 #' age-structured SEIR model.
 #'
 #' @param object An object of the class SEIRAge.
-#' 
+#'
 #' @return Transmission parameters of SEIRAge model.
 setGeneric('transmission_parameters',
            function(object) standardGeneric('transmission_parameters'))
@@ -138,13 +146,13 @@ setGeneric('transmission_parameters',
 setMethod('transmission_parameters', 'SEIRAge',
           function(object) object@transmission_parameters)
 
-#' @describeIn  SEIRAge 
+#' @describeIn  SEIRAge
 #' @description Sets transmission_parameters of an
 #' age-structured SEIR model.
-#' 
+#'
 #' If the transmission parameters provided to are not 1-dimensional an error is
 #' thrown.
-#' 
+#'
 #' @param b rate at which an infected individual exposes susceptible.
 #' @param k rate at which exposed individuals become infected.
 #' @param g rate at which infected individuals recover.
@@ -259,17 +267,44 @@ setMethod(
       y = state, times = times, func = right_hand_side,
       parms = parameters, method = solve_method)
 
-    # output as a dataframe
+
+    #output as a dataframe
     output <- as.data.frame.array(out)
 
+    #melt dataframe to wide format
+    out_temp = melt(output, 'time')
+
+    #add compartment and age range columns
+    out_temp$compartment = c(replicate(length(times)*age, "S"),
+                             replicate(length(times)*age, "E"),
+                             replicate(length(times)*age, "I"),
+                             replicate(length(times)*age, "R"))
+    out_temp$age_range = rep(object@age_ranges, each=length(times))
+
+    #drop the old variable column
+    out_temp = subset(out_temp, select = -c(variable) )
+
+    print(out_temp)
     # compute incidence number
     total_inf <- output[, (2*age+2):(3*age+1)] + output[, (3*age+2):(4*age+1)]
     n_inc <- rbind(rep(0, age),
                    total_inf[2:nrow(total_inf),]-total_inf[1:nrow(total_inf)-1,]
                    )
-    output$Incidence <- unname(as.matrix(n_inc))
 
-    # Return only at integer times
+    # melt the incidence dataframe
+    incidence_temp = melt(n_inc)
+
+    #add time, compartment and age_range columns as above
+    incidence_temp$time = rep(times, age)
+    incidence_temp$compartment = rep('Incidence', age*length(times))
+    incidence_temp$age_range = rep(object@age_ranges, each=length(times))
+
+    #drop the old variable column
+    incidence_temp = subset(incidence_temp, select = -c(variable))
+
+    #bind SEIR and incidence dataframes
+    output = rbind(out_temp, incidence_temp)
+
     return(output)
   })
 
