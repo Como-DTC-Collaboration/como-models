@@ -12,7 +12,9 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
 Suggests: 
     covr,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    knitr,
+    rmarkdown
 Config/testthat/edition: 3
 Imports: 
     forcats,
@@ -22,3 +24,9 @@ Imports:
     plyr,
     reshape2,
     methods
+Collate: 
+    'SEIR_Model.R'
+    'SEIaImIsR-class.R'
+    'fbind.R'
+    'fcount.R'
+VignetteBuilder: knitr

@@ -17,8 +17,6 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(comomodels)
-library(ggplot2)
-library(glue)
 ```
 
 ## Introduction
@@ -40,7 +38,7 @@ The total initial population size is normalised to 1.
 The current model does not include natural death or birth.	
 The ODEs describing how these six populations evolve over time are
 $$\frac{\text{d}S}{\text{d}t} = -\lambda S (I_{\text{a}} + I_{\text{m}} + I_{\text{s}}) + \omega R,$$
-where $\lamda$ denotes the rate, at which an infected individual exposes susceptible individuals,
+where $\lambda$ denotes the rate, at which an infected individual exposes susceptible individuals,
 and $\omega$ denotes the rate, at which recovered individuals become susceptible.
 $$\frac{\text{d}E}{\text{d}t} = \lambda S (I_{\text{a}} + I_{\text{m}} + I_{\text{s}}) -\gamma E,$$
 where $\gamma$ denotes the rate at which exposed individuals become infected.
@@ -112,8 +110,6 @@ omega <- 0.01
 e2i <- list(i_mild = 0.35, i_severe = 0.05)
 i2r <- list(i_asymptomatic = 0.9, i_mild = 0.5, i_severe = 0.05)
 pdeath <- list(i_asymptomatic = 0.005, i_mild = 0.05, i_severe = 0.3)
-# simulation period: 3000 time points (to relaxation)
-t <- seq(0, 3000, by = 1)
 ```
 
 And, we set time for the simulation:
@@ -134,4 +130,3 @@ We use the ode solver and then plot the relaxation into the steady state:
 model <- ode_simulate(model, t)
 model <- plot_ode_output(model)
 ```
-
