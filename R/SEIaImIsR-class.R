@@ -1,4 +1,4 @@
-#' An SEIR model for compartments of different symptoms, 
+#' An SEIR model for compartments of different symptoms: asymptomatic, mild and severe.
 #'
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -10,7 +10,7 @@ setClass("gg")
 #' An S4 class of a basic SEIR model with infected population of different symptome compartments: asymptomatic, mild and severe.
 #'
 #' @slot name A string gives the name of the model
-#' @slot initial_population A named list of the initial population size of each group with names: "S", "E", "I_asymptomatic", "I_mild", "I_severe", "R", "D_cumulative" 
+#' @slot initial_population A named list of the initial population size of each group with names: "S", "E", "I_asymptomatic", "I_mild", "I_severe", "R", "D_cumulative"
 #' @slot parameters A named list of the model parameters with names: "lam", "gamma", "omega", "e2i", "i2r", "pdeath"
 #' @slot output A dataframe holding the ode simulation output, with columns as population groups and rows as simulation time points
 #' @slot plot_output A ggplot holding the plot of the ode simulation output
@@ -20,12 +20,12 @@ setClass("gg")
 #' @import reshape2
 #' @import plyr
 #' @import magrittr
-#' 
+#'
 #' @note
 #' 1. Total initial population size is normalised to 1
 #' 2. The current model does not include natural death or birth.
 #'
-#' @export 
+#' @export
 #'
 setClass(Class = "SEIaImIsR",
          slots = c(
@@ -53,8 +53,8 @@ setClass(Class = "SEIaImIsR",
 #' @export
 #'
 
-set_init <- function(object,...){
-  UseMethod(generic = "set_init", object = SEIaImIsR)
+set_init <- function(object, ...) {
+  UseMethod(generic = "set_init", object = "SEIaImIsR")
 }
 
 #' @rdname set_init
@@ -74,11 +74,11 @@ set_init <- function(object,...){
 #' @param pdeath Numeric vector, rate of disease-caused mortality of each infected group
 #'
 set_init <- function(
-  object, 
-  S=NA_real_, 
+  object,
+  S=NA_real_,
   E=NA_real_,
   I_asymptomatic=NA_real_, I_mild=NA_real_, I_severe=NA_real_,
-  R=NA_real_, 
+  R=NA_real_,
   D_cumulative=NA_real_,
   lam=NA_real_, gamma=NA_real_, omega=NA_real_,
   e2i=list(), i2r=list(), pdeath=list()
@@ -89,7 +89,7 @@ set_init <- function(
   names(init_pop_list) <- names(object@initial_population)
   object@initial_population <- init_pop_list
   object@parameters <- param_list
-  
+
   # check if initial settings are valid
   check <- check_init(object)
   if (check == TRUE) object
@@ -105,11 +105,11 @@ set_init <- function(
 #' @export
 #'
 
-check_init <- function(object){
-  UseMethod(generic = "check_init", object = SEIaImIsR)
+check_init <- function(object) {
+  UseMethod(generic = "check_init", object = "SEIaImIsR")
 }
 #' @rdname check_init
-check_init <- function(object){
+check_init <- function(object) {
   errors <- character()
   # check whether all required parameters are set
   is_na_params <- is.na(object@parameters)
@@ -167,8 +167,8 @@ check_init <- function(object){
 #' @export
 #'
 
-ode_simulate <- function(object, ...){
-  UseMethod(generic = "ode_simulate", object = SEIaImIsR)
+ode_simulate <- function(object, ...) {
+  UseMethod(generic = "ode_simulate", object = "SEIaImIsR")
 }
 
 #' @rdname ode_simulate
@@ -176,8 +176,8 @@ ode_simulate <- function(object, ...){
 #' @param method A string indicating which ode integrator to use. Default is set to 'lsoda'
 #'
 ode_simulate <- function(
-  object, 
-  times, 
+  object,
+  times,
   method = "lsoda") {
   # initial population groups
   pop_groups <- c(S = object@initial_population$S,
@@ -194,7 +194,7 @@ ode_simulate <- function(
               e2i = object@parameters$e2i,
               i2r = object@parameters$i2r,
               pdeath = object@parameters$pdeath)
-  
+
   # ODE system RHS
   ode_symptome_rhs <- function(t, pop_groups, parameters) {
     with(
@@ -228,7 +228,7 @@ ode_simulate <- function(
 #'
 #' @export
 #'
-plot_ode_output <- function(object){
+plot_ode_output <- function(object) {
   UseMethod(generic = "plot_ode_output", object = SEIaImIsR)
 }
 #' @rdname plot_ode_output
