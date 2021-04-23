@@ -9,6 +9,9 @@ setClass("gg")
 
 #' An S4 class of a basic SEIR model with infected population of different symptome compartments: asymptomatic, mild and severe.
 #'
+#' 1. Total initial population size is normalised to 1
+#' 2. The current model does not include natural death or birth.
+#'
 #' @slot name A string gives the name of the model
 #' @slot initial_population A named list of the initial population size of each group with names: "S", "E", "I_asymptomatic", "I_mild", "I_severe", "R", "D_cumulative"
 #' @slot parameters A named list of the model parameters with names: "lam", "gamma", "omega", "e2i", "i2r", "pdeath"
@@ -21,11 +24,10 @@ setClass("gg")
 #' @import plyr
 #' @import magrittr
 #'
-#' @note
-#' 1. Total initial population size is normalised to 1
-#' 2. The current model does not include natural death or birth.
-#'
-#' @export
+#' @name SEIaImIsR-class
+#' @rdname SEIaImIsR-class
+#' @concept objects
+#' @exportClass SEIaImIsR
 #'
 setClass(Class = "SEIaImIsR",
          slots = c(
@@ -45,19 +47,16 @@ setClass(Class = "SEIaImIsR",
            plot_output = ggplot2::ggplot()
          ))
 
+
+
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+# Functions
+#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+
 #' set initial population sizes (in fraction) and parameters
 #'
 #' @param object An object of class SEIaImIsR
-#' @return An object of class SEIaImIsR with initial population and parameters
-#'
-#' @export
-#'
-
-set_init <- function(object, ...) {
-  UseMethod(generic = "set_init", object = "SEIaImIsR")
-}
-
-#' @rdname set_init
 #' @param S Numeric, initial population of the susceptible
 #' @param E Numeric, initial population of the exposed
 #' @param I_asymptomatic Numeric, initial population of the infected with no symptom
@@ -72,6 +71,9 @@ set_init <- function(object, ...) {
 #' @param e2i Numeric vector, fractions of different symptome compartments (I_asymptomic, I_mild, I_severe)
 #' @param i2r Numeric vector, rate at which each infected group recover
 #' @param pdeath Numeric vector, rate of disease-caused mortality of each infected group
+#' @return An object of class SEIaImIsR with initial population and parameters
+#' @rdname SEIaImIsR-class
+#' @export
 #'
 set_init <- function(
   object,
@@ -82,33 +84,27 @@ set_init <- function(
   D_cumulative=NA_real_,
   lam=NA_real_, gamma=NA_real_, omega=NA_real_,
   e2i=list(), i2r=list(), pdeath=list()
-  ){
+){
   param_list <- list(lam, gamma, omega, e2i, i2r, pdeath)
   init_pop_list <- list(S, E, I_asymptomatic, I_mild, I_severe, R, D_cumulative)
   names(param_list) <- names(object@parameters)
   names(init_pop_list) <- names(object@initial_population)
   object@initial_population <- init_pop_list
   object@parameters <- param_list
-
+  
   # check if initial settings are valid
   check <- check_init(object)
   if (check == TRUE) object
   else stop(paste(check, ", please check and rerun set_init.\n"))
 }
 
-
 #' to check validity of the settings of the parameters and initial conditions
 #'
 #' @param object An object of class SEIaImIsR
 #' @return TRUE if passing all checks, or an error message if any check fails
-#'
+#' @rdname SEIaImIsR-class
 #' @export
 #'
-
-check_init <- function(object) {
-  UseMethod(generic = "check_init", object = "SEIaImIsR")
-}
-#' @rdname check_init
 check_init <- function(object) {
   errors <- character()
   # check whether all required parameters are set
@@ -150,9 +146,7 @@ check_init <- function(object) {
   if (length(errors) == 0) TRUE else errors
 }
 
-
 #' to solve the ode system.
-#' Model:
 #' \deqn{\frac{dS}{dt} = -\lambda S(I_asymptomatic + I_mild + I_severe) + \omega R}
 #' \deqn{\frac{dE}/{dt} = \lambda S(I_asymptomatic + I_mild + I_severe) - \gamma E}
 #' \deqn{\frac{dI_asymptomatic}{dt} = e2i.i_asymptomic \gamma E - i2r.i_asymptomatic I_asymptomatic - pdeath.i_asymptomatic I_asymptomatic}
@@ -162,18 +156,11 @@ check_init <- function(object) {
 #' \deqn{\frac{dD_cumulative}{dt} =  pdeath.i_mild  I_mild + pdeath.i_severe I_severe}
 #'
 #' @param object An object of class SEIaImIsR
-#' @return An object of class SEIaImIsR with a dataframe of simulation output
-#'
-#' @export
-#'
-
-ode_simulate <- function(object, ...) {
-  UseMethod(generic = "ode_simulate", object = "SEIaImIsR")
-}
-
-#' @rdname ode_simulate
 #' @param times A list of time points of the simulation period
 #' @param method A string indicating which ode integrator to use. Default is set to 'lsoda'
+#' @return An object of class SEIaImIsR with a dataframe of simulation output
+#' @rdname SEIaImIsR-class
+#' @export
 #'
 ode_simulate <- function(
   object,
@@ -194,7 +181,7 @@ ode_simulate <- function(
               e2i = object@parameters$e2i,
               i2r = object@parameters$i2r,
               pdeath = object@parameters$pdeath)
-
+  
   # ODE system RHS
   ode_symptome_rhs <- function(t, pop_groups, parameters) {
     with(
@@ -221,17 +208,13 @@ ode_simulate <- function(
   return(object)
 }
 
+
 #' to plot the outcome of the ode similuation
 #'
 #' @param object An object of class SEIaImIsR
 #' @return An object of class SEIaImIsR with a plot showing the ode simulation outcome
-#'
+#' @rdname SEIaImIsR-class
 #' @export
-#'
-plot_ode_output <- function(object) {
-  UseMethod(generic = "plot_ode_output", object = SEIaImIsR)
-}
-#' @rdname plot_ode_output
 #'
 plot_ode_output <- function(object) {
   output <- object@output

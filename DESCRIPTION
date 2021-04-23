@@ -14,7 +14,8 @@ Suggests:
     covr,
     testthat (>= 3.0.0),
     knitr,
-    rmarkdown (>= 2.7)
+    rmarkdown,
+    markdown
 Config/testthat/edition: 3
 Imports: 
     forcats,

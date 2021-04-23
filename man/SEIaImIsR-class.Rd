@@ -3,9 +3,83 @@
 \docType{class}
 \name{SEIaImIsR-class}
 \alias{SEIaImIsR-class}
+\alias{set_init}
+\alias{check_init}
+\alias{ode_simulate}
+\alias{plot_ode_output}
 \title{An S4 class of a basic SEIR model with infected population of different symptome compartments: asymptomatic, mild and severe.}
+\usage{
+set_init(
+  object,
+  S = NA_real_,
+  E = NA_real_,
+  I_asymptomatic = NA_real_,
+  I_mild = NA_real_,
+  I_severe = NA_real_,
+  R = NA_real_,
+  D_cumulative = NA_real_,
+  lam = NA_real_,
+  gamma = NA_real_,
+  omega = NA_real_,
+  e2i = list(),
+  i2r = list(),
+  pdeath = list()
+)
+
+check_init(object)
+
+ode_simulate(object, times, method = "lsoda")
+
+plot_ode_output(object)
+}
+\arguments{
+\item{object}{An object of class SEIaImIsR}
+
+\item{S}{Numeric, initial population of the susceptible}
+
+\item{E}{Numeric, initial population of the exposed}
+
+\item{I_asymptomatic}{Numeric, initial population of the infected with no symptom}
+
+\item{I_mild}{Numeric, initial population of the infected with mild symptoms}
+
+\item{I_severe}{Numeric, initial population of the infected with severe symptoms
+that need further hospitalization}
+
+\item{R}{Numeric, initial population of the recovered}
+
+\item{D_cumulative}{Numeric, initial cumulative mortality}
+
+\item{lam}{Numeric, rate at which an infected individual exposes susceptible}
+
+\item{gamma}{Numeric, rate at which exposed individuals become infected}
+
+\item{omega}{Numeric, rate at which recovered individuals become susceptible}
+
+\item{e2i}{Numeric vector, fractions of different symptome compartments (I_asymptomic, I_mild, I_severe)}
+
+\item{i2r}{Numeric vector, rate at which each infected group recover}
+
+\item{pdeath}{Numeric vector, rate of disease-caused mortality of each infected group}
+
+\item{times}{A list of time points of the simulation period}
+
+\item{method}{A string indicating which ode integrator to use. Default is set to 'lsoda'}
+}
+\value{
+An object of class SEIaImIsR with initial population and parameters
+
+TRUE if passing all checks, or an error message if any check fails
+
+An object of class SEIaImIsR with a dataframe of simulation output
+
+An object of class SEIaImIsR with a plot showing the ode simulation outcome
+}
 \description{
-An S4 class of a basic SEIR model with infected population of different symptome compartments: asymptomatic, mild and severe.
+\enumerate{
+\item Total initial population size is normalised to 1
+\item The current model does not include natural death or birth.
+}
 }
 \section{Slots}{
 
@@ -21,9 +95,4 @@ An S4 class of a basic SEIR model with infected population of different symptome
 \item{\code{plot_output}}{A ggplot holding the plot of the ode simulation output}
 }}
 
-\note{
-\enumerate{
-\item Total initial population size is normalised to 1
-\item The current model does not include natural death or birth.
-}
-}
+\concept{objects}
