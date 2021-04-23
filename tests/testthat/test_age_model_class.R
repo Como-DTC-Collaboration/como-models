@@ -110,11 +110,14 @@ test_that("can run simulation for the SEIRAge", {
   my_model <- `transmission_parameters<-`(my_model, 1, 0.5, 0.5)
 
   expected_output <- data.frame('time'=rep(0:2, 10),
-                                'value'=c(rep(0.6, 3), rep(0.4, 3), rep(0, 24)),
-                                'compartment'=c(rep('S' , 6), rep('E' , 6),
-                                              rep('I', 6), rep('R' , 6),
-                                              rep('Incidence', 6))
-                                )
+                                'value'=c(rep(0.6, 3), rep(0.4, 3), rep(0, 24)))
+                                
+  times = seq(0, 2, by = 1)
+  expected_output$compartment = c(replicate(length(times)*2, "S"),
+                           replicate(length(times)*2, "E"),
+                           replicate(length(times)*2, "I"),
+                           replicate(length(times)*2, "R"),
+                           replicate(length(times)*2, "Incidence"))
   expected_output$age_range = rep(my_model@age_ranges, each=3)
   
   # Test output is correct
