@@ -20,5 +20,6 @@ Imports:
     deSolve,
     ggplot2,
     glue,
-    methods
+    methods,
+    reshape2
 VignetteBuilder: knitr
