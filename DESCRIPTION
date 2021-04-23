@@ -19,4 +19,6 @@ Imports:
     deSolve,
     ggplot2,
     glue,
+    reshape2,
+    tidyverse,
     methods

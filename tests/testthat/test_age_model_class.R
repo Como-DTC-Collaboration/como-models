@@ -101,23 +101,22 @@ test_that("can set new transmission parameters for the SEIRAge", {
 })
 
 test_that("can run simulation for the SEIRAge", {
-  my_model <- new('SEIRAge', name = 'my_model', n_age_categories = 2)
+  my_model <- new('SEIRAge', name = 'my_model', n_age_categories = 2,
+                  age_ranges = list('0-50', '50-100'))
+
   my_model <- `initial_conditions<-`(my_model, c(0.6, 0.4), c(0, 0), c(0, 0),
                                      c(0, 0))
 
   my_model <- `transmission_parameters<-`(my_model, 1, 0.5, 0.5)
 
-  expected_output <- data.frame(time=0:2,
-                                S1=rep(0.6,3),
-                                S2=rep(0.4,3),
-                                E1=rep(0,3),
-                                E2=rep(0,3),
-                                I1=rep(0,3),
-                                I2=rep(0,3),
-                                R1=rep(0,3),
-                                R2=rep(0,3))
-  expected_output$Incidence <- cbind(rep(0,3), rep(0,3))
-
+  expected_output <- data.frame('time'=rep(0:2, 10),
+                                'value'=c(rep(0.6, 3), rep(0.4, 3), rep(0, 24)),
+                                'compartment'=c(rep('S' , 6), rep('E' , 6),
+                                              rep('I', 6), rep('R' , 6),
+                                              rep('Incidence', 6))
+                                )
+  expected_output$age_range = rep(my_model@age_ranges, each=3)
+  
   # Test output is correct
   expect_equal(simulate_SEIRAge(my_model, seq(0, 2, by = 1)),
                expected_output)

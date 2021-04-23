@@ -23,8 +23,8 @@
 #' @import deSolve
 #' @import glue
 #' @import tidyverse
+#' @import reshape2
 
-#'
 
 setClass('SEIRAge',
          # slots
@@ -267,14 +267,13 @@ setMethod(
       y = state, times = times, func = right_hand_side,
       parms = parameters, method = solve_method)
 
-
     #output as a dataframe
     output <- as.data.frame.array(out)
 
-    #melt dataframe to wide format
+    # melt dataframe to wide format
     out_temp = melt(output, 'time')
 
-    #add compartment and age range columns
+    # add compartment and age range columns
     out_temp$compartment = c(replicate(length(times)*age, "S"),
                              replicate(length(times)*age, "E"),
                              replicate(length(times)*age, "I"),
@@ -284,25 +283,24 @@ setMethod(
     #drop the old variable column
     out_temp = subset(out_temp, select = -c(variable) )
 
-    print(out_temp)
     # compute incidence number
     total_inf <- output[, (2*age+2):(3*age+1)] + output[, (3*age+2):(4*age+1)]
     n_inc <- rbind(rep(0, age),
                    total_inf[2:nrow(total_inf),]-total_inf[1:nrow(total_inf)-1,]
                    )
 
-    # melt the incidence dataframe
+    # melt the incidence dataframe to long format
     incidence_temp = melt(n_inc)
 
-    #add time, compartment and age_range columns as above
+    # add time, compartment and age_range columns as above
     incidence_temp$time = rep(times, age)
     incidence_temp$compartment = rep('Incidence', age*length(times))
     incidence_temp$age_range = rep(object@age_ranges, each=length(times))
 
-    #drop the old variable column
+    # drop the old variable column
     incidence_temp = subset(incidence_temp, select = -c(variable))
 
-    #bind SEIR and incidence dataframes
+    # bind SEIR and incidence dataframes
     output = rbind(out_temp, incidence_temp)
 
     return(output)
