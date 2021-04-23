@@ -122,12 +122,13 @@ goes out to 50 days. The function returns
 a data frame where the columns are the time sequence, $S$, $E$, $I$, $R$, $C$ and $D$.
 Lastly, we visualize the results, plotting the six variables against time.
 ```{r fig1, fig.height = 5, fig.width = 7}
-col <- c("Susceptibles" = "blue", "Exposed" = "green", "Infectious" = "yellow", "Recovered" = "red", "Cases" = "gray", "Deaths" = "black")
-SEIRplot <- ggplot(out_df, aes(x = time)) +
-    geom_line(aes(y = S, color = "Susceptibles"), size = 1.5) +
-    geom_line(aes(y = E, color = "Exposed"), size = 1.5) +
-    geom_line(aes(y = I, color = "Infectious"), size = 1.5) +
-    geom_line(aes(y = R, color = "Recovered"), size = 1.5) +
+i <- sapply(out_df, is.factor)
+out_df[i] <- lapply(out_df[i], as.character)
+SEIR_df <- subset(out_df, compartment != "Incidences" & compartment != "Deaths")
+SEIR_df$compartment <- factor(SEIR_df$compartment, levels = c("S", "E", "I", "R"))
+col <- c("S" = "blue", "E" = "green", "I" = "yellow", "R" = "red")
+SEIRplot <- ggplot(SEIR_df, aes(x = time, y = value)) +
+    geom_line(aes(color = compartment), size = 1.5) +
     labs(x = "time", y = "fraction of the population",
          title = glue("SEIDR model")) +
     theme(legend.position = "right") +
@@ -137,9 +138,11 @@ print(SEIRplot)
 
 ```
 ```{r fig2, fig.height = 5, fig.width = 7}
-inc_plot <- ggplot(out_df, aes(x = time)) +
-    geom_line(aes(y = Incidences, color = "Cases"), size = 1.5) +
-    geom_line(aes(y = Deaths, color = "Deaths"), size = 1.5) +
+case_df <- subset(out_df, compartment == "Incidences" | compartment == "Deaths")
+case_df$compartment <- factor(case_df$compartment, levels = c("Incidences", "Deaths"))
+col <- c("Incidences" = "gray", "Deaths" = "black")
+inc_plot <- ggplot(case_df, aes(x = time, y = value)) +
+    geom_line(aes(color = compartment), size = 1.5) +
     labs(x = "time", y = "fraction of the population",
          title = glue("Incidences and deaths ")) +
     theme(legend.position = "right") +
