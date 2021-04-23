@@ -72,12 +72,12 @@ In this section we will walk through an example of how to simulate from the SEIR
 
 To create a new `SEIRSD` object, run:
 ```{r}
-my_model <- new("SEIRSD")
+model <- SEIRSD()
 ```
 
 Next, we set the parameter values for $\beta$, $\kappa$, $\gamma$ and $\mu$:
 ```{r}
-transmission_parameters(my_model) <- list(1, 0.9, 0.5, 0.1, 4.0)
+transmission_parameters(model) <- list(1, 0.9, 0.5, 0.1, 4.0)
 ```
 
 The four values in the list on the right-hand side are assigned to $\beta$,
@@ -85,13 +85,13 @@ $\kappa$, $\gamma$, and $\mu$, respectively.
 
 To check that the parameters have been set correctly, we call
 ```{r}
-transmission_parameters(my_model)
+transmission_parameters(model)
 ```
 
 We now need to set the initial conditions for the model. We only set the initial
 conditions $S(0)$, $E(0)$, $I(0)$ and $R(0)$.
 ```{r}
-initial_conditions(my_model) <- list(0.99, 0, 0.01, 0)
+initial_conditions(model) <- list(0.99, 0, 0.01, 0)
 ```
 
 The values in the list on the right-hand side are assigned to $S(0)$, $E(0)$, $I(0)$ and $R(0)$,
@@ -99,7 +99,7 @@ respectively. The initial conditions must sum to one. If they do not, an error i
 
 Now we can simulate the system.
 ```{r}
-results <- run(my_model, time=seq(0, 200, by = 0.1))
+results <- run(model, time=seq(0, 200, by = 0.1))
 ```
 
 Let's visualise the results.

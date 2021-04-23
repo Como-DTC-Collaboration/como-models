@@ -2,6 +2,7 @@
 
 export("initial_conditions<-")
 export("transmission_parameters<-")
+export(SEIRSD)
 export(fbind)
 export(fcount)
 export(initial_conditions)

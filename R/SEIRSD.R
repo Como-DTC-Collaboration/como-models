@@ -16,7 +16,8 @@
 #' @import deSolve
 #' @import glue
 #' @import reshape2
-setClass("SEIRSD",
+#' @export SEIRSD
+SEIRSD <- setClass("SEIRSD",
          # slots
          slots = c(
            output_names = "list",

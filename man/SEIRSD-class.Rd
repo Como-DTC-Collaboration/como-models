@@ -3,6 +3,7 @@
 \docType{class}
 \name{SEIRSD-class}
 \alias{SEIRSD-class}
+\alias{SEIRSD}
 \alias{initial_conditions,SEIRSD-method}
 \alias{initial_conditions,ANY,ANY-method}
 \alias{transmission_parameters,SEIRSD-method}
