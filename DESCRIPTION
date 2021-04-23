@@ -14,6 +14,7 @@ Suggests:
     covr,
     testthat (>= 3.0.0),
     knitr,
+    markdown,
     rmarkdown
 Config/testthat/edition: 3
 Imports: 
