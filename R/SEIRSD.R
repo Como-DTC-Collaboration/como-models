@@ -16,7 +16,6 @@
 #' @import deSolve
 #' @import glue
 #' @import reshape2
-
 setClass("SEIRSD",
          # slots
          slots = c(
@@ -31,16 +30,15 @@ setClass("SEIRSD",
          prototype = list(
            output_names = list("S", "E", "I", "R", "Incidences", "Deaths"),
            initial_condition_names = list("S0", "E0", "I0", "R0"),
-           initial_cases_deaths_names = list("C0", "D0"),
            transmission_parameter_names = list("b", "k", "g", "m"),
            initial_conditions = vector(mode = "list", length = 4)
          )
 )
+
 #' Retrieves initial conditions of SEIRSD model.
 #'
 #' @param object An object of the class SEIRSD.
 #' @export
-
 setGeneric("initial_conditions",
            function(object) standardGeneric("initial_conditions"))
 
@@ -50,32 +48,13 @@ setGeneric("initial_conditions",
 #' @param object An object of the class SEIRSD.
 #' @aliases initial_conditions,ANY,ANY-method
 #' @export
-
 setMethod("initial_conditions", "SEIRSD",
           function(object) object@initial_conditions)
-
-#' Retrieves initial cases and deaths of SEIRSD model.
-#'
-#' @param object An object of the class SEIRSD.
-#' @export
-
-setGeneric("initial_cases_deaths",
-           function(object) standardGeneric("initial_cases_deaths"))
-
-#' @describeIn SEIRSD Retrieves initial cases and deaths of SEIRSD model.
-#'
-#' @param object An object of the class SEIRSD.
-#' @aliases initial_cases_deaths,ANY,ANY-method
-#' @export
-
-setMethod("initial_cases_deaths", "SEIRSD",
-          function(object) object@initial_cases_deaths)
 
 #' Retrieves transmission parameters of SEIR model.
 #'
 #' @param object An object of the class SEIRSD.
 #' @export
-
 setGeneric("transmission_parameters",
            function(object) standardGeneric("transmission_parameters"))
 
@@ -119,7 +98,6 @@ setGeneric(
 #'
 #' @aliases initial_conditions<-,ANY,ANY-method
 #' @export
-
 setMethod(
   "initial_conditions<-", "SEIRSD",
   function(object, value) {
@@ -144,24 +122,19 @@ setMethod(
     }
     
     # if all above tests are passed, assign the init_cond namelist to the object
-    # and assign initial cases and deaths
     object@initial_conditions <- init_cond
-    init_c0_d0 <- list(init_cond$E0 + init_cond$I0 + init_cond$R0, 0)
-    names(init_c0_d0) <- object@initial_cases_deaths_names
-    
-    object@initial_cases_deaths <- init_c0_d0
     
     return(object)
   })
 
 #' Setter method for transmission parameters
-#' (b, k, g and m) of the SEIR model.
+#' (b, k, g, m, a) of the SEIR model.
 #'
 #' If the transmission parameters provided to are not 1-dimensional an error is
 #' thrown.
 #'
 #' @param object (SEIRSD model)
-#' @param value (list) list of values for b, k, g, m, respectively.
+#' @param value (list) list of values for b, k, g, m, a respectively.
 #'
 #' @return object of class SEIRSD with transmission parameter values
 #' assigned.
@@ -223,7 +196,7 @@ setMethod(
 #' \deqn{\frac{dS(t)}{dt} = a R(t) - b S(t) I(t)}
 #' \deqn{\frac{dE(t)}{dt} = b S(t) I(t) - k E(t)}
 #' \deqn{\frac{dI(t)}{dt} = k E(t) - (g + m) I(t)}
-#' \deqn{\frac{dR(t)}{dt} = g I(t)} - a R(t)
+#' \deqn{\frac{dR(t)}{dt} = g I(t) - a R(t)}
 #' \deqn{\frac{dC(t)}{dt} = b S(t) I(t)}
 #' \deqn{\frac{dD(t)}{dt} = m I(t)}
 #'
@@ -241,10 +214,10 @@ setMethod(
 #' population fractions, and incidence numbers and deaths of the SEIRSD model.
 #' @export
 
-setGeneric(name = "simulate_SEIRSD",
+setGeneric(name = "run",
            def = function(object, times = seq(0, 100, by = 1),
                           solve_method = "lsoda") {
-             standardGeneric("simulate_SEIRSD")})
+             standardGeneric("run")})
 
 #' @describeIn SEIRSD Solves ODEs of the SEIRSD specified in object
 #' for the time points specified in times and integration method specified in
@@ -269,11 +242,11 @@ setGeneric(name = "simulate_SEIRSD",
 #'
 #' @return a dataframe with the time steps, time series of S, E, I and R
 #' population fractions, and incidence numbers and deaths of the SEIRSD model.
-#' @aliases simulate_SEIRSD,ANY,ANY-method
+#' @aliases run,ANY,ANY-method
 #' @export
 
 setMethod(
-  "simulate_SEIRSD", "SEIRSD",
+  "run", "SEIRSD",
   function(object, times, solve_method = "lsoda") {
     if (!is.double(times)) {
       stop("Evaluation times of the model storage format must be a vector.")
@@ -284,8 +257,8 @@ setMethod(
                E = initial_conditions(object)$E0,
                I = initial_conditions(object)$I0,
                R = initial_conditions(object)$R0,
-               C = initial_cases_deaths(object)$C0,
-               D = initial_cases_deaths(object)$D0)
+               C = 0,
+               D = 0)
     # set transmission parameters vector
     parameters <- c(b = transmission_parameters(object)$b,
                     k = transmission_parameters(object)$k,
