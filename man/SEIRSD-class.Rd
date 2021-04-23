@@ -93,7 +93,7 @@ incidence.}
 (characters). Default is list("S0", "E0", "I0", R0").}
 
 \item{\code{transmission_parameter_names}}{list of names of transmission parameters
-(characters). Default is list("b", "k", "g", "m").}
+(characters). Default is list("b", "k", "g", "m", "a").}
 
 \item{\code{initial_conditions}}{list of values for initial conditions (double).}
 

@@ -8,7 +8,7 @@
 #' @slot initial_condition_names list of names of initial conditions
 #'       (characters). Default is list("S0", "E0", "I0", R0").
 #' @slot transmission_parameter_names list of names of transmission parameters
-#'       (characters). Default is list("b", "k", "g", "m").
+#'       (characters). Default is list("b", "k", "g", "m", "a").
 #' @slot initial_conditions list of values for initial conditions (double).
 #' @slot transmission_parameters list of values for transmission parameters
 #'       (double).
@@ -28,9 +28,9 @@ setClass("SEIRSD",
          # prototypes for the slots, automatically set parameter names and
          # its data type
          prototype = list(
-           output_names = list("S", "E", "I", "R", "Incidences", "Deaths"),
+           output_names = list("S", "E", "I", "R", "Incidences", "D"),
            initial_condition_names = list("S0", "E0", "I0", "R0"),
-           transmission_parameter_names = list("b", "k", "g", "m"),
+           transmission_parameter_names = list("b", "k", "g", "m", "a"),
            initial_conditions = vector(mode = "list", length = 4)
          )
 )
@@ -293,13 +293,6 @@ setMethod(
       parms = parameters, method = solve_method)
     
     output <- as.data.frame.array(out)
-    
-    # Compute incidences and deaths
-    output$C[2:length(output$C)] <- output$C[
-      2:length(output$C)] - output$C[1:(length(output$C) - 1)]
-    output$C[1] <- 0
-    output$D[2:length(output$D)] <- output$D[
-      2:length(output$D)] - output$D[1:(length(output$D) - 1)]
     
     colnames(output) <- c("time", object@output_names)
     
