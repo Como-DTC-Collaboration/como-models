@@ -198,11 +198,12 @@ setMethod(
     # add names to each value
     names(trans_params) <- object@transmission_parameter_names
     
-    # check format of parameters b, k and g
+    # check format of parameters b, k, g, m, a
     if (length(trans_params$b) != 1
         | length(trans_params$k) != 1
         | length(trans_params$g) != 1
-        | length(trans_params$m) != 1) {
+        | length(trans_params$m) != 1
+        | length(trans_params$a) != 1) {
       stop("The parameter values should be 1-dimensional.")
     }
     
@@ -219,10 +220,10 @@ setMethod(
 #' for the time points specified in times and integration method specified in
 #' solve_method.
 #'
-#' \deqn{\frac{dS(t)}{dt} = - b S(t) I(t)}
-#' \deqn{\frac{dE(t)}{dt} =  b S(t) I(t) - k E(t)}
+#' \deqn{\frac{dS(t)}{dt} = a R(t) - b S(t) I(t)}
+#' \deqn{\frac{dE(t)}{dt} = b S(t) I(t) - k E(t)}
 #' \deqn{\frac{dI(t)}{dt} = k E(t) - (g + m) I(t)}
-#' \deqn{\frac{dR(t)}{dt} = g I(t)}
+#' \deqn{\frac{dR(t)}{dt} = g I(t)} - a R(t)
 #' \deqn{\frac{dC(t)}{dt} = b S(t) I(t)}
 #' \deqn{\frac{dD(t)}{dt} = m I(t)}
 #'
@@ -249,10 +250,10 @@ setGeneric(name = "simulate_SEIRSD",
 #' for the time points specified in times and integration method specified in
 #' solve_method.
 #'
-#' \deqn{\frac{dS(t)}{dt} = - b S(t) I(t)}
-#' \deqn{\frac{dE(t)}{dt} =  b S(t) I(t) - k E(t)}
+#' \deqn{\frac{dS(t)}{dt} = a R(t) - b S(t) I(t)}
+#' \deqn{\frac{dE(t)}{dt} = b S(t) I(t) - k E(t)}
 #' \deqn{\frac{dI(t)}{dt} = k E(t) - (g + m) I(t)}
-#' \deqn{\frac{dR(t)}{dt} = g I(t)}
+#' \deqn{\frac{dR(t)}{dt} = g I(t) - a R(t)}
 #' \deqn{\frac{dC(t)}{dt} = b S(t) I(t)}
 #' \deqn{\frac{dD(t)}{dt} = m I(t)}
 #'
@@ -289,7 +290,8 @@ setMethod(
     parameters <- c(b = transmission_parameters(object)$b,
                     k = transmission_parameters(object)$k,
                     g = transmission_parameters(object)$g,
-                    m = transmission_parameters(object)$m)
+                    m = transmission_parameters(object)$m,
+                    a = transmission_parameters(object)$a)
     # function for RHS of ode system
     right_hand_side <- function(t, state, parameters) {
       with(
@@ -301,10 +303,10 @@ setMethod(
           c <- state[5]
           d <- state[6]
           # rate of change
-          ds <- -b * s * i
+          ds <- a * r - b * s * i
           de <- b * s * i - k * e
           di <- k * e - (g + m) * i
-          dr <- g * i
+          dr <- g * i - a * r
           dc <- b * s * i
           d_death <- m * i
           # return the rate of change
