@@ -2,15 +2,11 @@
 % Please edit documentation in R/SEIDR.R
 \name{simulate_SEIDR}
 \alias{simulate_SEIDR}
-\alias{simulate_SEIDR,SEIDR-method}
-\alias{simulate_SEIDR,ANY,ANY-method}
 \title{Solves ODEs of the SEIDR specified in object
 for the time points specified in times and integration method specified in
 solve_method.}
 \usage{
 simulate_SEIDR(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
-
-\S4method{simulate_SEIDR}{SEIDR}(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
 }
 \arguments{
 \item{object}{an object of the class SEIDR}

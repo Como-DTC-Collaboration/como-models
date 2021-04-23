@@ -3,11 +3,92 @@
 \docType{class}
 \name{SEIDR-class}
 \alias{SEIDR-class}
+\alias{initial_conditions,SEIDR-method}
+\alias{initial_conditions,ANY,ANY-method}
+\alias{initial_cases_deaths,SEIDR-method}
+\alias{initial_cases_deaths,ANY,ANY-method}
+\alias{transmission_parameters,SEIDR-method}
+\alias{transmission_parameters,ANY,ANY-method}
+\alias{initial_conditions<-,SEIDR-method}
+\alias{initial_conditions<-,ANY,ANY-method}
+\alias{transmission_parameters<-,SEIDR-method}
+\alias{transmission_parameters<-,ANY,ANY-method}
+\alias{simulate_SEIDR,SEIDR-method}
+\alias{simulate_SEIDR,ANY,ANY-method}
 \title{An S4 object representing the SEIDR.}
+\usage{
+\S4method{initial_conditions}{SEIDR}(object)
+
+\S4method{initial_cases_deaths}{SEIDR}(object)
+
+\S4method{transmission_parameters}{SEIDR}(object)
+
+\S4method{initial_conditions}{SEIDR}(object) <- value
+
+\S4method{transmission_parameters}{SEIDR}(object) <- value
+
+\S4method{simulate_SEIDR}{SEIDR}(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
+}
+\arguments{
+\item{object}{an object of the class SEIDR}
+
+\item{value}{(list) list of values for b, k, g, m, respectively.}
+
+\item{times}{(double) a sequence of time points at which the solution to
+the system of ODEs should be returned. Must be of the form
+seq(t_start, t_end, by=t_step). Default time series is seq(0, 100, by = 1).}
+
+\item{solve_method}{(string) a string of chosen numerical integration method
+for solving the ode system. Default is "lsoda" which is also the default for
+the ode function in the deSolve package used in this function.}
+}
+\value{
+object of class SEIDR with initial conditions assigned.
+
+object of class SEIDR with transmission parameter values
+assigned.
+
+a dataframe with the time steps, time series of S, E, I and R
+population fractions, and incidence numbers and deaths of the SEIDR model.
+}
 \description{
 This class represents the SEIR model, showing how populations of susceptible,
 exposed, infectious and recovered individuals evolve over time.
 }
+\section{Methods (by generic)}{
+\itemize{
+\item \code{initial_conditions}: Retrieves initial conditions of SEIDR model.
+
+\item \code{initial_cases_deaths}: Retrieves initial cases and deaths of SEIDR model.
+
+\item \code{transmission_parameters}: Retrieves transmission parameters of SEIR model.
+
+\item \code{initial_conditions<-}: Setter method for initial conditions (S0, E0, I0 and R0)
+of the SEIR model.
+
+All initial conditions must sum up to 1.
+If the initial conditions provided to do not sum to 1, an error is thrown.
+
+\item \code{transmission_parameters<-}: Setter method for transmission parameters
+(b, k, g and m) of the SEIR model.
+
+If the transmission parameters provided to are not 1-dimensional an error is
+thrown.
+
+\item \code{simulate_SEIDR}: Solves ODEs of the SEIDR specified in object
+for the time points specified in times and integration method specified in
+solve_method.
+
+\deqn{\frac{dS(t)}{dt} = - b S(t) I(t)}
+\deqn{\frac{dE(t)}{dt} =  b S(t) I(t) - k E(t)}
+\deqn{\frac{dI(t)}{dt} = k E(t) - (g + m) I(t)}
+\deqn{\frac{dR(t)}{dt} = g I(t)}
+\deqn{\frac{dC(t)}{dt} = b S(t) I(t)}
+\deqn{\frac{dD(t)}{dt} = m I(t)}
+
+This function relies on the package deSolve.
+}}
+
 \section{Slots}{
 
 \describe{

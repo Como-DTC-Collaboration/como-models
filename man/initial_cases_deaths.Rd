@@ -2,17 +2,13 @@
 % Please edit documentation in R/SEIDR.R
 \name{initial_cases_deaths}
 \alias{initial_cases_deaths}
-\alias{initial_cases_deaths,SEIDR-method}
-\alias{initial_cases_deaths,ANY,ANY-method}
-\title{Retrieves initial cases and deaths for SEIDR model.}
+\title{Retrieves initial cases and deaths of SEIDR model.}
 \usage{
 initial_cases_deaths(object)
-
-\S4method{initial_cases_deaths}{SEIDR}(object)
 }
 \arguments{
 \item{object}{An object of the class SEIDR.}
 }
 \description{
-Retrieves initial cases and deaths for SEIDR model.
+Retrieves initial cases and deaths of SEIDR model.
 }
