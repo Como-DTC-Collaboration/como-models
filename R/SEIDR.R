@@ -19,6 +19,7 @@
 #'
 #' @import deSolve
 #' @import glue
+#' @import reshape2
 
 setClass("SEIDR",
          # slots
@@ -292,5 +293,13 @@ setMethod(
       2:length(output$D)] - output$D[1:(length(output$D) - 1)]
 
     colnames(output) <- c("time", object@output_names)
+    
+    # Create long format of output
+    output <- melt(output, id.vars = "time")
+    names(output) <- c("time", "compartment", "value")
+    
+    # Added for consistency of output format across models
+    output$age_group <- rep("0-150", length(output$time))
+    
     return(output)
   })
