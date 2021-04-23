@@ -60,7 +60,7 @@ test_that("SEIR model runs correctly", {
   # Check output value for rates equal 0s
   expected_data <- data.frame(
     S = 0.9, E = 0, I = 0.1, R = 0, Incidences = 0, Deaths = 0)
-  out_df <- dcast(out_df, time ~ compartment, value.var="value")
+  out_df <- dcast(out_df, time ~ compartment, value.var = "value")
   test_data <- out_df[101, 2:7]
   row.names(test_data) <- NULL
   expect_identical(test_data, expected_data)
@@ -68,7 +68,7 @@ test_that("SEIR model runs correctly", {
   # Check that sum of states is sufficiently close to one at all times
   transmission_parameters(my_model) <- list(0.9, 0.2, 0.01, 0.1)
   out_df <- simulate_SEIDR(my_model, seq(0, 10, by = 0.1))
-  out_df <- dcast(out_df, time ~ compartment, value.var="value")
+  out_df <- dcast(out_df, time ~ compartment, value.var = "value")
   out_df$Deaths <- cumsum(out_df$Deaths)
   test <- rowSums(out_df[, c(2:5, 7)])
   expected <- as.double(rep(1, 101))

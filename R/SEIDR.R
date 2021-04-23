@@ -54,7 +54,7 @@ setGeneric("initial_conditions",
 
 
 #' @describeIn SEIDR Retrieves initial conditions of SEIDR model.
-#' 
+#'
 #' @param object An object of the class SEIDR.
 #' @aliases initial_conditions,ANY,ANY-method
 #' @export
@@ -71,7 +71,7 @@ setGeneric("initial_cases_deaths",
            function(object) standardGeneric("initial_cases_deaths"))
 
 #' @describeIn SEIDR Retrieves initial cases and deaths of SEIDR model.
-#' 
+#'
 #' @param object An object of the class SEIDR.
 #' @aliases initial_cases_deaths,ANY,ANY-method
 #' @export
@@ -88,7 +88,7 @@ setGeneric("transmission_parameters",
            function(object) standardGeneric("transmission_parameters"))
 
 #' @describeIn SEIDR Retrieves transmission parameters of SEIR model.
-#' 
+#'
 #' @param object An object of the class SEIDR.
 #' @aliases transmission_parameters,ANY,ANY-method
 #' @export
@@ -103,9 +103,9 @@ setMethod("transmission_parameters", "SEIDR",
 #'
 #' @param object an object of the class SEIDR
 #' @param value (list) list of initial conditions S0, E0, I0, R0.
-#' 
+#'
 #' @return object of class SEIDR with initial conditions assigned.
-#' 
+#'
 #' @export
 
 setGeneric(
@@ -122,9 +122,9 @@ setGeneric(
 #'
 #' @param object an object of the class SEIDR
 #' @param value (list) list of initial conditions S0, E0, I0, R0.
-#' 
+#'
 #' @return object of class SEIDR with initial conditions assigned.
-#' 
+#'
 #' @aliases initial_conditions<-,ANY,ANY-method
 #' @export
 
@@ -335,13 +335,13 @@ setMethod(
       2:length(output$D)] - output$D[1:(length(output$D) - 1)]
 
     colnames(output) <- c("time", object@output_names)
-    
+
     # Create long format of output
     output <- melt(output, id.vars = "time")
     names(output) <- c("time", "compartment", "value")
-    
+
     # Added for consistency of output format across models
     output$age_group <- rep("0-150", length(output$time))
-    
+
     return(output)
   })
