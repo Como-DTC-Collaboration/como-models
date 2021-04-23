@@ -1,4 +1,4 @@
-#' An S4 object representing the SEIDR.
+#' An S4 object representing the SEIRD.
 #'
 #' This class represents the SEIR model, showing how populations of susceptible,
 #' exposed, infectious and recovered individuals evolve over time.
@@ -21,7 +21,7 @@
 #' @import glue
 #' @import reshape2
 
-setClass("SEIDR",
+setClass("SEIRD",
          # slots
          slots = c(
            output_names = "list",
@@ -44,56 +44,56 @@ setClass("SEIDR",
            transmission_parameters = vector(mode = "list", length = 4)
          )
 )
-#' Retrieves initial conditions of SEIDR model.
+#' Retrieves initial conditions of SEIRD model.
 #'
-#' @param object An object of the class SEIDR.
+#' @param object An object of the class SEIRD.
 #' @export
 
 setGeneric("initial_conditions",
            function(object) standardGeneric("initial_conditions"))
 
 
-#' @describeIn SEIDR Retrieves initial conditions of SEIDR model.
+#' @describeIn SEIRD Retrieves initial conditions of SEIRD model.
 #'
-#' @param object An object of the class SEIDR.
+#' @param object An object of the class SEIRD.
 #' @aliases initial_conditions,ANY,ANY-method
 #' @export
 
-setMethod("initial_conditions", "SEIDR",
+setMethod("initial_conditions", "SEIRD",
           function(object) object@initial_conditions)
 
-#' Retrieves initial cases and deaths of SEIDR model.
+#' Retrieves initial cases and deaths of SEIRD model.
 #'
-#' @param object An object of the class SEIDR.
+#' @param object An object of the class SEIRD.
 #' @export
 
 setGeneric("initial_cases_deaths",
            function(object) standardGeneric("initial_cases_deaths"))
 
-#' @describeIn SEIDR Retrieves initial cases and deaths of SEIDR model.
+#' @describeIn SEIRD Retrieves initial cases and deaths of SEIRD model.
 #'
-#' @param object An object of the class SEIDR.
+#' @param object An object of the class SEIRD.
 #' @aliases initial_cases_deaths,ANY,ANY-method
 #' @export
 
-setMethod("initial_cases_deaths", "SEIDR",
+setMethod("initial_cases_deaths", "SEIRD",
           function(object) object@initial_cases_deaths)
 
 #' Retrieves transmission parameters of SEIR model.
 #'
-#' @param object An object of the class SEIDR.
+#' @param object An object of the class SEIRD.
 #' @export
 
 setGeneric("transmission_parameters",
            function(object) standardGeneric("transmission_parameters"))
 
-#' @describeIn SEIDR Retrieves transmission parameters of SEIR model.
+#' @describeIn SEIRD Retrieves transmission parameters of SEIR model.
 #'
-#' @param object An object of the class SEIDR.
+#' @param object An object of the class SEIRD.
 #' @aliases transmission_parameters,ANY,ANY-method
 #' @export
 
-setMethod("transmission_parameters", "SEIDR",
+setMethod("transmission_parameters", "SEIRD",
           function(object) object@transmission_parameters)
 
 #' Setter method for initial conditions (S0, E0, I0 and R0) of the SEIR model.
@@ -101,10 +101,10 @@ setMethod("transmission_parameters", "SEIDR",
 #' All initial conditions must sum up to 1.
 #' If the initial conditions provided to do not sum to 1, an error is thrown.
 #'
-#' @param object an object of the class SEIDR
+#' @param object an object of the class SEIRD
 #' @param value (list) list of initial conditions S0, E0, I0, R0.
 #'
-#' @return object of class SEIDR with initial conditions assigned.
+#' @return object of class SEIRD with initial conditions assigned.
 #'
 #' @export
 
@@ -114,22 +114,22 @@ setGeneric(
     standardGeneric("initial_conditions<-")
   })
 
-#' @describeIn SEIDR Setter method for initial conditions (S0, E0, I0 and R0)
+#' @describeIn SEIRD Setter method for initial conditions (S0, E0, I0 and R0)
 #' of the SEIR model.
 #'
 #' All initial conditions must sum up to 1.
 #' If the initial conditions provided to do not sum to 1, an error is thrown.
 #'
-#' @param object an object of the class SEIDR
+#' @param object an object of the class SEIRD
 #' @param value (list) list of initial conditions S0, E0, I0, R0.
 #'
-#' @return object of class SEIDR with initial conditions assigned.
+#' @return object of class SEIRD with initial conditions assigned.
 #'
 #' @aliases initial_conditions<-,ANY,ANY-method
 #' @export
 
 setMethod(
-  "initial_conditions<-", "SEIDR",
+  "initial_conditions<-", "SEIRD",
   function(object, value) {
 
     # create list of parameter values
@@ -168,10 +168,10 @@ setMethod(
 #' If the transmission parameters provided to are not 1-dimensional an error is
 #' thrown.
 #'
-#' @param object (SEIDR model)
+#' @param object (SEIRD model)
 #' @param value (list) list of values for b, k, g, m, respectively.
 #'
-#' @return object of class SEIDR with transmission parameter values
+#' @return object of class SEIRD with transmission parameter values
 #' assigned.
 #' @export
 
@@ -182,22 +182,22 @@ setGeneric(
   })
 
 
-#' @describeIn SEIDR Setter method for transmission parameters
+#' @describeIn SEIRD Setter method for transmission parameters
 #' (b, k, g and m) of the SEIR model.
 #'
 #' If the transmission parameters provided to are not 1-dimensional an error is
 #' thrown.
 #'
-#' @param object (SEIDR model)
+#' @param object (SEIRD model)
 #' @param value (list) list of values for b, k, g, m, respectively.
 #'
-#' @return object of class SEIDR with transmission parameter values
+#' @return object of class SEIRD with transmission parameter values
 #' assigned.
 #' @aliases transmission_parameters<-,ANY,ANY-method
 #' @export
 
 setMethod(
-  "transmission_parameters<-", "SEIDR",
+  "transmission_parameters<-", "SEIRD",
   function(object, value) {
 
     # create list of parameter values
@@ -221,9 +221,9 @@ setMethod(
     return(object)
   })
 
-# SEIDR class specific functions
+# SEIRD class specific functions
 
-#' Solves ODEs of the SEIDR specified in object
+#' Solves ODEs of the SEIRD specified in object
 #' for the time points specified in times and integration method specified in
 #' solve_method.
 #'
@@ -236,7 +236,7 @@ setMethod(
 #'
 #' This function relies on the package deSolve.
 #'
-#' @param object an object of the class SEIDR
+#' @param object an object of the class SEIRD
 #' @param times (double) a sequence of time points at which the solution to
 #' the system of ODEs should be returned. Must be of the form
 #' seq(t_start, t_end, by=t_step). Default time series is seq(0, 100, by = 1).
@@ -245,15 +245,15 @@ setMethod(
 #' the ode function in the deSolve package used in this function.
 #'
 #' @return a dataframe with the time steps, time series of S, E, I and R
-#' population fractions, and incidence numbers and deaths of the SEIDR model.
+#' population fractions, and incidence numbers and deaths of the SEIRD model.
 #' @export
 
-setGeneric(name = "simulate_SEIDR",
+setGeneric(name = "simulate_SEIRD",
            def = function(object, times = seq(0, 100, by = 1),
                           solve_method = "lsoda") {
-             standardGeneric("simulate_SEIDR")})
+             standardGeneric("simulate_SEIRD")})
 
-#' @describeIn SEIDR Solves ODEs of the SEIDR specified in object
+#' @describeIn SEIRD Solves ODEs of the SEIRD specified in object
 #' for the time points specified in times and integration method specified in
 #' solve_method.
 #'
@@ -266,7 +266,7 @@ setGeneric(name = "simulate_SEIDR",
 #'
 #' This function relies on the package deSolve.
 #'
-#' @param object an object of the class SEIDR
+#' @param object an object of the class SEIRD
 #' @param times (double) a sequence of time points at which the solution to
 #' the system of ODEs should be returned. Must be of the form
 #' seq(t_start, t_end, by=t_step). Default time series is seq(0, 100, by = 1).
@@ -275,12 +275,12 @@ setGeneric(name = "simulate_SEIDR",
 #' the ode function in the deSolve package used in this function.
 #'
 #' @return a dataframe with the time steps, time series of S, E, I and R
-#' population fractions, and incidence numbers and deaths of the SEIDR model.
-#' @aliases simulate_SEIDR,ANY,ANY-method
+#' population fractions, and incidence numbers and deaths of the SEIRD model.
+#' @aliases simulate_SEIRD,ANY,ANY-method
 #' @export
 
 setMethod(
-  "simulate_SEIDR", "SEIDR",
+  "simulate_SEIRD", "SEIRD",
   function(object, times, solve_method = "lsoda") {
     if (!is.double(times)) {
       stop("Evaluation times of the model storage format must be a vector.")

@@ -1,5 +1,5 @@
-test_that("SEIDR model is instantiated correctly", {
-  my_model <- new("SEIDR")
+test_that("SEIRD model is instantiated correctly", {
+  my_model <- new("SEIRD")
 
   expect_length(my_model@initial_conditions, 4)
   expect_length(my_model@transmission_parameters, 4)
@@ -7,7 +7,7 @@ test_that("SEIDR model is instantiated correctly", {
 })
 
 test_that("Initial conditions can be set and retrieved", {
-  my_model <- new("SEIDR")
+  my_model <- new("SEIRD")
   initial_conditions(my_model) <- list(0.9, 0, 0.1, 0)
 
   # Test output is correct
@@ -25,7 +25,7 @@ test_that("Initial conditions can be set and retrieved", {
 })
 
 test_that("Initial cases and deaths can be retrieved", {
-  my_model <- new("SEIDR")
+  my_model <- new("SEIRD")
   initial_conditions(my_model) <- list(0.9, 0, 0.1, 0)
 
   # Test output is correct
@@ -34,7 +34,7 @@ test_that("Initial cases and deaths can be retrieved", {
 })
 
 test_that("Transmission parameters can be set and retrieved", {
-  my_model <- new("SEIDR")
+  my_model <- new("SEIRD")
   transmission_parameters(my_model) <- list(1, 0.5, 0.5, 0.1)
 
   # Test output is correct
@@ -49,12 +49,12 @@ test_that("Transmission parameters can be set and retrieved", {
 })
 
 test_that("SEIR model runs correctly", {
-  my_model <- new("SEIDR")
+  my_model <- new("SEIRD")
   initial_conditions(my_model) <- list(0.9, 0, 0.1, 0)
   transmission_parameters(my_model) <- list(0, 0, 0, 0)
 
   # Check output shape
-  out_df <- simulate_SEIDR(my_model, seq(0, 10, by = 0.1))
+  out_df <- simulate_SEIRD(my_model, seq(0, 10, by = 0.1))
   expect_identical(dim(out_df), as.integer(c(((10 - 0) / 0.1 + 1) * 6, 4)))
 
   # Check output value for rates equal 0s
@@ -67,7 +67,7 @@ test_that("SEIR model runs correctly", {
 
   # Check that sum of states is sufficiently close to one at all times
   transmission_parameters(my_model) <- list(0.9, 0.2, 0.01, 0.1)
-  out_df <- simulate_SEIDR(my_model, seq(0, 10, by = 0.1))
+  out_df <- simulate_SEIRD(my_model, seq(0, 10, by = 0.1))
   out_df <- dcast(out_df, time ~ compartment, value.var = "value")
   out_df$Deaths <- cumsum(out_df$Deaths)
   test <- rowSums(out_df[, c(2:5, 7)])
@@ -75,5 +75,5 @@ test_that("SEIR model runs correctly", {
   expect_equal(test, expected)
 
   # Test input errors
-  expect_error(simulate_SEIDR(my_model, "a"))
+  expect_error(simulate_SEIRD(my_model, "a"))
 })
