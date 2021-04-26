@@ -38,18 +38,23 @@ $$\frac{\text{d}S}{\text{d}t} = \alpha R -\beta S I,$$
 $$\frac{\text{d}E}{\text{d}t} = \beta S I -\kappa E,$$
 $$\frac{\text{d}I}{\text{d}t} = \kappa E - (\gamma + \mu) I,$$
 $$\frac{\text{d}R}{\text{d}t} = \gamma I - \alpha R,$$
-where $\beta$, $\kappa$, $\gamma$ and $\mu$ are positive parameters.
+where $\alpha$, $\beta$, $\kappa$, $\gamma$ and $\mu$ are positive parameters.
 The rate at which susceptible individuals are infected depends on the fraction
 of the population that is susceptible, the fraction of the population that is
 infectious, and the probability of an infectious individual infecting a 
 susceptible individual, $\beta$. This is represented in the
-first terms on the right-hand side of $\text{d}S/ \text{d}t$ and $\text{d}I/ \text{d}t$.
+second term on the right-hand side of $\text{d}S/ \text{d}t$ and the first term
+on the right-hand side of $\text{d}I/ \text{d}t$.
 Exposed individuals become infectious at rate $\kappa$. $1/ \kappa$ is
 the incubation time of the virus, i.e. how many days after exposure the individual
 becomes infectious to others. Infectious individuals can either recover or die
 because of the disease. Infectious individuals recover in $1/ \gamma$
 days, thus individuals recover at rate $\gamma$. Similarly, infectious
 individuals die due to the infection after $1/ \mu$ days, making the death rate $\mu$.
+Lastly, immunity in this model does not last forever, and after $1/\alpha$ days,
+recovered individuals become susceptible again. This is reflected in the last
+term on the right-hand side of $\text{d}R/ \text{d}t$ and the first term on
+the right-hand side of $\text{d}S/ \text{d}t$.
 
 In addition to these four main ODEs, the model also keeps track of the number 
 of cases ($C$) and the number of disease-related deaths ($D$) over time
@@ -65,7 +70,7 @@ $S(t) + E(t) + I(t) + R(t) + D(t) \equiv 1$ for any given $t$.
 
 Because we build on this basic model to develop more complex epidemiological models,
 we solve the ODEs over time instead of just solving for the steady states. The
-next section shows an example of how to use the SEIR_model class.
+next section shows an example of how to use the `SEIRSD` class.
 
 ## The `SEIRSD` class
 In this section we will walk through an example of how to simulate from the SEIRSD model.
@@ -75,13 +80,13 @@ To create a new `SEIRSD` object, run:
 model <- SEIRSD()
 ```
 
-Next, we set the parameter values for $\beta$, $\kappa$, $\gamma$ and $\mu$:
+Next, we set the parameter values for $\beta$, $\kappa$, $\gamma$, $\mu$ and $\alpha$:
 ```{r}
 transmission_parameters(model) <- list(1, 0.9, 0.5, 0.1, 4.0)
 ```
 
 The four values in the list on the right-hand side are assigned to $\beta$,
-$\kappa$, $\gamma$, and $\mu$, respectively.
+$\kappa$, $\gamma$, $\mu$ and $\alpha$, respectively.
 
 To check that the parameters have been set correctly, we call
 ```{r}
