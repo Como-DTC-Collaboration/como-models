@@ -22,101 +22,92 @@ library(glue)
 ```
 
 ## Introduction
-This document explains the basics of the SEIR model. The model describes
+This document explains a version of the SEIR model that considers the difference
+in contact patterns in and between urban and rural populations. The model describes
 how populations of susceptible, exposed, infectious and recovered
-individuals evolve over time. A simple
+individuals evolve over time in each community. A simple
 ordinary differential equation (ODE) is defined for each of the populations.
-The S4 object class `SEIRD` lets the user
+The S4 object class `SEIR_rural_urban` lets the user
 define and simulate such a model, choosing the initial conditions and parameter values.
 
-## The SEIR Model
-The SEIR model consists of four ODEs describing the four populations. Susceptible
-individuals ($S$) have not been exposed to the virus. Exposed individuals ($E$) have been
-exposed to the virus and have been infected but are not yet infectious to others; they are 
-in the incubation period. Infectious individuals ($I$) can spread the virus to 
-others. Recovered individuals ($R$) are no longer
-infectious, and, in this model, have acquired immunity as they do not return
-to the susceptible population. Births and deaths are not considered in this model.
-The ODEs describing how these four populations evolve over time are
-$$\frac{\text{d}S}{\text{d}t} = -\beta S I,$$
-$$\frac{\text{d}E}{\text{d}t} = \beta S I -\kappa E,$$
-$$\frac{\text{d}I}{\text{d}t} = \kappa E - (\gamma + \mu) I,$$
-$$\frac{\text{d}R}{\text{d}t} = \gamma I,$$
-where $\beta$, $\kappa$, $\gamma$ and $\mu$ are positive parameters.
-The rate at which susceptible individuals are infected depends on the fraction
-of the population that is susceptible, the fraction of the population that is
-infectious, and the probability of an infectious individual infecting a 
-susceptible individual, $\beta$. This is represented in the
-first terms on the right-hand side of $\text{d}S/ \text{d}t$ and $\text{d}I/ \text{d}t$.
-Exposed individuals become infectious at rate $\kappa$. $1/ \kappa$ is
-the incubation time of the virus, i.e. how many days after exposure the individual
-becomes infectious to others. Infectious individuals can either recover or die
-because of the disease. Infectious individuals recover in $1/ \gamma$
-days, thus individuals recover at rate $\gamma$. Similarly, infectious
-individuals die due to the infection after $1/ \mu$ days, making the death rate $\mu$.
+## The SEIR Model with rural and urban communities
+The basic SEIR model has been explained in other vignettes. When we consider 
+rural and urban communities, there are multiple ways to model this. In this section
+I will propose two ways of modeling how these communities interact: (1) rural and urban individuals remain in their separate populations but these populations interact so infectious individuals from each population can infect susceptibles from both populations at differing rates, or (2) individuals can move between communities but only individuals within each community can infect each other.
 
-In addition to these four main ODEs, the model also keeps track of the number 
-of cases ($C$) and the number of disease-related deaths ($D$) over time
-$$\frac{\text{d}C}{\text{d}t} = \beta S I,$$
-$$\frac{\text{d}D}{\text{d}t} = \mu I.$$
+We start with a model where people are assumed to maintain their urban or rural lifestyle throughout the modeling time frame, so they do not move between communities. The motivation for this type of model comes from the fact that rural and urban populations will likely spend most of their time in their own community, but might visit the other occasionally. We therefor ``sort'' each individual into either the rural or urban population and assume that they maintain their rural or urban lifestyle most of time. These populations do interact and can infect each other, but individuals do not move between populations. We set $X_U$ to mean an urban populations and $U_Y$ to signify a rural population, to get 
 
-The system is closed by specifying the initial conditions
-$$S(0) = S_0,\ E(0) = E_0,\ I(0) = I_0,\ R(0) = R_0,\ C(0) = C_0,\ D(0) = D_0,$$
-where $C_0 = E_0 + I_0 + R_0$ to ensure the cases that occur before $t=0$ are
-also counted.
-In the implementation in this package, the variables are normalized so 
-$S(t) + E(t) + I(t) + R(t) + D(t) \equiv 1$ for any given $t$.
+$$\frac{\text{d}S_U}{\text{d}t} = -\beta_U S_U I_U - \beta_{UY} S_U I_Y$$
+$$\frac{\text{d}S_Y}{\text{d}t} = -\beta_Y S_Y I_Y - \beta_{YU} S_Y I_U$$
+where $\beta_U$, $\beta_Y$, $\beta_{UY}$ and $\beta_{YU}$ are positive contact parameters/matrices specifying the probability of infection within and between populations. Because the only interactions between populations that would have an effect on the dynamics of the model are those in which a susceptible and infectious individual meet, the remaining ODEs of the SEIR model would remain the same for each population:
 
-Steady states of the system described above are computed by setting the right-hand
-sides of the ODEs equal to zero. The system reaches a steady
-state when $E = 0$ and $I = 0$. $S$, $R$, $C$ and $D$ can then take on any value,
-as long as $S + E + I + D + R = 1$.
-This makes sense based on the biology, because as long as there are (soon to be)
-infectious individuals in the population, they will infect susceptibles 
-(unless $S = 0$ of course).
+\begin{equation}
+\begin{split}
+    \frac{\text{d}E_U}{\text{d}t} = &  \beta_U S_U I_U + \beta_{UY} S_U I_Y - \kappa E_U\\
+    \frac{\text{d}E_Y}{\text{d}t} = & \beta_Y S_Y I_Y + \beta_{YU} S_Y I_U - \kappa E_Y\\
+    \frac{\text{d}I_U}{\text{d}t} = & \kappa E_U - (\gamma + \mu)I_U\\
+    \frac{\text{d}I_Y}{\text{d}t} = & \kappa E_Y - (\gamma + \mu)I_Y\\
+    \frac{\text{d}R_U}{\text{d}t} = & \gamma I_U\\
+    \frac{\text{d}R_Y}{\text{d}t} = & \gamma I_Y\\
+\end{split}
+\end{equation}
+\noindent where $\kappa$, $\gamma$, and $\mu$ are positive parameters which don't necessarily differ between the communities as some or all disease characteristics remain the same in both communities. Although, one could imagine that individuals in a remote rural community are more likely to die of the disease so these parameter values can be varied.
+The big advantage of this model is that it is much simpler than the  model which includes migration explicitly, discussed below.
 
-Because we build on this basic model to develop more complex epidemiological models,
-we solve the ODEs over time instead of just solving for the steady states. The
-next section shows an example of how to use the SEIR_model class.
+In this next model we consider that although people might be in a rural or urban setting originally, they can move between the two easily. We then only have to consider infection within a population as individuals will have to be in the same setting as another individual to infect them, and thus become part of the same population. This makes the ODEs a lot more complicated as we now have to consider migration of all populations.
 
-## The `SEIRD` class
-In this section we will walk through an example of how to use the `SEIRD`
-class. This model is contained in the package comomodels.
+\begin{equation}
+\begin{split}
+    \frac{\text{d}S_U}{\text{d}t} = &-\beta_U S_U I_U + \phi_{SY}S_Y - \phi_{SU}S_U\\
+    \frac{\text{d}S_Y}{\text{d}t} = &-\beta_Y S_Y I_Y+ \phi_{SU}S_U - \phi_{SY}S_Y\\
+    \frac{\text{d}E_U}{\text{d}t} = &  \beta_U S_U I_U - \kappa E_U + \phi_{EY}E_Y - \phi_{EU}E_U\\
+    \frac{\text{d}E_Y}{\text{d}t} = & \beta_Y S_Y I_Y  - \kappa E_Y + \phi_{EU}E_U - \phi_{EY}E_Y\\
+    \frac{\text{d}I_U}{\text{d}t} = & \kappa E_U - (\gamma + \mu)I_U + \phi_{IY}I_Y - \phi_{IU}I_U\\
+    \frac{\text{d}I_Y}{\text{d}t} = & \kappa E_Y - (\gamma + \mu)I_Y + \phi_{IU}I_U - \phi_{IY}I_Y\\
+    \frac{\text{d}R_U}{\text{d}t} = & \gamma I_U + \phi_{RY}R_Y - \phi_{RU}R_U\\
+    \frac{\text{d}R_Y}{\text{d}t} = & \gamma I_Y + \phi_{RU}R_U - \phi_{RY}R_Y\\
+\end{split}
+\end{equation}
+\noindent where $\phi_{YX}$ are migration rates of population $Y$ from community $X$ to the other community.
 
-To create a new `SEIRD` object, run:
+## The `SEIR_rural_urban` class
+In this section we will walk through an example of how to use the `SEIR_rural_urban`
+class. This model is contained in the package comomodels. We also compare the two different approaches discussed above to assess whether they are qualitatively different.
+
+To create a new model of either class, we run:
 ```{r}
 my_model <- new("SEIR_rural_urban")
+my_model2 <- new("SEIR_rural_urban_2")
 ```
 
-Next, we set the parameter values for $\beta$, $\kappa$, $\gamma$ and $\mu$:
+Next, we set the parameter values for $\beta_u$, $\beta_y$, $\beta_{uy}$, $\beta_{yu}$, $\kappa$, $\gamma$ and $\mu$ for model 1 and $\beta_u$, $\beta_y$, $\kappa$, $\gamma$ , $\mu$, $\phi_{su}$, $\phi_{sy}$, $\phi_{eu}$, $\phi_{ey}$, $\phi_{iu}$, $\phi_{iy}$, $\phi_{ru}$, and $\phi_{ry}$ for model 2:
 ```{r}
 transmission_parameters(my_model) <- list(1, 0.5, 0.1, 0.1, 0.9, 0.5, 0.1)
+transmission_parameters2(my_model2) <- list(1, 0.5, 0.9, 0.5, 0.1, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05, 0.05)
 ```
-
-The four values in the list on the right-hand side are assigned to $\beta$,
-$\kappa$, $\gamma$, and $\mu$, respectively.
 
 To check that the parameters have been set correctly, we call
 ```{r}
 transmission_parameters(my_model)
+transmission_parameters2(my_model2)
 ```
 
 We now need to set the initial conditions for the model. We only set the initial
 conditions $S(0)$, $E(0)$, $I(0)$ and $R(0)$. The value of $C(0)$ is computed
-automatically and $D(0)=0$ always.
+automatically and $D(0)=0$ always. We set them the same for both models to get a good comparison.
 ```{r}
 initial_conditions(my_model) <- list(0.45, 0, 0.05, 0, 0.45, 0, 0.05, 0)
+initial_conditions2(my_model2) <- list(0.45, 0, 0.05, 0, 0.45, 0, 0.05, 0)
 ```
-The values in the list on the right-hand side are assigned to $S(0)$, $E(0)$, $I(0)$ and $R(0)$,
-respectively. The initial conditions must sum to one. If they do not, an error is thrown.
 
 
 Now we can simulate the system.
 ```{r}
 out_df <- simulate_SEIR_rural_urban(my_model, seq(0, 50, by = 0.1))
+out_df2 <- simulate_SEIR_rural_urban_2(my_model2, seq(0, 50, by = 0.1))
 ```
 
-The function `simulate_SEIRD` solves `my_model` from the initial conditions specified
+The function `simulate_SEIR_rural_urban` solves `my_model` from the initial conditions specified
 previously, over the time sequence `seq(0, 50, by = 0.1)`. This particular simulation
 goes out to 50 days. The function returns
 a data frame where the columns are the time sequence, $S$, $E$, $I$, $R$, $C$ and $D$.
@@ -130,7 +121,7 @@ col <- c("S_U" = "blue", "E_U" = "green", "I_U" = "yellow", "R_U" = "red", "S_Y"
 SEIRplot <- ggplot(SEIR_df, aes(x = time, y = value)) +
     geom_line(aes(color = compartment), size = 1.5) +
     labs(x = "time", y = "fraction of the population",
-         title = glue("SEIR model with urban and rural communities")) +
+         title = glue("SEIR model with urban and rural communities: no migration")) +
     theme(legend.position = "right") +
     scale_color_manual(values = col)
 
@@ -151,3 +142,38 @@ inc_plot <- ggplot(case_df, aes(x = time, y = value)) +
 print(inc_plot)
 
 ```
+
+We now do the same for the second model.
+
+```{r fig3, fig.height = 5, fig.width = 7}
+i <- sapply(out_df2, is.factor)
+out_df2[i] <- lapply(out_df2[i], as.character)
+SEIR_df2 <- subset(out_df2, compartment != "Incidences_U" & compartment != "Deaths_U" & compartment != "Incidences_Y" & compartment != "Deaths_Y")
+SEIR_df2$compartment <- factor(SEIR_df2$compartment, levels = c("S_U", "E_U", "I_U", "R_U", "S_Y", "E_Y", "I_Y", "R_Y"))
+col <- c("S_U" = "blue", "E_U" = "green", "I_U" = "yellow", "R_U" = "red", "S_Y" = "lightblue1", "E_Y" = "lightgreen", "I_Y" = "lightyellow", "R_Y" = "indianred")
+SEIRplot2 <- ggplot(SEIR_df2, aes(x = time, y = value)) +
+    geom_line(aes(color = compartment), size = 1.5) +
+    labs(x = "time", y = "fraction of the population",
+         title = glue("SEIR model with urban and rural communities: migration")) +
+    theme(legend.position = "right") +
+    scale_color_manual(values = col)
+
+print(SEIRplot2)
+
+```
+```{r fig4, fig.height = 5, fig.width = 7}
+case_df2 <- subset(out_df2, compartment == "Incidences_U" | compartment == "Deaths_U" | compartment == "Incidences_Y" | compartment == "Deaths_Y")
+case_df2$compartment <- factor(case_df2$compartment, levels = c("Incidences_U", "Deaths_U", "Incidences_Y", "Deaths_Y"))
+col <- c("Incidences_U" = "gray", "Deaths_U" = "black", "Incidences_Y" = "lightgray", "Deaths_Y" = "darkgray")
+inc_plot2 <- ggplot(case_df2, aes(x = time, y = value)) +
+    geom_line(aes(color = compartment), size = 1.5) +
+    labs(x = "time", y = "fraction of the population",
+         title = glue("Incidences and deaths")) +
+    theme(legend.position = "right") +
+    scale_color_manual(values = col)
+
+print(inc_plot2)
+
+```
+
+From the above plots we can see that there is some difference between the two models. Looking at the cases and deaths, they are remarkably the same, but we do see that the populations in model 2 are much more well-mixed. In the model with no migration (but with between-community infection) there is a stronger difference between communities when it comes to the dynamics of the populations whereas the model where migration is allowed (but only intra-community infection is possible) the communities behave much more the same way. 
