@@ -338,10 +338,16 @@ setMethod(
 
     # Create long format of output
     output <- melt(output, id.vars = "time")
-    names(output) <- c("time", "compartment", "value")
+    output <- output[ , c("time", "value", "variable")]
+    names(output) <- c("time", "value", "compartment")
 
     # Added for consistency of output format across models
-    output$age_group <- rep("0-150", length(output$time))
+    output$age_range <- rep("0-150", length(output$time))
 
     return(output)
   })
+
+my_model <- new("SEIRD")
+transmission_parameters(my_model) <- list(1, 0.9, 0.5, 0.1)
+initial_conditions(my_model) <- list(0.9, 0, 0.1, 0)
+out_df <- simulate_SEIRD(my_model, seq(0, 50, by = 0.1))
