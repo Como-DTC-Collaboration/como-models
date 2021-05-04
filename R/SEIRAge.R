@@ -14,6 +14,7 @@
 #' @slot transmission_parameters named list containing the transmission
 #'     parameters of the model. Transmission parameters b, k, g represent the
 #'     rates of changes between the compartments.
+#' @slot contact_matrix 
 #' @slot n_age_categories number of age categories.
 #' @slot age_ranges list of string characters representing the range of ages of
 #' people in each age category. This object must have length
@@ -36,7 +37,8 @@ setClass('SEIRAge',
            initial_conditions = 'list',
            transmission_parameters = 'list',
            age_ranges = 'list',
-           n_age_categories = 'numeric'
+           n_age_categories = 'numeric',
+           contact_matrix = 'matrix'
          ),
 
          # prototypes for the slots, automatically set output and param
@@ -49,7 +51,8 @@ setClass('SEIRAge',
            initial_conditions = vector(mode = "list", length = 4),
            transmission_parameters = vector(mode = "list", length = 3),
            age_ranges = vector(mode = 'list'),
-           n_age_categories = NA_real_
+           n_age_categories = NA_real_,
+           contact_matrix = matrix(NA)
 
          )
 )
@@ -229,7 +232,8 @@ setMethod(
     if(!is.double(times)){
       stop('Evaluation times of the model storage format must be a vector.')
     }
-
+    
+    #fetch number of age catagories
     age <- object@n_age_categories
 
     # set initial state vector
@@ -242,6 +246,9 @@ setMethod(
     parameters <- c(b = transmission_parameters(object)$b,
                     k = transmission_parameters(object)$k,
                     g = transmission_parameters(object)$g)
+    
+    # fetch contact matrix of the instance
+    C = object@contact_matrix
 
     # function for RHS of ode system
     right_hand_side <- function(t, state, parameters) {
@@ -252,9 +259,10 @@ setMethod(
           E <- state[(age+1):(2*age)]
           I <- state[(2*age+1):(3*age)]
           R <- state[(3*age+1):(4*age)]
+          
           # rate of change
-          dS <- -b*S*I
-          dE <- b*S*I - k*E
+          dS <- -b*S*C%*%I
+          dE <- b*S*C%*%I - k*E
           dI <- k*E - g*I
           dR <- g*I
           # return the rate of change
