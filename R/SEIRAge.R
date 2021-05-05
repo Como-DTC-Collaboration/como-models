@@ -14,7 +14,10 @@
 #' @slot transmission_parameters named list containing the transmission
 #'     parameters of the model. Transmission parameters b, k, g represent the
 #'     rates of changes between the compartments.
-#' @slot contact_matrix 
+#' @slot contact_matrix A square matrix with dimension
+#' equal to n_age_categories x n_age_categories. This matrix represents the
+#' contact between different age groups (rows) with age groups of
+#' people they come in contact with (columns)
 #' @slot n_age_categories number of age categories.
 #' @slot age_ranges list of string characters representing the range of ages of
 #' people in each age category. This object must have length
@@ -199,12 +202,16 @@ setMethod(
 #' evolution of population fractions in Susceptible (S), Exposed (E), Infected
 #' (I) and Recovered (R) groups in a given age group indexed by i is given by
 #'
-#' \deqn{\frac{dS_i(t)}{dt} = - b S_i(t) I_i(t)}
-#' \deqn{\frac{dE_i(t)}{dt} =  b S_i(t) I_i(t) - k E_i(t)}
+#' \deqn{\frac{dS_i(t)}{dt} = - b S_i(t) \Sigma_{j}C_{ij} I_j(t)}
+#' \deqn{\frac{dE_i(t)}{dt} = b S_i(t) \Sigma_{j}C_{ij} I_j(t)} - k E_i(t)}
 #' \deqn{\frac{dI_i(t)}{dt} = k E_i(t) - g I_i(t)}
 #' \deqn{\frac{dR_i(t)}{dt} = g I_i(t)}
 #'
-#' This function relies on the package deSolve.
+#' where C is a contact matrix whose elements represents the
+#' contact between different age groups (rows) with age groups of
+#' people they come in contact with (columns). This function relies on the 
+#' package deSolve to numerically integrate the set of equations above.
+#' 
 #'
 #' @param object An object of the class SEIRAge.
 #' @param times (vector) time sequence over which to solve the model.

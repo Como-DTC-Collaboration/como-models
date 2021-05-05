@@ -102,7 +102,8 @@ test_that("can set new transmission parameters for the SEIRAge", {
 
 test_that("can run simulation for the SEIRAge", {
   my_model <- new('SEIRAge', name = 'my_model', n_age_categories = 2,
-                  age_ranges = list('0-50', '50-100'))
+                  age_ranges = list('0-50', '50-100'), 
+                  contact_matrix = matrix(c(1,0,0,1), nrow = 2))
 
   my_model <- `initial_conditions<-`(my_model, c(0.6, 0.4), c(0, 0), c(0, 0),
                                      c(0, 0))
