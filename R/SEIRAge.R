@@ -28,9 +28,8 @@
 #' @import glue
 #' @import tidyverse
 #' @import reshape2
-
-
-setClass('SEIRAge',
+#' @export
+SEIRAge <- setClass('SEIRAge',
          # slots
          slots = c(
            name = 'character',
