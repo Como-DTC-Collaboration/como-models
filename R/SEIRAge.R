@@ -32,7 +32,6 @@
 SEIRAge <- setClass('SEIRAge',
          # slots
          slots = c(
-           name = 'character',
            output_names = 'list',
            initial_condition_names = 'list',
            transmission_parameter_names = 'list',
@@ -46,7 +45,6 @@ SEIRAge <- setClass('SEIRAge',
          # prototypes for the slots, automatically set output and param
          # names
          prototype = list(
-           name = NA_character_,
            output_names = list('S', 'E', 'I', 'R', 'Incidence'),
            initial_condition_names = list('S0', 'E0', 'I0', 'R0'),
            transmission_parameter_names = list('b', 'k', 'g'),
@@ -93,7 +91,6 @@ setMethod('initial_conditions', 'SEIRAge',
 #' @param R0 initial fraction of the population that has recovered
 #'           by age group. Data can be provided as a list or vector of doubles.
 #'
-#' All initial conditions must sum up to 1.
 #'
 #' @return Updated version of the age-structured SEIR model.
 setGeneric(
@@ -108,7 +105,7 @@ setMethod(
 
     # check that ICs are valid
     if (sum(S0, E0, I0, R0) != 1) {
-      stop('Invalid initial conditions. Must add up to 1.')
+      stop('Invalid initial conditions. Must sum to 1.')
     }
 
     # create list of parameter values
@@ -198,8 +195,8 @@ setMethod(
     return(object)
   })
 
-# Method to simulate output using from SEIRAge model.
-
+#' Method to simulate output using from SEIRAge model.
+#' 
 #' @describeIn SEIRAge Solves a system to ODEs which form an
 #' age-structured simple SEIR model. The system of equations for the time
 #' evolution of population fractions in Susceptible (S), Exposed (E), Infected
@@ -227,15 +224,15 @@ setMethod(
 #' @return data frame containing the time vector and time series of S, R and I
 #' population fractions for each age group outputs with incidence numbers
 #' for each age group.
-setGeneric(name = 'simulate_SEIRAge',
+setGeneric(name = 'run',
            def = function(object, times = seq(0, 100, by = 1),
                           solve_method = 'lsoda'){
-             standardGeneric('simulate_SEIRAge')
+             standardGeneric('run')
            }
 )
 
 setMethod(
-  'simulate_SEIRAge', 'SEIRAge',
+  'run', 'SEIRAge',
   function(object, times, solve_method = 'lsoda') {
 
     # error if times is not a vector or list of doubles
@@ -266,15 +263,15 @@ setMethod(
         as.list(c(state, parameters)),
         {
           S <- state[1:age]
-          E <- state[(age+1):(2*age)]
-          I <- state[(2*age+1):(3*age)]
-          R <- state[(3*age+1):(4*age)]
+          E <- state[(age + 1):(2 * age)]
+          I <- state[(2 * age + 1):(3 * age)]
+          R <- state[(3 * age + 1):(4 * age)]
           
           # rate of change
-          dS <- -b*S*C%*%I
-          dE <- b*S*C%*%I - k*E
-          dI <- k*E - g*I
-          dR <- g*I
+          dS <- -b * S * C %*% I
+          dE <- b * S * C %*% I - k * E
+          dI <- k * E - g * I
+          dR <- g * I
           # return the rate of change
           list(c(dS, dE, dI, dR))
         })
