@@ -187,6 +187,10 @@ setMethod(
     if(length(b) != 1 | length(k) != 1 | length(g) != 1){
       stop('The parameter values should be 1-dimensional.')
     }
+    
+    # Set the row and column names of the instance's contact matrix
+    rownames(object@contact_matrix) <- object@age_ranges
+    colnames(object@contact_matrix) <- object@age_ranges
 
     # if all above tests are passed, assign the trans_params namelist to the
     # object
