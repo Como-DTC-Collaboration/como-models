@@ -2,6 +2,7 @@
 
 export(fbind)
 export(fcount)
+exportClasses(SEIRAge)
 import(deSolve)
 import(glue)
 import(reshape2)

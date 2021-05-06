@@ -69,6 +69,7 @@ SEIRAge <- setClass('SEIRAge',
 setGeneric('initial_conditions',
            function(object) standardGeneric('initial_conditions'))
 
+#' @export
 setMethod('initial_conditions', 'SEIRAge',
           function(object) object@initial_conditions)
 
@@ -95,14 +96,17 @@ setMethod('initial_conditions', 'SEIRAge',
 #' @return Updated version of the age-structured SEIR model.
 setGeneric(
   'initial_conditions<-',
-  function(object, S0, E0, I0, R0){
+  function(object, value){
     standardGeneric('initial_conditions<-')
   })
 
 setMethod(
   'initial_conditions<-', 'SEIRAge',
-  function(object, S0, E0, I0, R0) {
-
+  function(object, value) {
+    S0 = value$S0
+    E0 = value$E0
+    I0 = value$I0
+    R0 = value$R0
     # check that ICs are valid
     if (sum(S0, E0, I0, R0) != 1) {
       stop('Invalid initial conditions. Must sum to 1.')
@@ -165,15 +169,18 @@ setMethod('transmission_parameters', 'SEIRAge',
 #' @return Updated version of the age-structured SEIR model.
 setGeneric(
   'transmission_parameters<-',
-  function(object, b, k, g){
+  function(object, value){
     standardGeneric('transmission_parameters<-')
   })
 
 setMethod(
   'transmission_parameters<-', 'SEIRAge',
-  function(object, b, k, g) {
+  function(object, value) {
 
     # create list of parameter values
+    b <- value$b
+    k <- value$k
+    g <- value$g
     trans_params <- list(b, k, g)
 
     # add names to each value

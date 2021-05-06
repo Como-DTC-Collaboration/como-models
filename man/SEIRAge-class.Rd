@@ -3,11 +3,11 @@
 \docType{class}
 \name{SEIRAge-class}
 \alias{SEIRAge-class}
+\alias{SEIRAge}
 \alias{initial_conditions}
 \alias{initial_conditions<-}
 \alias{transmission_parameters}
 \alias{transmission_parameters<-}
-\alias{simulate_SEIRAge}
 \title{Defines an age-structured SEIR model and solves the set of
 ordinary differential equations of the model with a chosen method of
 numerical integration.}
@@ -19,8 +19,6 @@ initial_conditions(object, S0, E0, I0, R0) <- value
 transmission_parameters(object)
 
 transmission_parameters(object, b, k, g) <- value
-
-simulate_SEIRAge(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
 }
 \arguments{
 \item{object}{An object of the class SEIRAge.}
@@ -38,9 +36,7 @@ by age group.  Data can be provided as a list or vector of doubles
 each element corresponding to the fraction for a single age group.}
 
 \item{R0}{initial fraction of the population that has recovered
-by age group. Data can be provided as a list or vector of doubles.
-
-All initial conditions must sum up to 1.}
+by age group. Data can be provided as a list or vector of doubles.}
 
 \item{b}{rate at which an infected individual exposes susceptible.}
 
@@ -50,14 +46,6 @@ All initial conditions must sum up to 1.}
 
 All rates of change between compartments are equal regardless of
 age group.}
-
-\item{times}{(vector) time sequence over which to solve the model.
-Must be of the form seq(t_start,t_end,by=t_step). Default time series
-is seq(0, 100, by = 1).}
-
-\item{solve_method}{A string indicating the chosen numerical integration
-method for solving the ode system. Default is \code{lsoda} which is also the
-default for the ode function in the deSolve package used in this function.}
 }
 \value{
 Initial conditions of SEIRAge model.
@@ -67,10 +55,6 @@ Updated version of the age-structured SEIR model.
 Transmission parameters of SEIRAge model.
 
 Updated version of the age-structured SEIR model.
-
-data frame containing the time vector and time series of S, R and I
-population fractions for each age group outputs with incidence numbers
-for each age group.
 }
 \description{
 Sets transmission_parameters of an
@@ -94,18 +78,6 @@ sizes compared to the number of age groups, an error is thrown.
 age-structured SEIR model.
 
 \item \code{transmission_parameters<-}: 
-
-\item \code{simulate_SEIRAge}: Solves a system to ODEs which form an
-age-structured simple SEIR model. The system of equations for the time
-evolution of population fractions in Susceptible (S), Exposed (E), Infected
-(I) and Recovered (R) groups in a given age group indexed by i is given by
-
-\deqn{\frac{dS_i(t)}{dt} = - b S_i(t) I_i(t)}
-\deqn{\frac{dE_i(t)}{dt} =  b S_i(t) I_i(t) - k E_i(t)}
-\deqn{\frac{dI_i(t)}{dt} = k E_i(t) - g I_i(t)}
-\deqn{\frac{dR_i(t)}{dt} = g I_i(t)}
-
-This function relies on the package deSolve.
 }}
 
 \section{Slots}{
@@ -128,6 +100,11 @@ model. Initial values for each compartment, S0, E0, I0, R0.}
 \item{\code{transmission_parameters}}{named list containing the transmission
 parameters of the model. Transmission parameters b, k, g represent the
 rates of changes between the compartments.}
+
+\item{\code{contact_matrix}}{A square matrix with dimension
+equal to n_age_categories x n_age_categories. This matrix represents the
+contact between different age groups (rows) with age groups of
+people they come in contact with (columns)}
 
 \item{\code{n_age_categories}}{number of age categories.}
 
