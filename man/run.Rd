@@ -2,7 +2,7 @@
 % Please edit documentation in R/SEIRAge.R
 \name{run}
 \alias{run}
-\title{Method to simulate output using from SEIRAge model.}
+\title{SEIRAge Method to simulate output using from SEIRAge model.}
 \usage{
 run(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
 }
@@ -23,5 +23,11 @@ population fractions for each age group outputs with incidence numbers
 for each age group.
 }
 \description{
-Method to simulate output using from SEIRAge model.
+Solves a system to ODEs which form an
+age-structured simple SEIR model. The system of equations for the time
+evolution of population fractions in Susceptible (S), Exposed (E), Infected
+(I) and Recovered (R) groups in a given age group indexed by i is given by
+}
+\details{
+
 }

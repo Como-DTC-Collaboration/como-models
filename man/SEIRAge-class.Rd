@@ -14,35 +14,16 @@ numerical integration.}
 \usage{
 initial_conditions(object)
 
-initial_conditions(object, S0, E0, I0, R0) <- value
+initial_conditions(object) <- value
 
 transmission_parameters(object)
 
-transmission_parameters(object, b, k, g) <- value
+transmission_parameters(object) <- value
 }
 \arguments{
 \item{object}{An object of the class SEIRAge.}
 
-\item{S0}{initial fraction of the population that is susceptible
-by age group. Data can be provided as a list or vector of doubles
-each element corresponding to the fraction for a single age group.}
-
-\item{E0}{initial fraction of the population that has been exposed
-by age group.  Data can be provided as a list or vector of doubles
-each element corresponding to the fraction for a single age group.}
-
-\item{I0}{initial fraction of the population that is infectious
-by age group.  Data can be provided as a list or vector of doubles
-each element corresponding to the fraction for a single age group.}
-
-\item{R0}{initial fraction of the population that has recovered
-by age group. Data can be provided as a list or vector of doubles.}
-
-\item{b}{rate at which an infected individual exposes susceptible.}
-
-\item{k}{rate at which exposed individuals become infected.}
-
-\item{g}{rate at which infected individuals recover.
+\item{value}{a named list of form list(b=, k=, g=)
 
 All rates of change between compartments are equal regardless of
 age group.}
@@ -57,11 +38,9 @@ Transmission parameters of SEIRAge model.
 Updated version of the age-structured SEIR model.
 }
 \description{
-Sets transmission_parameters of an
-age-structured SEIR model.
-
-If the transmission parameters provided to are not 1-dimensional an error is
-thrown.
+Defines an age-structured SEIR model and solves the set of
+ordinary differential equations of the model with a chosen method of
+numerical integration.
 }
 \section{Functions}{
 \itemize{
@@ -77,14 +56,16 @@ sizes compared to the number of age groups, an error is thrown.
 \item \code{transmission_parameters}: Retrieves transmission_parameters for an
 age-structured SEIR model.
 
-\item \code{transmission_parameters<-}: 
+\item \code{transmission_parameters<-}: Sets transmission_parameters of an
+age-structured SEIR model.
+
+If the transmission parameters provided to are not 1-dimensional an error is
+thrown.
 }}
 
 \section{Slots}{
 
 \describe{
-\item{\code{name}}{character representing name of model}
-
 \item{\code{output_names}}{names of the compartments which are used by the
 model.}
 

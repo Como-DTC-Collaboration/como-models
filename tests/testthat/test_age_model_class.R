@@ -1,6 +1,6 @@
 test_that("SEIRAge gets instantiated", {
-  my_model <- new('SEIRAge', n_age_categories = 2,
-                  age_ranges = list('0-50', '50-100'))
+  my_model <- SEIRAge(n_age_categories = 2,
+                      age_ranges = list('0-50', '50-100'))
 
   # Test output is correct
 

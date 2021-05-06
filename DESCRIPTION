@@ -23,7 +23,9 @@ Imports:
     glue,
     reshape2,
     tidyverse,
-    methods
+    methods,
+    magrittr,
+    rlang
 VignetteBuilder: knitr
 Depends: 
     R (>= 2.10)

@@ -2,7 +2,6 @@
 #' ordinary differential equations of the model with a chosen method of
 #' numerical integration.
 #'
-#' @slot name character representing name of model
 #' @slot output_names names of the compartments which are used by the
 #'     model.
 #' @slot initial_condition_names names of the initial conditions used by the
@@ -28,6 +27,7 @@
 #' @import glue
 #' @import tidyverse
 #' @import reshape2
+#' @importFrom methods new
 #' @export
 SEIRAge <- setClass('SEIRAge',
          # slots
@@ -80,18 +80,9 @@ setMethod('initial_conditions', 'SEIRAge',
 #' sizes compared to the number of age groups, an error is thrown.
 #'
 #' @param object An object of the class SEIRAge.
-#' @param S0 initial fraction of the population that is susceptible
-#'           by age group. Data can be provided as a list or vector of doubles
-#'           each element corresponding to the fraction for a single age group.
-#' @param E0 initial fraction of the population that has been exposed
-#'           by age group.  Data can be provided as a list or vector of doubles
-#'           each element corresponding to the fraction for a single age group.
-#' @param I0 initial fraction of the population that is infectious
-#'           by age group.  Data can be provided as a list or vector of doubles
-#'           each element corresponding to the fraction for a single age group.
-#' @param R0 initial fraction of the population that has recovered
-#'           by age group. Data can be provided as a list or vector of doubles.
-#'
+#' @param value a named list of (S0, E0, I0, R0) where each element can be a list
+#' of vector of doubles, with each element corresponding to the fraction for a
+#' single age group.
 #'
 #' @return Updated version of the age-structured SEIR model.
 setGeneric(
@@ -149,19 +140,17 @@ setMethod(
 setGeneric('transmission_parameters',
            function(object) standardGeneric('transmission_parameters'))
 
+#' @export
 setMethod('transmission_parameters', 'SEIRAge',
           function(object) object@transmission_parameters)
 
-#' @describeIn  SEIRAge
-#' @description Sets transmission_parameters of an
+#' @describeIn  SEIRAge Sets transmission_parameters of an
 #' age-structured SEIR model.
 #'
 #' If the transmission parameters provided to are not 1-dimensional an error is
 #' thrown.
 #'
-#' @param b rate at which an infected individual exposes susceptible.
-#' @param k rate at which exposed individuals become infected.
-#' @param g rate at which infected individuals recover.
+#' @param value a named list of form list(b=, k=, g=)
 #'
 #' All rates of change between compartments are equal regardless of
 #' age group.
@@ -202,9 +191,9 @@ setMethod(
     return(object)
   })
 
-#' Method to simulate output using from SEIRAge model.
+#' SEIRAge Method to simulate output using from SEIRAge model.
 #' 
-#' @describeIn SEIRAge Solves a system to ODEs which form an
+#' Solves a system to ODEs which form an
 #' age-structured simple SEIR model. The system of equations for the time
 #' evolution of population fractions in Susceptible (S), Exposed (E), Infected
 #' (I) and Recovered (R) groups in a given age group indexed by i is given by
@@ -231,15 +220,17 @@ setMethod(
 #' @return data frame containing the time vector and time series of S, R and I
 #' population fractions for each age group outputs with incidence numbers
 #' for each age group.
-setGeneric(name = 'run',
+setGeneric("run",
            def = function(object, times = seq(0, 100, by = 1),
                           solve_method = 'lsoda'){
              standardGeneric('run')
            }
 )
 
+#' @importFrom magrittr "%>%"
+#' @importFrom rlang .data
 setMethod(
-  'run', 'SEIRAge',
+  "run", 'SEIRAge',
   function(object, times, solve_method = 'lsoda') {
 
     # error if times is not a vector or list of doubles
@@ -303,7 +294,8 @@ setMethod(
     out_temp$age_range = rep(object@age_ranges, each=length(times))
 
     #drop the old variable column
-    out_temp = subset(out_temp, select = -c(variable) )
+    out_temp = out_temp %>% 
+      dplyr::select(-.data$variable)
 
     # compute incidence number
     total_inf <- output[, (2*age+2):(3*age+1)] + output[, (3*age+2):(4*age+1)]
@@ -320,7 +312,8 @@ setMethod(
     incidence_temp$age_range = rep(object@age_ranges, each=length(times))
 
     # drop the old variable column
-    incidence_temp = subset(incidence_temp, select = -c(variable))
+    incidence_temp = incidence_temp %>% 
+      dplyr::select(-.data$variable)
 
     # bind SEIR and incidence dataframes
     output = rbind(out_temp, incidence_temp)
