@@ -28,7 +28,8 @@
 #' @import tidyverse
 #' @import reshape2
 #' @importFrom methods new
-#' @export
+#' @export SEIRAge
+#' @exportClass SEIRAge
 SEIRAge <- setClass('SEIRAge',
          # slots
          slots = c(
@@ -91,6 +92,7 @@ setGeneric(
     standardGeneric('initial_conditions<-')
   })
 
+#' @export
 setMethod(
   'initial_conditions<-', 'SEIRAge',
   function(object, value) {
@@ -162,6 +164,7 @@ setGeneric(
     standardGeneric('transmission_parameters<-')
   })
 
+#' @export
 setMethod(
   'transmission_parameters<-', 'SEIRAge',
   function(object, value) {
@@ -229,6 +232,7 @@ setGeneric("run",
 
 #' @importFrom magrittr "%>%"
 #' @importFrom rlang .data
+#' @export
 setMethod(
   "run", 'SEIRAge',
   function(object, times, solve_method = 'lsoda') {
@@ -291,11 +295,15 @@ setMethod(
                              replicate(length(times)*age, "E"),
                              replicate(length(times)*age, "I"),
                              replicate(length(times)*age, "R"))
-    out_temp$age_range = rep(object@age_ranges, each=length(times))
+    out_temp$age_range = unlist(rep(object@age_ranges, each=length(times)))
 
     #drop the old variable column
     out_temp = out_temp %>% 
-      dplyr::select(-.data$variable)
+      dplyr::select(-.data$variable) %>% 
+      dplyr::mutate(compartment=as.factor(compartment)) %>% 
+      dplyr::mutate(compartment=forcats::fct_relevel(compartment, "S", "E", "I", "R")) %>% 
+      dplyr::mutate(age_range=as.factor(age_range)) %>% 
+      dplyr::mutate(age_range=forcats::fct_relevel(age_range, object@age_ranges))
 
     # compute incidence number
     total_inf <- output[, (2*age+2):(3*age+1)] + output[, (3*age+2):(4*age+1)]
@@ -304,12 +312,12 @@ setMethod(
                    )
 
     # melt the incidence dataframe to long format
-    incidence_temp = melt(n_inc)
+    incidence_temp = melt(n_inc, id.vars=NULL)
 
     # add time, compartment and age_range columns as above
     incidence_temp$time = rep(times, age)
     incidence_temp$compartment = rep('Incidence', age*length(times))
-    incidence_temp$age_range = rep(object@age_ranges, each=length(times))
+    incidence_temp$age_range = unlist(rep(object@age_ranges, each=length(times)))
 
     # drop the old variable column
     incidence_temp = incidence_temp %>% 

@@ -156,7 +156,13 @@ test_that("can run simulation for the SEIRAge", {
                            replicate(length(times)*2, "I"),
                            replicate(length(times)*2, "R"),
                            replicate(length(times)*2, "Incidence"))
-  expected_output$age_range = rep(my_model@age_ranges, each=3)
+  expected_output$age_range = unlist(rep(my_model@age_ranges, each=3))
+  expected_output <- expected_output %>% 
+    dplyr::mutate(compartment=as.factor(compartment)) %>% 
+    dplyr::mutate(compartment=forcats::fct_relevel(compartment, "S", "E", "I", "R")) %>% 
+    dplyr::mutate(age_range=as.factor(age_range)) %>% 
+    dplyr::mutate(age_range=forcats::fct_relevel(age_range, my_model@age_ranges))
+  
   
   # Test output is correct
   expect_equal(run(my_model, seq(0, 2, by = 1)),
