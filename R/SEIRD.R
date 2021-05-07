@@ -20,8 +20,10 @@
 #' @import deSolve
 #' @import glue
 #' @import reshape2
+#' 
+#' @export SEIRD
 
-setClass("SEIRD",
+SEIRD <- setClass("SEIRD",
          # slots
          slots = c(
            output_names = "list",
@@ -244,14 +246,15 @@ setMethod(
 #' for solving the ode system. Default is "lsoda" which is also the default for
 #' the ode function in the deSolve package used in this function.
 #'
-#' @return a dataframe with the time steps, time series of S, E, I and R
-#' population fractions, and incidence numbers and deaths of the SEIRD model.
+#' @return two dataframes: one with the time steps, age range, time series of S,
+#' E, I and R population fractions, and one with the time steps, age range,
+#' time series of incidences and deaths population fraction.
 #' @export
 
-setGeneric(name = "simulate_SEIRD",
+setGeneric(name = "run",
            def = function(object, times = seq(0, 100, by = 1),
                           solve_method = "lsoda") {
-             standardGeneric("simulate_SEIRD")})
+             standardGeneric("run")})
 
 #' @describeIn SEIRD Solves ODEs of the SEIRD specified in object
 #' for the time points specified in times and integration method specified in
@@ -274,13 +277,14 @@ setGeneric(name = "simulate_SEIRD",
 #' for solving the ode system. Default is "lsoda" which is also the default for
 #' the ode function in the deSolve package used in this function.
 #'
-#' @return a dataframe with the time steps, time series of S, E, I and R
-#' population fractions, and incidence numbers and deaths of the SEIRD model.
-#' @aliases simulate_SEIRD,ANY,ANY-method
+#' @return two dataframes: one with the time steps, age range, time series of S,
+#' E, I and R population fractions, and one with the time steps, age range,
+#' time series of incidences and deaths population fraction.
+#' @aliases run,ANY,ANY-method
 #' @export
 
 setMethod(
-  "simulate_SEIRD", "SEIRD",
+  "run", "SEIRD",
   function(object, times, solve_method = "lsoda") {
     if (!is.double(times)) {
       stop("Evaluation times of the model storage format must be a vector.")
@@ -343,11 +347,19 @@ setMethod(
 
     # Added for consistency of output format across models
     output$age_range <- rep("0-150", length(output$time))
-
-    return(output)
+    
+    # Split output into 2 dataframes: one with S,E,I, and R and one with C and D
+    outputSEIR <- subset(output, compartment != "Incidences" &
+                           compartment != "Deaths")
+    outputCD <- subset(output, compartment != "S" &
+                         compartment != "E" &
+                         compartment != "I" &
+                         compartment != "R")
+    
+    return(list("outputSEIR" = outputSEIR,"outputCD" = outputCD))
   })
 
-my_model <- new("SEIRD")
+my_model <- SEIRD()
 transmission_parameters(my_model) <- list(1, 0.9, 0.5, 0.1)
 initial_conditions(my_model) <- list(0.9, 0, 0.1, 0)
-out_df <- simulate_SEIRD(my_model, seq(0, 50, by = 0.1))
+out_df <- run(my_model, seq(0, 50, by = 0.1))

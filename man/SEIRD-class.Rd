@@ -3,6 +3,7 @@
 \docType{class}
 \name{SEIRD-class}
 \alias{SEIRD-class}
+\alias{SEIRD}
 \alias{initial_conditions,SEIRD-method}
 \alias{initial_conditions,ANY,ANY-method}
 \alias{initial_cases_deaths,SEIRD-method}
@@ -13,8 +14,8 @@
 \alias{initial_conditions<-,ANY,ANY-method}
 \alias{transmission_parameters<-,SEIRD-method}
 \alias{transmission_parameters<-,ANY,ANY-method}
-\alias{simulate_SEIRD,SEIRD-method}
-\alias{simulate_SEIRD,ANY,ANY-method}
+\alias{run,SEIRD-method}
+\alias{run,ANY,ANY-method}
 \title{An S4 object representing the SEIRD.}
 \usage{
 \S4method{initial_conditions}{SEIRD}(object)
@@ -27,7 +28,7 @@
 
 \S4method{transmission_parameters}{SEIRD}(object) <- value
 
-\S4method{simulate_SEIRD}{SEIRD}(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
+\S4method{run}{SEIRD}(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
 }
 \arguments{
 \item{object}{an object of the class SEIRD}
@@ -48,8 +49,9 @@ object of class SEIRD with initial conditions assigned.
 object of class SEIRD with transmission parameter values
 assigned.
 
-a dataframe with the time steps, time series of S, E, I and R
-population fractions, and incidence numbers and deaths of the SEIRD model.
+two dataframes: one with the time steps, age range, time series of S,
+E, I and R population fractions, and one with the time steps, age range,
+time series of incidences and deaths population fraction.
 }
 \description{
 This class represents the SEIR model, showing how populations of susceptible,
@@ -75,7 +77,7 @@ If the initial conditions provided to do not sum to 1, an error is thrown.
 If the transmission parameters provided to are not 1-dimensional an error is
 thrown.
 
-\item \code{simulate_SEIRD}: Solves ODEs of the SEIRD specified in object
+\item \code{run}: Solves ODEs of the SEIRD specified in object
 for the time points specified in times and integration method specified in
 solve_method.
 

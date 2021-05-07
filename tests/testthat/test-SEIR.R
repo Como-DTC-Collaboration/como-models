@@ -1,5 +1,5 @@
 test_that("SEIRD model is instantiated correctly", {
-  my_model <- new("SEIRD")
+  my_model <- SEIRD()
 
   expect_length(my_model@initial_conditions, 4)
   expect_length(my_model@transmission_parameters, 4)
@@ -7,7 +7,7 @@ test_that("SEIRD model is instantiated correctly", {
 })
 
 test_that("Initial conditions can be set and retrieved", {
-  my_model <- new("SEIRD")
+  my_model <- SEIRD()
   initial_conditions(my_model) <- list(0.9, 0, 0.1, 0)
 
   # Test output is correct
@@ -25,7 +25,7 @@ test_that("Initial conditions can be set and retrieved", {
 })
 
 test_that("Initial cases and deaths can be retrieved", {
-  my_model <- new("SEIRD")
+  my_model <- SEIRD()
   initial_conditions(my_model) <- list(0.9, 0, 0.1, 0)
 
   # Test output is correct
@@ -34,7 +34,7 @@ test_that("Initial cases and deaths can be retrieved", {
 })
 
 test_that("Transmission parameters can be set and retrieved", {
-  my_model <- new("SEIRD")
+  my_model <- SEIRD()
   transmission_parameters(my_model) <- list(1, 0.5, 0.5, 0.1)
 
   # Test output is correct
@@ -49,31 +49,37 @@ test_that("Transmission parameters can be set and retrieved", {
 })
 
 test_that("SEIR model runs correctly", {
-  my_model <- new("SEIRD")
+  my_model <- SEIRD()
   initial_conditions(my_model) <- list(0.9, 0, 0.1, 0)
   transmission_parameters(my_model) <- list(0, 0, 0, 0)
 
   # Check output shape
-  out_df <- simulate_SEIRD(my_model, seq(0, 10, by = 0.1))
-  expect_identical(dim(out_df), as.integer(c(((10 - 0) / 0.1 + 1) * 6, 4)))
+  out_df <- run(my_model, seq(0, 10, by = 0.1))
+  expect_identical(dim(out_df$outputSEIR), as.integer(c(((10 - 0) / 0.1 + 1) * 4, 4)))
+  expect_identical(dim(out_df$outputCD), as.integer(c(((10 - 0) / 0.1 + 1) * 2, 4)))
 
   # Check output value for rates equal 0s
   expected_data <- data.frame(
     S = 0.9, E = 0, I = 0.1, R = 0, Incidences = 0, Deaths = 0)
-  out_df <- dcast(out_df, time ~ compartment, value.var = "value")
-  test_data <- out_df[101, 2:7]
-  row.names(test_data) <- NULL
-  expect_identical(test_data, expected_data)
+  out_df_SEIR <- dcast(out_df$outputSEIR, time ~ compartment, value.var = "value")
+  out_df_CD <- dcast(out_df$outputCD, time ~ compartment, value.var = "value")
+  test_data_SEIR <- out_df_SEIR[101, 2:5]
+  test_data_CD <- out_df_CD[101,2:3]
+  row.names(test_data_SEIR) <- NULL
+  row.names(test_data_CD) <- NULL
+  expect_identical(test_data_SEIR, expected_data[1:4])
+  expect_identical(test_data_CD, expected_data[5:6])
 
   # Check that sum of states is sufficiently close to one at all times
   transmission_parameters(my_model) <- list(0.9, 0.2, 0.01, 0.1)
-  out_df <- simulate_SEIRD(my_model, seq(0, 10, by = 0.1))
-  out_df <- dcast(out_df, time ~ compartment, value.var = "value")
-  out_df$Deaths <- cumsum(out_df$Deaths)
-  test <- rowSums(out_df[, c(2:5, 7)])
+  out_df <- run(my_model, seq(0, 10, by = 0.1))
+  out_df_SEIR <- dcast(out_df$outputSEIR, time ~ compartment, value.var = "value")
+  out_df_CD <- dcast(out_df$outputCD, time ~ compartment, value.var = "value")
+  out_df_CD$Deaths <- cumsum(out_df_CD$Deaths)
+  test <- rowSums(out_df_SEIR[, c(2:5)]) + out_df_CD$Deaths
   expected <- as.double(rep(1, 101))
   expect_equal(test, expected)
 
   # Test input errors
-  expect_error(simulate_SEIRD(my_model, "a"))
+  expect_error(run(my_model, "a"))
 })

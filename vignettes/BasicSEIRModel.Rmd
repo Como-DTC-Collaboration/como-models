@@ -85,7 +85,7 @@ class. This model is contained in the package comomodels.
 
 To create a new `SEIRD` object, run:
 ```{r}
-my_model <- new("SEIRD")
+my_model <- SEIRD()
 ```
 
 Next, we set the parameter values for $\beta$, $\kappa$, $\gamma$ and $\mu$:
@@ -113,7 +113,7 @@ respectively. The initial conditions must sum to one. If they do not, an error i
 
 Now we can simulate the system.
 ```{r}
-out_df <- simulate_SEIRD(my_model, seq(0, 50, by = 0.1))
+out_df <- run(my_model, seq(0, 50, by = 0.1))
 ```
 
 The function `simulate_SEIRD` solves `my_model` from the initial conditions specified
@@ -122,9 +122,7 @@ goes out to 50 days. The function returns
 a data frame where the columns are the time sequence, $S$, $E$, $I$, $R$, $C$ and $D$.
 Lastly, we visualize the results, plotting the six variables against time.
 ```{r fig1, fig.height = 5, fig.width = 7}
-i <- sapply(out_df, is.factor)
-out_df[i] <- lapply(out_df[i], as.character)
-SEIR_df <- subset(out_df, compartment != "Incidences" & compartment != "Deaths")
+SEIR_df <- out_df$outputSEIR
 SEIR_df$compartment <- factor(SEIR_df$compartment, levels = c("S", "E", "I", "R"))
 col <- c("S" = "blue", "E" = "green", "I" = "yellow", "R" = "red")
 SEIRplot <- ggplot(SEIR_df, aes(x = time, y = value)) +
@@ -138,7 +136,7 @@ print(SEIRplot)
 
 ```
 ```{r fig2, fig.height = 5, fig.width = 7}
-case_df <- subset(out_df, compartment == "Incidences" | compartment == "Deaths")
+case_df <- out_df$outputCD
 case_df$compartment <- factor(case_df$compartment, levels = c("Incidences", "Deaths"))
 col <- c("Incidences" = "gray", "Deaths" = "black")
 inc_plot <- ggplot(case_df, aes(x = time, y = value)) +
