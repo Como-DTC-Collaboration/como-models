@@ -358,8 +358,3 @@ setMethod(
     
     return(list("outputSEIR" = outputSEIR,"outputCD" = outputCD))
   })
-
-my_model <- SEIRD()
-transmission_parameters(my_model) <- list(1, 0.9, 0.5, 0.1)
-initial_conditions(my_model) <- list(0.9, 0, 0.1, 0)
-out_df <- run(my_model, seq(0, 50, by = 0.1))
