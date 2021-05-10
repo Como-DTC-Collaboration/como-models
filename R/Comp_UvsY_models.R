@@ -12,7 +12,7 @@ library(readxl)
 
 # load contact matrices
 load("../Data/contact_all_urban.rdata")
-contact_all_urban <- contact_all
+contact_all_urban <- contact_all # ROWS are age of person, COLUMNS are age of contact
 names_urban <- names(contact_all_urban)
 load("../Data/contact_all_rural.rdata")
 contact_all_rural <- contact_all
@@ -36,14 +36,14 @@ model_nomig <- new("SEIR_rural_urban")
 
 # compute average contact rate for urban an rural communities
 # units: number of contacts/day
-contact_rate_urban = mean(contact_all_urban[[country]])
-contact_rate_rural = mean(contact_all_rural[[country]])
+contact_rate_urban = mean(rowSums(contact_all_urban[[country]]))
+contact_rate_rural = mean(rowSums(contact_all_rural[[country]]))
 scaling_urban_to_rural = contact_rate_rural/contact_rate_urban
 res_rural = matrix(0,174,2)
 for (i in 1:174) {
   n = names_common[i]
-  rate_urban = mean(contact_all_urban[[n]])
-  rate_rural = mean(contact_all_rural[[n]])
+  rate_urban = mean(rowSums(contact_all_urban[[n]]))
+  rate_rural = mean(rowSums(contact_all_rural[[n]]))
   res_rural[i,] = c(rate_urban,rate_rural)
 }
 
@@ -51,8 +51,8 @@ res_rural <- data.frame("urban" = res_rural[,1], "rural" = res_rural[,2])
 row.names(res_rural) <- names_common
 
 ggplot(res_rural, aes(x=urban, y=rural)) + geom_point() +
-  coord_cartesian(xlim = c(0.45, 1.1), ylim = c(0.45, 1.1)) +
-  geom_segment(aes(x = 0, y = 0, xend = 1.5, yend = 1.5)) +
+  coord_cartesian(xlim = c(7, 18), ylim = c(7, 18)) +
+  geom_segment(aes(x = 0, y = 0, xend = 20, yend = 20)) +
   geom_text(label=names_common, hjust = -0.1, vjust = -0.1)
 
 # set parameters for both models, as equal as possible
@@ -64,8 +64,8 @@ k = 0.2 # 1/(incubation period in days)
 g = 0.1# 1/(days between infection and recovery)
 m = 0.03 # probability of death, cases-fatality ratio.
 # no migration model: bu, by, buy, byu, k, g, m
-c_uy = 0.1 # number of urban contacts per day for a rural individual, relative to urban-urban contact
-c_yu = 0.1 # number of rural contacts per day for an urban individual, relative to urban-urban contact
+c_uy = 0.5 # number of urban contacts per day for a rural individual, relative to urban-urban contact
+c_yu = 0.5 # number of rural contacts per day for an urban individual, relative to urban-urban contact
 buy = b * c_uy # rate at which rural individuals infect urban individuals
 byu = b * c_yu # rate at which urban individuals infect rural individuals
 transmission_parameters(model_nomig) <- list(bu, by, buy, byu, k, g, m)
