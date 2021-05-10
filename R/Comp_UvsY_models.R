@@ -62,7 +62,7 @@ bu = b # infection rate in urban community
 by = b * scaling_urban_to_rural # infection rate in rural community
 k = 0.2 # 1/(incubation period in days)
 g = 0.1# 1/(days between infection and recovery)
-m = 0.05 # 1/(days between infection and death)
+m = 0.035 # probability of death, cases-fatality ratio.
 # no migration model: bu, by, buy, byu, k, g, m
 c_uy = 0.5 # number of urban contacts per day for a rural individual, relative to urban-urban contact
 c_yu = 0.5 # number of rural contacts per day for an urban individual, relative to urban-urban contact
