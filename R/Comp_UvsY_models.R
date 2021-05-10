@@ -25,7 +25,7 @@ country <- "TUN"
 if (!(country %in% names_common)) {
   stop(paste(country," is not a valid three-letter country code."))
 }
-country_data <- read_excel("~/Downloads/Country_ruralpop_data.xlsx", sheet = "Data", skip = 3)
+country_data <- read_excel("../Data/Country_ruralpop_data.xlsx", sheet = "Data", skip = 3)
 country_frac_rural <- country_data$`2019`[country_data$`Country Code` == country]
 country_frac_rural <- country_frac_rural/100 #turn percentage into fraction
 
