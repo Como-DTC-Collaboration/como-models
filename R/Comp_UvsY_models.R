@@ -21,7 +21,7 @@ names_common <- intersect(names_urban,names_rural)
 
 # specify country and obtain population data
 # NOTE: World bank data and contact matrix data use the same three-letter country codes!
-country <- "TUN"
+country <- "ETH"
 if (!(country %in% names_common)) {
   stop(paste(country," is not a valid three-letter country code."))
 }
@@ -39,21 +39,21 @@ model_nomig <- new("SEIR_rural_urban")
 contact_rate_urban = mean(contact_all_urban[[country]])
 contact_rate_rural = mean(contact_all_rural[[country]])
 scaling_urban_to_rural = contact_rate_rural/contact_rate_urban
-#res_rural = matrix(0,174,2)
-#for (i in 1:174) {
-#  n = names_common[i]
-#  rate_urban = mean(contact_all_urban[[n]])
-#  rate_rural = mean(contact_all_rural[[n]])
-#  res_rural[i,] = c(rate_urban,rate_rural)
-#}
+res_rural = matrix(0,174,2)
+for (i in 1:174) {
+  n = names_common[i]
+  rate_urban = mean(contact_all_urban[[n]])
+  rate_rural = mean(contact_all_rural[[n]])
+  res_rural[i,] = c(rate_urban,rate_rural)
+}
 
-#res_rural <- data.frame("urban" = res_rural[,1], "rural" = res_rural[,2])
-#row.names(res_rural) <- names_common
+res_rural <- data.frame("urban" = res_rural[,1], "rural" = res_rural[,2])
+row.names(res_rural) <- names_common
 
-#ggplot(res_rural, aes(x=urban, y=rural)) + geom_point() +
-#  coord_cartesian(xlim = c(0.4, 1.2), ylim = c(0.4, 1.2)) +
-#  geom_segment(aes(x = 0, y = 0, xend = 1.5, yend = 1.5)) +
-#  geom_text(label=names_common)
+ggplot(res_rural, aes(x=urban, y=rural)) + geom_point() +
+  coord_cartesian(xlim = c(0.45, 1.1), ylim = c(0.45, 1.1)) +
+  geom_segment(aes(x = 0, y = 0, xend = 1.5, yend = 1.5)) +
+  geom_text(label=names_common, hjust = -0.1, vjust = -0.1)
 
 # set parameters for both models, as equal as possible
 # parameters they have in common
@@ -62,10 +62,10 @@ bu = b # infection rate in urban community
 by = b * scaling_urban_to_rural # infection rate in rural community
 k = 0.2 # 1/(incubation period in days)
 g = 0.1# 1/(days between infection and recovery)
-m = 0.035 # probability of death, cases-fatality ratio.
+m = 0.03 # probability of death, cases-fatality ratio.
 # no migration model: bu, by, buy, byu, k, g, m
-c_uy = 0.5 # number of urban contacts per day for a rural individual, relative to urban-urban contact
-c_yu = 0.5 # number of rural contacts per day for an urban individual, relative to urban-urban contact
+c_uy = 0.1 # number of urban contacts per day for a rural individual, relative to urban-urban contact
+c_yu = 0.1 # number of rural contacts per day for an urban individual, relative to urban-urban contact
 buy = b * c_uy # rate at which rural individuals infect urban individuals
 byu = b * c_yu # rate at which urban individuals infect rural individuals
 transmission_parameters(model_nomig) <- list(bu, by, buy, byu, k, g, m)
