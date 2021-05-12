@@ -57,6 +57,7 @@ format_matrix <- function(contact_matrix, age_names) {
     mutate(age_infectee=fct_relevel(age_infectee, age_names))
 }
 
+
 c_home <- format_matrix(contact_home$India, age_names) %>% mutate(type="home")
 c_work <- format_matrix(contact_work$India, age_names) %>% mutate(type="work")
 c_school <- format_matrix(contact_school$India, age_names) %>% mutate(type="school")
@@ -99,8 +100,17 @@ Specifically, the term $S_i \Sigma_{j}C_{ij} I_j$ effectively indicates the expe
 
 Now we create a model that includes this age-structured mixing. Since the contact matrices have 16 age classes, we instantiate a model with this number of classes. We also give it transmission parameters, populate the age classes with initial conditions and provide it with our overall contact matrix.
 
-We probably want to use more realistic demographics here for each age population: can we get these from comoDTC?
+We use more demographics loaded from the population data file provided by the como model and initialise the model
+with a uniform initial infected population of 1% across all age groups. The remaining 99% of the population starts
+as susceptibles.
 ```{r}
+
+
+pops = population[population$country == 'India', ]$pop
+pop_fraction = pops/sum(pops)
+pop_fraction[16] = sum(pop_fraction[16:21])
+pop_fraction = pop_fraction[1:16]
+
 n_ages <- 16
 c_combined_wider <- c_combined %>% 
   pivot_wider(id_cols = age_infectee, names_from = age_infector,
@@ -112,9 +122,10 @@ model <- comomodels::SEIRAge(n_age_categories = n_ages,
                  contact_matrix = c_combined_wider,
                  age_ranges = as.list(age_names))
 transmission_parameters(model) <- list(b=1, k=0.5, g=0.5)
-initial_conditions(model) <- list(S0=rep(0.05, n_ages),
+
+initial_conditions(model) <- list(S0=pop_fraction*0.99,
                                   E0=rep(0, n_ages),
-                                  I0=rep(0.0125, n_ages),
+                                  I0=pop_fraction*0.01,
                                   R0=rep(0, n_ages))
 ```
 
