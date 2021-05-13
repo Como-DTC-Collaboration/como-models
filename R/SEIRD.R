@@ -7,13 +7,9 @@
 #'       incidence.
 #' @slot initial_condition_names list of names of initial conditions
 #'       (characters). Default is list("S0", "E0", "I0", R0").
-#' @slot initial_cases_deaths_names name for initial cases and deaths
-#'       (characters). Default is list("C0", "D0").
 #' @slot transmission_parameter_names list of names of transmission parameters
-#'       (characters). Default is list("b", "k", "g", "m").
+#'       (characters). Default is list("beta", "kappa", "gamma", "mu").
 #' @slot initial_conditions list of values for initial conditions (double).
-#' @slot initial_cases_deaths list of values for initial cases and deaths.
-#'       Both set to 0, not to be changed by user (double).
 #' @slot transmission_parameters list of values for transmission parameters
 #'       (double).
 #'
@@ -22,7 +18,6 @@
 #' @import reshape2
 #' 
 #' @export SEIRD
-
 SEIRD <- setClass("SEIRD",
          # slots
          slots = c(
@@ -30,19 +25,15 @@ SEIRD <- setClass("SEIRD",
            initial_condition_names = "list",
            transmission_parameter_names = "list",
            initial_conditions = "list",
-           transmission_parameters = "list",
-           initial_cases_deaths_names = "list",
-           initial_cases_deaths = "list"
+           transmission_parameters = "list"
          ),
          # prototypes for the slots, automatically set parameter names and
          # its data type
          prototype = list(
-           output_names = list("S", "E", "I", "R", "Incidences", "Deaths"),
+           output_names = list("S", "E", "I", "R", "D", "Incidence", "Deaths"),
            initial_condition_names = list("S0", "E0", "I0", "R0"),
-           initial_cases_deaths_names = list("C0", "D0"),
-           transmission_parameter_names = list("b", "k", "g", "m"),
+           transmission_parameter_names = list("beta", "kappa", "gamma", "mu"),
            initial_conditions = vector(mode = "list", length = 4),
-           initial_cases_deaths = vector(mode = "list", length = 2),
            transmission_parameters = vector(mode = "list", length = 4)
          )
 )
@@ -60,32 +51,13 @@ setGeneric("initial_conditions",
 #' @param object An object of the class SEIRD.
 #' @aliases initial_conditions,ANY,ANY-method
 #' @export
-
 setMethod("initial_conditions", "SEIRD",
           function(object) object@initial_conditions)
-
-#' Retrieves initial cases and deaths of SEIRD model.
-#'
-#' @param object An object of the class SEIRD.
-#' @export
-
-setGeneric("initial_cases_deaths",
-           function(object) standardGeneric("initial_cases_deaths"))
-
-#' @describeIn SEIRD Retrieves initial cases and deaths of SEIRD model.
-#'
-#' @param object An object of the class SEIRD.
-#' @aliases initial_cases_deaths,ANY,ANY-method
-#' @export
-
-setMethod("initial_cases_deaths", "SEIRD",
-          function(object) object@initial_cases_deaths)
 
 #' Retrieves transmission parameters of SEIR model.
 #'
 #' @param object An object of the class SEIRD.
 #' @export
-
 setGeneric("transmission_parameters",
            function(object) standardGeneric("transmission_parameters"))
 
@@ -94,11 +66,10 @@ setGeneric("transmission_parameters",
 #' @param object An object of the class SEIRD.
 #' @aliases transmission_parameters,ANY,ANY-method
 #' @export
-
 setMethod("transmission_parameters", "SEIRD",
           function(object) object@transmission_parameters)
 
-#' Setter method for initial conditions (S0, E0, I0 and R0) of the SEIR model.
+#' Set initial conditions (S0, E0, I0 and R0) of the SEIR model.
 #'
 #' All initial conditions must sum up to 1.
 #' If the initial conditions provided to do not sum to 1, an error is thrown.
@@ -109,7 +80,6 @@ setMethod("transmission_parameters", "SEIRD",
 #' @return object of class SEIRD with initial conditions assigned.
 #'
 #' @export
-
 setGeneric(
   "initial_conditions<-",
   function(object, value) {
@@ -129,17 +99,15 @@ setGeneric(
 #'
 #' @aliases initial_conditions<-,ANY,ANY-method
 #' @export
-
 setMethod(
   "initial_conditions<-", "SEIRD",
   function(object, value) {
 
-    # create list of parameter values
+    if(mean(names(value) %in% object@initial_condition_names) != 1)
+      stop(paste0("Initial conditions must contain: ",
+                  object@initial_condition_names))
     init_cond <- value
-
-    # add names to each value
-    names(init_cond) <- object@initial_condition_names
-
+    
     # raise errors if age category dimensions do not match initial state vectors
     # also raise errors if initial state and parameter values are not doubles
     for (p in list("S0", "E0", "I0", "R0")) {
@@ -153,30 +121,22 @@ setMethod(
       stop("Invalid initial conditions. Must add up to 1.")
     }
 
-    # if all above tests are passed, assign the init_cond namelist to the object
-    # and assign initial cases and deaths
     object@initial_conditions <- init_cond
-    init_c0_d0 <- list(init_cond$E0 + init_cond$I0 + init_cond$R0, 0)
-    names(init_c0_d0) <- object@initial_cases_deaths_names
-
-    object@initial_cases_deaths <- init_c0_d0
 
     return(object)
   })
 
-#' Setter method for transmission parameters
-#' (b, k, g and m) of the SEIR model.
+#' Set transmission parameters for SEIRD model
 #'
 #' If the transmission parameters provided to are not 1-dimensional an error is
 #' thrown.
 #'
 #' @param object (SEIRD model)
-#' @param value (list) list of values for b, k, g, m, respectively.
+#' @param value (list) list of values for beta, kappa, gamma, mu, respectively.
 #'
 #' @return object of class SEIRD with transmission parameter values
 #' assigned.
 #' @export
-
 setGeneric(
   "transmission_parameters<-",
   function(object, value) {
@@ -184,31 +144,29 @@ setGeneric(
   })
 
 
-#' @describeIn SEIRD Setter method for transmission parameters
-#' (b, k, g and m) of the SEIR model.
+#' @describeIn SEIRD Set transmission parameters (beta, kappa, gamma and mu) of the SEIR model.
 #'
 #' If the transmission parameters provided to are not 1-dimensional an error is
 #' thrown.
 #'
 #' @param object (SEIRD model)
-#' @param value (list) list of values for b, k, g, m, respectively.
+#' @param value (list) list of values for beta, kappa, gamma, mu, respectively.
 #'
 #' @return object of class SEIRD with transmission parameter values
 #' assigned.
 #' @aliases transmission_parameters<-,ANY,ANY-method
 #' @export
-
 setMethod(
   "transmission_parameters<-", "SEIRD",
   function(object, value) {
 
     # create list of parameter values
+    if(mean(names(value) %in% object@transmission_parameter_names) != 1)
+      stop(paste0("Transmission parameters must contain: ",
+                  object@transmission_parameter_names))
     trans_params <- value
 
-    # add names to each value
-    names(trans_params) <- object@transmission_parameter_names
-
-    # check format of parameters b, k and g
+    # check format of parameters
     if (length(trans_params$b) != 1
         | length(trans_params$k) != 1
         | length(trans_params$g) != 1
@@ -229,12 +187,12 @@ setMethod(
 #' for the time points specified in times and integration method specified in
 #' solve_method.
 #'
-#' \deqn{\frac{dS(t)}{dt} = - b S(t) I(t)}
-#' \deqn{\frac{dE(t)}{dt} =  b S(t) I(t) - k E(t)}
-#' \deqn{\frac{dI(t)}{dt} = k E(t) - (g + m) I(t)}
-#' \deqn{\frac{dR(t)}{dt} = g I(t)}
-#' \deqn{\frac{dC(t)}{dt} = b S(t) I(t)}
-#' \deqn{\frac{dD(t)}{dt} = m I(t)}
+#' \deqn{\frac{dS(t)}{dt} = - beta S(t) I(t)}
+#' \deqn{\frac{dE(t)}{dt} =  beta S(t) I(t) - kappa E(t)}
+#' \deqn{\frac{dI(t)}{dt} = kappa E(t) - (gamma + mu) I(t)}
+#' \deqn{\frac{dR(t)}{dt} = gamma I(t)}
+#' \deqn{\frac{dC(t)}{dt} = beta S(t) I(t)}
+#' \deqn{\frac{dD(t)}{dt} = mu I(t)}
 #'
 #' This function relies on the package deSolve.
 #'
@@ -250,7 +208,6 @@ setMethod(
 #' E, I and R population fractions, and one with the time steps, age range,
 #' time series of incidences and deaths population fraction.
 #' @export
-
 setGeneric(name = "run",
            def = function(object, times = seq(0, 100, by = 1),
                           solve_method = "lsoda") {
@@ -260,12 +217,12 @@ setGeneric(name = "run",
 #' for the time points specified in times and integration method specified in
 #' solve_method.
 #'
-#' \deqn{\frac{dS(t)}{dt} = - b S(t) I(t)}
-#' \deqn{\frac{dE(t)}{dt} =  b S(t) I(t) - k E(t)}
-#' \deqn{\frac{dI(t)}{dt} = k E(t) - (g + m) I(t)}
-#' \deqn{\frac{dR(t)}{dt} = g I(t)}
-#' \deqn{\frac{dC(t)}{dt} = b S(t) I(t)}
-#' \deqn{\frac{dD(t)}{dt} = m I(t)}
+#' \deqn{\frac{dS(t)}{dt} = - beta S(t) I(t)}
+#' \deqn{\frac{dE(t)}{dt} =  beta S(t) I(t) - kappa E(t)}
+#' \deqn{\frac{dI(t)}{dt} = kappa E(t) - (gamma + mu) I(t)}
+#' \deqn{\frac{dR(t)}{dt} = gamma I(t)}
+#' \deqn{\frac{dC(t)}{dt} = beta S(t) I(t)}
+#' \deqn{\frac{dD(t)}{dt} = mu I(t)}
 #'
 #' This function relies on the package deSolve.
 #'
@@ -282,7 +239,6 @@ setGeneric(name = "run",
 #' time series of incidences and deaths population fraction.
 #' @aliases run,ANY,ANY-method
 #' @export
-
 setMethod(
   "run", "SEIRD",
   function(object, times, solve_method = "lsoda") {
@@ -295,8 +251,8 @@ setMethod(
                E = initial_conditions(object)$E0,
                I = initial_conditions(object)$I0,
                R = initial_conditions(object)$R0,
-               C = initial_cases_deaths(object)$C0,
-               D = initial_cases_deaths(object)$D0)
+               C = 0,
+               D = 0)
     # set transmission parameters vector
     parameters <- c(b = transmission_parameters(object)$b,
                     k = transmission_parameters(object)$k,
@@ -332,13 +288,11 @@ setMethod(
     output <- as.data.frame.array(out)
 
     # Compute incidences and deaths
-    output$C[2:length(output$C)] <- output$C[
-      2:length(output$C)] - output$C[1:(length(output$C) - 1)]
-    output$C[1] <- 0
-    output$D[2:length(output$D)] <- output$D[
-      2:length(output$D)] - output$D[1:(length(output$D) - 1)]
-
-    colnames(output) <- c("time", object@output_names)
+    cases <- c(0, diff(output$C))
+    deaths <- c(0, diff(output$D))
+    output$Incidence <- cases
+    output$Deaths <- deaths
+    output <- output[, c("time", unlist(object@output_names))]
 
     # Create long format of output
     output <- melt(output, id.vars = "time")
@@ -349,12 +303,10 @@ setMethod(
     output$age_range <- rep("0-150", length(output$time))
     
     # Split output into 2 dataframes: one with S,E,I, and R and one with C and D
-    outputSEIR <- subset(output, compartment != "Incidences" &
-                           compartment != "Deaths")
-    outputCD <- subset(output, compartment != "S" &
-                         compartment != "E" &
-                         compartment != "I" &
-                         compartment != "R")
+    states <- subset(output, !output$compartment %in% c("Incidence", "Deaths"))
+    states <- droplevels(states)
+    daily <- subset(output, output$compartment %in% c("Incidence", "Deaths"))
+    daily <- droplevels(daily)
     
-    return(list("outputSEIR" = outputSEIR,"outputCD" = outputCD))
+    return(list("states" = states, "daily" = daily))
   })

@@ -2,15 +2,14 @@
 % Please edit documentation in R/SEIRD.R
 \name{transmission_parameters<-}
 \alias{transmission_parameters<-}
-\title{Setter method for transmission parameters
-(b, k, g and m) of the SEIR model.}
+\title{Set transmission parameters for SEIRD model}
 \usage{
 transmission_parameters(object) <- value
 }
 \arguments{
 \item{object}{(SEIRD model)}
 
-\item{value}{(list) list of values for b, k, g, m, respectively.}
+\item{value}{(list) list of values for beta, kappa, gamma, mu, respectively.}
 }
 \value{
 object of class SEIRD with transmission parameter values

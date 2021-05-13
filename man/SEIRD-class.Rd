@@ -6,8 +6,6 @@
 \alias{SEIRD}
 \alias{initial_conditions,SEIRD-method}
 \alias{initial_conditions,ANY,ANY-method}
-\alias{initial_cases_deaths,SEIRD-method}
-\alias{initial_cases_deaths,ANY,ANY-method}
 \alias{transmission_parameters,SEIRD-method}
 \alias{transmission_parameters,ANY,ANY-method}
 \alias{initial_conditions<-,SEIRD-method}
@@ -20,8 +18,6 @@
 \usage{
 \S4method{initial_conditions}{SEIRD}(object)
 
-\S4method{initial_cases_deaths}{SEIRD}(object)
-
 \S4method{transmission_parameters}{SEIRD}(object)
 
 \S4method{initial_conditions}{SEIRD}(object) <- value
@@ -33,7 +29,7 @@
 \arguments{
 \item{object}{an object of the class SEIRD}
 
-\item{value}{(list) list of values for b, k, g, m, respectively.}
+\item{value}{(list) list of values for beta, kappa, gamma, mu, respectively.}
 
 \item{times}{(double) a sequence of time points at which the solution to
 the system of ODEs should be returned. Must be of the form
@@ -61,8 +57,6 @@ exposed, infectious and recovered individuals evolve over time.
 \itemize{
 \item \code{initial_conditions}: Retrieves initial conditions of SEIRD model.
 
-\item \code{initial_cases_deaths}: Retrieves initial cases and deaths of SEIRD model.
-
 \item \code{transmission_parameters}: Retrieves transmission parameters of SEIR model.
 
 \item \code{initial_conditions<-}: Setter method for initial conditions (S0, E0, I0 and R0)
@@ -71,8 +65,7 @@ of the SEIR model.
 All initial conditions must sum up to 1.
 If the initial conditions provided to do not sum to 1, an error is thrown.
 
-\item \code{transmission_parameters<-}: Setter method for transmission parameters
-(b, k, g and m) of the SEIR model.
+\item \code{transmission_parameters<-}: Set transmission parameters (beta, kappa, gamma and mu) of the SEIR model.
 
 If the transmission parameters provided to are not 1-dimensional an error is
 thrown.
@@ -81,12 +74,12 @@ thrown.
 for the time points specified in times and integration method specified in
 solve_method.
 
-\deqn{\frac{dS(t)}{dt} = - b S(t) I(t)}
-\deqn{\frac{dE(t)}{dt} =  b S(t) I(t) - k E(t)}
-\deqn{\frac{dI(t)}{dt} = k E(t) - (g + m) I(t)}
-\deqn{\frac{dR(t)}{dt} = g I(t)}
-\deqn{\frac{dC(t)}{dt} = b S(t) I(t)}
-\deqn{\frac{dD(t)}{dt} = m I(t)}
+\deqn{\frac{dS(t)}{dt} = - beta S(t) I(t)}
+\deqn{\frac{dE(t)}{dt} =  beta S(t) I(t) - kappa E(t)}
+\deqn{\frac{dI(t)}{dt} = kappa E(t) - (gamma + mu) I(t)}
+\deqn{\frac{dR(t)}{dt} = gamma I(t)}
+\deqn{\frac{dC(t)}{dt} = beta S(t) I(t)}
+\deqn{\frac{dD(t)}{dt} = mu I(t)}
 
 This function relies on the package deSolve.
 }}
@@ -100,16 +93,10 @@ incidence.}
 \item{\code{initial_condition_names}}{list of names of initial conditions
 (characters). Default is list("S0", "E0", "I0", R0").}
 
-\item{\code{initial_cases_deaths_names}}{name for initial cases and deaths
-(characters). Default is list("C0", "D0").}
-
 \item{\code{transmission_parameter_names}}{list of names of transmission parameters
-(characters). Default is list("b", "k", "g", "m").}
+(characters). Default is list("beta", "kappa", "gamma", "mu").}
 
 \item{\code{initial_conditions}}{list of values for initial conditions (double).}
-
-\item{\code{initial_cases_deaths}}{list of values for initial cases and deaths.
-Both set to 0, not to be changed by user (double).}
 
 \item{\code{transmission_parameters}}{list of values for transmission parameters
 (double).}

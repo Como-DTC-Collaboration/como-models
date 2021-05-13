@@ -25,12 +25,12 @@ E, I and R population fractions, and one with the time steps, age range,
 time series of incidences and deaths population fraction.
 }
 \description{
-\deqn{\frac{dS(t)}{dt} = - b S(t) I(t)}
-\deqn{\frac{dE(t)}{dt} =  b S(t) I(t) - k E(t)}
-\deqn{\frac{dI(t)}{dt} = k E(t) - (g + m) I(t)}
-\deqn{\frac{dR(t)}{dt} = g I(t)}
-\deqn{\frac{dC(t)}{dt} = b S(t) I(t)}
-\deqn{\frac{dD(t)}{dt} = m I(t)}
+\deqn{\frac{dS(t)}{dt} = - beta S(t) I(t)}
+\deqn{\frac{dE(t)}{dt} =  beta S(t) I(t) - kappa E(t)}
+\deqn{\frac{dI(t)}{dt} = kappa E(t) - (gamma + mu) I(t)}
+\deqn{\frac{dR(t)}{dt} = gamma I(t)}
+\deqn{\frac{dC(t)}{dt} = beta S(t) I(t)}
+\deqn{\frac{dD(t)}{dt} = mu I(t)}
 }
 \details{
 This function relies on the package deSolve.

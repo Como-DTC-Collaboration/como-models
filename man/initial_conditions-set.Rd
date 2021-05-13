@@ -2,7 +2,7 @@
 % Please edit documentation in R/SEIRD.R
 \name{initial_conditions<-}
 \alias{initial_conditions<-}
-\title{Setter method for initial conditions (S0, E0, I0 and R0) of the SEIR model.}
+\title{Set initial conditions (S0, E0, I0 and R0) of the SEIR model.}
 \usage{
 initial_conditions(object) <- value
 }
