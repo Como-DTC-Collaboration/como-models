@@ -16,7 +16,7 @@
 #' @import deSolve
 #' @import glue
 #' @import reshape2
-#' 
+#'
 #' @export SEIRD
 SEIRD <- setClass("SEIRD",
          # slots
@@ -102,11 +102,11 @@ setMethod(
   "initial_conditions<-", "SEIRD",
   function(object, value) {
 
-    if(mean(names(value) %in% object@initial_condition_names) != 1)
+    if (mean(names(value) %in% object@initial_condition_names) != 1)
       stop(paste0("Initial conditions must contain: ",
                   object@initial_condition_names))
     init_cond <- value
-    
+
     # raise errors if age category dimensions do not match initial state vectors
     # also raise errors if initial state and parameter values are not doubles
     for (p in list("S0", "E0", "I0", "R0")) {
@@ -143,7 +143,8 @@ setGeneric(
   })
 
 
-#' @describeIn SEIRD Set transmission parameters (beta, kappa, gamma and mu) of the SEIR model.
+#' @describeIn SEIRD Set transmission parameters (beta, kappa, gamma and mu)
+#' of the SEIR model.
 #'
 #' If the transmission parameters provided to are not 1-dimensional an error is
 #' thrown.
@@ -160,7 +161,7 @@ setMethod(
   function(object, value) {
 
     # create list of parameter values
-    if(mean(names(value) %in% object@transmission_parameter_names) != 1)
+    if (mean(names(value) %in% object@transmission_parameter_names) != 1)
       stop(paste0("Transmission parameters must contain: ",
                   object@transmission_parameter_names))
     trans_params <- value
@@ -244,10 +245,10 @@ setMethod(
     if (!is.double(times)) {
       stop("Evaluation times of the model storage format must be a vector.")
     }
-    
-    if(is.null(unlist(object@transmission_parameters)))
+
+    if (is.null(unlist(object@transmission_parameters)))
       stop("Transmission parameters must be set before running.")
-    if(is.null(unlist(object@initial_conditions)))
+    if (is.null(unlist(object@initial_conditions)))
       stop("Initial conditions must be set before running.")
 
     # set initial state vector
@@ -300,18 +301,18 @@ setMethod(
 
     # Create long format of output
     output <- melt(output, id.vars = "time")
-    output <- output[ , c("time", "value", "variable")]
+    output <- output[, c("time", "value", "variable")]
     names(output) <- c("time", "value", "compartment")
 
     # Added for consistency of output format across models
     output$age_range <- rep("0-150", length(output$time))
-    
+
     # Split output into 2 dataframes: one with S,E,I, and R and one with C and D
     states <- subset(output, !output$compartment %in% c("Incidence", "Deaths"))
     states <- droplevels(states)
     changes <- subset(output, output$compartment %in% c("Incidence", "Deaths"))
     changes <- droplevels(changes)
-    
+
     list("states" = states, "changes" = changes)
   })
 
@@ -321,12 +322,12 @@ setMethod(
 #'
 #' @return an R0 value
 #' @export
-setGeneric("R0", def=function(model){
+setGeneric("R0", def = function(model) {
   standardGeneric("R0")
 })
 
 #' @describeIn SEIRD Calculates basic reproduction number for SEIRD model
-#' 
+#'
 #' The R0 parameter is given by:
 #' \deqn{R_0 = \beta/\gamma}
 #'
