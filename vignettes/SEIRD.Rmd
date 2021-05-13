@@ -167,7 +167,7 @@ result %>%
 ```
 
 Why do some epidemics die out whereas others don't? This is can be explored through the basic reproduction number, $R_0$, which is the expected number of people infected by a
-single infectious individual in a population where everyone is susceptible. If $R_0>1$, the epidemic grows exponentially; if $R_0<1$, transmission dies out over time. In an SEIRD model, the reproductive number is given by:
+single infectious individual in a population where everyone is susceptible. If $R_0>1$, the epidemic intially grows exponentially; if $R_0<1$, transmission dies out immediately. In an SEIRD model, the reproductive number is given by:
 
 $$R_0 = \beta/\gamma.$$
 We now calculate $R_0$ for $\beta=0.1$ and $\beta=0.75$.
