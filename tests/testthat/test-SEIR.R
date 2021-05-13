@@ -46,14 +46,14 @@ test_that("SEIR model runs correctly", {
   # Check output shape
   t <- seq(0, 10, by = 0.1)
   out_df <- run(my_model, t)
-  expect_identical(dim(out_df$daily), as.integer(c(((10 - 0) / 0.1 + 1) * 2, 4)))
+  expect_identical(dim(out_df$changes), as.integer(c(((10 - 0) / 0.1 + 1) * 2, 4)))
   expect_identical(dim(out_df$state), as.integer(c(((10 - 0) / 0.1 + 1) * 5, 4)))
 
   # Check output value for rates equal 0s
   expected_data <- data.frame(
     S = 0.9, E = 0, I = 0.1, R = 0, Incidence = 0, Deaths = 0)
   out_df_SEIR <- dcast(out_df$states, time ~ compartment, value.var = "value")
-  out_df_CD <- dcast(out_df$daily, time ~ compartment, value.var = "value")
+  out_df_CD <- dcast(out_df$changes, time ~ compartment, value.var = "value")
   test_data_SEIR <- out_df_SEIR[101, 2:5]
   test_data_CD <- out_df_CD[101,2:3]
   row.names(test_data_SEIR) <- NULL
@@ -65,7 +65,7 @@ test_that("SEIR model runs correctly", {
   transmission_parameters(my_model) <- list(beta=0.9, kappa=0.2, gamma=0.01, mu=0.1)
   out_df <- run(my_model, seq(0, 10, by = 0.1))
   out_df_SEIR <- dcast(out_df$states, time ~ compartment, value.var = "value")
-  out_df_CD <- dcast(out_df$daily, time ~ compartment, value.var = "value")
+  out_df_CD <- dcast(out_df$changes, time ~ compartment, value.var = "value")
   out_df_CD$Deaths <- cumsum(out_df_CD$Deaths)
   test <- rowSums(out_df_SEIR[, c(2:5)]) + out_df_CD$Deaths
   expected <- as.double(rep(1, 101))
@@ -74,3 +74,5 @@ test_that("SEIR model runs correctly", {
   # Test input errors
   expect_error(run(my_model, "a"))
 })
+
+

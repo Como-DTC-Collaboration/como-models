@@ -41,7 +41,6 @@ SEIRD <- setClass("SEIRD",
 #'
 #' @param object An object of the class SEIRD.
 #' @export
-
 setGeneric("initial_conditions",
            function(object) standardGeneric("initial_conditions"))
 
@@ -123,7 +122,7 @@ setMethod(
 
     object@initial_conditions <- init_cond
 
-    return(object)
+    object
   })
 
 #' Set transmission parameters for SEIRD model
@@ -178,7 +177,7 @@ setMethod(
     # object
     object@transmission_parameters <- trans_params
 
-    return(object)
+    object
   })
 
 # SEIRD class specific functions
@@ -254,10 +253,10 @@ setMethod(
                C = 0,
                D = 0)
     # set transmission parameters vector
-    parameters <- c(b = transmission_parameters(object)$b,
-                    k = transmission_parameters(object)$k,
-                    g = transmission_parameters(object)$g,
-                    m = transmission_parameters(object)$m)
+    parameters <- c(b = transmission_parameters(object)$beta,
+                    k = transmission_parameters(object)$kappa,
+                    g = transmission_parameters(object)$gamma,
+                    m = transmission_parameters(object)$mu)
     # function for RHS of ode system
     right_hand_side <- function(t, state, parameters) {
       with(
@@ -305,8 +304,34 @@ setMethod(
     # Split output into 2 dataframes: one with S,E,I, and R and one with C and D
     states <- subset(output, !output$compartment %in% c("Incidence", "Deaths"))
     states <- droplevels(states)
-    daily <- subset(output, output$compartment %in% c("Incidence", "Deaths"))
-    daily <- droplevels(daily)
+    changes <- subset(output, output$compartment %in% c("Incidence", "Deaths"))
+    changes <- droplevels(changes)
     
-    return(list("states" = states, "daily" = daily))
+    list("states" = states, "changes" = changes)
   })
+
+#' Calculates basic reproduction number
+#'
+#' @param model a model object from comomodels package
+#'
+#' @return an R0 value
+#' @export
+setGeneric("R0", def=function(model){
+  standardGeneric("R0")
+})
+
+#' @describeIn SEIRD Calculates basic reproduction number for SEIRD model
+#' 
+#' The R0 parameter is given by:
+#' \deqn{R_0 = \beta/\gamma}
+#'
+#' @param model an SEIRD model
+#'
+#' @return an R0 value
+#' @export
+#' @aliases R0,ANY,ANY-method
+setMethod("R0", "SEIRD", function(model) {
+  beta <- model@transmission_parameters$beta
+  gamma <- model@transmission_parameters$gamma
+  beta / gamma
+})

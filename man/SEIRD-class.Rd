@@ -14,6 +14,8 @@
 \alias{transmission_parameters<-,ANY,ANY-method}
 \alias{run,SEIRD-method}
 \alias{run,ANY,ANY-method}
+\alias{R0,SEIRD-method}
+\alias{R0,ANY,ANY-method}
 \title{An S4 object representing the SEIRD.}
 \usage{
 \S4method{initial_conditions}{SEIRD}(object)
@@ -25,6 +27,8 @@
 \S4method{transmission_parameters}{SEIRD}(object) <- value
 
 \S4method{run}{SEIRD}(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
+
+\S4method{R0}{SEIRD}(model)
 }
 \arguments{
 \item{object}{an object of the class SEIRD}
@@ -38,6 +42,8 @@ seq(t_start, t_end, by=t_step). Default time series is seq(0, 100, by = 1).}
 \item{solve_method}{(string) a string of chosen numerical integration method
 for solving the ode system. Default is "lsoda" which is also the default for
 the ode function in the deSolve package used in this function.}
+
+\item{model}{an SEIRD model}
 }
 \value{
 object of class SEIRD with initial conditions assigned.
@@ -48,6 +54,8 @@ assigned.
 two dataframes: one with the time steps, age range, time series of S,
 E, I and R population fractions, and one with the time steps, age range,
 time series of incidences and deaths population fraction.
+
+an R0 value
 }
 \description{
 This class represents the SEIR model, showing how populations of susceptible,
@@ -82,6 +90,11 @@ solve_method.
 \deqn{\frac{dD(t)}{dt} = mu I(t)}
 
 This function relies on the package deSolve.
+
+\item \code{R0}: Calculates basic reproduction number for SEIRD model
+
+The R0 parameter is given by:
+\deqn{R_0 = \beta/\gamma}
 }}
 
 \section{Slots}{
