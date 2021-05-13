@@ -23,5 +23,6 @@ Imports:
     ggplot2,
     glue,
     methods,
-    reshape2
+    reshape2,
+    dplyr
 VignetteBuilder: knitr

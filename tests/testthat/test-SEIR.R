@@ -75,4 +75,28 @@ test_that("SEIR model runs correctly", {
   expect_error(run(my_model, "a"))
 })
 
+test_that("Running model before setting parameters fails", {
+  t <- seq(0, 10, by = 0.1)
+  my_model <- SEIRD()
+  initial_conditions(my_model) <- list(S0=0.9, E0=0, I0=0.1, R0=0)
+  expect_error(run(my_model, t), "Transmission parameters must be set before running.")
+  my_model <- SEIRD()
+  transmission_parameters(my_model) <- list(beta=0.9, kappa=0.2, gamma=0.01, mu=0.1)
+  expect_error(run(my_model, t), "Initial conditions must be set before running.")
+})
 
+test_that("R0 works for SEIRD model", {
+  my_model <- SEIRD()
+  initial_conditions(my_model) <- list(S0=0.9, E0=0, I0=0.1, R0=0)
+  beta <- 1.1
+  gamma <- 0.4
+  transmission_parameters(my_model) <- list(beta=beta, kappa=0.1,
+                                            gamma=gamma, mu=0.3)
+  expect_equal(R0(my_model), beta/gamma)
+  
+  beta <- 1.4
+  gamma <- 0.8
+  transmission_parameters(my_model) <- list(beta=beta, kappa=0.1,
+                                            gamma=gamma, mu=0.3)
+  expect_equal(R0(my_model), beta/gamma)
+})

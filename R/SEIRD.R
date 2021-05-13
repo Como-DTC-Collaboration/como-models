@@ -244,6 +244,11 @@ setMethod(
     if (!is.double(times)) {
       stop("Evaluation times of the model storage format must be a vector.")
     }
+    
+    if(is.null(unlist(object@transmission_parameters)))
+      stop("Transmission parameters must be set before running.")
+    if(is.null(unlist(object@initial_conditions)))
+      stop("Initial conditions must be set before running.")
 
     # set initial state vector
     state <- c(S = initial_conditions(object)$S0,
