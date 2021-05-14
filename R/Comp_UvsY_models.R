@@ -25,9 +25,11 @@ country <- "ETH"
 if (!(country %in% names_common)) {
   stop(paste(country," is not a valid three-letter country code."))
 }
-country_data <- read_excel("../Data/Country_ruralpop_data.xlsx", sheet = "Data", skip = 3)
-country_frac_rural <- country_data$`2019`[country_data$`Country Code` == country]
+country_pop_rural <- read_excel("../Data/Country_ruralpop_data.xlsx", sheet = "Data", skip = 3)
+country_pop_total<- read_excel("../Data/Country_totalpop_data.xlsx", sheet = "Data", skip = 3)
+country_frac_rural <- country_pop_rural$`2019`[country_pop_rural$`Country Code` == country]
 country_frac_rural <- country_frac_rural/100 #turn percentage into fraction
+country_totalpop <- country_pop_total$`2019`[country_pop_total$`Country Code` == country]
 
 # create model with NO migration, but with cross-community infection
 model_nomig <- new("SEIR_rural_urban")
@@ -36,39 +38,32 @@ model_nomig <- new("SEIR_rural_urban")
 
 # compute average contact rate for urban an rural communities
 # units: number of contacts/day
-contact_rate_urban = mean(rowSums(contact_all_urban[[country]]))
-contact_rate_rural = mean(rowSums(contact_all_rural[[country]]))
-scaling_urban_to_rural = contact_rate_rural/contact_rate_urban
-res_rural = matrix(0,174,2)
-for (i in 1:174) {
-  n = names_common[i]
-  rate_urban = mean(rowSums(contact_all_urban[[n]]))
-  rate_rural = mean(rowSums(contact_all_rural[[n]]))
-  res_rural[i,] = c(rate_urban,rate_rural)
-}
+# contact_rate_urban = mean(rowSums(contact_all_urban[[country]]))
+# contact_rate_rural = mean(rowSums(contact_all_rural[[country]]))
+# scaling_urban_to_rural = contact_rate_rural/contact_rate_urban
+#res_rural = matrix(0,174,2)
+#for (i in 1:174) {
+#  n = names_common[i]
+#  rate_urban = mean(rowSums(contact_all_urban[[n]]))
+#  rate_rural = mean(rowSums(contact_all_rural[[n]]))
+#  res_rural[i,] = c(rate_urban,rate_rural)
+#}
 
-res_rural <- data.frame("urban" = res_rural[,1], "rural" = res_rural[,2])
-row.names(res_rural) <- names_common
+#res_rural <- data.frame("urban" = res_rural[,1], "rural" = res_rural[,2])
+#row.names(res_rural) <- names_common
 
-ggplot(res_rural, aes(x=urban, y=rural)) + geom_point() +
-  coord_cartesian(xlim = c(7, 18), ylim = c(7, 18)) +
-  geom_segment(aes(x = 0, y = 0, xend = 20, yend = 20)) +
-  geom_text(label=names_common, hjust = -0.1, vjust = -0.1)
+#ggplot(res_rural, aes(x=urban, y=rural)) + geom_point() +
+#  coord_cartesian(xlim = c(7, 18), ylim = c(7, 18)) +
+#  geom_segment(aes(x = 0, y = 0, xend = 20, yend = 20)) +
+#  geom_text(label=names_common, hjust = -0.1, vjust = -0.1)
 
 # set parameters for both models, as equal as possible
 # parameters they have in common
-b = 0.3 # baseline infection rate, assuming urban community
-bu = b # infection rate in urban community
-by = b * scaling_urban_to_rural # infection rate in rural community
+b = 0.3 # probability of infection
 k = 0.2 # 1/(incubation period in days)
 g = 0.1# 1/(days between infection and recovery)
 m = 0.03 # probability of death, cases-fatality ratio.
-# no migration model: bu, by, buy, byu, k, g, m
-c_uy = 0.5 # number of urban contacts per day for a rural individual, relative to urban-urban contact
-c_yu = 0.5 # number of rural contacts per day for an urban individual, relative to urban-urban contact
-buy = b * c_uy # rate at which rural individuals infect urban individuals
-byu = b * c_yu # rate at which urban individuals infect rural individuals
-transmission_parameters(model_nomig) <- list(bu, by, buy, byu, k, g, m)
+transmission_parameters(model_nomig) <- list(b, k, g, m)
 # migration model: bu, by, k, g, m, fsu, fsy, feu, fey, fiu, fiy, fru, fry
 #fsu = 0.05 # migration rate of susceptible urban people to rural communities
 #fsy = 0.05 # migration rate of susceptible rural people to urban communities
@@ -86,8 +81,12 @@ start_infected_urban = 0.05
 initial_conditions(model_nomig) <- list(1-country_frac_rural - start_infected_urban, 0, start_infected_urban, 0, country_frac_rural, 0, 0, 0)
 #initial_conditions2(model_mig) <- list(0.59, 0, 0.01, 0, 0.4, 0, 0, 0)
 
+# set contact matrices
+contact_matrices(model_nomig) <- list(contact_all_urban[[country]],contact_all_rural[[country]])
+
+
 # simulate both models
-out_nomig <- simulate_SEIR_rural_urban(model_nomig, seq(0, 200, by = 0.1))
+out_nomig <- run(model_nomig, seq(0, 50, by = 0.1))
 #out_mig <- simulate_SEIR_rural_urban_2(model_mig, seq(0, 100, by = 0.1))
 
 # visualize results

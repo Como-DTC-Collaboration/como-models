@@ -14,12 +14,16 @@
 #' @slot initial_cases_deaths_names name for initial cases and deaths
 #'       (characters). Default is list("C_U0", "D_U0", "C_Y0", "D_Y0").
 #' @slot transmission_parameter_names list of names of transmission parameters
-#'       (characters). Default is list("bu", "by", "buy", "byu", "k", "g", "m").
+#'       (characters). Default is list("b", "k", "g", "m").
 #' @slot initial_conditions list of values for initial conditions (double).
 #' @slot initial_cases_deaths list of values for initial cases and deaths.
 #'       Both set to 0, not to be changed by user (double).
 #' @slot transmission_parameters list of values for transmission parameters
 #'       (double).
+#' @slot contact_matrices list of two contact matrices, one for urban communties
+#'       and one for rural communities, normalized to population size (double).
+#' @slot contact_matrices_names list of names for two contact matrices, 
+#'       one for urban communties and one for rural communities
 #'
 #' @import deSolve
 #' @import glue
@@ -34,7 +38,9 @@ setClass("SEIR_rural_urban",
            initial_conditions = "list",
            transmission_parameters = "list",
            initial_cases_deaths_names = "list",
-           initial_cases_deaths = "list"
+           initial_cases_deaths = "list",
+           contact_matrices = "list",
+           contact_matrices_names = "list"
          ),
          # prototypes for the slots, automatically set parameter names and
          # its data type
@@ -46,13 +52,17 @@ setClass("SEIR_rural_urban",
            initial_condition_names = list("S_U0", "E_U0", "I_U0", "R_U0", "S_Y0",
            "E_Y0", "I_Y0", "R_Y0"),
            initial_cases_deaths_names = list("C_U0", "D_U0", "C_Y0", "D_Y0"),
-           transmission_parameter_names = list("bu", "by", "buy", "byu", "k",
+           transmission_parameter_names = list("b", "k",
                                                "g", "m"),
            initial_conditions = vector(mode = "list", length = 8),
            initial_cases_deaths = vector(mode = "list", length = 4),
-           transmission_parameters = vector(mode = "list", length = 7)
+           transmission_parameters = vector(mode = "list", length = 7),
+           contact_matrices = vector(mode = "list", length = 2),
+           contact_matrices_names = list("urban", "rural")
          )
 )
+
+#-----------------------------------------------------------------------------
 #' Retrieves initial conditions of SEIR_rural_urban model.
 #'
 #' @param object An object of the class SEIR_rural_urban.
@@ -71,6 +81,7 @@ setGeneric("initial_conditions",
 setMethod("initial_conditions", "SEIR_rural_urban",
           function(object) object@initial_conditions)
 
+#-----------------------------------------------------------------------------
 #' Retrieves initial cases and deaths of SEIR_rural_urban model.
 #'
 #' @param object An object of the class SEIR_rural_urban.
@@ -88,6 +99,7 @@ setGeneric("initial_cases_deaths",
 setMethod("initial_cases_deaths", "SEIR_rural_urban",
           function(object) object@initial_cases_deaths)
 
+#-----------------------------------------------------------------------------
 #' Retrieves transmission parameters of SEIR model.
 #'
 #' @param object An object of the class SEIR_rural_urban.
@@ -105,6 +117,25 @@ setGeneric("transmission_parameters",
 setMethod("transmission_parameters", "SEIR_rural_urban",
           function(object) object@transmission_parameters)
 
+#-----------------------------------------------------------------------------
+#' Retrieves contact_matrices of SEIR model.
+#'
+#' @param object An object of the class SEIR_rural_urban.
+#' @export
+
+setGeneric("contact_matrices",
+           function(object) standardGeneric("contact_matrices"))
+
+#' @describeIn SEIR_rural_urban Retrieves contact matrices of SEIR model.
+#'
+#' @param object An object of the class SEIR_rural_urban.
+#' @aliases contact_matrices,ANY,ANY-method
+#' @export
+
+setMethod("contact_matrices", "SEIR_rural_urban",
+          function(object) object@contact_matrices)
+
+#-----------------------------------------------------------------------------
 #' Setter method for initial conditions (S0, E0, I0 and R0) for both communities
 #' in the SEIR model.
 #'
@@ -177,15 +208,15 @@ setMethod(
     return(object)
   })
 
+#-----------------------------------------------------------------------------
 #' Setter method for transmission parameters
-#' (bu, by, buy, byu, k, g and m) of the SEIR model.
+#' (b, k, g and m) of the SEIR model.
 #'
 #' If the transmission parameters provided to are not 1-dimensional an error is
 #' thrown.
 #'
 #' @param object (SEIR_rural_urban model)
-#' @param value (list) list of values for bu, by, buy, byu, k, g, m,
-#' respectively.
+#' @param value (list) list of values for b, k, g, m, respectively.
 #'
 #' @return object of class SEIR_rural_urban with transmission parameter values
 #' assigned.
@@ -199,14 +230,13 @@ setGeneric(
 
 
 #' @describeIn SEIR_rural_urban Setter method for transmission parameters
-#' (bu, by, buy, byu, k, g and m) of the SEIR model.
+#' (b, k, g and m) of the SEIR model.
 #'
 #' If the transmission parameters provided to are not 1-dimensional an error is
 #' thrown.
 #'
 #' @param object (SEIR_rural_urban model)
-#' @param value (list) list of values for  bu, by, buy, byu, k, g, m,
-#' respectively.
+#' @param value (list) list of values for k, g, m, respectively.
 #'
 #' @return object of class SEIR_rural_urban with transmission parameter values
 #' assigned.
@@ -223,11 +253,8 @@ setMethod(
     # add names to each value
     names(trans_params) <- object@transmission_parameter_names
     
-    # check format of parameters b, k and g
-    if (length(trans_params$bu) != 1
-        | length(trans_params$by) != 1
-        | length(trans_params$buy) != 1
-        | length(trans_params$byu) != 1
+    # check format of parameters b, k, g, m
+    if (length(trans_params$b) != 1
         | length(trans_params$k) != 1
         | length(trans_params$g) != 1
         | length(trans_params$m) != 1) {
@@ -241,26 +268,85 @@ setMethod(
     return(object)
   })
 
+#-----------------------------------------------------------------------------
+#' Setter method for contact matrices for urban and rural communities in the
+#' SEIR model. Matrices must be of type double and must be normalized
+#'
+#' @param object (SEIR_rural_urban model)
+#' @param value (list) list of contact matrices
+#'
+#' @return object of class SEIR_rural_urban with  contact matrices
+#' assigned.
+#' @export
+
+setGeneric(
+  "contact_matrices<-",
+  function(object, value) {
+    standardGeneric("contact_matrices<-")
+  })
+
+#' @describeIn SEIR_rural_urban #' Setter method for contact matrices for
+#' urban and rural communities in the SEIR model. 
+#' Matrices must be of type double and must be normalized
+#'
+#' @param object (SEIR_rural_urban model)
+#' @param value (list) list of contact matrices
+#'
+#' @return object of class SEIR_rural_urban with contact matrices
+#' assigned.
+#' @aliases contact_matrices<-,ANY,ANY-method
+#' @export
+
+setMethod(
+  "contact_matrices<-", "SEIR_rural_urban",
+  function(object, value) {
+    
+    # create list of parameter values
+    contact_mat <- value
+    
+    # add names to each value
+    names(contact_mat) <- object@contact_matrices_names
+    
+    # check format of contact matrices 
+    if (typeof(contact_mat$urban) != "double"
+        | typeof(contact_mat$rural) != "double" ) {
+      stop("Contact matrices must be of type double.")
+    }
+    
+    # check that matrices are normalized
+    if (!(all(contact_mat$urban) <= 1)
+        | !(all(contact_mat$rural) <= 1) ) {
+      stop("Contact matrices must be normalized.")
+    }
+    
+    # if all above tests are passed, assign the contact_mat namelist to the
+    # object
+    object@contact_matrices <- contact_mat
+    
+    return(object)
+  })
+
+#-----------------------------------------------------------------------------
 # SEIR_rural_urban class specific functions
 
 #' Solves ODEs of the SEIR_rural_urban specified in object
 #' for the time points specified in times and integration method specified in
 #' solve_method.
 #' For the urban community:
-#' \deqn{\frac{dS_U(t)}{dt} = - b_U S_U(t) I_U(t) - b_{UY} S_U I_U}
-#' \deqn{\frac{dE_U(t)}{dt} =  b_U S_U(t) I_U(t) + b_{UY} S_U I_U - k E_U(t)}
-#' \deqn{\frac{dI_U(t)}{dt} = k E_U(t) - (g + m) I_U(t)}
-#' \deqn{\frac{dR_U(t)}{dt} = g I_U(t)}
-#' \deqn{\frac{dC_U(t)}{dt} = b_U S_U(t) I_U(t) + b_{UY} S_U I_U}
-#' \deqn{\frac{dD_U(t)}{dt} = m I_U(t)}
+#' \deqn{\frac{dS_U(t)}{dt} = - b S_U I_U c_U - b S_U I_Y c_UY}
+#' \deqn{\frac{dE_U(t)}{dt} =  b S_U I_U c_U - b S_U I_Y c_UY - k E_U}
+#' \deqn{\frac{dI_U(t)}{dt} = k E_U - (g + m) I_U}
+#' \deqn{\frac{dR_U(t)}{dt} = g I_U}
+#' \deqn{\frac{dC_U(t)}{dt} = b S_U I_U c_U - b S_U I_Y c_UY}
+#' \deqn{\frac{dD_U(t)}{dt} = m I_U}
 #' 
 #' For the rural community:
-#' \deqn{\frac{dS_Y(t)}{dt} = - b_Y S_Y(t) I_Y(t) - b_{YU} S_Y I_Y}
-#' \deqn{\frac{dE_Y(t)}{dt} =  b_Y S_Y(t) I_Y(t) + b_{YU} S_Y I_Y - k E_Y(t)}
-#' \deqn{\frac{dI_Y(t)}{dt} = k E_Y(t) - (g + m) I_Y(t)}
-#' \deqn{\frac{dR_Y(t)}{dt} = g I_Y(t)}
-#' \deqn{\frac{dC_Y(t)}{dt} = b_Y S_Y(t) I_Y(t) + b_{YU} S_Y I_Y}
-#' \deqn{\frac{dD_Y(t)}{dt} = m I_Y(t)}
+#' \deqn{\frac{dS_Y(t)}{dt} = - b S_Y I_Y c_Y - b S_Y I_U c_YU}
+#' \deqn{\frac{dE_Y(t)}{dt} =   b S_Y I_Y c_Y - b S_Y I_U c_YU}
+#' \deqn{\frac{dI_Y(t)}{dt} = k E_Y - (g + m) I_Y}
+#' \deqn{\frac{dR_Y(t)}{dt} = g I_Y}
+#' \deqn{\frac{dC_Y(t)}{dt} =  b S_Y I_Y c_Y - b S_Y I_U c_YU}
+#' \deqn{\frac{dD_Y(t)}{dt} = m I_Y}
 #'
 #' This function relies on the package deSolve.
 #'
@@ -276,30 +362,30 @@ setMethod(
 #' population fractions, and incidence numbers and deaths of the SEIR_rural_urban model.
 #' @export
 
-setGeneric(name = "simulate_SEIR_rural_urban",
+setGeneric(name = "run",
            def = function(object, times = seq(0, 100, by = 1),
                           solve_method = "lsoda") {
-             standardGeneric("simulate_SEIR_rural_urban")})
+             standardGeneric("run")})
 
 #' @describeIn SEIR_rural_urban Solves ODEs of the SEIR_rural_urban specified in object
 #' for the time points specified in times and integration method specified in
 #' solve_method.
 #'
 #' For the urban community:
-#' \deqn{\frac{dS_U(t)}{dt} = - b_U S_U(t) I_U(t) - b_{UY} S_U I_U}
-#' \deqn{\frac{dE_U(t)}{dt} =  b_U S_U(t) I_U(t) + b_{UY} S_U I_U - k E_U(t)}
-#' \deqn{\frac{dI_U(t)}{dt} = k E_U(t) - (g + m) I_U(t)}
-#' \deqn{\frac{dR_U(t)}{dt} = g I_U(t)}
-#' \deqn{\frac{dC_U(t)}{dt} = b_U S_U(t) I_U(t) + b_{UY} S_U I_U}
-#' \deqn{\frac{dD_U(t)}{dt} = m I_U(t)}
+#' \deqn{\frac{dS_U(t)}{dt} = - b S_U I_U c_U - b S_U I_Y c_UY}
+#' \deqn{\frac{dE_U(t)}{dt} =  b S_U I_U c_U - b S_U I_Y c_UY - k E_U}
+#' \deqn{\frac{dI_U(t)}{dt} = k E_U - (g + m) I_U}
+#' \deqn{\frac{dR_U(t)}{dt} = g I_U}
+#' \deqn{\frac{dC_U(t)}{dt} = b S_U I_U c_U - b S_U I_Y c_UY}
+#' \deqn{\frac{dD_U(t)}{dt} = m I_U}
 #' 
 #' For the rural community:
-#' \deqn{\frac{dS_Y(t)}{dt} = - b_Y S_Y(t) I_Y(t) - b_{YU} S_Y I_Y}
-#' \deqn{\frac{dE_Y(t)}{dt} =  b_Y S_Y(t) I_Y(t) + b_{YU} S_Y I_Y - k E_Y(t)}
-#' \deqn{\frac{dI_Y(t)}{dt} = k E_Y(t) - (g + m) I_Y(t)}
-#' \deqn{\frac{dR_Y(t)}{dt} = g I_Y(t)}
-#' \deqn{\frac{dC_Y(t)}{dt} = b_Y S_Y(t) I_Y(t) + b_{YU} S_Y I_Y}
-#' \deqn{\frac{dD_Y(t)}{dt} = m I_Y(t)}
+#' \deqn{\frac{dS_Y(t)}{dt} = - b S_Y I_Y c_Y - b S_Y I_U c_YU}
+#' \deqn{\frac{dE_Y(t)}{dt} =   b S_Y I_Y c_Y - b S_Y I_U c_YU}
+#' \deqn{\frac{dI_Y(t)}{dt} = k E_Y - (g + m) I_Y}
+#' \deqn{\frac{dR_Y(t)}{dt} = g I_Y}
+#' \deqn{\frac{dC_Y(t)}{dt} =  b S_Y I_Y c_Y - b S_Y I_U c_YU}
+#' \deqn{\frac{dD_Y(t)}{dt} = m I_Y}
 #'
 #' This function relies on the package deSolve.
 #'
@@ -314,11 +400,11 @@ setGeneric(name = "simulate_SEIR_rural_urban",
 #' @return a dataframe with the time steps, time series of S, E, I and R
 #' population fractions, and incidence numbers and deaths for both communities
 #' in the SEIR_rural_urban model.
-#' @aliases simulate_SEIR_rural_urban,ANY,ANY-method
+#' @aliases run,ANY,ANY-method
 #' @export
 
 setMethod(
-  "simulate_SEIR_rural_urban", "SEIR_rural_urban",
+  "run", "SEIR_rural_urban",
   function(object, times, solve_method = "lsoda") {
     if (!is.double(times)) {
       stop("Evaluation times of the model storage format must be a vector.")
@@ -337,14 +423,25 @@ setMethod(
                RY = initial_conditions(object)$R_Y0,
                CY = initial_cases_deaths(object)$C_Y0,
                DY = initial_cases_deaths(object)$D_Y0)
+    # compute contacts c_U, c_UY, c_Y, c_YU from contact matrices
+    # number of urban contacts for an urban individual
+    c_U = mean(rowSums(contact_matrices(object)$urban))
+    print(c_U)
+    # number of rural contacts for an urban individual
+    c_UY = 0.1*c_U
+    # number of rural contacts for a rural individual
+    c_Y = mean(rowSums(contact_matrices(object)$rural))
+    #number of urban contacts for a rural individual
+    c_YU = 0.1*c_Y
     # set transmission parameters vector
-    parameters <- c(bu = transmission_parameters(object)$bu,
-                    by = transmission_parameters(object)$by,
-                    buy = transmission_parameters(object)$buy,
-                    byu = transmission_parameters(object)$byu,
+    parameters <- c(b = transmission_parameters(object)$b,
                     k = transmission_parameters(object)$k,
                     g = transmission_parameters(object)$g,
-                    m = transmission_parameters(object)$m)
+                    m = transmission_parameters(object)$m,
+                    c_U = c_U,
+                    c_UY = c_UY,
+                    c_Y = c_Y,
+                    c_YU = c_YU)
     # function for RHS of ode system
     right_hand_side <- function(t, state, parameters) {
       with(
@@ -362,18 +459,18 @@ setMethod(
           cy <- state[11]
           dy <- state[12]
           # rate of change: urban
-          dsu <- -bu * su * iu - buy * su *iy
-          deu <- bu * su * iu + buy * su *iy - k * eu
+          dsu <- -b * su * (1- du - dy - ( 1- iu - du - dy)^c_U) - b * su * (1- du - dy-(1 - iy - du - dy)^c_UY)
+          deu <- b * su * (1- du - dy-( 1- iu - du - dy)^c_U) + b * su * (1- du - dy-(1 - iy - du - dy)^c_UY) - k * eu
           diu <- k * eu - (g + m) * iu
           dru <- g * iu
-          dcu <- bu * su * iu + buy * su *iy
+          dcu <- b * su * (1- du - dy-( 1- iu - du - dy)^c_U) + b * su * (1- du - dy-(1 - iy - du - dy)^c_UY)
           d_deathu <- m * iu
           # rate of change: rural
-          dsy <- -by * sy * iy - byu * sy *iu
-          dey <- by * sy * iy + byu * sy *iu - k * ey
+          dsy <- -b * sy * (1- du - dy - (1-iy - du - dy)^c_Y) - b * sy * (1- du - dy - (1-iu - du - dy)^c_YU) 
+          dey <- b * sy * (1- du - dy - (1-iy - du - dy)^c_Y) + b * sy * (1- du - dy - (1-iu - du - dy)^c_YU) - k * ey
           diy <- k * ey - (g + m) * iy
           dry <- g * iy
-          dcy <- by * sy * iy + byu * sy *iu
+          dcy <- b * sy * (1- du - dy - (1-iy - du - dy)^c_Y) + b * sy * (1- du - dy - (1-iu - du - dy)^c_YU) 
           d_deathy <- m * iy
           # return the rate of change
           list(c(dsu, deu, diu, dru, dcu, d_deathu,
