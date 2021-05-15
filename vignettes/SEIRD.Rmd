@@ -126,9 +126,12 @@ $$ \text{deaths(t)} = C(t) - C(t - 1).$$
 ```{r fig2, fig.height = 5, fig.width = 7}
 changes <- out_df$changes
 
-ggplot(changes, aes(x = time, y = value)) +
-  geom_line(aes(color = compartment)) +
-  scale_color_brewer(palette = "Dark2")
+ggplot(changes, aes(x = time, y = value, fill = compartment)) +
+  geom_bar(stat="identity", position = position_dodge()) +
+  labs(x = "time", y = "fraction of the population per day",
+       title = glue("Incidences and deaths")) +
+  theme(legend.position = "bottom", legend.title = element_blank())
+
 ```
 
 ## Sensitivity analysis
@@ -141,7 +144,7 @@ run_seird <- function(beta_val) {
   params <- list(beta=beta_val, kappa=0.9, gamma=0.5, mu=0.1)
   model <- SEIRD(initial_conditions = inits,
                 transmission_parameters=params)
-  times <- seq(0, 50, by = 0.1)
+  times <- seq(0, 50, by = 1)
   out_df <- run(model, times)
   out_df$changes
 }
