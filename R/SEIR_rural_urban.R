@@ -24,6 +24,9 @@
 #'       and one for rural communities, normalized to population size (double).
 #' @slot contact_matrices_names list of names for two contact matrices, 
 #'       one for urban communties and one for rural communities
+#' @slot country_demog list of vectors with percentage of population in each age
+#'       group in urban and rural community.
+#' @slot country_demog_names list of names for urban and rural demographic data.
 #'
 #' @import deSolve
 #' @import glue
@@ -40,7 +43,9 @@ setClass("SEIR_rural_urban",
            initial_cases_deaths_names = "list",
            initial_cases_deaths = "list",
            contact_matrices = "list",
-           contact_matrices_names = "list"
+           contact_matrices_names = "list",
+           country_demog = "list",
+           country_demog_names = "list"
          ),
          # prototypes for the slots, automatically set parameter names and
          # its data type
@@ -58,7 +63,9 @@ setClass("SEIR_rural_urban",
            initial_cases_deaths = vector(mode = "list", length = 4),
            transmission_parameters = vector(mode = "list", length = 7),
            contact_matrices = vector(mode = "list", length = 2),
-           contact_matrices_names = list("urban", "rural")
+           contact_matrices_names = list("urban", "rural"),
+           country_demog = list("urban", "rural"),
+           country_demog_names = list("urban", "rural")
          )
 )
 
@@ -134,6 +141,24 @@ setGeneric("contact_matrices",
 
 setMethod("contact_matrices", "SEIR_rural_urban",
           function(object) object@contact_matrices)
+
+#-----------------------------------------------------------------------------
+#' Retrieves demographic data of SEIR model.
+#'
+#' @param object An object of the class SEIR_rural_urban.
+#' @export
+
+setGeneric("country_demog",
+           function(object) standardGeneric("country_demog"))
+
+#' @describeIn SEIR_rural_urban Retrieves demographic data of SEIR model.
+#'
+#' @param object An object of the class SEIR_rural_urban.
+#' @aliases country_demog,ANY,ANY-method
+#' @export
+
+setMethod("country_demog", "SEIR_rural_urban",
+          function(object) object@country_demog)
 
 #-----------------------------------------------------------------------------
 #' Setter method for initial conditions (S0, E0, I0 and R0) for both communities
@@ -270,12 +295,12 @@ setMethod(
 
 #-----------------------------------------------------------------------------
 #' Setter method for contact matrices for urban and rural communities in the
-#' SEIR model. Matrices must be of type double and must be normalized
+#' SEIR model. Matrices must be of type double.
 #'
 #' @param object (SEIR_rural_urban model)
 #' @param value (list) list of contact matrices
 #'
-#' @return object of class SEIR_rural_urban with  contact matrices
+#' @return object of class SEIR_rural_urban with contact matrices
 #' assigned.
 #' @export
 
@@ -287,7 +312,7 @@ setGeneric(
 
 #' @describeIn SEIR_rural_urban #' Setter method for contact matrices for
 #' urban and rural communities in the SEIR model. 
-#' Matrices must be of type double and must be normalized
+#' Matrices must be of type double
 #'
 #' @param object (SEIR_rural_urban model)
 #' @param value (list) list of contact matrices
@@ -313,15 +338,65 @@ setMethod(
       stop("Contact matrices must be of type double.")
     }
     
+    # if all above tests are passed, assign the contact_mat namelist to the
+    # object
+    object@contact_matrices <- contact_mat
+    
+    return(object)
+  })
+
+#-----------------------------------------------------------------------------
+#' Setter method for demographic data for urban and rural communities in the
+#' SEIR model. both vectors together must sum to 1.
+#'
+#' @param object (SEIR_rural_urban model)
+#' @param value (list) list of 2 sets of population fractions by age group
+#'
+#' @return object of class SEIR_rural_urban with  contact matrices
+#' assigned.
+#' @export
+
+setGeneric(
+  "country_demog<-",
+  function(object, value) {
+    standardGeneric("country_demog<-")
+  })
+
+#' @describeIn SEIR_rural_urban Setter method for demographic data for urban
+#' and rural communities in the SEIR model. both vectors together must sum to 1.
+#'
+#' @param object (SEIR_rural_urban model)
+#' @param value (list) list of 2 set of population fractions by age group
+#'
+#' @return object of class SEIR_rural_urban with demographic data
+#' assigned.
+#' @aliases country_demog<-,ANY,ANY-method
+#' @export
+
+setMethod(
+  "country_demog<-", "SEIR_rural_urban",
+  function(object, value) {
+    
+    # create list of parameter values
+    demo_data <- value
+    
+    # add names to each value
+    names(demo_data) <- object@country_demog_names
+    
+    # check format of contact matrices 
+    if (typeof(demo_data$urban) != "double"
+        | typeof(demo_data$rural) != "double" ) {
+      stop("Contact matrices must be of type double.")
+    }
+    
     # check that matrices are normalized
-    if (!(all(contact_mat$urban) <= 1)
-        | !(all(contact_mat$rural) <= 1) ) {
-      stop("Contact matrices must be normalized.")
+    if (!(sum(demo_data$urban)+sum(demo_data$rural)) <= 1) {
+      stop("Sum over all age groups and both communities must be 1.")
     }
     
     # if all above tests are passed, assign the contact_mat namelist to the
     # object
-    object@contact_matrices <- contact_mat
+    object@country_demog <- demo_data
     
     return(object)
   })
@@ -425,12 +500,11 @@ setMethod(
                DY = initial_cases_deaths(object)$D_Y0)
     # compute contacts c_U, c_UY, c_Y, c_YU from contact matrices
     # number of urban contacts for an urban individual
-    c_U = mean(rowSums(contact_matrices(object)$urban))
-    print(c_U)
+    c_U = sum(rowSums(contact_matrices(object)$urban) *country_demog(object)$urban)/2
     # number of rural contacts for an urban individual
     c_UY = 0.1*c_U
     # number of rural contacts for a rural individual
-    c_Y = mean(rowSums(contact_matrices(object)$rural))
+    c_Y = sum(rowSums(contact_matrices(object)$rural) *country_demog(object)$rural)/2
     #number of urban contacts for a rural individual
     c_YU = 0.1*c_Y
     # set transmission parameters vector
@@ -459,18 +533,18 @@ setMethod(
           cy <- state[11]
           dy <- state[12]
           # rate of change: urban
-          dsu <- -b * su * (1- du - dy - ( 1- iu - du - dy)^c_U) - b * su * (1- du - dy-(1 - iy - du - dy)^c_UY)
-          deu <- b * su * (1- du - dy-( 1- iu - du - dy)^c_U) + b * su * (1- du - dy-(1 - iy - du - dy)^c_UY) - k * eu
+          dsu <- -(b * su * iu * c_U + b * su * iy * c_UY)
+          deu <- b * su * iu * c_U + b * su * iy * c_UY - k * eu
           diu <- k * eu - (g + m) * iu
           dru <- g * iu
-          dcu <- b * su * (1- du - dy-( 1- iu - du - dy)^c_U) + b * su * (1- du - dy-(1 - iy - du - dy)^c_UY)
+          dcu <- b * su * iu * c_U + b * su * iy * c_UY
           d_deathu <- m * iu
           # rate of change: rural
-          dsy <- -b * sy * (1- du - dy - (1-iy - du - dy)^c_Y) - b * sy * (1- du - dy - (1-iu - du - dy)^c_YU) 
-          dey <- b * sy * (1- du - dy - (1-iy - du - dy)^c_Y) + b * sy * (1- du - dy - (1-iu - du - dy)^c_YU) - k * ey
+          dsy <- -(b * sy * iy * c_Y + b * sy * iu * c_YU) 
+          dey <- b * sy * iy * c_Y + b * sy * iu * c_YU - k * ey
           diy <- k * ey - (g + m) * iy
           dry <- g * iy
-          dcy <- b * sy * (1- du - dy - (1-iy - du - dy)^c_Y) + b * sy * (1- du - dy - (1-iu - du - dy)^c_YU) 
+          dcy <- b * sy * iy * c_Y + b * sy * iu * c_YU 
           d_deathy <- m * iy
           # return the rate of change
           list(c(dsu, deu, diu, dru, dcu, d_deathu,
