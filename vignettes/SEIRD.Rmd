@@ -112,7 +112,9 @@ states <- out_df$states
 
 ggplot(states, aes(x = time, y = value)) +
   geom_line(aes(color = compartment)) +
-  scale_color_brewer(palette = "Dark2")
+  scale_color_brewer(palette = "Dark2") +
+  labs(x = "time (days)", y = "fraction of the population",
+       title = glue("Evolution of different compartments over time"))
 ```
 
 The simulation also outputs incidence and deaths. These are derived from the state variables. Incidence is just the difference between the cumulative number of cases between two time points,
@@ -128,7 +130,7 @@ changes <- out_df$changes
 
 ggplot(changes, aes(x = time, y = value, fill = compartment)) +
   geom_bar(stat="identity", position = position_dodge()) +
-  labs(x = "time", y = "fraction of the population per day",
+  labs(x = "time (days)", y = "fraction of the population per day",
        title = glue("Incidences and deaths")) +
   theme(legend.position = "bottom", legend.title = element_blank())
 
@@ -163,9 +165,12 @@ for(i in seq_along(beta_vals)) {
 # plot results
 result %>% 
   filter(compartment=="Deaths") %>% 
-  ggplot(aes(x=time, y=value)) +
-  geom_line(aes(colour=as.factor(beta), group=as.factor(beta))) +
-  labs(y = "Fraction of the population that died per day", color = "beta")
+  ggplot(aes(x=time, y=value, fill = as.factor(beta))) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  labs(x = "time (days)", y = "Fraction of the population that died per day",
+       title = glue("Number of deaths for differing values of beta")) +
+  theme(legend.position = "bottom", legend.title = element_blank())
+
 ```
 
 Why do some epidemics die out quickly but others don't? This is can be explored through the basic reproductive number, $R_0$, which is the expected number of people infected by a
