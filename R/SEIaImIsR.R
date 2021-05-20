@@ -12,8 +12,7 @@ setClass("gg")
 #' 1. Total initial population size is normalised to 1
 #' 2. The current model does not include natural death or birth.
 #'
-#' @slot name A string gives the name of the model
-#' @slot initial_population A named list of the initial population size of each group with names: "S", "E", "I_asymptomatic", "I_mild", "I_severe", "R", "D_cumulative"
+#' @slot initial_population A named list of the initial population size of each group with names: "S", "E", "I_asymptomatic", "I_mild", "I_severe", "R", "D"
 #' @slot parameters A named list of the model parameters with names: "lam", "gamma", "omega", "e2i", "i2r", "pdeath"
 #' @slot output A dataframe holding the ode simulation output of different population groups in long format, using simulation time points as id variables
 #' @slot plot_output A ggplot holding the plot of the ode simulation output
@@ -24,27 +23,23 @@ setClass("gg")
 #' @import plyr
 #' @import magrittr
 #'
-#' @name SEIaImIsR-class
-#' @rdname SEIaImIsR-class
 #' @concept objects
-#' @exportClass SEIaImIsR
-#'
-setClass(Class = "SEIaImIsR",
+#' @export SEIaImIsR
+SEIaImIsR <- setClass(Class = "SEIaImIsR",
          slots = c(
-           name = "character",
-           initial_population = "list",
-           parameters = "list",
-           output = "list",
-           plot_output = "gg"
+           initial_condition_names = "list",
+           transmission_parameter_names = "list",
+           initial_conditions = "list",
+           transmission_parameters = "list",
+           output_names = "list"
          ),
          prototype = list(
-           name = NA_character_,
-           initial_population = vector(mode = "list", length = 7) %>%
-             setNames(list("S", "E", "I_asymptomatic", "I_mild", "I_severe", "R", "D_cumulative")),
-           parameters = vector(mode = "list", length = 6) %>%
-             setNames(list("lam", "gamma", "omega", "e2i", "i2r", "pdeath")),
-           output = data.frame(),
-           plot_output = ggplot2::ggplot()
+           initial_condition_names = list("S0", "E0", "I_asymptomatic0",
+                                          "I_mild0", "I_severe0", "R0"),
+           transmission_parameter_names= list("lam", "gamma", "omega",
+                                              "e2i", "i2r", "pdeath"),
+           initial_conditions = vector(mode = "list", length = 6),
+           transmission_parameters = vector(mode = "list", length = 6)
          ))
 
 
@@ -63,7 +58,7 @@ setClass(Class = "SEIaImIsR",
 #' @param I_mild Numeric, initial fraction of the population that is infected with mild symptoms
 #' @param I_severe Numeric, initial fraction of the population that is infected severe symptoms
 #' that need further hospitalization
-#' @param D_cumulative Numeric, initial fraction of the population that is dead due to the infection
+#' @param D Numeric, initial fraction of the population that is dead due to the infection
 #' @param R Numeric, initial fraction of the population that is recovered
 #' @param lam Numeric, rate at which an infected individual exposes susceptible
 #' @param gamma Numeric, rate at which exposed individuals become infected
@@ -81,12 +76,12 @@ set_init <- function(
   E=NA_real_,
   I_asymptomatic=NA_real_, I_mild=NA_real_, I_severe=NA_real_,
   R=NA_real_,
-  D_cumulative=NA_real_,
+  D=NA_real_,
   lam=NA_real_, gamma=NA_real_, omega=NA_real_,
   e2i=list(), i2r=list(), pdeath=list()
 ){
   param_list <- list(lam, gamma, omega, e2i, i2r, pdeath)
-  init_pop_list <- list(S, E, I_asymptomatic, I_mild, I_severe, R, D_cumulative)
+  init_pop_list <- list(S, E, I_asymptomatic, I_mild, I_severe, R, D)
   names(param_list) <- names(object@parameters)
   names(init_pop_list) <- names(object@initial_population)
   object@initial_population <- init_pop_list
@@ -145,14 +140,15 @@ check_init <- function(object) {
   if (length(errors) == 0) TRUE else errors
 }
 
-#' to solve the ode system.
+#' Solves the ode system.
+#' 
 #' \deqn{\frac{dS}{dt} = -\lambda S(I_asymptomatic + I_mild + I_severe) + \omega R}
-#' \deqn{\frac{dE}/{dt} = \lambda S(I_asymptomatic + I_mild + I_severe) - \gamma E}
+#' \deqn{\frac{dE}{dt} = \lambda S(I_asymptomatic + I_mild + I_severe) - \gamma E}
 #' \deqn{\frac{dI_asymptomatic}{dt} = e2i.i_asymptomic \gamma E - i2r.i_asymptomatic I_asymptomatic - pdeath.i_asymptomatic I_asymptomatic}
 #' \deqn{\frac{dI_mild}{dt} = e2i.i_mild\gamma E - i2r.i_mild I_mild - pdeath.i_mild I_mild}
 #' \deqn{\frac{dI_severe}{dt} = e2i.i_severe\gamma E - i2r.i_severe I_severe  - pdeath.i_severe I_severe}
 #' \deqn{\frac{dR}{dt} = -\omega R + i2r.i_mild I_mild + i2r.i_severe I_severe}
-#' \deqn{\frac{dD_cumulative}{dt} =  pdeath.i_mild  I_mild + pdeath.i_severe I_severe}
+#' \deqn{\frac{dD}{dt} =  pdeath.i_mild  I_mild + pdeath.i_severe I_severe}
 #'
 #' @param object An object of class SEIaImIsR
 #' @param times A list of time points of the simulation period
@@ -172,7 +168,7 @@ ode_simulate <- function(
                   I_mild = object@initial_population$I_mild,
                   I_severe = object@initial_population$I_severe,
                   R = object@initial_population$R,
-                  D_cumulative = object@initial_population$D_cumulative)
+                  D = object@initial_population$D)
   # parameters
   params <- c(lam = object@parameters$lam,
               gamma = object@parameters$gamma,
@@ -191,9 +187,9 @@ ode_simulate <- function(
         dI_mild <- e2i.i_mild * gamma * E - i2r.i_mild * I_mild  - pdeath.i_mild * I_mild
         dI_severe <- e2i.i_severe * gamma * E - i2r.i_severe * I_severe  - pdeath.i_severe * I_severe
         dR <- -omega * R + i2r.i_asymptomatic * I_asymptomatic + i2r.i_mild * I_mild + i2r.i_severe * I_severe
-        dD_cumulative <-  pdeath.i_asymptomatic * I_asymptomatic + pdeath.i_mild * I_mild + pdeath.i_severe * I_severe
+        dD <-  pdeath.i_asymptomatic * I_asymptomatic + pdeath.i_mild * I_mild + pdeath.i_severe * I_severe
         # return the rate of cI_severenge
-        list(c(dS, dE, dI_asymptomatic, dI_mild, dI_severe, dR, dD_cumulative))
+        list(c(dS, dE, dI_asymptomatic, dI_mild, dI_severe, dR, dD))
       })
   }
   # solving ode
@@ -208,29 +204,4 @@ ode_simulate <- function(
   names(output.melt) <- c("time", "population_group", "fraction")
   object@output <- output.melt
   return(object)
-}
-
-
-#' to plot the outcome of the ode similuation
-#'
-#' @param object An object of class SEIaImIsR
-#' @return An object of class SEIaImIsR with a plot showing the ode simulation outcome
-#' @rdname SEIaImIsR-class
-#' @export
-#'
-plot_ode_output <- function(object) {
-  output <- object@output
-  # make sur object@output is not empty.
-  if (empty(output)) {
-    error <- "Empty output. \
-  Please first run the ode simulation by calling ode_simulate."
-    return(error)
-  }else{
-    # plot the each group
-    p <- ggplot(data = output, aes(x = time, y = fraction)) +
-      geom_line(aes(colour = population_group)) +
-      theme_classic()
-    object@plot_output <- p
-    return(object)
-  }
 }

@@ -24,10 +24,9 @@ Imports:
     magrittr,
     plyr,
     reshape2,
-    methods
-Collate: 
-    'SEIR_Model.R'
-    'SEIaImIsR-class.R'
-    'fbind.R'
-    'fcount.R'
+    methods,
+    glue,
+    methods,
+    reshape2,
+    dplyr
 VignetteBuilder: knitr

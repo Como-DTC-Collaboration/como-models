@@ -87,7 +87,7 @@ class.
 
 To create a new `SEIaImIsR` object, run:
 ```{r}
-model <- new("SEIaImIsR", name = "model")
+model <- SEIaImIsR()
 ```
 
 Next, we assign values for the fractions of the population.
