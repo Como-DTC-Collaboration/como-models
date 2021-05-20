@@ -15,7 +15,7 @@ setClass("gg")
 #' @slot name A string gives the name of the model
 #' @slot initial_population A named list of the initial population size of each group with names: "S", "E", "I_asymptomatic", "I_mild", "I_severe", "R", "D_cumulative"
 #' @slot parameters A named list of the model parameters with names: "lam", "gamma", "omega", "e2i", "i2r", "pdeath"
-#' @slot output A dataframe holding the ode simulation output, with columns as population groups and rows as simulation time points
+#' @slot output A dataframe holding the ode simulation output of different population groups in long format, using simulation time points as id variables
 #' @slot plot_output A ggplot holding the plot of the ode simulation output
 #'
 #' @import deSolve
@@ -57,14 +57,14 @@ setClass(Class = "SEIaImIsR",
 #' set initial population sizes (in fraction) and parameters
 #'
 #' @param object An object of class SEIaImIsR
-#' @param S Numeric, initial population of the susceptible
-#' @param E Numeric, initial population of the exposed
-#' @param I_asymptomatic Numeric, initial population of the infected with no symptom
-#' @param I_mild Numeric, initial population of the infected with mild symptoms
-#' @param I_severe Numeric, initial population of the infected with severe symptoms
+#' @param S Numeric, initial fraction of the population that is susceptible
+#' @param E Numeric, "initial fraction of the population that is exposed
+#' @param I_asymptomatic Numeric, "initial fraction of the population that is infected with no symptom
+#' @param I_mild Numeric, "initial fraction of the population that is infected with mild symptoms
+#' @param I_severe Numeric, "initial fraction of the population that is infected severe symptoms
 #' that need further hospitalization
-#' @param D_cumulative Numeric, initial cumulative mortality
-#' @param R Numeric, initial population of the recovered
+#' @param D_cumulative Numeric, "initial fraction of the population that is dead due to the infection
+#' @param R Numeric, "initial fraction of the population that is recovered
 #' @param lam Numeric, rate at which an infected individual exposes susceptible
 #' @param gamma Numeric, rate at which exposed individuals become infected
 #' @param omega Numeric, rate at which recovered individuals become susceptible
@@ -91,7 +91,6 @@ set_init <- function(
   names(init_pop_list) <- names(object@initial_population)
   object@initial_population <- init_pop_list
   object@parameters <- param_list
-  
   # check if initial settings are valid
   check <- check_init(object)
   if (check == TRUE) object
@@ -181,7 +180,7 @@ ode_simulate <- function(
               e2i = object@parameters$e2i,
               i2r = object@parameters$i2r,
               pdeath = object@parameters$pdeath)
-  
+
   # ODE system RHS
   ode_symptome_rhs <- function(t, pop_groups, parameters) {
     with(
@@ -191,7 +190,7 @@ ode_simulate <- function(
         dI_asymptomatic <- (1.0 - e2i.i_mild - e2i.i_severe) * gamma * E - i2r.i_asymptomatic * I_asymptomatic  - pdeath.i_asymptomatic * I_asymptomatic
         dI_mild <- e2i.i_mild * gamma * E - i2r.i_mild * I_mild  - pdeath.i_mild * I_mild
         dI_severe <- e2i.i_severe * gamma * E - i2r.i_severe * I_severe  - pdeath.i_severe * I_severe
-        dR <- -omega * R + i2r.i_asymptomatic * I_asymptomatic + i2r.i_mild * I_mild + i2r.i_severe * I_severe
+        dR <- -omega * R + i2r.i_asymptomatic * I_asymptomatic + i2r.i_mild * I_mild + i2r.i_severe * I_severes
         dD_cumulative <-  pdeath.i_asymptomatic * I_asymptomatic + pdeath.i_mild * I_mild + pdeath.i_severe * I_severe
         # return the rate of cI_severenge
         list(c(dS, dE, dI_asymptomatic, dI_mild, dI_severe, dR, dD_cumulative))
@@ -204,7 +203,10 @@ ode_simulate <- function(
                 parms = params,
                 method = method)
   output <- as.data.frame(output)
-  object@output <- output
+  # reshape data frame into long format
+  output.melt <- melt(output, id.vars = "time")
+  names(output.melt) <- c("time", "population_group", "fraction")
+  object@output <- output.melt
   return(object)
 }
 
@@ -218,16 +220,14 @@ ode_simulate <- function(
 #'
 plot_ode_output <- function(object) {
   output <- object@output
+  # make sur object@output is not empty.
   if (empty(output)) {
     error <- "Empty output. \
   Please first run the ode simulation by calling ode_simulate."
     return(error)
   }else{
-    # reshape data frame
-    output.melt <- melt(output, id.vars = "time")
-    names(output.melt) <- c("time", "population_group", "fraction")
     # plot the each group
-    p <- ggplot(data = output.melt, aes(x = time, y = fraction)) +
+    p <- ggplot(data = output, aes(x = time, y = fraction)) +
       geom_line(aes(colour = population_group)) +
       theme_classic()
     object@plot_output <- p

@@ -35,20 +35,20 @@ plot_ode_output(object)
 \arguments{
 \item{object}{An object of class SEIaImIsR}
 
-\item{S}{Numeric, initial population of the susceptible}
+\item{S}{Numeric, initial fraction of the population that is susceptible}
 
-\item{E}{Numeric, initial population of the exposed}
+\item{E}{Numeric, "initial fraction of the population that is exposed}
 
-\item{I_asymptomatic}{Numeric, initial population of the infected with no symptom}
+\item{I_asymptomatic}{Numeric, "initial fraction of the population that is infected with no symptom}
 
-\item{I_mild}{Numeric, initial population of the infected with mild symptoms}
+\item{I_mild}{Numeric, "initial fraction of the population that is infected with mild symptoms}
 
-\item{I_severe}{Numeric, initial population of the infected with severe symptoms
+\item{I_severe}{Numeric, "initial fraction of the population that is infected severe symptoms
 that need further hospitalization}
 
-\item{R}{Numeric, initial population of the recovered}
+\item{R}{Numeric, "initial fraction of the population that is recovered}
 
-\item{D_cumulative}{Numeric, initial cumulative mortality}
+\item{D_cumulative}{Numeric, "initial fraction of the population that is dead due to the infection}
 
 \item{lam}{Numeric, rate at which an infected individual exposes susceptible}
 
@@ -90,7 +90,7 @@ An object of class SEIaImIsR with a plot showing the ode simulation outcome
 
 \item{\code{parameters}}{A named list of the model parameters with names: "lam", "gamma", "omega", "e2i", "i2r", "pdeath"}
 
-\item{\code{output}}{A dataframe holding the ode simulation output, with columns as population groups and rows as simulation time points}
+\item{\code{output}}{A dataframe holding the ode simulation output of different population groups in long format, using simulation time points as id variables}
 
 \item{\code{plot_output}}{A ggplot holding the plot of the ode simulation output}
 }}

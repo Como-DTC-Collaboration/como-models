@@ -130,3 +130,14 @@ We use the ode solver and then plot the relaxation into the steady state:
 model <- ode_simulate(model, t)
 model <- plot_ode_output(model)
 ```
+
+Comparison with no natural loss of immunity (no transmission from R to S; omega=0)
+```{r}
+model1 <- set_init(object = model, S = S, E = E, I_asymptomatic = I_asymptomatic, I_mild = I_mild,
+                    I_severe = I_severe, R = R, D_cumulative = D_cumulative,
+                    lam = lam, gamma = gamma, omega = 0.0,
+                    e2i = e2i, i2r = i2r, pdeath = pdeath)
+
+model1 <- ode_simulate(model1, t)
+model1 <- plot_ode_output(model1)
+```

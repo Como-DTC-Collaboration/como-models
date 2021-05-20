@@ -19,7 +19,7 @@ e2i <- list(i_mild = 0.35, i_severe = 0.05)
 i2r <- list(i_asymptomatic = 0.9, i_mild = 0.5, i_severe = 0.05)
 pdeath <- list(i_asymptomatic = 0.005, i_mild = 0.05, i_severe = 0.3)
 # simulation period: 3000 time points (to relaxation)
-t <- seq(0, 3000, by = 1)
+t <- seq(0, 300, by = 1)
 
 # test: validate model settings - ode simulation - plot, on test data
 test_that("SEIaImIsR validate", {
@@ -40,12 +40,15 @@ test_that("SEIaImIsR validate", {
   # view plot
   print(model@plot_output)
   # check @output
-  expect_equal(dim(model@output),
-               c(length(t), length(model@initial_population) + 1))
   expect_equal(colnames(model@output),
+               c("time", "population_group", "fraction"))
+  output_wide <- dcast(model@output, time~population_group)
+  expect_equal(dim(output_wide),
+               c(length(t), length(model@initial_population) + 1))
+  expect_equal(colnames(output_wide),
                c("time", "S", "E", "I_asymptomatic", "I_mild", "I_severe", "R", "D_cumulative"))
   # check whether the sum of population at each simulation time point == 1
-  expect_equal(rowSums(model@output[, -which(names(model@output) == "time")]),
+  expect_equal(rowSums(output_wide[, -which(names(output_wide) == "time")]),
                 rep(1.0, length(t)))
   # check @plot_output
   expect_s3_class(model@plot_output, "ggplot")
