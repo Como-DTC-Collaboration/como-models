@@ -3,15 +3,14 @@
 \name{transmission_parameters<-}
 \alias{transmission_parameters<-}
 \title{Setter method for transmission parameters
-(bu, by, buy, byu, k, g and m) of the SEIR model.}
+(b, k, g, m and C) of the SEIR model.}
 \usage{
 transmission_parameters(object) <- value
 }
 \arguments{
 \item{object}{(SEIR_rural_urban model)}
 
-\item{value}{(list) list of values for bu, by, buy, byu, k, g, m,
-respectively.}
+\item{value}{(list) list of values for b, k, g, m, C, respectively.}
 }
 \value{
 object of class SEIR_rural_urban with transmission parameter values

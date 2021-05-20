@@ -44,8 +44,7 @@ frac_rural <- country_rural/100 #turn percentage into fraction
 country_fullname <- code_to_country$`TableName`[code_to_country$`Country Code` == country]
 pop_byage_2019 <- country_pop_byage[(country_pop_byage$`Region, subregion, country or area *` == country_fullname & country_pop_byage$`Reference date (as of 1 July)` == 2019),9:29]
 pop_byage_2019 <- as.double(pop_byage_2019)
-totalpop <- sum(pop_byage_2019)
-pop_byage_2019 <- pop_byage_2019/totalpop #normalized to fractions of population per age group
+pop_byage_2019 <- pop_byage_2019/sum(pop_byage_2019) #normalized to fractions of population per age group
 # must sum last few entries because contact matrices have an 80+ category instead of 100+
 pop_byage_2019 <- c(pop_byage_2019[1:15], sum(pop_byage_2019[16:20]))
 
@@ -79,7 +78,8 @@ b = 0.3 # probability of infection
 k = 0.2 # 1/(incubation period in days)
 g = 0.1# 1/(days between infection and recovery)
 m = 0.03 # probability of death, cases-fatality ratio.
-transmission_parameters(model_nomig) <- list(b, k, g, m)
+C = 1 # connectedness parameter
+transmission_parameters(model_nomig) <- list(b, k, g, m, C)
 
 # set initial conditions, same in both models
 start_infected_urban = 0.05
@@ -92,7 +92,7 @@ contact_matrices(model_nomig) <- list(contact_all_urban[[country]],contact_all_r
 country_demog(model_nomig) <- list(pop_byage_2019*(1-frac_rural),pop_byage_2019*frac_rural)
 
 # simulate both models
-tend = 100
+tend = 50
 out_nomig <- run(model_nomig, seq(0, tend, by = 0.1))
 
 # visualize results

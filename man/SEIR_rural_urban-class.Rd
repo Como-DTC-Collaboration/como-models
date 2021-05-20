@@ -9,12 +9,20 @@
 \alias{initial_cases_deaths,ANY,ANY-method}
 \alias{transmission_parameters,SEIR_rural_urban-method}
 \alias{transmission_parameters,ANY,ANY-method}
+\alias{contact_matrices,SEIR_rural_urban-method}
+\alias{contact_matrices,ANY,ANY-method}
+\alias{country_demog,SEIR_rural_urban-method}
+\alias{country_demog,ANY,ANY-method}
 \alias{initial_conditions<-,SEIR_rural_urban-method}
 \alias{initial_conditions<-,ANY,ANY-method}
 \alias{transmission_parameters<-,SEIR_rural_urban-method}
 \alias{transmission_parameters<-,ANY,ANY-method}
-\alias{simulate_SEIR_rural_urban,SEIR_rural_urban-method}
-\alias{simulate_SEIR_rural_urban,ANY,ANY-method}
+\alias{contact_matrices<-,SEIR_rural_urban-method}
+\alias{contact_matrices<-,ANY,ANY-method}
+\alias{country_demog<-,SEIR_rural_urban-method}
+\alias{country_demog<-,ANY,ANY-method}
+\alias{run,SEIR_rural_urban-method}
+\alias{run,ANY,ANY-method}
 \title{An S4 object representing the SEIR_rural_urban.}
 \usage{
 \S4method{initial_conditions}{SEIR_rural_urban}(object)
@@ -23,21 +31,24 @@
 
 \S4method{transmission_parameters}{SEIR_rural_urban}(object)
 
+\S4method{contact_matrices}{SEIR_rural_urban}(object)
+
+\S4method{country_demog}{SEIR_rural_urban}(object)
+
 \S4method{initial_conditions}{SEIR_rural_urban}(object) <- value
 
 \S4method{transmission_parameters}{SEIR_rural_urban}(object) <- value
 
-\S4method{simulate_SEIR_rural_urban}{SEIR_rural_urban}(
-  object,
-  times = seq(0, 100, by = 1),
-  solve_method = "lsoda"
-)
+\S4method{contact_matrices}{SEIR_rural_urban}(object) <- value
+
+\S4method{country_demog}{SEIR_rural_urban}(object) <- value
+
+\S4method{run}{SEIR_rural_urban}(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
 }
 \arguments{
 \item{object}{an object of the class SEIR_rural_urban}
 
-\item{value}{(list) list of values for  bu, by, buy, byu, k, g, m,
-respectively.}
+\item{value}{(list) list of 2 set of population fractions by age group}
 
 \item{times}{(double) a sequence of time points at which the solution to
 the system of ODEs should be returned. Must be of the form
@@ -53,6 +64,12 @@ object of class SEIR_rural_urban with initial conditions assigned.
 object of class SEIR_rural_urban with transmission parameter values
 assigned.
 
+object of class SEIR_rural_urban with contact matrices
+assigned.
+
+object of class SEIR_rural_urban with demographic data
+assigned.
+
 a dataframe with the time steps, time series of S, E, I and R
 population fractions, and incidence numbers and deaths for both communities
 in the SEIR_rural_urban model.
@@ -66,43 +83,62 @@ but can infect people from the other community.
 }
 \section{Methods (by generic)}{
 \itemize{
-\item \code{initial_conditions}: Retrieves initial conditions of SEIR_rural_urban model.
+\item \code{initial_conditions}: Retrieves initial conditions of
+SEIR_rural_urban model.
 
-\item \code{initial_cases_deaths}: Retrieves initial cases and deaths of SEIR_rural_urban model.
+\item \code{initial_cases_deaths}: Retrieves initial cases and deaths of
+SEIR_rural_urban model.
 
 \item \code{transmission_parameters}: Retrieves transmission parameters of SEIR model.
 
-\item \code{initial_conditions<-}: Setter method for initial conditions (S0, E0, I0 and R0)
-for both communities in the SEIR model.
+\item \code{contact_matrices}: Retrieves contact matrices of SEIR model.
+
+\item \code{country_demog}: Retrieves demographic data of SEIR model.
+
+\item \code{initial_conditions<-}: Setter method for initial conditions
+(S0, E0, I0 and R0) for both communities in the SEIR model.
 
 All initial conditions must sum up to 1.
 If the initial conditions provided to do not sum to 1, an error is thrown.
 
 \item \code{transmission_parameters<-}: Setter method for transmission parameters
-(bu, by, buy, byu, k, g and m) of the SEIR model.
+(b, k, g, m and C) of the SEIR model.
 
 If the transmission parameters provided to are not 1-dimensional an error is
 thrown.
 
-\item \code{simulate_SEIR_rural_urban}: Solves ODEs of the SEIR_rural_urban specified in object
-for the time points specified in times and integration method specified in
-solve_method.
+\item \code{contact_matrices<-}: #' Setter method for contact matrices for
+urban and rural communities in the SEIR model.
+Matrices must be of type double
+
+\item \code{country_demog<-}: Setter method for demographic data for urban
+and rural communities in the SEIR model. both vectors together must sum to 1.
+
+\item \code{run}: Solves ODEs of the SEIR_rural_urban specified
+in object for the time points specified in times and integration method
+specified in solve_method.
 
 For the urban community:
-\deqn{\frac{dS_U(t)}{dt} = - b_U S_U(t) I_U(t) - b_{UY} S_U I_U}
-\deqn{\frac{dE_U(t)}{dt} =  b_U S_U(t) I_U(t) + b_{UY} S_U I_U - k E_U(t)}
-\deqn{\frac{dI_U(t)}{dt} = k E_U(t) - (g + m) I_U(t)}
-\deqn{\frac{dR_U(t)}{dt} = g I_U(t)}
-\deqn{\frac{dC_U(t)}{dt} = b_U S_U(t) I_U(t) + b_{UY} S_U I_U}
-\deqn{\frac{dD_U(t)}{dt} = m I_U(t)}
+\deqn{\frac{dS_U(t)}{dt} = - b S_U (I_U + I_Y) N_U/ C
+                           - b S_U/f_urban I_U/f_urban N_U (1-C)}
+\deqn{\frac{dE_U(t)}{dt} =  b S_U (I_U + I_Y) N_U C
+                           + b S_U/f_urban I_U/f_urban N_U (1-C) -k E_U}
+\deqn{\frac{dI_U(t)}{dt} = k E_U - (g + m) I_U}
+\deqn{\frac{dR_U(t)}{dt} = g I_U}
+\deqn{\frac{dC_U(t)}{dt} = b S_U (I_U + I_Y) N_U C
+                           + b S_U/f_urban I_U/f_urban N_U (1-C)}
+\deqn{\frac{dD_U(t)}{dt} = m I_U}
 
 For the rural community:
-\deqn{\frac{dS_Y(t)}{dt} = - b_Y S_Y(t) I_Y(t) - b_{YU} S_Y I_Y}
-\deqn{\frac{dE_Y(t)}{dt} =  b_Y S_Y(t) I_Y(t) + b_{YU} S_Y I_Y - k E_Y(t)}
-\deqn{\frac{dI_Y(t)}{dt} = k E_Y(t) - (g + m) I_Y(t)}
-\deqn{\frac{dR_Y(t)}{dt} = g I_Y(t)}
-\deqn{\frac{dC_Y(t)}{dt} = b_Y S_Y(t) I_Y(t) + b_{YU} S_Y I_Y}
-\deqn{\frac{dD_Y(t)}{dt} = m I_Y(t)}
+\deqn{\frac{dS_Y(t)}{dt} = - b S_Y (I_U + I_Y) N_Y C
+                           - b S_Y/f_rural I_Y/f_rural N_Y (1-C)}
+\deqn{\frac{dE_Y(t)}{dt} =   b S_Y (I_U + I_Y) N_Y C
+                           + b S_Y/f_rural I_Y/f_rural N_Y (1-C) - k E_Y}
+\deqn{\frac{dI_Y(t)}{dt} = k E_Y - (g + m) I_Y}
+\deqn{\frac{dR_Y(t)}{dt} = g I_Y}
+\deqn{\frac{dC_Y(t)}{dt} =  b S_Y (I_U + I_Y) N_Y C
+                           + b S_Y/f_rural I_Y/f_rural N_Y (1-C)}
+\deqn{\frac{dD_Y(t)}{dt} = m I_Y}
 
 This function relies on the package deSolve.
 }}
@@ -121,7 +157,7 @@ incidence.}
 (characters). Default is list("C_U0", "D_U0", "C_Y0", "D_Y0").}
 
 \item{\code{transmission_parameter_names}}{list of names of transmission parameters
-(characters). Default is list("bu", "by", "buy", "byu", "k", "g", "m").}
+(characters). Default is list("b", "k", "g", "m", "C").}
 
 \item{\code{initial_conditions}}{list of values for initial conditions (double).}
 
@@ -130,5 +166,16 @@ Both set to 0, not to be changed by user (double).}
 
 \item{\code{transmission_parameters}}{list of values for transmission parameters
 (double).}
+
+\item{\code{contact_matrices}}{list of two contact matrices, one for urban communties
+and one for rural communities, normalized to population size (double).}
+
+\item{\code{contact_matrices_names}}{list of names for two contact matrices,
+one for urban communties and one for rural communities}
+
+\item{\code{country_demog}}{list of vectors with percentage of population in each age
+group in urban and rural community.}
+
+\item{\code{country_demog_names}}{list of names for urban and rural demographic data.}
 }}
 
