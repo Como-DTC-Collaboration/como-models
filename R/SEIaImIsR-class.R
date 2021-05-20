@@ -58,13 +58,13 @@ setClass(Class = "SEIaImIsR",
 #'
 #' @param object An object of class SEIaImIsR
 #' @param S Numeric, initial fraction of the population that is susceptible
-#' @param E Numeric, "initial fraction of the population that is exposed
-#' @param I_asymptomatic Numeric, "initial fraction of the population that is infected with no symptom
-#' @param I_mild Numeric, "initial fraction of the population that is infected with mild symptoms
-#' @param I_severe Numeric, "initial fraction of the population that is infected severe symptoms
+#' @param E Numeric, initial fraction of the population that is exposed
+#' @param I_asymptomatic Numeric, initial fraction of the population that is infected with no symptom
+#' @param I_mild Numeric, initial fraction of the population that is infected with mild symptoms
+#' @param I_severe Numeric, initial fraction of the population that is infected severe symptoms
 #' that need further hospitalization
-#' @param D_cumulative Numeric, "initial fraction of the population that is dead due to the infection
-#' @param R Numeric, "initial fraction of the population that is recovered
+#' @param D_cumulative Numeric, initial fraction of the population that is dead due to the infection
+#' @param R Numeric, initial fraction of the population that is recovered
 #' @param lam Numeric, rate at which an infected individual exposes susceptible
 #' @param gamma Numeric, rate at which exposed individuals become infected
 #' @param omega Numeric, rate at which recovered individuals become susceptible
@@ -190,7 +190,7 @@ ode_simulate <- function(
         dI_asymptomatic <- (1.0 - e2i.i_mild - e2i.i_severe) * gamma * E - i2r.i_asymptomatic * I_asymptomatic  - pdeath.i_asymptomatic * I_asymptomatic
         dI_mild <- e2i.i_mild * gamma * E - i2r.i_mild * I_mild  - pdeath.i_mild * I_mild
         dI_severe <- e2i.i_severe * gamma * E - i2r.i_severe * I_severe  - pdeath.i_severe * I_severe
-        dR <- -omega * R + i2r.i_asymptomatic * I_asymptomatic + i2r.i_mild * I_mild + i2r.i_severe * I_severes
+        dR <- -omega * R + i2r.i_asymptomatic * I_asymptomatic + i2r.i_mild * I_mild + i2r.i_severe * I_severe
         dD_cumulative <-  pdeath.i_asymptomatic * I_asymptomatic + pdeath.i_mild * I_mild + pdeath.i_severe * I_severe
         # return the rate of cI_severenge
         list(c(dS, dE, dI_asymptomatic, dI_mild, dI_severe, dR, dD_cumulative))
