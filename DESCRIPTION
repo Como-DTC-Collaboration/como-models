@@ -12,9 +12,17 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
 Suggests: 
     covr,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    knitr,
+    markdown,
+    rmarkdown
 Config/testthat/edition: 3
 Imports: 
     forcats,
     deSolve,
-    ggplot2
+    ggplot2,
+    glue,
+    methods,
+    reshape2,
+    dplyr
+VignetteBuilder: knitr
