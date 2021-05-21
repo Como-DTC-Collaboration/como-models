@@ -563,24 +563,24 @@ setMethod(
           cy <- state[11]
           dy <- state[12]
           # rate of change: urban
-          dsu <- - (b * su * (iu + iy) * N_U * C +
-                    b * (su / f_urban) * (iu / f_urban) * N_U * (1 - C))
-          deu <- b * su * (iu + iy) * N_U * C +
-                 b * (su / f_urban) * (iu / f_urban) * N_U * (1 - C) - k * eu
+          dsu <- - (b * su * (iu + iy) * (f_urban * N_U + f_rural * N_Y) * C +
+                    b * su * (iu / f_urban) * N_U * (1 - C))
+          deu <- b * su * (iu + iy) * (f_urban * N_U + f_rural * N_Y) * C +
+                 b * su * (iu / f_urban) * N_U * (1 - C) - k * eu
           diu <- k * eu - (g + m) * iu
           dru <- g * iu
-          dcu <- b * su * (iu + iy) * N_U * C +
-                 b * (su / f_urban) * (iu / f_urban) * N_U * (1 - C)
+          dcu <- b * su * (iu + iy) * (f_urban * N_U + f_rural * N_Y) * C +
+                 b * su * (iu / f_urban) * N_U * (1 - C)
           d_deathu <- m * iu
           # rate of change: rural
-          dsy <- - (b * sy * (iu + iy) * N_Y * C +
-                    b * (sy / f_rural) * (iy / f_rural) * N_Y * (1 - C))
-          dey <- b * sy * (iu + iy) * N_Y * C +
-                 b * (sy / f_rural) * (iy / f_rural) * N_Y * (1 - C) - k * ey
+          dsy <- - (b * sy * (iu + iy) * (f_urban * N_U + f_rural * N_Y) * C +
+                    b * sy * (iy / f_rural) * N_Y * (1 - C))
+          dey <- b * sy * (iu + iy) * (f_urban * N_U + f_rural * N_Y) * C +
+                 b * sy * (iy / f_rural) * N_Y * (1 - C) - k * ey
           diy <- k * ey - (g + m) * iy
           dry <- g * iy
-          dcy <- b * sy * (iu + iy) * N_Y * C +
-                 b * (sy / f_rural) * (iy / f_rural) * N_Y * (1 - C)
+          dcy <- b * sy * (iu + iy) * (f_urban * N_U + f_rural * N_Y) * C +
+                 b * sy * (iy / f_rural) * N_Y * (1 - C)
           d_deathy <- m * iy
           # return the rate of change
           list(c(dsu, deu, diu, dru, dcu, d_deathu,
