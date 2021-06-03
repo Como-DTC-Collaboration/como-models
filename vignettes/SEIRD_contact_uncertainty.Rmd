@@ -1,0 +1,210 @@
+---
+title: "SEIRD_contact_uncertainty"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{SEIRD_contact_uncertainty}
+  %\VignetteEncoding{UTF-8}
+  %\VignetteEngine{knitr::rmarkdown}
+editor_options:
+  markdown:
+    wrap: 72
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(comomodels)
+library(tidyverse)
+library(tidyr)
+library(dplyr)
+library(reshape2)
+library(forcats)
+library(ggplot2)
+library(deSolve)
+library(socialmixr)
+```
+
+## Introduction
+
+Age-structured compartmental models such as the SEIR implemented in this
+repository use contact matrices to control the spread of a disease within and
+between age groups. Given a contact matrix $C$, each element $C_{i,j}$
+indicates the expected number of contacts someone from age group $i$ has per
+day with people from age group $j$.
+
+Typically, when performing simulations of the age-structured SEIR model, or
+inference for the parameters of the model, the contact matrix is provided as a
+fixed input. However, using fixed values for the contact matrix neglects the
+uncertainty which may be present in the contact data.
+
+The purpose of this document is to investigate the sensitivity of the outputs
+of the SEIR model to the values of the contact matrix. Using bootstrap samples
+which represent the uncertainty in the contact matrix, we show significant
+uncertainty in the numbers of infected individuals.
+
+For details and explanation of the SEIR model, see the following notebook:
+<link>.
+
+## Bootstrap samples of contact matrices
+
+We obtain samples of the contact matrix using the socialmixr library which
+accesses the POLYMOD data. This library provides functionality to obtain
+bootstrap samples of the contact matrix for countries covered by the study. The
+first step is to generate 250 bootstrap samples for the contact matrix in the
+United Kingdom.
+
+```{r}
+
+# Define age groups and names
+ages <- seq(0, 80, 5)
+age_names <- vector(length = 16)
+for(i in seq_along(age_names)) {
+  age_names[i] <- paste0(ages[i], "-", ages[i + 1])
+}
+
+# Get population data
+pops <- population[population$country == "United Kingdom", ]$pop
+pop_fraction <- pops/sum(pops)
+pop_fraction[16] <- sum(pop_fraction[16:21])
+pop_fraction <- pop_fraction[1:16]
+n_ages <- 16
+
+# Load the contact matrix data from POLYMOD
+n_bootstrap <- 250
+data(polymod)
+polymod_data <- contact_matrix(polymod,
+                               n=n_bootstrap,
+                               countries="United Kingdom",
+                               age.limits=ages)
+
+# Get the first element of the list, which contains the matrices
+matrices <- polymod_data["matrices"][[1]]
+
+```
+
+First, we inspect the range of values in the sampled contact matrices. In the
+plot below, we look at the distribution of the diagonal elements of the matrix
+for each age group.
+
+```{r, fig.width=7, fig.height=5}
+
+contacts_same_age <- c()
+ages_list <- c()
+for (i in 1:n_bootstrap){
+  contacts_same_age <- append(contacts_same_age, diag(matrices[[i]][[1]])[1:16])
+  ages_list <- append(ages_list, age_names)
+}
+
+data <- data.frame(ages_list, contacts_same_age)
+data$ages_list <- factor(data$ages_list, levels=age_names[1:16], ordered=TRUE)
+
+ggplot(data, aes(x=ages_list, y=contacts_same_age), l) + geom_boxplot() +
+  xlab("Age group") + ylab("Number of contacts with same age group")
+```
+
+The plot shows high numbers of contacts within the age group, with significant
+uncertainty, for schoolchildren (ages 5--20). In most of the other age groups,
+the uncertainty is small but it does not appear non-negligible. In the next
+section, the effect of these uncertainties on the SEIR outputs will be studied.
+
+## SEIR simulations
+
+In this step, we run the age-structured SEIR model once for each bootstrap
+sample of the contact matrix. We use fixed values for the other parameters of
+the model. Namely, we set $\beta=1$, $\kappa=0.5$, and $\gamma=0.5$, with an
+initial exposed group compartment equal to 1% of the population size, and all
+other individuals in the susceptible group.
+
+```{r}
+for (i in 1:n_bootstrap){
+  matrix=matrices[[i]][[1]]
+
+  # Remove the column and row names so the model will accept it
+  colnames(matrix) <- NULL
+  rownames(matrix) <- NULL
+
+  # Keep the data for ages 0-80, in 5 year increments
+  matrix <- matrix[1:16,1:16]
+
+  model <- SEIRAge(n_age_categories=n_ages,
+                   contact_matrix=matrix,
+                   age_ranges=as.list(age_names))
+
+  # Set the other parameters of the model  
+  transmission_parameters(model) <- list(b=1, k=0.5, g=0.5)
+  initial_conditions(model) <- list(S0=pop_fraction*0.99,
+                                    E0=pop_fraction*0.01,
+                                    I0=rep(0, n_ages),
+                                    R0=rep(0, n_ages))
+  res <- run(model, time=seq(0, 100, by=1))
+
+  # Save the data for the I and R compartments
+  x = filter(res, compartment %in% c("I", "R"))
+  if (i==1)
+    all_results <- x
+  else
+    all_results <- rbind(all_results, x)
+}
+```
+
+Having obtained the simulation results, we plot the central 90% probability
+interval of the number in the infected compartment over time for two selected
+age groups (15--20 and 55--60).
+
+
+```{r, fig.width=7, fig.height=5}
+
+I_data <- filter(all_results, age_range=="15-20", compartment=="I")
+data <- I_data$value * sum(pops)
+dim(data) <- c(length(I_data$time)/n_bootstrap, n_bootstrap)
+quants <- t(apply(data, 1, quantile, probs=c(0.05, 0.5, 0.95), na.rm=TRUE))
+quants_df <- data.frame(quants)
+quants_df["time"] <- seq(0, 100, by=1)
+
+ggplot(quants_df, aes(x = time)) +
+  geom_line(aes(y=X5.)) +
+  geom_line(aes(y=X50.)) +
+  geom_line(aes(y=X95.)) +
+  geom_ribbon(aes(ymin=X5., ymax=X95.), fill="blue", alpha=0.5) +
+  ylab("I compartment, age 15-20")
+
+I_data <- filter(all_results, age_range=="55-60", compartment=="I")
+data <- I_data$value * sum(pops)
+dim(data) <- c(length(I_data$time)/n_bootstrap, n_bootstrap)
+quants <- t(apply(data, 1, quantile, probs=c(0.05, 0.5, 0.95), na.rm=TRUE))
+quants_df <- data.frame(quants)
+quants_df["time"] <- seq(0, 100, by=1)
+
+ggplot(quants_df, aes(x = time)) +
+  geom_line(aes(y=X5.)) +
+  geom_line(aes(y=X50.)) +
+  geom_line(aes(y=X95.)) +
+  geom_ribbon(aes(ymin=X5., ymax=X95.), fill="blue", alpha=0.5) +
+  ylab("I compartment, age 55-60")
+
+```
+
+The results show that the while the shape of the epidemic trajectory remains
+similar for all contact matrices in the bootstrap sample, the number of people
+in the I compartment exhibits significant uncertainty, particularly near the
+peak of the epidemic.
+
+Finally, we perform the same uncertainty analysis for the number in the R
+compartment at the final time point, for all age groups.
+
+
+```{r, fig.width=7, fig.height=5}
+
+data <- filter(all_results, compartment=="R", time==100.0)
+
+ggplot(data, aes(x=age_range, y=value/pop_fraction), l) +
+  geom_boxplot() +
+  xlab("Age group") +
+  ylab("Proportion of age group ever infected")
+
+```
