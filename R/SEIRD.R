@@ -329,7 +329,7 @@ setGeneric("R0", def = function(model) {
 #' @describeIn SEIRD Calculates basic reproduction number for SEIRD model
 #'
 #' The R0 parameter is given by:
-#' \deqn{R_0 = \beta/\gamma}
+#' \deqn{R_0 = \beta/(\gamma + \mu)}
 #'
 #' @param model an SEIRD model
 #'
@@ -339,5 +339,6 @@ setGeneric("R0", def = function(model) {
 setMethod("R0", "SEIRD", function(model) {
   beta <- model@transmission_parameters$beta
   gamma <- model@transmission_parameters$gamma
-  beta / gamma
+  mu <- model@transmission_parameters$mu
+  beta / (gamma + mu)
 })

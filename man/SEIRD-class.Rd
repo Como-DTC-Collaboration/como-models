@@ -73,7 +73,8 @@ of the SEIR model.
 All initial conditions must sum up to 1.
 If the initial conditions provided to do not sum to 1, an error is thrown.
 
-\item \code{transmission_parameters<-}: Set transmission parameters (beta, kappa, gamma and mu) of the SEIR model.
+\item \code{transmission_parameters<-}: Set transmission parameters (beta, kappa, gamma and mu)
+of the SEIR model.
 
 If the transmission parameters provided to are not 1-dimensional an error is
 thrown.
@@ -94,7 +95,7 @@ This function relies on the package deSolve.
 \item \code{R0}: Calculates basic reproduction number for SEIRD model
 
 The R0 parameter is given by:
-\deqn{R_0 = \beta/\gamma}
+\deqn{R_0 = \beta/(\gamma + \mu)}
 }}
 
 \section{Slots}{

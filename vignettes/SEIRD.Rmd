@@ -174,9 +174,9 @@ result %>%
 ```
 
 Why do some epidemics die out quickly but others don't? This is can be explored through the basic reproductive number, $R_0$, which is the expected number of people infected by a
-single infectious individual in a population where everyone is susceptible. Note that this basic reproductive number is unrelated to the initial condition for the recovered population! If $R_0>1$, an infectious individual infects more than one other person and the epidemic initially grows exponentially; if $R_0<1$, an infectious individual infects less than one other person and the epidemic dies out quickly. In an SEIRD model with normalized populations, the reproductive number is given by:
+single infectious individual in a population where everyone is susceptible (i.e $S_0 \approx 1$). Note that this basic reproductive number is unrelated to the initial condition for the recovered population! If $R_0>1$, an infectious individual infects more than one other person and the epidemic initially grows exponentially; if $R_0<1$, an infectious individual infects less than one other person and the epidemic dies out quickly. In an SEIRD model with normalized populations, the reproductive number is given by:
 
-$$R_0 = \beta S_0/\gamma.$$
+$$R_0 = \beta S_0/(\gamma + \mu).$$
 We now calculate $R_0$ for $\beta=0.1$ and $\beta=0.75$.
 ```{r, fig.height = 5, fig.width = 7}
 inits <- list(S0=0.99, E0=0, I0=0.01, R0=0)
