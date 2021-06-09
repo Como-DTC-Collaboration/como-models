@@ -1,9 +1,9 @@
 ---
-title: "SEIaImIsR model"
+title: "SEIaImIsRD model"
 author: "Liangti Dai and David Seiferth"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{SEIaImIsR model}
+  %\VignetteIndexEntry{SEIaImIsRD model}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -20,45 +20,45 @@ library(comomodels)
 ```
 
 ## Introduction
-This document explains the basics of the SEIaImIsR model. The model describes
+This document explains the basics of the SEIaImIsRD model. The model describes
 how populations of susceptible ($S$), exposed ($E$), infectious and recovered ($R$)
 individuals evolve over time. The infected population is split into different 
 symptom compartments: asymptomatic ($I_a$), mild ($I_m$) and severe ($I_s$). 
 An ordinary differential equation (ODE) is defined for each of the populations.
 
-The object class `SEIaImIsR` lets the user define and simulate such a model, 
+The object class `SEIaImIsRD` lets the user define and simulate such a model, 
 choosing the initial conditions and parameter values.
 
-## The SEIaImIsR Model
-The SEIaImIsR model consists of six ODEs describing the six populations. Susceptible
+## The SEIaImIsRD Model
+The SEIaImIsRD model consists of six ODEs describing the six populations. Susceptible
 individuals ($S$) have not been exposed to the virus. Exposed individuals ($E$) have been
 exposed to the virus and have been infected but are not yet infectious to others; they are 
 in the incubation period. Infectious individuals can spread the virus to others. 
 The total initial population size is normalised to 1.
 The current model does not include natural death or birth.	
 The ODEs describing how these six populations evolve over time are
-$$\frac{\text{d}S}{\text{d}t} = -\lambda S (I_{\text{a}} + I_{\text{m}} + I_{\text{s}}) + \omega R,$$
-where $\lambda$ denotes the rate, at which an infected individual exposes susceptible individuals,
+$$\frac{\text{d}S}{\text{d}t} = -S (\beta_{I_a}I_a + \beta_{I_m}I_m + \beta_{I_s}I_s) + \omega R,$$
+where $\beta$ denotes the rate, at which an infected individual exposes susceptible individuals,
 and $\omega$ denotes the rate, at which recovered individuals become susceptible.
-$$\frac{\text{d}E}{\text{d}t} = \lambda S (I_{\text{a}} + I_{\text{m}} + I_{\text{s}}) -\gamma E,$$
-where $\gamma$ denotes the rate at which exposed individuals become infected.
-$$\frac{\text{d}I_{\text{a}}}{\text{d}t} = (1-\alpha_{E->I_m} -\alpha_{E->I_s}) \gamma E - \beta_{I_a->R}  I_{\text{a}} - \mu_{I_a->D} * I_{a},$$
-where $\alpha_{E->I_m}$ denotes the fraction of exposed individuals that develop mild symptoms and  $\alpha_{E->I_s}$ denotes the corresponding fraction with severe symptoms (in the code the fraction is denoted by 'e2i').
-The rate, at which each infected group recovers, is denoted by $\beta{I->R}$
-(in the code the rate $\beta$ is denoted by 'i2r').
-The rate of disease-caused mortality of each infected group is denoted by $\mu_{I->D}$
-(in the code the rate $\mu$ is denoted by 'pdeath').
+$$\frac{\text{d}E}{\text{d}t} = S (\beta_{I_a}I_a + \beta_{I_m}I_m + \beta_{I_s}I_s) - \kappa E,$$
+where $\kappa$ denotes the rate at which exposed individuals become infected.
+$$\frac{dI_{a}}{dt} = \eta_{E->I_a} \kappa E - (\gamma_{I_a} + \mu_{I_a})I_{a},$$
 
-$$\frac{\text{d}I_{\text{m}}}{\text{d}t} = \alpha_{E->I_m} \gamma E - \beta_{I_m->R}  I_{\text{m}} - \mu_{I_m->D}  * I_{m},$$         
-$$\frac{\text{d}I_{\text{s}}}{\text{d}t} = \alpha_{E->I_s} \gamma E - \beta_{I_s->R}  I_{\text{s}} - \mu_{I_s->D}  * I_{s},$$  
-$$\frac{\text{d}R}{\text{d}t} = - \omega R +\mu_{I_a->D}  * I_{a} + \mu_{I_m->D}  * I_{m} + \mu_{I_s->D}  * I_{s}.$$
+
+$$\frac{dI_{m}}{dt} = \eta_{E->I_m} \kappa E - (\gamma_{I_m} + \mu_{I_a})I_{m},$$
+$$\frac{dI_{s}}{dt} = \eta_{E->I_s} \kappa E - (\gamma_{I_s} + \mu_{I_a})I_{s},$$
+where $\eta_{E->I_a}$, $\eta_{E->I_m}$, $\eta_{E->I_s}$ denote the fraction of exposed individuals that develop asymptomatic, mild and symptoms, respectively (in the code the fraction is denoted by 'p_symptom').
+The rate, at which each infected group recovers, is denoted by $\gamma_I$.
+The rate of disease-caused mortality of each infected group is denoted by $\mu_I$.
+
+$$\frac{\text{d}R}{\text{d}t} = - \omega R +\mu_{I_a}  * I_{a} + \mu_{I_m}  * I_{m} + \mu_{I_s}  * I_{s}.$$
 
 The rate at which susceptible individuals are infected depends on the fraction
 of the population that is susceptible, the fraction of the population that is
 infectious, and the probability of an infectious individual infecting a 
 susceptible individual, $\lambda$. This is represented in the
 first terms on the right-hand side of $\text{d}S/ \text{d}t$ and $\text{d}I/ \text{d}t$.
-Exposed individuals become infectious at rate $\gamma$. The reciprocal value $1/ \gamma$ is
+Exposed individuals become infectious at rate $\kappa$. The reciprocal value $1/ \kappa$ is
 the incubation time of the virus, i.e. how many days after exposure the individual
 becomes infectious to others. Infectious individuals can either recover or die
 because of the disease. Infectious individuals in group $i\in {a,m,s}$ recover in $1/ \beta_i$
@@ -67,7 +67,7 @@ individuals die due to the infection after $1/ \mu_i$ days, making the death rat
 
 In addition to these six main ODEs, the model also keeps track the number of 
 disease-related deaths ($D$) over time
-$$\frac{\text{d}D}{\text{d}t} = - \mu_{I_a->D} * I_{a} +  \mu_{I_m->D} * I_{m} +  \mu_{I_s->D} * I_{s},$$
+$$\frac{\text{d}D}{\text{d}t} = - \mu_{I_a} * I_{a} +  \mu_{I_m} * I_{m} +  \mu_{I_s} * I_{s},$$
 
 The system is closed by specifying the initial conditions
 $$S(0) = S_0,\ E(0) = E_0,\ I(0) = I_0,\ R(0) = R_0,\ C(0) = C_0,\ D(0) = D_0,$$
@@ -81,13 +81,13 @@ Because we build on this basic model to develop more complex epidemiological mod
 we solve the ODEs over time instead of just solving for the steady states. The
 next section shows an example of how to use the SEIR_model class.
 
-## The `SEIaImIsR` class
-In this section we will walk through an example of how to use the `SEIaImIsR`
+## The `SEIaImIsRD` class
+In this section we will walk through an example of how to use the `SEIaImIsRD`
 class.
 
-To create a new `SEIaImIsR` object, run:
+To create a new `SEIaImIsRD` object, run:
 ```{r}
-model <- SEIaImIsR()
+model <- SEIaImIsRD()
 ```
 
 Next, we assign values for the fractions of the population.
@@ -104,40 +104,42 @@ D_cumulative <- 0
 
 Then, we define the transition rates:
 ```{r}
-lam <- 1.0
-gamma <- 0.5
+beta <- list(i_asymptomatic = 0.80, i_mild = 0.90, i_severe = 1.00)
+kappa <- 0.50
 omega <- 0.01
-e2i <- list(i_mild = 0.35, i_severe = 0.05)
-i2r <- list(i_asymptomatic = 0.9, i_mild = 0.5, i_severe = 0.05)
-pdeath <- list(i_asymptomatic = 0.005, i_mild = 0.05, i_severe = 0.3)
+p_symptom <- list(i_mild = 0.35, i_severe = 0.05)
+gamma <- list(i_asymptomatic = 0.9, i_mild = 0.50, i_severe = 0.05)
+mu <- list(i_asymptomatic = 0.005, i_mild = 0.05, i_severe = 0.30)
 ```
 
 And, we set time for the simulation:
 ```{r}
-t <- seq(0, 3000, by = 1)
+t <- seq(0, 2000, by = 1)
 ```
 
 We initialise our model with the parameters defined above:
 ```{r}
 model <- set_init(object = model, S = S, E = E, I_asymptomatic = I_asymptomatic, I_mild = I_mild,
-                    I_severe = I_severe, R = R, D_cumulative = D_cumulative,
-                    lam = lam, gamma = gamma, omega = omega,
-                    e2i = e2i, i2r = i2r, pdeath = pdeath)
+                    I_severe = I_severe, R = R, D = D_cumulative,
+                    beta = beta, kappa = kappa, omega = omega,
+                    p_symptom = p_symptom, gamma = gamma, mu = mu)
 ```
 
 We use the ode solver and then plot the relaxation into the steady state:
 ```{r}
 model <- ode_simulate(model, t)
-model <- plot_ode_output(model)
+p <- plot_dataframe(model@output, x = "time", y = "fraction", c = "population_group")
+print(p)
 ```
 
 Comparison with no natural loss of immunity (no transmission from R to S; omega=0)
 ```{r}
 model1 <- set_init(object = model, S = S, E = E, I_asymptomatic = I_asymptomatic, I_mild = I_mild,
-                    I_severe = I_severe, R = R, D_cumulative = D_cumulative,
-                    lam = lam, gamma = gamma, omega = 0.0,
-                    e2i = e2i, i2r = i2r, pdeath = pdeath)
+                    I_severe = I_severe, R = R, D = D_cumulative,
+                    beta = beta, kappa = kappa, omega = 0.00,
+                    p_symptom = p_symptom, gamma = gamma, mu = mu)
 
 model1 <- ode_simulate(model1, t)
-model1 <- plot_ode_output(model1)
+p1 <- plot_dataframe(model1@output, x = "time", y = "fraction", c = "population_group")
+print(p1)
 ```
