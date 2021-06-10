@@ -90,13 +90,15 @@ test_that("R0 works for SEIRD model", {
   initial_conditions(my_model) <- list(S0=0.9, E0=0, I0=0.1, R0=0)
   beta <- 1.1
   gamma <- 0.4
+  mu <- 0.2
   transmission_parameters(my_model) <- list(beta=beta, kappa=0.1,
-                                            gamma=gamma, mu=0.3)
-  expect_equal(R0(my_model), beta/gamma)
+                                            gamma=gamma, mu=mu)
+  expect_equal(R0(my_model), beta/(gamma+mu))
   
   beta <- 1.4
   gamma <- 0.8
+  mu <- 0.1
   transmission_parameters(my_model) <- list(beta=beta, kappa=0.1,
-                                            gamma=gamma, mu=0.3)
-  expect_equal(R0(my_model), beta/gamma)
+                                            gamma=gamma, mu=mu)
+  expect_equal(R0(my_model), beta/(gamma+mu))
 })
