@@ -30,6 +30,7 @@ The object class `SEIaImIsRD` lets the user define and simulate such a model,
 choosing the initial conditions and parameter values.
 
 ## The SEIaImIsRD Model
+### Core: the ODE system
 The SEIaImIsRD model consists of six ODEs describing the six populations. Susceptible
 individuals ($S$) have not been exposed to the virus. Exposed individuals ($E$) have been
 exposed to the virus and have been infected but are not yet infectious to others; they are 
@@ -81,6 +82,31 @@ Because we build on this basic model to develop more complex epidemiological mod
 we solve the ODEs over time instead of just solving for the steady states. The
 next section shows an example of how to use the SEIR_model class.
 
+### Basic reproduction number
+For mathematical details, please refer to [this paper](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6002118/pdf/main.pdf).
+
+We calculate the basic reproduction number ($R_0$) using the next generation matrix approach, given the equation:
+$$R_0 = \rho(FV^{-1}),$$
+where $F=\frac{\partial F_i{(x_0)}}{\partial x_j}$, $V=\frac{\partial V_i{(x_0)}}{\partial x_j}$ and $\rho$ denotes the spectral radius of a matrix (i.e. the largest absolute value of its eigenvalues).
+
+The $F_i$ are the new infections, while the $V_i$ transfers of infections from one infectious or exposed compartment to another (here, these compartments are $E$, $I_a$, $I_m$ and $I_s$). $x_0$ is the disease-free equilibrium state.
+
+In the SEIaImIsRD model, $F$ and $V$ are $4\times4$ matrices:
+$$
+F = \left(\begin{array}{cc} 
+0 & S_0\beta_{I_a} & S_0\beta_{I_m} & S_0\beta_{I_s}\\
+0 & 0 & 0 & 0\\
+0 & 0 & 0 & 0\\
+0 & 0 & 0 & 0
+\end{array}\right), 
+V = \left(\begin{array}{cc} 
+\kappa & 0 & 0 & 0\\
+\kappa \eta_{E->I_a} & \gamma_{I_a} + \mu_{I_a} & 0 & 0\\
+\kappa \eta_{E->I_m} & 0 & \gamma_{I_m} + \mu_{I_m} & 0\\
+\kappa \eta_{E->I_s} & 0 & 0 & \gamma_{I_s} + \mu_{I_s}
+\end{array}\right)
+$$
+
 ## The `SEIaImIsRD` class
 In this section we will walk through an example of how to use the `SEIaImIsRD`
 class.
@@ -125,11 +151,13 @@ model <- set_init(object = model, S = S, E = E, I_asymptomatic = I_asymptomatic,
                     p_symptom = p_symptom, gamma = gamma, mu = mu)
 ```
 
-We use the ode solver and then plot the relaxation into the steady state:
+We use the ode solver, plot the relaxation into the steady state and calculate the R0 of the system by calling the function `R0_SEIaImIsRD`:
 ```{r}
 model <- ode_simulate(model, t)
+model <- R0_SEIaImIsRD(model)
 p <- plot_dataframe(model@output, x = "time", y = "fraction", c = "population_group")
 print(p)
+print(paste0("model: R0=", model@R0))
 ```
 
 Comparison with no natural loss of immunity (no transmission from R to S; omega=0)
@@ -140,6 +168,24 @@ model1 <- set_init(object = model, S = S, E = E, I_asymptomatic = I_asymptomatic
                     p_symptom = p_symptom, gamma = gamma, mu = mu)
 
 model1 <- ode_simulate(model1, t)
+model1 <- R0_SEIaImIsRD(model1)
 p1 <- plot_dataframe(model1@output, x = "time", y = "fraction", c = "population_group")
 print(p1)
+print(paste0("model1: R0=", model1@R0))
 ```
+
+Comparison with altered beta values:
+```{r}
+beta <- list(i_asymptomatic = 0.50, i_mild = 0.90, i_severe = 1.00)
+model2 <- set_init(object = model, S = S, E = E, I_asymptomatic = I_asymptomatic, I_mild = I_mild,
+                    I_severe = I_severe, R = R, D = D_cumulative,
+                    beta = beta, kappa = kappa, omega = 0.00,
+                    p_symptom = p_symptom, gamma = gamma, mu = mu)
+
+model2 <- ode_simulate(model2, t)
+model2 <- R0_SEIaImIsRD(model2)
+p2 <- plot_dataframe(model2@output, x = "time", y = "fraction", c = "population_group")
+print(p2)
+print(paste0("model2: R0=", model2@R0))
+```
+

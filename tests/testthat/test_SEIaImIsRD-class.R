@@ -33,12 +33,17 @@ test_that("SEIaImIsRD validate", {
   # 3. ode simulation and plot
   model <- ode_simulate(model, t)
   p <- plot_dataframe(model@output, x = "time", y = "fraction", c = "population_group")
+  # 4. calculate basic reproduction number (R0)
+  model <- R0_SEIaImIsRD(model)
 
   # check the validity of the model class and settings
   expect_s4_class(model, "SEIaImIsRD")
   expect_true(check_init(model))
+  # print out R0 value
+  print(paste0("R0 = ", model@R0))
   # view plot
   print(p)
+
   # check @output
   expect_equal(colnames(model@output),
                c("time", "population_group", "fraction"))

@@ -3,6 +3,7 @@
 export("initial_conditions<-")
 export("transmission_parameters<-")
 export(R0)
+export(R0_SEIaImIsRD)
 export(SEIRD)
 export(SEIaImIsRD)
 export(check_init)

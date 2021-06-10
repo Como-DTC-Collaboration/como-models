@@ -23,6 +23,7 @@ setClass("gg")
 #'       (characters). Default is list("beta", "kappa", "kappa", "mu").
 #' @slot initial_conditions list of values for initial conditions (double).
 #' @slot transmission_parameters list of values for transmission parameters (double).
+#' @slot R0 basic reproduction number (double).
 #' @slot output_names list of compartments name which are used by the model and
 #'       incidence.
 #' @slot output dataframe of output in long format
@@ -41,6 +42,7 @@ SEIaImIsRD <- setClass(Class = "SEIaImIsRD",
            transmission_parameter_names = "list",
            initial_conditions = "list",
            transmission_parameters = "list",
+           R0 = "numeric",
            output_names = "list",
            output = "list"
          ),
@@ -51,6 +53,7 @@ SEIaImIsRD <- setClass(Class = "SEIaImIsRD",
                                               "p_symptom", "gamma", "mu"),
            initial_conditions = vector(mode = "list", length = 6),
            transmission_parameters = vector(mode = "list", length = 6),
+           R0 = NA_real_,
            output_names = list("S", "E", "I_asymptomatic",
                                "I_mild", "I_severe", "R", "D"),
            output = data.frame()
@@ -228,6 +231,48 @@ ode_simulate <- function(
   return(object)
 }
 
+#' Calculate the basic reproduction number (\code{R_0}) of the system using the next generation matrix approach.
+#' @seealso \url{https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6002118/pdf/main.pdf} mathematical
+#' details of the next generation matrix approach.
+#'
+#' The R0 parameter is given by:
+#' \deqn{R_0 = \rho(FV^{-1})},
+#' where \deqn{F=\frac{\partial F_i{(x_0)}}{\partial x_j}} and \deqn{V=\frac{\partial V_i{(x_0)}}{\partial x_j}}
+#' and \code{rho} represents the spectral radius of a matrix (i.e. the largest absolute of eigenvalue).
+#' The \code{F_i} are the new infections, while the \code{V_i} transfers of infections from one compartment to
+#' another. \code{x_0} is the disease-free equilibrium state.
+#'
+#' @param object An SEIaImIsRD class object.
+#'
+#' @return An object of class SEIaImIsRD with R0 value stored
+#' @rdname SEIaImIsRD-class
+#' @export
+#'
+R0_SEIaImIsRD <- function(object) {
+  # get required parameters:
+  S <- object@initial_conditions$S
+  beta <- object@transmission_parameters$beta
+  kappa <- object@transmission_parameters$kappa
+  p_symptom <- object@transmission_parameters$p_symptom
+  gamma <- object@transmission_parameters$gamma
+  mu <- object@transmission_parameters$mu
+  # define matrices F and V:
+  F <- matrix(0, 4, 4)
+  V <- matrix(0, 4, 4)
+  F[1, 2:4] <-  c(S * beta$i_asymptomatic, S * beta$i_mild, S * beta$i_severe)
+  V[1, 1] <- kappa
+  V[2, 1] <- kappa * (1 - p_symptom$i_mild - p_symptom$i_severe)
+  V[2, 2] <- gamma$i_asymptomatic + mu$i_asymptomatic
+  V[3, 1] <- kappa * p_symptom$i_mild
+  V[3, 3] <- gamma$i_mild + mu$i_mild
+  V[4, 1] <- kappa * p_symptom$i_severe
+  V[4, 4] <- gamma$i_severe + mu$i_severe
+  # calculate R0 as the spectral radius for the matrix F x V^(-1):
+  eigVals <- eigen(F %*% (solve(V)))$values
+  object@R0 <- max(abs(eigVals))
+  return(object)
+}
+
 
 #' # describeIn SEIaImIsRD Plot the outcome of the ode similuation (for any dataframe)
 #'
@@ -240,6 +285,7 @@ ode_simulate <- function(
 #' @rdname plot_dataframe
 #' @export
 #' @aliases plot_dataframe,ANY,ANY-method
+#'
 plot_dataframe <- function(data, x = "time", y = "fraction", c = "population_group") {
   p <- ggplot(data, aes_string(x = x, y = y)) +
     geom_line(aes_string(colour = c)) +

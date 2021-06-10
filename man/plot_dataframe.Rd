@@ -5,8 +5,7 @@
 \alias{plot_dataframe,ANY,ANY-method}
 \title{describeIn SEIaImIsRD Plot the outcome of the ode similuation (for any dataframe)}
 \usage{
-plot_dataframe(data, x = "time", y = "fraction",
-  c = "population_group")
+plot_dataframe(data, x = "time", y = "fraction", c = "population_group")
 }
 \arguments{
 \item{x}{The variable in the dataframe to be mapped to the x axis in ggploy aesthetics. Default is set to "time".}

@@ -7,20 +7,34 @@
 \alias{set_init}
 \alias{check_init}
 \alias{ode_simulate}
+\alias{R0_SEIaImIsRD}
 \title{An S4 object representing the SEIRD model with infected population of different symptome compartments: asymptomatic, mild and severe.}
 \usage{
-set_init(object, S = NA_real_, E = NA_real_,
-  I_asymptomatic = NA_real_, I_mild = NA_real_, I_severe = NA_real_,
-  R = NA_real_, D = NA_real_, beta = list(), kappa = NA_real_,
-  omega = NA_real_, p_symptom = list(), gamma = list(),
-  mu = list())
+set_init(
+  object,
+  S = NA_real_,
+  E = NA_real_,
+  I_asymptomatic = NA_real_,
+  I_mild = NA_real_,
+  I_severe = NA_real_,
+  R = NA_real_,
+  D = NA_real_,
+  beta = list(),
+  kappa = NA_real_,
+  omega = NA_real_,
+  p_symptom = list(),
+  gamma = list(),
+  mu = list()
+)
 
 check_init(object)
 
 ode_simulate(object, times, method = "lsoda")
+
+R0_SEIaImIsRD(object)
 }
 \arguments{
-\item{object}{An object of class SEIaImIsRD}
+\item{object}{An SEIaImIsRD class object.}
 
 \item{S}{Numeric, initial fraction of the population that is susceptible}
 
@@ -52,10 +66,6 @@ that need further hospitalization}
 \item{times}{A list of time points of the simulation period}
 
 \item{method}{A string indicating which ode integrator to use. Default is set to 'lsoda'}
-
-\item{object}{An object of class SEIaImIsRD}
-
-\item{object}{An object of class SEIaImIsRD}
 }
 \value{
 An object of class SEIaImIsRD with initial population and parameters
@@ -63,6 +73,8 @@ An object of class SEIaImIsRD with initial population and parameters
 TRUE if passing all checks, or an error message if any check fails
 
 An object of class SEIaImIsRD with a dataframe of simulation output
+
+An object of class SEIaImIsRD with R0 value stored
 }
 \description{
 This class represents an extension of the SEIRD model, showing how populations of susceptible,
@@ -97,10 +109,23 @@ are subgrouped into compartments according to different severity of symptoms, i.
 
 \item{\code{transmission_parameters}}{list of values for transmission parameters (double).}
 
+\item{\code{R0}}{basic reproduction number (double).}
+
 \item{\code{output_names}}{list of compartments name which are used by the model and
 incidence.}
 
 \item{\code{output}}{dataframe of output in long format}
 }}
 
+\seealso{
+\url{https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6002118/pdf/main.pdf} mathematical
+details of the next generation matrix approach.
+
+The R0 parameter is given by:
+\deqn{R_0 = \rho(FV^{-1})},
+where \deqn{F=\frac{\partial F_i{(x_0)}}{\partial x_j}} and \deqn{V=\frac{\partial V_i{(x_0)}}{\partial x_j}}
+and \code{rho} represents the spectral radius of a matrix (i.e. the largest absolute of eigenvalue).
+The \code{F_i} are the new infections, while the \code{V_i} transfers of infections from one compartment to
+another. \code{x_0} is the disease-free equilibrium state.
+}
 \concept{objects}
