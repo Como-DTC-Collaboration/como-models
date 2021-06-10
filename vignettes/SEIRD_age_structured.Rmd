@@ -125,12 +125,13 @@ c_combined_wider <- c_combined %>%
 model <- comomodels::SEIRAge(n_age_categories = n_ages,
                  contact_matrix = c_combined_wider,
                  age_ranges = as.list(age_names))
-transmission_parameters(model) <- list(b=1, k=0.5, g=0.5)
+transmission_parameters(model) <- list(b=1, k=0.5, g=0.5, mu = 0.01)
 
 initial_conditions(model) <- list(S0=pop_fraction*0.99,
                                   E0=rep(0, n_ages),
                                   I0=pop_fraction*0.01,
-                                  R0=rep(0, n_ages))
+                                  R0=rep(0, n_ages),
+                                  D0=rep(0, n_ages))
 ```
 
 We next simulate the model and visualise all the dynamics of each compartment.
