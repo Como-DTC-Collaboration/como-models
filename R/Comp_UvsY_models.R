@@ -22,7 +22,7 @@ names_common <- intersect(names_urban,names_rural)
 
 # specify country and obtain population data
 # NOTE: World bank data and contact matrix data use the same three-letter country codes!
-country <- "NLD"
+country <- "AFG"
 if (!(country %in% names_common)) {
   stop(paste(country," is not a valid three-letter country code."))
 }
@@ -82,7 +82,7 @@ m = 0.03 # probability of death, cases-fatality ratio.
 C = 0.1 # connectedness parameter
 
 # set initial conditions, same in both models
-start_infected_urban = 0.001
+start_infected_urban = 0.01
 start_infected_rural = 0
 S0U = 1-frac_rural - start_infected_urban
 E0U = 0
@@ -192,3 +192,9 @@ incplot_total <- ggplot(CD_total, aes(x = time, y = value, fill = compartment)) 
   scale_color_manual(values = col)
 
 grid.arrange(SEIRplot_total,incplot_total,nrow = 1)
+
+sum(CD_total$value[CD_total$compartment=="Incidences_U"])
+sum(CD_total$value[CD_total$compartment=="Deaths_U"])
+SEIR_total$time[SEIR_total$value == max(SEIR_total$value[SEIR_total$compartment=="I_U"])]
+
+
