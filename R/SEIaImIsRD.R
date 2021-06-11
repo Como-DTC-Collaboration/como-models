@@ -261,11 +261,11 @@ R0_SEIaImIsRD <- function(object) {
   V <- matrix(0, 4, 4)
   F[1, 2:4] <-  c(S * beta$i_asymptomatic, S * beta$i_mild, S * beta$i_severe)
   V[1, 1] <- kappa
-  V[2, 1] <- kappa * (1 - p_symptom$i_mild - p_symptom$i_severe)
+  V[2, 1] <- -kappa * (1 - p_symptom$i_mild - p_symptom$i_severe)
   V[2, 2] <- gamma$i_asymptomatic + mu$i_asymptomatic
-  V[3, 1] <- kappa * p_symptom$i_mild
+  V[3, 1] <- -kappa * p_symptom$i_mild
   V[3, 3] <- gamma$i_mild + mu$i_mild
-  V[4, 1] <- kappa * p_symptom$i_severe
+  V[4, 1] <- -kappa * p_symptom$i_severe
   V[4, 4] <- gamma$i_severe + mu$i_severe
   # calculate R0 as the spectral radius for the matrix F x V^(-1):
   eigVals <- eigen(F %*% (solve(V)))$values

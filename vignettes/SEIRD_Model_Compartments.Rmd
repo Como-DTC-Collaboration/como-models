@@ -83,15 +83,22 @@ we solve the ODEs over time instead of just solving for the steady states. The
 next section shows an example of how to use the SEIR_model class.
 
 ### Basic reproduction number
-For mathematical details, please refer to [this paper](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6002118/pdf/main.pdf).
+The mathematical details refer to [this paper](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6002118/pdf/main.pdf).
 
-We calculate the basic reproduction number ($R_0$) using the next generation matrix approach, given the equation:
-$$R_0 = \rho(FV^{-1}),$$
-where $F=\frac{\partial F_i{(x_0)}}{\partial x_j}$, $V=\frac{\partial V_i{(x_0)}}{\partial x_j}$ and $\rho$ denotes the spectral radius of a matrix (i.e. the largest absolute value of its eigenvalues).
+We calculate the basic reproduction number ($\mathscr{R_0}$) using the next generation matrix approach:
 
-The $F_i$ are the new infections, while the $V_i$ transfers of infections from one infectious or exposed compartment to another (here, these compartments are $E$, $I_a$, $I_m$ and $I_s$). $x_0$ is the disease-free equilibrium state.
+First, define 
+$x\in (x_1, x_2,...,x_n)^T$ be the number of individuals in each compartment, where the first $m < n$ compartments contain exposed or infected individuals. In the **SEIaImIsRD** model, these compartments $E$, $I_a$, $Im$ and $Is$). 
 
-In the SEIaImIsRD model, $F$ and $V$ are $4\times4$ matrices:
+Assume that a disease free equilibrium (DFE) $x_0$ exists and is stable in the absence of disease, and that the linearized equations for $x_1, …, x_m$ at the DFE decouple from the other equations. Consider these equations written in the form $\frac{\text{d}x_i}{\text{d}t} = \mathscr{F_i}(x) - \mathscr{V_i}(x)$ for $i \in \{1, 2, ..., m\}$. In this splitting, $\mathscr{F_i}(x)$ is the rate of appearance of new infections in compartment $i$, and $\mathscr{V_i}(x)$ is the rate of other transitions between compartment $i$ and other infected compartments. It is assumed that $\mathscr{F_i}=0$ for $i\in\{m+1, m+2, ..., n\}$.
+
+Now define $F=\frac{\partial \mathscr{F_i}{(x_0)}}{\partial x_j}$ and $V=\frac{\partial \mathscr{V_i}{(x_0)}}{\partial x_j}$ for $i,j \in \{1, 2, ..., m\}$. Matrix $FV^{-1}$ has $(i,j)$ entry equal to the expected number of secondary infections
+in compartment $i$ produced by an infected individual introduced in compartment $j$. Thus $FV^{-1}$ is the $\textit{next generation matrix}$ and
+
+$$\mathscr{R_0} = \rho(FV^{-1}),$$
+where $\rho$ denotes the $\textit{spectral radius}$ of a matrix (i.e. the largest absolute value of its eigenvalues).
+
+Applying the above approach to the SEIaImIsRD model, the DFE matrices $F$ and $V$ are:
 $$
 F = \left(\begin{array}{cc} 
 0 & S_0\beta_{I_a} & S_0\beta_{I_m} & S_0\beta_{I_s}\\
@@ -101,11 +108,12 @@ F = \left(\begin{array}{cc}
 \end{array}\right), 
 V = \left(\begin{array}{cc} 
 \kappa & 0 & 0 & 0\\
-\kappa \eta_{E->I_a} & \gamma_{I_a} + \mu_{I_a} & 0 & 0\\
-\kappa \eta_{E->I_m} & 0 & \gamma_{I_m} + \mu_{I_m} & 0\\
-\kappa \eta_{E->I_s} & 0 & 0 & \gamma_{I_s} + \mu_{I_s}
+-\kappa \eta_{E->I_a} & \gamma_{I_a} + \mu_{I_a} & 0 & 0\\
+-\kappa \eta_{E->I_m} & 0 & \gamma_{I_m} + \mu_{I_m} & 0\\
+-\kappa \eta_{E->I_s} & 0 & 0 & \gamma_{I_s} + \mu_{I_s}
 \end{array}\right)
 $$
+where $S_0$ is the initial number of susceptibles, as in assumption the initial conditions $x_0 = \{S_0, E_0, ...\}$ can be seen as a DFE given that $S_0, E_0>0$ and $E_0 \ll S_0$, and $x_{0i}=0$ for all other compartments except $S_0$ and $E_0$ . $\mathscr{R_0}$ can then be calculated using the equation $\mathscr{R_0} = \rho(FV^{-1})$.
 
 ## The `SEIaImIsRD` class
 In this section we will walk through an example of how to use the `SEIaImIsRD`
@@ -119,8 +127,8 @@ model <- SEIaImIsRD()
 Next, we assign values for the fractions of the population.
 The initial conditions must sum to one.
 ```{r}
-S <- 0.9
-E <- 0.1
+S <- 0.99
+E <- 0.01
 I_asymptomatic <- 0
 I_mild <- 0
 I_severe <- 0

@@ -3,8 +3,8 @@
 
 # set up test data:
 # initial population (in fraction)
-S <- 0.9
-E <- 0.1
+S <- 0.99
+E <- 0.01
 I_asymptomatic <- 0
 I_mild <- 0
 I_severe <- 0
