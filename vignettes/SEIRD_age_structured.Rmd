@@ -108,7 +108,7 @@ We use more demographics loaded from the population data file provided by the co
 with a uniform initial infected population of 1% across all age groups. The remaining 99% of the population starts
 as susceptibles.
 ```{r}
-
+load(file = "../data/population.rda")
 
 pops = population[population$country == 'India', ]$pop
 pop_fraction = pops/sum(pops)
@@ -174,8 +174,8 @@ model_5070 <- comomodels::SEIRAge(n_age_categories = n_ages,
                  contact_matrix = c_combined_wider,
                  age_ranges = as.list(age_names))
 
-transmission_parameters(model_1530) <- list(b=1, k=0.5, g=0.5)
-transmission_parameters(model_5070) <- list(b=1, k=0.5, g=0.5)
+transmission_parameters(model_1530) <- list(b=1, k=0.5, g=0.5, mu=0.01)
+transmission_parameters(model_5070) <- list(b=1, k=0.5, g=0.5, mu=0.01)
 
 S0_1530 = pop_fraction*1
 S0_1530[4:6] = S0_1530[4:6]*0.99
@@ -190,12 +190,14 @@ I0_5070[10:14] = pop_fraction[10:14]*0.01
 initial_conditions(model_1530) <- list(S0=S0_1530,
                                   E0=rep(0, n_ages),
                                   I0=I0_1530,
-                                  R0=rep(0, n_ages))
+                                  R0=rep(0, n_ages),
+                                  D0=rep(0, n_ages))
 
 initial_conditions(model_5070) <- list(S0=S0_5070,
                                   E0=rep(0, n_ages),
                                   I0=I0_5070,
-                                  R0=rep(0, n_ages))
+                                  R0=rep(0, n_ages),
+                                  D0=rep(0, n_ages))
 ```
 
 
