@@ -14,6 +14,7 @@ Suggests:
     covr,
     testthat (>= 3.0.0),
     knitr,
+    markdown,
     rmarkdown
 Config/testthat/edition: 3
 Imports: 
@@ -25,7 +26,8 @@ Imports:
     tidyverse,
     methods,
     magrittr,
-    rlang
+    rlang,
+    dplyr,
 VignetteBuilder: knitr
 Depends: 
     R (>= 2.10)
