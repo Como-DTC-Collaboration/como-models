@@ -18,15 +18,16 @@ method for solving the ode system. Default is \code{lsoda} which is also the
 default for the ode function in the deSolve package used in this function.}
 }
 \value{
-data frame containing the time vector and time series of S, R and I
-population fractions for each age group outputs with incidence numbers
+data frame containing the time vector and time series of S, R, I and
+D population fractions for each age group outputs with incidence numbers
 for each age group.
 }
 \description{
 Solves a system to ODEs which form an
 age-structured simple SEIR model. The system of equations for the time
 evolution of population fractions in Susceptible (S), Exposed (E), Infected
-(I) and Recovered (R) groups in a given age group indexed by i is given by
+(I), Recovered (R) and Dead (D) groups in a given age group indexed by i is
+given by
 }
 \details{
 
