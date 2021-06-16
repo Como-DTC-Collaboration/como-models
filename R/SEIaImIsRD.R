@@ -20,7 +20,7 @@ setClass("gg")
 #' @slot initial_condition_names list of names of initial conditions
 #'       (characters). Default is list("S0", "E0", "I_asymptomatic0", "I_mild0", "I_severe0", "R0", "D0").
 #' @slot transmission_parameter_names list of names of transmission parameters
-#'       (characters). Default is list("beta", "kappa", "kappa", "mu").
+#'       (characters). Default is list("beta", "kappa", "p_symptom", "gamma", "mu").
 #' @slot initial_conditions list of values for initial conditions (double).
 #' @slot transmission_parameters list of values for transmission parameters (double).
 #' @slot R0 basic reproduction number (double).
@@ -51,7 +51,7 @@ SEIaImIsRD <- setClass(Class = "SEIaImIsRD",
                                           "I_mild0", "I_severe0", "R0", "D0"),
            transmission_parameter_names = list("beta", "kappa", "omega",
                                               "p_symptom", "gamma", "mu"),
-           initial_conditions = vector(mode = "list", length = 6),
+           initial_conditions = vector(mode = "list", length = 7),
            transmission_parameters = vector(mode = "list", length = 6),
            R0 = NA_real_,
            output_names = list("S", "E", "I_asymptomatic",
@@ -173,7 +173,7 @@ check_init <- function(object) {
 #' \deqn{\frac{dI_{mild}(t)}{dt} = p_symptom.i_{mild}\kappa E(t) - (\gamma.i_{mild} + \mu.i_{mild}) I_{mild}(t)}
 #' \deqn{\frac{dI_{severe}(t)}{dt} = p_symptom.i_{severe}\kappa E(t) - (\gamma.i_{severe} + \mu.i_{severe}) I_{severe}(t)}
 #' \deqn{\frac{dR(t)}{dt} = -\omega R(t) + \gamma.i_{mild} I_{mild}(t) + \gamma.i_{severe} I_{severe}(t)}
-#' \deqn{\frac{dD(t)}{dt} =  \mu.i_{mild} I_{mild}(t) + \mu.i_{severe} I_{severe}(t)}
+#' \deqn{\frac{dD(t)}{dt} =  \mu.i_{asymptomatic} I_{asymptomatic}(t) + \mu.i_{mild} I_{mild}(t) + \mu.i_{severe} I_{severe}(t)}
 #'
 #' @param object An object of class SEIaImIsRD
 #' @param times A list of time points of the simulation period

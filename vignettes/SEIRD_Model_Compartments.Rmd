@@ -57,7 +57,7 @@ $$\frac{\text{d}R}{\text{d}t} = - \omega R +\mu_{I_a}  * I_{a} + \mu_{I_m}  * I_
 The rate at which susceptible individuals are infected depends on the fraction
 of the population that is susceptible, the fraction of the population that is
 infectious, and the probability of an infectious individual infecting a 
-susceptible individual, $\lambda$. This is represented in the
+susceptible individual, $\beta$. This is represented in the
 first terms on the right-hand side of $\text{d}S/ \text{d}t$ and $\text{d}I/ \text{d}t$.
 Exposed individuals become infectious at rate $\kappa$. The reciprocal value $1/ \kappa$ is
 the incubation time of the virus, i.e. how many days after exposure the individual
@@ -68,7 +68,7 @@ individuals die due to the infection after $1/ \mu_i$ days, making the death rat
 
 In addition to these six main ODEs, the model also keeps track the number of 
 disease-related deaths ($D$) over time
-$$\frac{\text{d}D}{\text{d}t} = - \mu_{I_a} * I_{a} +  \mu_{I_m} * I_{m} +  \mu_{I_s} * I_{s},$$
+$$\frac{\text{d}D}{\text{d}t} = \mu_{I_a} * I_{a} +  \mu_{I_m} * I_{m} +  \mu_{I_s} * I_{s},$$
 
 The system is closed by specifying the initial conditions
 $$S(0) = S_0,\ E(0) = E_0,\ I(0) = I_0,\ R(0) = R_0,\ C(0) = C_0,\ D(0) = D_0,$$
@@ -80,7 +80,7 @@ sides of the ODEs equal to zero.
 
 Because we build on this basic model to develop more complex epidemiological models,
 we solve the ODEs over time instead of just solving for the steady states. The
-next section shows an example of how to use the SEIR_model class.
+next section shows an example of how to use the **SEIaImIsRD** model class.
 
 ### Basic reproduction number
 The mathematical details refer to [this paper](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6002118/pdf/main.pdf).
@@ -88,9 +88,9 @@ The mathematical details refer to [this paper](https://www.ncbi.nlm.nih.gov/pmc/
 We calculate the basic reproduction number ($\mathscr{R_0}$) using the next generation matrix approach:
 
 First, define 
-$x\in (x_1, x_2,...,x_n)^T$ be the number of individuals in each compartment, where the first $m < n$ compartments contain exposed or infected individuals. In the **SEIaImIsRD** model, these compartments $E$, $I_a$, $Im$ and $Is$). 
+$x\in (x_1, x_2,...,x_n)^T$ be the number of individuals in each compartment, where the first $m < n$ compartments contain exposed or infected individuals. In the **SEIaImIsRD** model, these compartments $E$, $I_a$, $I_m$ and $I_s$). 
 
-Assume that a disease free equilibrium (DFE) $x_0$ exists and is stable in the absence of disease, and that the linearized equations for $x_1, â€¦, x_m$ at the DFE decouple from the other equations. Consider these equations written in the form $\frac{\text{d}x_i}{\text{d}t} = \mathscr{F_i}(x) - \mathscr{V_i}(x)$ for $i \in \{1, 2, ..., m\}$. In this splitting, $\mathscr{F_i}(x)$ is the rate of appearance of new infections in compartment $i$, and $\mathscr{V_i}(x)$ is the rate of other transitions between compartment $i$ and other infected compartments. It is assumed that $\mathscr{F_i}=0$ for $i\in\{m+1, m+2, ..., n\}$.
+Assume that a disease free equilibrium (DFE) $x_0$ exists and is stable in the absence of disease, and that the linearized equations for $x_1, ...¦, x_m$ at the DFE decouple from the other equations. Consider these equations written in the form $\frac{\text{d}x_i}{\text{d}t} = \mathscr{F_i}(x) - \mathscr{V_i}(x)$ for $i \in \{1, 2, ..., m\}$. In this splitting, $\mathscr{F_i}(x)$ is the rate of appearance of new infections in compartment $i$, and $\mathscr{V_i}(x)$ is the rate of other transitions between compartment $i$ and other infected compartments. It is assumed that $\mathscr{F_i}=0$ for $i\in\{m+1, m+2, ..., n\}$.
 
 Now define $F=\frac{\partial \mathscr{F_i}{(x_0)}}{\partial x_j}$ and $V=\frac{\partial \mathscr{V_i}{(x_0)}}{\partial x_j}$ for $i,j \in \{1, 2, ..., m\}$. Matrix $FV^{-1}$ has $(i,j)$ entry equal to the expected number of secondary infections
 in compartment $i$ produced by an infected individual introduced in compartment $j$. Thus $FV^{-1}$ is the $\textit{next generation matrix}$ and
@@ -159,7 +159,7 @@ model <- set_init(object = model, S = S, E = E, I_asymptomatic = I_asymptomatic,
                     p_symptom = p_symptom, gamma = gamma, mu = mu)
 ```
 
-We use the ode solver, plot the relaxation into the steady state and calculate the R0 of the system by calling the function `R0_SEIaImIsRD`:
+We use the ode solver, plot the relaxation into the steady state and calculate the $\mathscr{R_0}$ of the system by calling the function `R0_SEIaImIsRD`:
 ```{r}
 model <- ode_simulate(model, t)
 model <- R0_SEIaImIsRD(model)
@@ -168,7 +168,7 @@ print(p)
 print(paste0("model: R0=", model@R0))
 ```
 
-Comparison with no natural loss of immunity (no transmission from R to S; omega=0)
+Comparison with no natural loss of immunity (no transmission from $R$ to $S$; $\omega=0$)
 ```{r}
 model1 <- set_init(object = model, S = S, E = E, I_asymptomatic = I_asymptomatic, I_mild = I_mild,
                     I_severe = I_severe, R = R, D = D_cumulative,
@@ -182,7 +182,7 @@ print(p1)
 print(paste0("model1: R0=", model1@R0))
 ```
 
-Comparison with altered beta values:
+Comparison with altered $\beta$ values (i.e. rate at which an individual from $I_i$ infects $S$):
 ```{r}
 beta <- list(i_asymptomatic = 0.50, i_mild = 0.90, i_severe = 1.00)
 model2 <- set_init(object = model, S = S, E = E, I_asymptomatic = I_asymptomatic, I_mild = I_mild,
