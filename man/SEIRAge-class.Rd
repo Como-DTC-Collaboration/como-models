@@ -23,7 +23,7 @@ transmission_parameters(object) <- value
 \arguments{
 \item{object}{An object of the class SEIRAge.}
 
-\item{value}{a named list of form list(b=, k=, g=)
+\item{value}{a named list of form list(b=, k=, g=, mu=)
 
 All rates of change between compartments are equal regardless of
 age group.}

@@ -30,6 +30,7 @@
 #' @importFrom methods new
 #' @export SEIRAge
 #' @exportClass SEIRAge
+#' 
 SEIRAge <- setClass('SEIRAge',
          # slots
          slots = c(
@@ -46,11 +47,11 @@ SEIRAge <- setClass('SEIRAge',
          # prototypes for the slots, automatically set output and param
          # names
          prototype = list(
-           output_names = list('S', 'E', 'I', 'R', 'Incidence'),
-           initial_condition_names = list('S0', 'E0', 'I0', 'R0'),
-           transmission_parameter_names = list('b', 'k', 'g'),
-           initial_conditions = vector(mode = "list", length = 4),
-           transmission_parameters = vector(mode = "list", length = 3),
+           output_names = list('S', 'E', 'I', 'R', 'D' ,'Incidence'),
+           initial_condition_names = list('S0', 'E0', 'I0', 'R0', 'D0'),
+           transmission_parameter_names = list('b', 'k', 'g', 'mu'),
+           initial_conditions = vector(mode = "list", length = 5),
+           transmission_parameters = vector(mode = "list", length = 4),
            age_ranges = vector(mode = 'list'),
            n_age_categories = NA_real_,
            contact_matrix = matrix(NA)
@@ -100,27 +101,28 @@ setMethod(
     E0 = value$E0
     I0 = value$I0
     R0 = value$R0
+    D0 = value$D0
     # check that ICs are valid
-    if (sum(S0, E0, I0, R0) != 1) {
+    if (sum(S0, E0, I0, R0, D0) != 1) {
       stop('Invalid initial conditions. Must sum to 1.')
     }
 
     # create list of parameter values
-    ic <- list(S0, E0, I0, R0)
+    ic <- list(S0, E0, I0, R0, D0)
 
     # add names to each value
     names(ic) = object@initial_condition_names
 
     # raise errors if age category dimensions do not match initial state vectors
     # also raise errors if initial state and parameter values are not doubles
-    for (p in list('S0', 'E0', 'I0', 'R0')){
+    for (p in list('S0', 'E0', 'I0', 'R0', 'D0')){
       if(length(ic[[p]]) != object@n_age_categories){
         stop(glue('Wrong number of age groups for {p}
               compartments.'))}
       if(!is.numeric(ic[[p]])){
         stop(glue('{p} format must be numeric'))}
     }
-    if(sum(S0, E0, I0, R0) != 1){
+    if(sum(S0, E0, I0, R0, D0) != 1){
       stop('All compartments need to sum up to 1.')
     }
 
@@ -152,7 +154,7 @@ setMethod('transmission_parameters', 'SEIRAge',
 #' If the transmission parameters provided to are not 1-dimensional an error is
 #' thrown.
 #'
-#' @param value a named list of form list(b=, k=, g=)
+#' @param value a named list of form list(b=, k=, g=, mu=)
 #'
 #' All rates of change between compartments are equal regardless of
 #' age group.
@@ -173,7 +175,9 @@ setMethod(
     b <- value$b
     k <- value$k
     g <- value$g
-    trans_params <- list(b, k, g)
+    mu <- value$mu
+    
+    trans_params <- list(b, k, g, mu)
 
     # add names to each value
     names(trans_params) = object@transmission_parameter_names
@@ -199,13 +203,15 @@ setMethod(
 #' Solves a system to ODEs which form an
 #' age-structured simple SEIR model. The system of equations for the time
 #' evolution of population fractions in Susceptible (S), Exposed (E), Infected
-#' (I) and Recovered (R) groups in a given age group indexed by i is given by
+#' (I), Recovered (R) and Dead (D) groups in a given age group indexed by i is 
+#' given by
 #'
 #' \deqn{\frac{dS_i(t)}{dt} = - b S_i(t) \Sigma_{j}C_{ij} I_j(t)}
 #' \deqn{\frac{dE_i(t)}{dt} = b S_i(t) \Sigma_{j}C_{ij} I_j(t)} - k E_i(t)}
 #' \deqn{\frac{dI_i(t)}{dt} = k E_i(t) - g I_i(t)}
 #' \deqn{\frac{dR_i(t)}{dt} = g I_i(t)}
-#'
+#' \deqn{\frac{dD_i(t)}{dt} = \mu I_i(t)}
+
 #' where C is a contact matrix whose elements represents the
 #' contact between different age groups (rows) with age groups of
 #' people they come in contact with (columns). This function relies on the 
@@ -220,8 +226,8 @@ setMethod(
 #' method for solving the ode system. Default is `lsoda` which is also the
 #' default for the ode function in the deSolve package used in this function.
 #'
-#' @return data frame containing the time vector and time series of S, R and I
-#' population fractions for each age group outputs with incidence numbers
+#' @return data frame containing the time vector and time series of S, R, I and
+#' D population fractions for each age group outputs with incidence numbers
 #' for each age group.
 setGeneric("run",
            def = function(object, times = seq(0, 100, by = 1),
@@ -249,12 +255,14 @@ setMethod(
     state <- c(S = initial_conditions(object)$S0,
                E = initial_conditions(object)$E0,
                I = initial_conditions(object)$I0,
-               R = initial_conditions(object)$R0)
+               R = initial_conditions(object)$R0,
+               D = initial_conditions(object)$D0)
 
     # set parameters vector
     parameters <- c(b = transmission_parameters(object)$b,
                     k = transmission_parameters(object)$k,
-                    g = transmission_parameters(object)$g)
+                    g = transmission_parameters(object)$g,
+                    mu = transmission_parameters(object)$mu)
     
     # fetch contact matrix of the instance
     C = object@contact_matrix
@@ -268,14 +276,17 @@ setMethod(
           E <- state[(age + 1):(2 * age)]
           I <- state[(2 * age + 1):(3 * age)]
           R <- state[(3 * age + 1):(4 * age)]
+          D <- state[(4 * age + 1):(5 * age)]
+          
           
           # rate of change
           dS <- -b * S * C %*% I
           dE <- b * S * C %*% I - k * E
           dI <- k * E - g * I
           dR <- g * I
+          dD <- mu * I
           # return the rate of change
-          list(c(dS, dE, dI, dR))
+          list(c(dS, dE, dI, dR, dD))
         })
     }
 
@@ -294,14 +305,16 @@ setMethod(
     out_temp$compartment = c(replicate(length(times)*age, "S"),
                              replicate(length(times)*age, "E"),
                              replicate(length(times)*age, "I"),
-                             replicate(length(times)*age, "R"))
+                             replicate(length(times)*age, "R"),
+                             replicate(length(times)*age, "D"))
+
     out_temp$age_range = unlist(rep(object@age_ranges, each=length(times)))
 
     #drop the old variable column
     out_temp = out_temp %>% 
       dplyr::select(-.data$variable) %>% 
       dplyr::mutate(compartment=as.factor(compartment)) %>% 
-      dplyr::mutate(compartment=forcats::fct_relevel(compartment, "S", "E", "I", "R")) %>% 
+      dplyr::mutate(compartment=forcats::fct_relevel(compartment, "S", "E", "I", "R","D")) %>% 
       dplyr::mutate(age_range=as.factor(age_range)) %>% 
       dplyr::mutate(age_range=forcats::fct_relevel(age_range, object@age_ranges))
 
@@ -313,7 +326,8 @@ setMethod(
 
     # melt the incidence dataframe to long format
     incidence_temp = melt(n_inc, id.vars=NULL)
-
+    print(incidence_temp)
+    
     # add time, compartment and age_range columns as above
     incidence_temp$time = rep(times, age)
     incidence_temp$compartment = rep('Incidence', age*length(times))
