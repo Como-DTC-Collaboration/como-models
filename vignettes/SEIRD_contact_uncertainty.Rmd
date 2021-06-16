@@ -19,6 +19,7 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(comomodels)
+library(glue)
 library(tidyverse)
 library(tidyr)
 library(dplyr)
@@ -27,6 +28,7 @@ library(forcats)
 library(ggplot2)
 library(deSolve)
 library(socialmixr)
+load(file = "../data/population.rda")
 ```
 
 ## Introduction
@@ -120,7 +122,17 @@ the model. Namely, we set $\beta=1$, $\kappa=0.5$, and $\gamma=0.5$, with an
 initial exposed group compartment equal to 1% of the population size, and all
 other individuals in the susceptible group.
 
+The age structured model takes another parameter $\mu$ which specifies the 
+death rate. For this parameter, we will provide a vector giving a separate
+value for each age group. The $\mu$ we provide reflects higher death rates for
+older people and the very young.
+
 ```{r}
+mu=c(0.05, 0.025, 0.01, 0.005, 0.005, 0.005, 0.01, 0.02, 0.03, 0.04, 
+     0.05, 0.06, 0.07, 0.08, 0.09, 0.1)
+```
+
+```{r, include=FALSE}
 for (i in 1:n_bootstrap){
   matrix=matrices[[i]][[1]]
 
@@ -135,16 +147,17 @@ for (i in 1:n_bootstrap){
                    contact_matrix=matrix,
                    age_ranges=as.list(age_names))
 
-  # Set the other parameters of the model  
-  transmission_parameters(model) <- list(b=1, k=0.5, g=0.5)
-  initial_conditions(model) <- list(S0=pop_fraction*0.99,
-                                    E0=pop_fraction*0.01,
-                                    I0=rep(0, n_ages),
-                                    R0=rep(0, n_ages))
+  # Set the other parameters of the model
+  transmission_parameters(model) <- list(b=1, k=0.5, g=0.5, mu=mu)
+  initial_conditions(model) <- list(S0=pop_fraction*0.999,
+                                    E0=rep(0, n_ages),
+                                    I0=pop_fraction*0.001,
+                                    R0=rep(0, n_ages),
+                                    D0=rep(0, n_ages))
   res <- run(model, time=seq(0, 100, by=1))
 
   # Save the data for the I and R compartments
-  x = filter(res, compartment %in% c("I", "R"))
+  x = filter(res, compartment %in% c("I", "R", "D"))
   if (i==1)
     all_results <- x
   else
@@ -194,7 +207,7 @@ similar for all contact matrices in the bootstrap sample, the number of people
 in the I compartment exhibits significant uncertainty, particularly near the
 peak of the epidemic.
 
-Finally, we perform the same uncertainty analysis for the number in the R
+Next, we perform the same uncertainty analysis for the number in the recovered
 compartment at the final time point, for all age groups.
 
 
@@ -206,5 +219,17 @@ ggplot(data, aes(x=age_range, y=value/pop_fraction), l) +
   geom_boxplot() +
   xlab("Age group") +
   ylab("Proportion of age group ever infected")
+
+```
+Finally, we study the effects on death.
+
+```{r, fig.width=7, fig.height=5}
+
+data <- filter(all_results, compartment=="D", time==100.0)
+
+ggplot(data, aes(x=age_range, y=value/pop_fraction), l) +
+  geom_boxplot() +
+  xlab("Age group") +
+  ylab("Proportion of age group died")
 
 ```
