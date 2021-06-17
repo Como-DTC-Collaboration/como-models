@@ -16,7 +16,17 @@ knitr::opts_chunk$set(
 ```
 
 ```{r setup}
+if (!requireNamespace("plotly", quietly = TRUE))
+    install.packages("plotly")
+if (!requireNamespace("kable", quietly = TRUE))
+    install.packages("kable")
+if (!requireNamespace("kableExtra", quietly = TRUE))
+    install.packages("kableExtra")
+
 library(comomodels)
+library(plotly) # interactive plot
+library(knitr) # table layout 
+library(kableExtra) # plot and table arrangement
 ```
 
 ## Introduction
@@ -90,7 +100,7 @@ We calculate the basic reproduction number ($\mathscr{R_0}$) using the next gene
 First, define 
 $x\in (x_1, x_2,...,x_n)^T$ be the number of individuals in each compartment, where the first $m < n$ compartments contain exposed or infected individuals. In the **SEIaImIsRD** model, these compartments $E$, $I_a$, $I_m$ and $I_s$). 
 
-Assume that a disease free equilibrium (DFE) $x_0$ exists and is stable in the absence of disease, and that the linearized equations for $x_1, ...¦, x_m$ at the DFE decouple from the other equations. Consider these equations written in the form $\frac{\text{d}x_i}{\text{d}t} = \mathscr{F_i}(x) - \mathscr{V_i}(x)$ for $i \in \{1, 2, ..., m\}$. In this splitting, $\mathscr{F_i}(x)$ is the rate of appearance of new infections in compartment $i$, and $\mathscr{V_i}(x)$ is the rate of other transitions between compartment $i$ and other infected compartments. It is assumed that $\mathscr{F_i}=0$ for $i\in\{m+1, m+2, ..., n\}$.
+Assume that a disease free equilibrium (DFE) $x_0$ exists and is stable in the absence of disease, and that the linearized equations for $x_1, ..., x_m$ at the DFE decouple from the other equations. Consider these equations written in the form $\frac{\text{d}x_i}{\text{d}t} = \mathscr{F_i}(x) - \mathscr{V_i}(x)$ for $i \in \{1, 2, ..., m\}$. In this splitting, $\mathscr{F_i}(x)$ is the rate of appearance of new infections in compartment $i$, and $\mathscr{V_i}(x)$ is the rate of other transitions between compartment $i$ and other infected compartments. It is assumed that $\mathscr{F_i}=0$ for $i\in\{m+1, m+2, ..., n\}$.
 
 Now define $F=\frac{\partial \mathscr{F_i}{(x_0)}}{\partial x_j}$ and $V=\frac{\partial \mathscr{V_i}{(x_0)}}{\partial x_j}$ for $i,j \in \{1, 2, ..., m\}$. Matrix $FV^{-1}$ has $(i,j)$ entry equal to the expected number of secondary infections
 in compartment $i$ produced by an infected individual introduced in compartment $j$. Thus $FV^{-1}$ is the $\textit{next generation matrix}$ and
@@ -119,6 +129,7 @@ where $S_0$ is the initial number of susceptibles, as in assumption the initial 
 In this section we will walk through an example of how to use the `SEIaImIsRD`
 class.
 
+### Initialization of the model
 To create a new `SEIaImIsRD` object, run:
 ```{r}
 model <- SEIaImIsRD()
@@ -146,6 +157,20 @@ gamma <- list(i_asymptomatic = 0.9, i_mild = 0.50, i_severe = 0.05)
 mu <- list(i_asymptomatic = 0.005, i_mild = 0.05, i_severe = 0.30)
 ```
 
+Define helper function for printing out parameter values
+```{r}
+print_table_transmission_parameters <- function(model){
+  df.params <- model@transmission_parameters %>%
+    data.frame() %>%
+    t()
+  colnames(df.params) <- "value"
+  table.params <- kable(df.params) %>%
+    kable_styling(bootstrap_options = "striped", full_width = FALSE, position="left")
+  return (table.params)
+}
+```
+
+
 And, we set time for the simulation:
 ```{r}
 t <- seq(0, 2000, by = 1)
@@ -159,17 +184,41 @@ model <- set_init(object = model, S = S, E = E, I_asymptomatic = I_asymptomatic,
                     p_symptom = p_symptom, gamma = gamma, mu = mu)
 ```
 
-We use the ode solver, plot the relaxation into the steady state and calculate the $\mathscr{R_0}$ of the system by calling the function `R0_SEIaImIsRD`:
-```{r}
+We use the ode solver to solve the system, plot the relaxation into the steady state and calculate the $\mathscr{R_0}$ of the system by calling the function `R0_SEIaImIsRD`. Here we present the simulation result under several different conditions:
+
+#### 1. Including natural loss of immunity
+Transmission from $R$ to $S$ exists; $\omega>0$
+```{r, fig.show='hide'}
+par(mfrow=c(1,2))
 model <- ode_simulate(model, t)
 model <- R0_SEIaImIsRD(model)
-p <- plot_dataframe(model@output, x = "time", y = "fraction", c = "population_group")
-print(p)
-print(paste0("model: R0=", model@R0))
+
+# plot
+model.plot <- plot_dataframe(model@output, x = "time", y = "fraction", c = "population_group") + 
+  ggtitle(paste0("model: R0=", model@R0)) # Show R0 on the title
+model.plot <- ggplotly(p=model.plot, dynamicTicks = TRUE, originalData = FALSE)
+
+# get parameters
+model.params.table = print_table_transmission_parameters(model)
+  
 ```
 
-Comparison with no natural loss of immunity (no transmission from $R$ to $S$; $\omega=0$)
-```{r}
+<div class = "row">
+<div class = "col-md-4">
+```{r, echo=FALSE, fig.show='hold'}
+model.params.table
+```
+</div>
+<div class = "col-md-3">
+```{r, echo=FALSE, fig.show='hold'}
+model.plot
+```
+</div>
+</div>
+
+#### 2. No natural loss of immunity 
+No transmission from $R$ to $S$; $\omega=0$
+```{r, fig.show='hide'}
 model1 <- set_init(object = model, S = S, E = E, I_asymptomatic = I_asymptomatic, I_mild = I_mild,
                     I_severe = I_severe, R = R, D = D_cumulative,
                     beta = beta, kappa = kappa, omega = 0.00,
@@ -177,13 +226,35 @@ model1 <- set_init(object = model, S = S, E = E, I_asymptomatic = I_asymptomatic
 
 model1 <- ode_simulate(model1, t)
 model1 <- R0_SEIaImIsRD(model1)
-p1 <- plot_dataframe(model1@output, x = "time", y = "fraction", c = "population_group")
-print(p1)
-print(paste0("model1: R0=", model1@R0))
+
+# plot
+model1.plot <- plot_dataframe(model1@output, x = "time", y = "fraction", c = "population_group") +
+  ggtitle(paste0("model1: R0=", model1@R0))
+model1.plot <- ggplotly(p=model1.plot, dynamicTicks = TRUE, originalData = FALSE)
+
+# get parameters
+model1.params.table = print_table_transmission_parameters(model1)
 ```
 
-Comparison with altered $\beta$ values (i.e. rate at which an individual from $I_i$ infects $S$):
-```{r}
+<div class = "row">
+<div class = "col-md-4">
+```{r, echo=FALSE, fig.show='hold'}
+model1.params.table
+```
+</div>
+<div class = "col-md-3">
+```{r, echo=FALSE, fig.show='hold'}
+model1.plot
+```
+</div>
+</div>
+
+We can see whether including waning immunity may produce different epidemic behaviors under the same $\mathscr{R_0}$.
+
+
+#### 3. Altering the value(s) of $\beta$ 
+$\beta$: the rate at which an individual from any infected group $I_i$ infects $S$
+```{r, fig.show='hide'}
 beta <- list(i_asymptomatic = 0.50, i_mild = 0.90, i_severe = 1.00)
 model2 <- set_init(object = model, S = S, E = E, I_asymptomatic = I_asymptomatic, I_mild = I_mild,
                     I_severe = I_severe, R = R, D = D_cumulative,
@@ -192,8 +263,25 @@ model2 <- set_init(object = model, S = S, E = E, I_asymptomatic = I_asymptomatic
 
 model2 <- ode_simulate(model2, t)
 model2 <- R0_SEIaImIsRD(model2)
-p2 <- plot_dataframe(model2@output, x = "time", y = "fraction", c = "population_group")
-print(p2)
-print(paste0("model2: R0=", model2@R0))
+
+# plot
+model2.plot <- plot_dataframe(model2@output, x = "time", y = "fraction", c = "population_group") +
+  ggtitle(paste0("model2: R0=", model1@R0))
+model2.plot <- ggplotly(p=model2.plot, dynamicTicks = TRUE, originalData = FALSE)
+
+# get parameters
+model2.params.table = print_table_transmission_parameters(model2)
 ```
 
+<div class = "row">
+<div class = "col-md-4">
+```{r, echo=FALSE, fig.show='hold'}
+model2.params.table
+```
+</div>
+<div class = "col-md-3">
+```{r, echo=FALSE, fig.show='hold'}
+model2.plot
+```
+</div>
+</div>
