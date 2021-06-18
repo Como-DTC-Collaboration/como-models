@@ -22,7 +22,7 @@ names_common <- intersect(names_urban,names_rural)
 
 # specify country and obtain population data
 # NOTE: World bank data and contact matrix data use the same three-letter country codes!
-country <- "AFG"
+country <- "TUN"
 if (!(country %in% names_common)) {
   stop(paste(country," is not a valid three-letter country code."))
 }
@@ -79,7 +79,7 @@ b = 0.3 # probability of infection
 k = 0.2 # 1/(incubation period in days)
 g = 0.1# 1/(days between infection and recovery)
 m = 0.03 # probability of death, cases-fatality ratio.
-C = 0.1 # connectedness parameter
+C = 1 # connectedness parameter
 
 # set initial conditions, same in both models
 start_infected_urban = 0.01
@@ -172,16 +172,17 @@ SEIR_total$value[SEIR_total$compartment == "S_U"] <- SEIR_df$value[SEIR_df$compa
 SEIR_total$value[SEIR_total$compartment == "E_U"] <- SEIR_df$value[SEIR_df$compartment == "E_U"] + SEIR_df$value[SEIR_df$compartment == "E_Y"]
 SEIR_total$value[SEIR_total$compartment == "I_U"] <- SEIR_df$value[SEIR_df$compartment == "I_U"] + SEIR_df$value[SEIR_df$compartment == "I_Y"]
 SEIR_total$value[SEIR_total$compartment == "R_U"] <- SEIR_df$value[SEIR_df$compartment == "R_U"] + SEIR_df$value[SEIR_df$compartment == "R_Y"]
-CD_total$value[CD_total$compartment == "Incidences_U"] <- case_df$value[case_df$compartment == "Incidences_U"] + case_df$value[case_df$compartment == "Incidences_Y"]
-CD_total$value[CD_total$compartment == "Deaths_U"] <- case_df$value[case_df$compartment == "Deaths_U"] + case_df$value[case_df$compartment == "Deaths_Y"] 
+CD_total$value[CD_total$compartment == "Incidences"] <- case_df$value[case_df$compartment == "Incidences_U"] + case_df$value[case_df$compartment == "Incidences_Y"]
+CD_total$value[CD_total$compartment == "Deaths"] <- case_df$value[case_df$compartment == "Deaths_U"] + case_df$value[case_df$compartment == "Deaths_Y"] 
 
 SEIR_total <- SEIR_total[SEIR_total$compartment != "S_Y" & SEIR_total$compartment != "E_Y" & SEIR_total$compartment != "I_Y" & SEIR_total$compartment != "R_Y",]
 CD_total <- CD_total[CD_total$compartment != "Incidences_Y" & CD_total$compartment != "Deaths_Y",]
 
-SEIRplot_total <- ggplot(SEIR_total, aes(x = time, y = value)) +
-  geom_line(aes(color = compartment), size = 1.5) +
+SEIRplot_total <- ggplot(NULL, aes(x = time, y = value)) +
+  geom_line(data = SEIR_total, aes(color = compartment), size = 1.5) +
+  geom_line(data = SEIRD_df, aes(color = compartment), linetype = "dashed", size = 1.5) + 
   labs(x = "time", y = "fraction of the population",
-       title = glue("SEIR model with urban and rural communities")) +
+       title = glue("Basic SEIRD vs. SEIR model with urban and rural communities")) +
   theme(legend.position = "bottom", legend.title = element_blank())
 
 incplot_total <- ggplot(CD_total, aes(x = time, y = value, fill = compartment)) +

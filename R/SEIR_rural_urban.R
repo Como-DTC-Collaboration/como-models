@@ -524,11 +524,11 @@ setMethod(
     # number of urban contacts for an urban individual, normalized over the
     # whole population through the age demographics
     N_U <- sum(rowSums(contact_matrices(object)$urban) *
-                country_demog(object)$urban) / 2
+                (country_demog(object)$urban/sum(country_demog(object)$urban))) / 2
     # number of rural contacts for a rural individual, normalized over the
     # whole population through the age demographics
     N_Y <- sum(rowSums(contact_matrices(object)$rural) *
-                country_demog(object)$rural) / 2
+                (country_demog(object)$rural/sum(country_demog(object)$rural))) / 2
 
     # fraction of the population that is urban
     f_urban <- sum(country_demog(object)$urban)
