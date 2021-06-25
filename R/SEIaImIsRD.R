@@ -29,8 +29,6 @@
 #' @import deSolve
 #' @import ggplot2
 #' @import reshape2
-#' @import plyr
-#' @import magrittr
 #'
 #' @concept objects
 #' @export SEIaImIsRD

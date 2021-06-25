@@ -14,17 +14,13 @@ Suggests:
     covr,
     testthat (>= 3.0.0),
     knitr,
-    rmarkdown,
-    markdown
+    markdown,
+    rmarkdown
 Config/testthat/edition: 3
 Imports: 
     forcats,
     deSolve,
     ggplot2,
-    magrittr,
-    plyr,
-    reshape2,
-    methods,
     glue,
     methods,
     reshape2,

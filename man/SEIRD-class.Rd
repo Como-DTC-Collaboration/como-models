@@ -95,7 +95,7 @@ This function relies on the package deSolve.
 \item \code{R0}: Calculates basic reproduction number for SEIRD model
 
 The R0 parameter is given by:
-\deqn{R_0 = \beta/\gamma}
+\deqn{R_0 = \beta/(\gamma + \mu)}
 }}
 
 \section{Slots}{
