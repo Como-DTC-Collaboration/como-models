@@ -40,15 +40,17 @@ SEIRD <- setClass("SEIRD",
 #' Retrieves initial conditions of SEIRD model.
 #'
 #' @param object An object of the class SEIRD.
+#' @rdname SEIRD-class
 #' @export
 setGeneric("initial_conditions",
            function(object) standardGeneric("initial_conditions"))
 
 
-#' @describeIn SEIRD Retrieves initial conditions of SEIRD model.
+#' Retrieves initial conditions of SEIRD model.
 #'
 #' @param object An object of the class SEIRD.
 #' @aliases initial_conditions,ANY,ANY-method
+#' @rdname SEIRD-class
 #' @export
 setMethod("initial_conditions", "SEIRD",
           function(object) object@initial_conditions)
@@ -56,14 +58,16 @@ setMethod("initial_conditions", "SEIRD",
 #' Retrieves transmission parameters of SEIR model.
 #'
 #' @param object An object of the class SEIRD.
+#' @rdname SEIRD-class
 #' @export
 setGeneric("transmission_parameters",
            function(object) standardGeneric("transmission_parameters"))
 
-#' @describeIn SEIRD Retrieves transmission parameters of SEIR model.
+#' Retrieves transmission parameters of SEIR model.
 #'
 #' @param object An object of the class SEIRD.
 #' @aliases transmission_parameters,ANY,ANY-method
+#' @rdname SEIRD-class
 #' @export
 setMethod("transmission_parameters", "SEIRD",
           function(object) object@transmission_parameters)
@@ -77,7 +81,7 @@ setMethod("transmission_parameters", "SEIRD",
 #' @param value (list) list of initial conditions S0, E0, I0, R0.
 #'
 #' @return object of class SEIRD with initial conditions assigned.
-#'
+#' @rdname SEIRD-class
 #' @export
 setGeneric(
   "initial_conditions<-",
@@ -85,7 +89,7 @@ setGeneric(
     standardGeneric("initial_conditions<-")
   })
 
-#' @describeIn SEIRD Setter method for initial conditions (S0, E0, I0 and R0)
+#' Setter method for initial conditions (S0, E0, I0 and R0)
 #' of the SEIR model.
 #'
 #' All initial conditions must sum up to 1.
@@ -97,6 +101,7 @@ setGeneric(
 #' @return object of class SEIRD with initial conditions assigned.
 #'
 #' @aliases initial_conditions<-,ANY,ANY-method
+#' @rdname SEIRD-class
 #' @export
 setMethod(
   "initial_conditions<-", "SEIRD",
@@ -135,6 +140,7 @@ setMethod(
 #'
 #' @return object of class SEIRD with transmission parameter values
 #' assigned.
+#' @rdname SEIRD-class
 #' @export
 setGeneric(
   "transmission_parameters<-",
@@ -143,7 +149,7 @@ setGeneric(
   })
 
 
-#' @describeIn SEIRD Set transmission parameters (beta, kappa, gamma and mu)
+#' Set transmission parameters (beta, kappa, gamma and mu)
 #' of the SEIR model.
 #'
 #' If the transmission parameters provided to are not 1-dimensional an error is
@@ -155,6 +161,7 @@ setGeneric(
 #' @return object of class SEIRD with transmission parameter values
 #' assigned.
 #' @aliases transmission_parameters<-,ANY,ANY-method
+#' @rdname SEIRD-class
 #' @export
 setMethod(
   "transmission_parameters<-", "SEIRD",
@@ -207,13 +214,14 @@ setMethod(
 #' @return two dataframes: one with the time steps, age range, time series of S,
 #' E, I and R population fractions, and one with the time steps, age range,
 #' time series of incidences and deaths population fraction.
+#' @rdname SEIRD-class
 #' @export
 setGeneric(name = "run",
            def = function(object, times = seq(0, 100, by = 1),
                           solve_method = "lsoda") {
              standardGeneric("run")})
 
-#' @describeIn SEIRD Solves ODEs of the SEIRD specified in object
+#' Solves ODEs of the SEIRD specified in object
 #' for the time points specified in times and integration method specified in
 #' solve_method.
 #'
@@ -238,6 +246,7 @@ setGeneric(name = "run",
 #' E, I and R population fractions, and one with the time steps, age range,
 #' time series of incidences and deaths population fraction.
 #' @aliases run,ANY,ANY-method
+#' @rdname SEIRD-class
 #' @export
 setMethod(
   "run", "SEIRD",
@@ -326,7 +335,7 @@ setGeneric("R0", def = function(model) {
   standardGeneric("R0")
 })
 
-#' @describeIn SEIRD Calculates basic reproduction number for SEIRD model
+#' Calculates basic reproduction number for SEIRD model
 #'
 #' The R0 parameter is given by:
 #' \deqn{R_0 = \beta/(\gamma + \mu)}

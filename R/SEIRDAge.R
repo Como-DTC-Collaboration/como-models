@@ -14,24 +14,23 @@
 #'     parameters of the model. Transmission parameters b, k, g represent the
 #'     rates of changes between the compartments.
 #' @slot contact_matrix A square matrix with dimension
-#' equal to n_age_categories x n_age_categories. This matrix represents the
-#' contact between different age groups (rows) with age groups of
-#' people they come in contact with (columns)
+#'     equal to n_age_categories x n_age_categories. This matrix represents the
+#'     contact between different age groups (rows) with age groups of
+#'     people they come in contact with (columns)
 #' @slot n_age_categories number of age categories.
 #' @slot age_ranges list of string characters representing the range of ages of
-#' people in each age category. This object must have length
-#' \code{n_age_categories} (otherwise an error is returned) and each element
-#' must be formatted as 'age1-age2'.
+#'     people in each age category. This object must have length
+#'     \code{n_age_categories} (otherwise an error is returned) and each element
+#'     must be formatted as 'age1-age2'.
 #'
 #' @import deSolve
 #' @import glue
 #' @import tidyverse
 #' @import reshape2
 #' @importFrom methods new
-#' @export SEIRAge
-#' @exportClass SEIRAge
+#' @export SEIRDAge
 #' 
-SEIRAge <- setClass('SEIRAge',
+SEIRDAge <- setClass('SEIRDAge',
          # slots
          slots = c(
            output_names = 'list',
@@ -59,43 +58,38 @@ SEIRAge <- setClass('SEIRAge',
          )
 )
 
-# Setter and getter methods for transmission_parameters of an age-structured
+# Setter and getter methods for initial_conditions of an age-structured
 # SEIR model.
 
-#' @describeIn SEIRAge Retrieves initial_conditions for an
+#' Retrieves initial_conditions for an
 #' age-structured SEIR model.
 #'
-#' @param object An object of the class SEIRAge.
+#' @param object An object of the class SEIRDAge.
 #'
-#' @return Initial conditions of SEIRAge model.
-setGeneric('initial_conditions',
-           function(object) standardGeneric('initial_conditions'))
-
+#' @return Initial conditions of SEIRDAge model.
+#' @aliases initial_conditions,ANY,ANY-method
+#' @rdname SEIRDAge-class
 #' @export
-setMethod('initial_conditions', 'SEIRAge',
+setMethod('initial_conditions', 'SEIRDAge',
           function(object) object@initial_conditions)
 
-#' @describeIn SEIRAge Sets initial_conditions of an age-structured
+#' Sets initial_conditions of an age-structured
 #' SEIR model.
 #'
 #' If the initial conditions provided to do not sum to 1 or of different
 #' sizes compared to the number of age groups, an error is thrown.
 #'
-#' @param object An object of the class SEIRAge.
+#' @param object An object of the class SEIRDAge.
 #' @param value a named list of (S0, E0, I0, R0) where each element can be a list
 #' of vector of doubles, with each element corresponding to the fraction for a
 #' single age group.
 #'
 #' @return Updated version of the age-structured SEIR model.
-setGeneric(
-  'initial_conditions<-',
-  function(object, value){
-    standardGeneric('initial_conditions<-')
-  })
-
+#' @aliases initial_conditions<-,ANY,ANY-method
+#' @rdname SEIRDAge-class
 #' @export
 setMethod(
-  'initial_conditions<-', 'SEIRAge',
+  'initial_conditions<-', 'SEIRDAge',
   function(object, value) {
     S0 = value$S0
     E0 = value$E0
@@ -135,20 +129,18 @@ setMethod(
 # Setter and getter methods for transmission_parameters of an age-structured
 # SEIR model.
 
-#' @describeIn SEIRAge Retrieves transmission_parameters for an
+#' Retrieves transmission_parameters for an
 #' age-structured SEIR model.
 #'
-#' @param object An object of the class SEIRAge.
+#' @param object An object of the class SEIRDAge.
 #'
-#' @return Transmission parameters of SEIRAge model.
-setGeneric('transmission_parameters',
-           function(object) standardGeneric('transmission_parameters'))
-
+#' @return Transmission parameters of SEIRDAge model.
+#' @aliases transmission_parameters,ANY,ANY-method
+#' @rdname SEIRDAge-class
 #' @export
-setMethod('transmission_parameters', 'SEIRAge',
+setMethod('transmission_parameters', 'SEIRDAge',
           function(object) object@transmission_parameters)
-
-#' @describeIn  SEIRAge Sets transmission_parameters of an
+#' Sets transmission_parameters of an
 #' age-structured SEIR model.
 #'
 #' If the transmission parameters provided to are not 1-dimensional an error is
@@ -160,15 +152,11 @@ setMethod('transmission_parameters', 'SEIRAge',
 #' age group.
 #'
 #' @return Updated version of the age-structured SEIR model.
-setGeneric(
-  'transmission_parameters<-',
-  function(object, value){
-    standardGeneric('transmission_parameters<-')
-  })
-
+#' @aliases transmission_parameters<-,ANY,ANY-method
+#' @rdname SEIRDAge-class
 #' @export
 setMethod(
-  'transmission_parameters<-', 'SEIRAge',
+  'transmission_parameters<-', 'SEIRDAge',
   function(object, value) {
 
     # create list of parameter values
@@ -198,7 +186,7 @@ setMethod(
     return(object)
   })
 
-#' SEIRAge Method to simulate output using from SEIRAge model.
+#' Method to simulate output using from model.
 #' 
 #' Solves a system to ODEs which form an
 #' age-structured simple SEIR model. The system of equations for the time
@@ -218,7 +206,7 @@ setMethod(
 #' package deSolve to numerically integrate the set of equations above.
 #' 
 #'
-#' @param object An object of the class SEIRAge.
+#' @param object An object of the class SEIRDAge.
 #' @param times (vector) time sequence over which to solve the model.
 #'        Must be of the form seq(t_start,t_end,by=t_step). Default time series
 #'        is seq(0, 100, by = 1).
@@ -229,18 +217,13 @@ setMethod(
 #' @return data frame containing the time vector and time series of S, R, I and
 #' D population fractions for each age group outputs with incidence numbers
 #' for each age group.
-setGeneric("run",
-           def = function(object, times = seq(0, 100, by = 1),
-                          solve_method = 'lsoda'){
-             standardGeneric('run')
-           }
-)
-
+#' @rdname SEIRDAge-class
+#' @aliases run,ANY,ANY-method
 #' @importFrom magrittr "%>%"
 #' @importFrom rlang .data
 #' @export
 setMethod(
-  "run", 'SEIRAge',
+  "run", 'SEIRDAge',
   function(object, times, solve_method = 'lsoda') {
 
     # error if times is not a vector or list of doubles
