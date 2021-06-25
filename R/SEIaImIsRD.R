@@ -1,11 +1,12 @@
-#' An SEIRD model for compartments of different symptoms (asymptomatic, mild and severe) with different transmission rates (beta).
+#' SEIaImIsRD: an SEIRD model for compartments of different symptoms (asymptomatic, mild and severe) with different transmission rates (beta).
 #'
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Class definitions
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-#' An S4 object representing the SEIRD model with infected population of different symptome compartments: asymptomatic, mild and severe.
+#' An S4 object representing the SEIaImIsRD model: SEIRD with infected population 
+#' that are composed of different symptome compartments: asymptomatic, mild and severe (current settings).
 #'
 #' This class represents an extension of the SEIRD model, showing how populations of susceptible,
 #' exposed, infectious and recovered individuals evolve over time, in which the infectious individuals
@@ -29,6 +30,8 @@
 #' @import deSolve
 #' @import ggplot2
 #' @import reshape2
+#' @import plotly
+#' @import kableExtra
 #'
 #' @concept objects
 #' @export SEIaImIsRD
@@ -72,7 +75,7 @@ setMethod("initial_conditions", "SEIaImIsRD",
           function(object) object@initial_conditions)
 
 
-#' @describeIn SEIaImIsRD Retrieves transmission parameters of SEIR model.
+#' @describeIn SEIaImIsRD Retrieves transmission parameters of SEIaImIsRD model.
 #'
 #' @param object An object of the class SEIaImIsRD.
 #' @aliases initial_conditions,SEIaImIsRD-method
@@ -208,7 +211,7 @@ setMethod(
 #'
 #' @param object An object of class SEIaImIsRD
 #' @param times A list of time points of the simulation period
-#' @param solved_method A string indicating which ode integrator to use. Default is set to 'lsoda'
+#' @param solve_method A string indicating which ode integrator to use. Default is set to 'lsoda'
 #' @return An object of class SEIaImIsRD with a dataframe of simulation output
 #' @rdname SEIaImIsRD-class
 #' @aliases run,SEIaImIsRD-method
@@ -321,8 +324,8 @@ setMethod("R0", "SEIaImIsRD", function(model) {
 #' @export
 #' @aliases plot_dataframe,ANY,ANY-method
 #'
-plot_dataframe <- function(data, x = "time", y = "value", c = "compartment") {
-  p <- ggplot(data, aes_string(x = x, y = y)) +
+plot_dataframe <- function(dataframe, x = "time", y = "value", c = "compartment") {
+  p <- ggplot(dataframe, aes_string(x = x, y = y)) +
     geom_line(aes_string(colour = c)) +
     theme_classic()
   return(p)

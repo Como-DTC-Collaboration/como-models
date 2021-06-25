@@ -13,7 +13,7 @@
 \alias{transmission_parameters<-,}
 \alias{run,SEIaImIsRD-method}
 \alias{R0,SEIaImIsRD-method}
-\title{An SEIRD model for compartments of different symptoms (asymptomatic, mild and severe) with different transmission rates (beta).}
+\title{SEIaImIsRD: an SEIRD model for compartments of different symptoms (asymptomatic, mild and severe) with different transmission rates (beta).}
 \usage{
 \S4method{initial_conditions}{SEIaImIsRD}(object)
 
@@ -40,9 +40,9 @@ mu - a list of the rate of disease-caused mortality of each infected group}
 
 \item{times}{A list of time points of the simulation period}
 
-\item{model}{A model of an SEIaImIsRD class object with initial_conditions and transmission_parameters set.}
+\item{solve_method}{A string indicating which ode integrator to use. Default is set to 'lsoda'}
 
-\item{solved_method}{A string indicating which ode integrator to use. Default is set to 'lsoda'}
+\item{model}{A model of an SEIaImIsRD class object with initial_conditions and transmission_parameters set.}
 }
 \value{
 An object of class SEIaImIsRD with initial population and parameters
@@ -54,7 +54,8 @@ An object of class SEIaImIsRD with a dataframe of simulation output
 A SEIaImIsRD class object with R0 value stored
 }
 \description{
-An S4 object representing the SEIRD model with infected population of different symptome compartments: asymptomatic, mild and severe.
+An S4 object representing the SEIaImIsRD model: SEIRD with infected population
+that are composed of different symptome compartments: asymptomatic, mild and severe (current settings).
 
 \deqn{\frac{dS(t)}{dt} = -S(t)(\beta.i_{asymptomatic} I_{asymptomatic}(t) + \beta.i_{mild} I_{mild}(t) + \beta.i_{severe} I_{severe}(t)) + \omega R(t)}
 \deqn{\frac{dE(t)}{dt} = S(t)(\beta.i_{asymptomatic} I_{asymptomatic}(t) + \beta.i_{mild} I_{mild}(t) + \beta.i_{severe} I_{severe}(t)) - \kappa E(t)}
@@ -78,7 +79,7 @@ are subgrouped into compartments according to different severity of symptoms, i.
 \itemize{
 \item \code{initial_conditions}: Retrieves initial conditions of SEIaImIsRD model.
 
-\item \code{transmission_parameters}: Retrieves transmission parameters of SEIR model.
+\item \code{transmission_parameters}: Retrieves transmission parameters of SEIaImIsRD model.
 
 \item \code{initial_conditions<-}: Setter method for initial population sizes (in fraction)
 of the SEIaImIsRD model.

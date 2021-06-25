@@ -16,10 +16,10 @@ knitr::opts_chunk$set(
 ```
 
 ```{r setup}
-if (!requireNamespace("plotly", quietly = TRUE))
-    install.packages("plotly")
-if (!requireNamespace("kableExtra", quietly = TRUE))
-    install.packages("kableExtra")
+#if (!requireNamespace("plotly", quietly = TRUE))
+#    install.packages("plotly")
+#if (!requireNamespace("kableExtra", quietly = TRUE))
+#    install.packages("kableExtra")
 
 library(comomodels)
 library(plotly) # interactive plot
