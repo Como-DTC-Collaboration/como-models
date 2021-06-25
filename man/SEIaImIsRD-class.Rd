@@ -4,82 +4,57 @@
 \name{SEIaImIsRD-class}
 \alias{SEIaImIsRD-class}
 \alias{SEIaImIsRD}
-\alias{set_init}
-\alias{check_init}
-\alias{ode_simulate}
-\alias{R0_SEIaImIsRD}
-\title{An S4 object representing the SEIRD model with infected population of different symptome compartments: asymptomatic, mild and severe.}
+\alias{initial_conditions,SEIaImIsRD-method}
+\alias{transmission_parameters,SEIaImIsRD-method}
+\alias{initial_conditions<-,SEIaImIsRD-method}
+\alias{initial_conditions<-,}
+\alias{SEIaImIsRD-method}
+\alias{transmission_parameters<-,SEIaImIsRD-method}
+\alias{transmission_parameters<-,}
+\alias{run,SEIaImIsRD-method}
+\alias{R0,SEIaImIsRD-method}
+\title{An SEIRD model for compartments of different symptoms (asymptomatic, mild and severe) with different transmission rates (beta).}
 \usage{
-set_init(
-  object,
-  S = NA_real_,
-  E = NA_real_,
-  I_asymptomatic = NA_real_,
-  I_mild = NA_real_,
-  I_severe = NA_real_,
-  R = NA_real_,
-  D = NA_real_,
-  beta = list(),
-  kappa = NA_real_,
-  omega = NA_real_,
-  p_symptom = list(),
-  gamma = list(),
-  mu = list()
-)
+\S4method{initial_conditions}{SEIaImIsRD}(object)
 
-check_init(object)
+\S4method{transmission_parameters}{SEIaImIsRD}(object)
 
-ode_simulate(object, times, method = "lsoda")
+\S4method{initial_conditions}{SEIaImIsRD}(object) <- value
 
-R0_SEIaImIsRD(object)
+\S4method{transmission_parameters}{SEIaImIsRD}(object) <- value
+
+\S4method{run}{SEIaImIsRD}(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
+
+\S4method{R0}{SEIaImIsRD}(model)
 }
 \arguments{
-\item{object}{An SEIaImIsRD class object.}
+\item{object}{An object of class SEIaImIsRD}
 
-\item{S}{Numeric, initial fraction of the population that is susceptible}
-
-\item{E}{Numeric, initial fraction of the population that is exposed}
-
-\item{I_asymptomatic}{Numeric, initial fraction of the population that is infected with no symptom}
-
-\item{I_mild}{Numeric, initial fraction of the population that is infected with mild symptoms}
-
-\item{I_severe}{Numeric, initial fraction of the population that is infected severe symptoms
-that need further hospitalization}
-
-\item{R}{Numeric, initial fraction of the population that is recovered}
-
-\item{D}{Numeric, initial fraction of the population that is dead due to the infection}
-
-\item{beta}{Numeric vector, effective contact rate (i.e. rate at which an infected individual exposes susceptible) from different symptome compartments}
-
-\item{kappa}{Numeric, rate of progression from exposed to infectious (the reciprocal is the incubation period).}
-
-\item{omega}{Numeric, rate at which recovered individuals become susceptible}
-
-\item{p_symptom}{Numeric vector, fractions of different symptome compartments}
-
-\item{gamma}{Numeric vector, rate of removal (i.e. rate at which each infected group recover).}
-
-\item{mu}{Numeric vector, rate of disease-caused mortality of each infected group}
+\item{value}{A numeric named list of values for transmission parameters:
+beta - a list of the effective contact rate from each infected group (i.e. rate at which an infected individual exposes susceptible),
+kappa - rate of progression from exposed to infectious (the reciprocal is the incubation period),
+omega - rate at which recovered individuals become susceptible,
+p_symptom - a list of fraction of different infected groups,
+gamma - a list of the rate of removal of each infected group (i.e. recovery rate of an infected individual),
+mu - a list of the rate of disease-caused mortality of each infected group}
 
 \item{times}{A list of time points of the simulation period}
 
-\item{method}{A string indicating which ode integrator to use. Default is set to 'lsoda'}
+\item{model}{A model of an SEIaImIsRD class object with initial_conditions and transmission_parameters set.}
+
+\item{solved_method}{A string indicating which ode integrator to use. Default is set to 'lsoda'}
 }
 \value{
 An object of class SEIaImIsRD with initial population and parameters
 
-TRUE if passing all checks, or an error message if any check fails
+An object of class SEIaImIsRD with initial population and parameters
 
 An object of class SEIaImIsRD with a dataframe of simulation output
 
-An object of class SEIaImIsRD with R0 value stored
+A SEIaImIsRD class object with R0 value stored
 }
 \description{
-This class represents an extension of the SEIRD model, showing how populations of susceptible,
-exposed, infectious and recovered individuals evolve over time, in which the infectious individuals
-are subgrouped into compartments according to different severity of symptoms, i.e. asymptomatic, mild and severe.
+An S4 object representing the SEIRD model with infected population of different symptome compartments: asymptomatic, mild and severe.
 
 \deqn{\frac{dS(t)}{dt} = -S(t)(\beta.i_{asymptomatic} I_{asymptomatic}(t) + \beta.i_{mild} I_{mild}(t) + \beta.i_{severe} I_{severe}(t)) + \omega R(t)}
 \deqn{\frac{dE(t)}{dt} = S(t)(\beta.i_{asymptomatic} I_{asymptomatic}(t) + \beta.i_{mild} I_{mild}(t) + \beta.i_{severe} I_{severe}(t)) - \kappa E(t)}
@@ -87,15 +62,31 @@ are subgrouped into compartments according to different severity of symptoms, i.
 \deqn{\frac{dI_{mild}(t)}{dt} = p_symptom.i_{mild}\kappa E(t) - (\gamma.i_{mild} + \mu.i_{mild}) I_{mild}(t)}
 \deqn{\frac{dI_{severe}(t)}{dt} = p_symptom.i_{severe}\kappa E(t) - (\gamma.i_{severe} + \mu.i_{severe}) I_{severe}(t)}
 \deqn{\frac{dR(t)}{dt} = -\omega R(t) + \gamma.i_{mild} I_{mild}(t) + \gamma.i_{severe} I_{severe}(t)}
-\deqn{\frac{dD(t)}{dt} =  \mu.i_{mild} I_{mild}(t) + \mu.i_{severe} I_{severe}(t)}
+\deqn{\frac{dD(t)}{dt} =  \mu.i_{asymptomatic} I_{asymptomatic}(t) + \mu.i_{mild} I_{mild}(t) + \mu.i_{severe} I_{severe}(t)}
 }
 \details{
+This class represents an extension of the SEIRD model, showing how populations of susceptible,
+exposed, infectious and recovered individuals evolve over time, in which the infectious individuals
+are subgrouped into compartments according to different severity of symptoms, i.e. asymptomatic, mild and severe.
 \enumerate{
 \item Total initial population size is normalised to 1.
 \item The current model does not include natural death or birth.
 \item The current model defines different infection.
 }
 }
+\section{Methods (by generic)}{
+\itemize{
+\item \code{initial_conditions}: Retrieves initial conditions of SEIaImIsRD model.
+
+\item \code{transmission_parameters}: Retrieves transmission parameters of SEIR model.
+
+\item \code{initial_conditions<-}: Setter method for initial population sizes (in fraction)
+of the SEIaImIsRD model.
+
+\item \code{transmission_parameters<-}: Setter method for transmission parameters
+of the SEIaImIsRD model.
+}}
+
 \section{Slots}{
 
 \describe{
@@ -103,7 +94,7 @@ are subgrouped into compartments according to different severity of symptoms, i.
 (characters). Default is list("S0", "E0", "I_asymptomatic0", "I_mild0", "I_severe0", "R0", "D0").}
 
 \item{\code{transmission_parameter_names}}{list of names of transmission parameters
-(characters). Default is list("beta", "kappa", "kappa", "mu").}
+(characters). Default is list("beta", "kappa", "p_symptom", "gamma", "mu").}
 
 \item{\code{initial_conditions}}{list of values for initial conditions (double).}
 

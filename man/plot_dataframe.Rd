@@ -5,14 +5,14 @@
 \alias{plot_dataframe,ANY,ANY-method}
 \title{describeIn SEIaImIsRD Plot the outcome of the ode similuation (for any dataframe)}
 \usage{
-plot_dataframe(data, x = "time", y = "fraction", c = "population_group")
+plot_dataframe(data, x = "time", y = "value", c = "compartment")
 }
 \arguments{
 \item{x}{The variable in the dataframe to be mapped to the x axis in ggploy aesthetics. Default is set to "time".}
 
-\item{y}{The variable in the dataframe to be mapped to the y axis in ggploy aesthetics. Default is set to "fraction".}
+\item{y}{The variable in the dataframe to be mapped to the y axis in ggploy aesthetics. Default is set to "value".}
 
-\item{c}{The variable in the dataframe to be plotted in different lines with different colours. Default is set to "population_group".}
+\item{c}{The variable in the dataframe to be plotted in different lines with different colours. Default is set to "compartment".}
 
 \item{dataframe}{A dataframe in long format}
 }

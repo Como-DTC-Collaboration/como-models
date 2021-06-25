@@ -9,7 +9,7 @@ I_asymptomatic <- 0
 I_mild <- 0
 I_severe <- 0
 R <- 0
-D_cumulative <- 0
+D <- 0
 
 # params
 beta <- list(i_asymptomatic = 0.80, i_mild = 0.90, i_severe = 1.00)
@@ -24,21 +24,18 @@ t <- seq(0, 2000, by = 1)
 # test: validate model settings - ode simulation - plot, on test data
 test_that("SEIaImIsRD validate", {
   # 1. create the instance in class SEIaImIsRD
-  model <- new("SEIaImIsRD")
+  model <- SEIaImIsRD()
   # 2. set up parameters and initial population
-  model <- set_init(object = model, S = S, E = E, I_asymptomatic = I_asymptomatic, I_mild = I_mild,
-                    I_severe = I_severe, R = R, D = D_cumulative,
-                    beta = beta, kappa = kappa, omega = omega,
-                    p_symptom = p_symptom, gamma = gamma, mu = mu)
+  transmission_parameters(model) <- list(beta = beta, kappa = kappa, omega = omega, p_symptom = p_symptom, gamma = gamma, mu = mu)
+  initial_conditions(model) <- list(S = S, E = E, I_asymptomatic = I_asymptomatic, I_mild = I_mild, I_severe = I_severe, R = R, D = D)
   # 3. ode simulation and plot
-  model <- ode_simulate(model, t)
-  p <- plot_dataframe(model@output, x = "time", y = "fraction", c = "population_group")
+  model <- run(model, t)
+  p <- plot_dataframe(model@output, x = "time", y = "value", c = "compartment")
   # 4. calculate basic reproduction number (R0)
-  model <- R0_SEIaImIsRD(model)
+  model <- R0(model)
 
   # check the validity of the model class and settings
   expect_s4_class(model, "SEIaImIsRD")
-  expect_true(check_init(model))
   # print out R0 value
   print(paste0("R0 = ", model@R0))
   # view plot
@@ -46,8 +43,8 @@ test_that("SEIaImIsRD validate", {
 
   # check @output
   expect_equal(colnames(model@output),
-               c("time", "population_group", "fraction"))
-  output_wide <- dcast(model@output, time~population_group)
+               c("time", "compartment", "value"))
+  output_wide <- dcast(model@output, time~compartment)
   expect_equal(dim(output_wide),
                c(length(t), length(model@initial_conditions) + 1))
   expect_equal(colnames(output_wide),
@@ -63,19 +60,10 @@ test_that("model error input", {
   model <- SEIaImIsRD()
   expect_error({
     # initial population sum not equal to 1
-    set_init(object = model, S = 0.1, E = E, I_asymptomatic = I_asymptomatic, I_mild = I_mild,
-             I_severe = I_severe, R = R, D = D_cumulative,
-             beta = beta, kappa = kappa, omega = omega,
-             p_symptom = p_symptom, gamma = gamma, mu = mu)
+    initial_conditions(model) <- list(S = 0.1, E = E, I_asymptomatic = I_asymptomatic, I_mild = I_mild, I_severe = I_severe, R = R, D = D)
     # missing population group (S)
-    set_init(object = model, E = E, I_asymptomatic = I_asymptomatic, I_mild = I_mild,
-             I_severe = I_severe, R = R, D = D_cumulative,
-             beta = beta, kappa = kappa, omega = omega,
-             p_symptom = p_symptom, gamma = gamma, mu = mu)
+    initial_conditions(model) <- list(E = E, I_asymptomatic = I_asymptomatic, I_mild = I_mild, I_severe = I_severe, R = R, D = D)
     # missing parameter (beta)
-    set_init(object = model, S = S, E = E, I_asymptomatic = I_asymptomatic, I_mild = I_mild,
-             I_severe = I_severe, R = R, D = D_cumulative,
-             kappa = kappa, omega = omega,
-             p_symptom = p_symptom, gamma = gamma, mu = mu)
+    transmission_parameters(model) <- list(kappa = kappa, omega = omega, p_symptom = p_symptom, gamma = gamma, mu = mu)
     })
 })

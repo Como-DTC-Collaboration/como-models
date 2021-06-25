@@ -18,8 +18,6 @@ knitr::opts_chunk$set(
 ```{r setup}
 if (!requireNamespace("plotly", quietly = TRUE))
     install.packages("plotly")
-if (!requireNamespace("kable", quietly = TRUE))
-    install.packages("kable")
 if (!requireNamespace("kableExtra", quietly = TRUE))
     install.packages("kableExtra")
 
@@ -144,7 +142,7 @@ I_asymptomatic <- 0
 I_mild <- 0
 I_severe <- 0
 R <- 0
-D_cumulative <- 0
+D <- 0
 ```
 
 Then, we define the transition rates:
@@ -176,12 +174,12 @@ And, we set time for the simulation:
 t <- seq(0, 2000, by = 1)
 ```
 
-We initialise our model with the parameters defined above:
+We initialise our model with the conditions and parameters defined above:
 ```{r}
-model <- set_init(object = model, S = S, E = E, I_asymptomatic = I_asymptomatic, I_mild = I_mild,
-                    I_severe = I_severe, R = R, D = D_cumulative,
-                    beta = beta, kappa = kappa, omega = omega,
-                    p_symptom = p_symptom, gamma = gamma, mu = mu)
+transmission_parameters(model) <- list(beta = beta, kappa = kappa, omega = omega,
+                                       p_symptom = p_symptom, gamma = gamma, mu = mu)
+initial_conditions(model) <- list(S = S, E = E, I_asymptomatic = I_asymptomatic,
+                                  I_mild = I_mild, I_severe = I_severe, R = R, D = D)
 ```
 
 We use the ode solver to solve the system, plot the relaxation into the steady state and calculate the $\mathscr{R_0}$ of the system by calling the function `R0_SEIaImIsRD`. Here we present the simulation result under several different conditions:
@@ -190,11 +188,11 @@ We use the ode solver to solve the system, plot the relaxation into the steady s
 Transmission from $R$ to $S$ exists; $\omega>0$
 ```{r, fig.show='hide'}
 par(mfrow=c(1,2))
-model <- ode_simulate(model, t)
-model <- R0_SEIaImIsRD(model)
+model <- run(model, t)
+model <- R0(model)
 
 # plot
-model.plot <- plot_dataframe(model@output, x = "time", y = "fraction", c = "population_group") + 
+model.plot <- plot_dataframe(model@output, x = "time", y = "value", c = "compartment") + 
   ggtitle(paste0("model: R0=", model@R0)) # Show R0 on the title
 model.plot <- ggplotly(p=model.plot, dynamicTicks = TRUE, originalData = FALSE)
 
@@ -219,16 +217,14 @@ model.plot
 #### 2. No natural loss of immunity 
 No transmission from $R$ to $S$; $\omega=0$
 ```{r, fig.show='hide'}
-model1 <- set_init(object = model, S = S, E = E, I_asymptomatic = I_asymptomatic, I_mild = I_mild,
-                    I_severe = I_severe, R = R, D = D_cumulative,
-                    beta = beta, kappa = kappa, omega = 0.00,
-                    p_symptom = p_symptom, gamma = gamma, mu = mu)
-
-model1 <- ode_simulate(model1, t)
-model1 <- R0_SEIaImIsRD(model1)
+model1 <- model
+transmission_parameters(model1) <- list(beta = beta, kappa = kappa, omega = 0.00,
+                                        p_symptom = p_symptom, gamma = gamma, mu = mu)
+model1 <- run(model1, t)
+model1 <- R0(model1)
 
 # plot
-model1.plot <- plot_dataframe(model1@output, x = "time", y = "fraction", c = "population_group") +
+model1.plot <- plot_dataframe(model1@output, x = "time", y = "value", c = "compartment") +
   ggtitle(paste0("model1: R0=", model1@R0))
 model1.plot <- ggplotly(p=model1.plot, dynamicTicks = TRUE, originalData = FALSE)
 
@@ -255,17 +251,14 @@ We can see whether including waning immunity may produce different epidemic beha
 #### 3. Altering the value(s) of $\beta$ 
 $\beta$: the rate at which an individual from any infected group $I_i$ infects $S$
 ```{r, fig.show='hide'}
-beta <- list(i_asymptomatic = 0.50, i_mild = 0.90, i_severe = 1.00)
-model2 <- set_init(object = model, S = S, E = E, I_asymptomatic = I_asymptomatic, I_mild = I_mild,
-                    I_severe = I_severe, R = R, D = D_cumulative,
-                    beta = beta, kappa = kappa, omega = 0.00,
-                    p_symptom = p_symptom, gamma = gamma, mu = mu)
-
-model2 <- ode_simulate(model2, t)
-model2 <- R0_SEIaImIsRD(model2)
+model2 <- model
+transmission_parameters(model2) <- list(beta = list(i_asymptomatic = 0.50, i_mild = 0.90, i_severe = 1.00),
+                                        kappa = kappa, omega = omega, p_symptom = p_symptom, gamma = gamma, mu = mu)
+model2 <- run(model2, t)
+model2 <- R0(model2)
 
 # plot
-model2.plot <- plot_dataframe(model2@output, x = "time", y = "fraction", c = "population_group") +
+model2.plot <- plot_dataframe(model2@output, x = "time", y = "value", c = "compartment") +
   ggtitle(paste0("model2: R0=", model1@R0))
 model2.plot <- ggplotly(p=model2.plot, dynamicTicks = TRUE, originalData = FALSE)
 

@@ -4,8 +4,6 @@
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Class definitions
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-#' @noRd
-setClass("gg")
 
 #' An S4 object representing the SEIRD model with infected population of different symptome compartments: asymptomatic, mild and severe.
 #'
@@ -63,107 +61,142 @@ SEIaImIsRD <- setClass(Class = "SEIaImIsRD",
 
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Functions
+# Generics defined in SEIRD will only be reset methods here to avoid ambiguity.
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-#' set initial population sizes (in fraction) and parameters
+#' @describeIn SEIaImIsRD Retrieves initial conditions of SEIaImIsRD model.
 #'
-#' @param object An object of class SEIaImIsRD
-#' @param S Numeric, initial fraction of the population that is susceptible
-#' @param E Numeric, initial fraction of the population that is exposed
-#' @param I_asymptomatic Numeric, initial fraction of the population that is infected with no symptom
-#' @param I_mild Numeric, initial fraction of the population that is infected with mild symptoms
-#' @param I_severe Numeric, initial fraction of the population that is infected severe symptoms
-#' that need further hospitalization
-#' @param D Numeric, initial fraction of the population that is dead due to the infection
-#' @param R Numeric, initial fraction of the population that is recovered
-#' @param beta Numeric vector, effective contact rate (i.e. rate at which an infected individual exposes susceptible) from different symptome compartments
-#' @param kappa Numeric, rate of progression from exposed to infectious (the reciprocal is the incubation period).
-#' @param omega Numeric, rate at which recovered individuals become susceptible
-#' @param p_symptom Numeric vector, fractions of different symptome compartments
-#' @param gamma Numeric vector, rate of removal (i.e. rate at which each infected group recover).
-#' @param mu Numeric vector, rate of disease-caused mortality of each infected group
-#' @return An object of class SEIaImIsRD with initial population and parameters
-#' @rdname SEIaImIsRD-class
+#' @param object An object of the class SEIaImIsRD.
+#' @aliases initial_conditions,SEIaImIsRD-method
 #' @export
-#'
-set_init <- function(
-  object,
-  S=NA_real_,
-  E=NA_real_,
-  I_asymptomatic=NA_real_, I_mild=NA_real_, I_severe=NA_real_,
-  R=NA_real_,
-  D=NA_real_,
-  beta=list(), kappa=NA_real_, omega=NA_real_,
-  p_symptom=list(), gamma=list(), mu=list()
-) {
-  param_list <- list(beta, kappa, omega, p_symptom, gamma, mu)
-  init_pop_list <- list(S, E, I_asymptomatic, I_mild, I_severe, R, D)
-  names(param_list) <- object@transmission_parameter_names
-  names(init_pop_list) <- object@initial_condition_names
-  object@initial_conditions <- init_pop_list
-  object@transmission_parameters <- param_list
-  # check if initial settings are valid
-  check <- check_init(object)
-  if (check == TRUE) object
-  else stop(paste(check, ", please check and rerun set_init.\n"))
-}
+setMethod("initial_conditions", "SEIaImIsRD",
+          function(object) object@initial_conditions)
 
-#' to check validity of the settings of the parameters and initial conditions
+
+#' @describeIn SEIaImIsRD Retrieves transmission parameters of SEIR model.
+#'
+#' @param object An object of the class SEIaImIsRD.
+#' @aliases initial_conditions,SEIaImIsRD-method
+#' @export
+setMethod("transmission_parameters", "SEIaImIsRD",
+          function(object) object@transmission_parameters)
+
+
+
+#' @describeIn SEIaImIsRD Setter method for initial population sizes (in fraction)
+#' of the SEIaImIsRD model.
 #'
 #' @param object An object of class SEIaImIsRD
-#' @return TRUE if passing all checks, or an error message if any check fails
-#' @rdname SEIaImIsRD-class
+#' @param value A numeric named list containing the initial fraction of population groups:
+#' S - susceptible,
+#' E - exposed,
+#' I_asymptomatic - infected with no symptom,
+#' I_mild - infected with mild symptoms,
+#' I_severe - infected severe symptoms that need further hospitalization,
+#' D - dead due to the infection,
+#' R - recovered.
+#'
+#' @return An object of class SEIaImIsRD with initial population and parameters
+#' @aliases initial_conditions<-, SEIaImIsRD-method
 #' @export
 #'
-check_init <- function(object) {
-  errors <- character()
-  # check whether all required parameters are set
-  is_na_params <- is.na(object@transmission_parameters)
-  if (sum(is_na_params) != 0) {
-    msg <- paste("Missing parameters:",
-                 paste(names(object@transmission_parameters)[is_na_params], collapse = ", ")
-    )
-    errors <- c(errors, msg)
-  }
-  # check whether all required initial population groups are set
-  is_na_pop <- is.na(object@initial_conditions)
-  if (sum(is_na_pop) != 0) {
-    msg <- paste("Missing initial setting for population group:",
-                 paste(names(object@initial_conditions)[is_na_pop], collapse = ", ")
-    )
-    errors <- c(errors, msg)
-  }else{
-    # check whether the sum of initial population is normalized to 1
-    sum_init_pop <- sum(unlist(object@initial_conditions))
-    if (sum_init_pop != 1) {
-      msg <- "Sum of initial population is not 1, please normalize"
+setMethod(
+  "initial_conditions<-",
+  "SEIaImIsRD",
+  function(object,
+           value = list(S = NA_real_, E = NA_real_,
+           I_asymptomatic = NA_real_, I_mild = NA_real_, I_severe = NA_real_,
+           R = NA_real_,
+           D = NA_real_)) {
+    init_pop_list <- value
+    names(init_pop_list) <- object@initial_condition_names
+    object@initial_conditions <- init_pop_list
+    # check if values are valid
+    errors <- character()
+    # check whether all required initial population groups are set
+    is_na_pop <- is.na(init_pop_list)
+    if (sum(is_na_pop) != 0) {
+      msg <- paste("Missing initial setting for population group:",
+                   paste(names(init_pop_list)[is_na_pop], collapse = ", ")
+      )
+      errors <- c(errors, msg)
+    }else{
+      # check whether the sum of initial population is normalized to 1
+      sum_init_pop <- sum(unlist(init_pop_list))
+      if (sum_init_pop != 1) {
+        msg <- "Sum of initial population is not 1, please normalize"
+        errors <- c(errors, msg)
+      }
+    }
+    if (length(errors) == 0) {
+      object@initial_conditions <- init_pop_list
+      object
+      }
+    else stop(paste(errors, ", please check and rerun transmission_parameters<-.\n"))
+  })
+
+
+#' @describeIn SEIaImIsRD Setter method for transmission parameters
+#' of the SEIaImIsRD model.
+#'
+#' @param object An object of class SEIaImIsRD
+#' @param value A numeric named list of values for transmission parameters:
+#' beta - a list of the effective contact rate from each infected group (i.e. rate at which an infected individual exposes susceptible),
+#' kappa - rate of progression from exposed to infectious (the reciprocal is the incubation period),
+#' omega - rate at which recovered individuals become susceptible,
+#' p_symptom - a list of fraction of different infected groups,
+#' gamma - a list of the rate of removal of each infected group (i.e. recovery rate of an infected individual),
+#' mu - a list of the rate of disease-caused mortality of each infected group
+#' @return An object of class SEIaImIsRD with initial population and parameters
+#' @aliases transmission_parameters<-, SEIaImIsRD-method
+#' @export
+#'
+setMethod(
+  "transmission_parameters<-",
+  "SEIaImIsRD",
+  function(
+    object,
+    value = list(beta = list(), kappa = NA_real_, omega = NA_real_,
+    p_symptom = list(), gamma = list(), mu = list())) {
+    param_list <- value
+    names(param_list) <- object@transmission_parameter_names
+    object@transmission_parameters <- param_list
+    # check if values are valid
+    errors <- character()
+    # check whether all required parameters are set
+    is_na_params <- is.na(param_list)
+    if (sum(is_na_params) != 0) {
+      msg <- paste("Missing parameters:",
+                   paste(names(param_list)[is_na_params], collapse = ", ")
+      )
       errors <- c(errors, msg)
     }
-  }
-  # check whether the lengths of beta, gamma and mu correspond to the number of infected groups
-  n_beta <- length(object@transmission_parameters$beta)
-  if (n_beta != 3) {
-    msg <- paste0(
-      "Length of parameter beta,", n_beta, ", is not equal to the setting ", 3)
-    errors <- c(errors, msg)
-  }
-  n_gamma <- length(object@transmission_parameters$gamma)
-  if (n_gamma != 3) {
-    msg <- paste0(
-      "Length of parameter gamma,", n_gamma, ", is not equal to the setting ", 3)
-    errors <- c(errors, msg)
-  }
-  n_mu <- length(object@transmission_parameters$mu)
-  if (n_mu != 3) {
-    msg <- paste0(
-      "Length of parameter mu,", n_mu, ", is not equal to the setting ", 3)
-    errors <- c(errors, msg)
-  }
-  if (length(errors) == 0) TRUE else errors
-}
-
-
+    # check whether the lengths of beta, gamma and mu correspond to the number of infected groups
+    n_beta <- length(param_list$beta)
+    if (n_beta != 3) {
+      msg <- paste0(
+        "Length of parameter beta,", n_beta, ", is not equal to the setting ", 3)
+      errors <- c(errors, msg)
+    }
+    n_gamma <- length(param_list$gamma)
+    if (n_gamma != 3) {
+      msg <- paste0(
+        "Length of parameter gamma,", n_gamma, ", is not equal to the setting ", 3)
+      errors <- c(errors, msg)
+    }
+    n_mu <- length(param_list$mu)
+    if (n_mu != 3) {
+      msg <- paste0(
+        "Length of parameter mu,", n_mu, ", is not equal to the setting ", 3)
+      errors <- c(errors, msg)
+    }
+    if (length(errors) == 0) {
+      object@transmission_parameters <- param_list
+      object
+      }
+    else stop(paste(errors, ", please check and rerun transmission_parameters<-.\n"))
+    })
 
 #' Solves the ode system.
 #'
@@ -177,59 +210,64 @@ check_init <- function(object) {
 #'
 #' @param object An object of class SEIaImIsRD
 #' @param times A list of time points of the simulation period
-#' @param method A string indicating which ode integrator to use. Default is set to 'lsoda'
+#' @param solved_method A string indicating which ode integrator to use. Default is set to 'lsoda'
 #' @return An object of class SEIaImIsRD with a dataframe of simulation output
 #' @rdname SEIaImIsRD-class
+#' @aliases run,SEIaImIsRD-method
 #' @export
 #'
-ode_simulate <- function(
-  object,
-  times,
-  method = "lsoda") {
-  # initial population groups
-  pop_groups <- c(S = object@initial_conditions$S,
-                  E = object@initial_conditions$E,
-                  I_asymptomatic = object@initial_conditions$I_asymptomatic,
-                  I_mild = object@initial_conditions$I_mild,
-                  I_severe = object@initial_conditions$I_severe,
-                  R = object@initial_conditions$R,
-                  D = object@initial_conditions$D)
-  # parameters
-  params <- c(beta = object@transmission_parameters$beta,
-              kappa = object@transmission_parameters$kappa,
-              omega = object@transmission_parameters$omega,
-              p_symptom = object@transmission_parameters$p_symptom,
-              gamma = object@transmission_parameters$gamma,
-              mu = object@transmission_parameters$mu)
+setMethod("run",
+          "SEIaImIsRD",
+          def = function(
+            object,
+            times,
+            solve_method = "lsoda") {
+            # initial population groups
+            pop_groups <- c(S = object@initial_conditions$S,
+                            E = object@initial_conditions$E,
+                            I_asymptomatic = object@initial_conditions$I_asymptomatic,
+                            I_mild = object@initial_conditions$I_mild,
+                            I_severe = object@initial_conditions$I_severe,
+                            R = object@initial_conditions$R,
+                            D = object@initial_conditions$D)
+            # parameters
+            params <- c(beta = object@transmission_parameters$beta,
+                        kappa = object@transmission_parameters$kappa,
+                        omega = object@transmission_parameters$omega,
+                        p_symptom = object@transmission_parameters$p_symptom,
+                        gamma = object@transmission_parameters$gamma,
+                        mu = object@transmission_parameters$mu)
 
-  # ODE system RHS
-  ode_symptome_rhs <- function(t, pop_groups, parameters) {
-    with(
-      as.list(c(pop_groups, params)), {
-        dS <- -S * (beta.i_asymptomatic * I_asymptomatic + beta.i_mild * I_mild + beta.i_severe * I_severe) + omega * R
-        dE <- S * (beta.i_asymptomatic * I_asymptomatic + beta.i_mild * I_mild + beta.i_severe * I_severe) - kappa * E
-        dI_a <- (1.0 - p_symptom.i_mild - p_symptom.i_severe) * kappa * E - (gamma.i_asymptomatic + mu.i_asymptomatic) * I_asymptomatic
-        dI_m <- p_symptom.i_mild * kappa * E - (gamma.i_mild + mu.i_mild) * I_mild
-        dI_s <- p_symptom.i_severe * kappa * E - (gamma.i_severe + mu.i_severe) * I_severe
-        dR <- -omega * R + gamma.i_asymptomatic * I_asymptomatic + gamma.i_mild * I_mild + gamma.i_severe * I_severe
-        dD <-  mu.i_asymptomatic * I_asymptomatic + mu.i_mild * I_mild + mu.i_severe * I_severe
-        # return the rate of cI_severenge
-        list(c(dS, dE, dI_a, dI_m, dI_s, dR, dD))
-      })
-  }
-  # solving ode
-  output <- ode(y = pop_groups,
-                times = times,
-                func = ode_symptome_rhs,
-                parms = params,
-                method = method)
-  output <- as.data.frame(output)
-  # reshape data frame into long format
-  output.melt <- melt(output, id.vars = "time")
-  names(output.melt) <- c("time", "population_group", "fraction")
-  object@output <- output.melt
-  return(object)
-}
+            # ODE system RHS
+            ode_symptome_rhs <- function(t, pop_groups, parameters) {
+              with(
+                as.list(c(pop_groups, params)), {
+                  dS <- -S * (beta.i_asymptomatic * I_asymptomatic + beta.i_mild * I_mild + beta.i_severe * I_severe) + omega * R
+                  dE <- S * (beta.i_asymptomatic * I_asymptomatic + beta.i_mild * I_mild + beta.i_severe * I_severe) - kappa * E
+                  dI_a <- (1.0 - p_symptom.i_mild - p_symptom.i_severe) * kappa * E - (gamma.i_asymptomatic + mu.i_asymptomatic) * I_asymptomatic
+                  dI_m <- p_symptom.i_mild * kappa * E - (gamma.i_mild + mu.i_mild) * I_mild
+                  dI_s <- p_symptom.i_severe * kappa * E - (gamma.i_severe + mu.i_severe) * I_severe
+                  dR <- -omega * R + gamma.i_asymptomatic * I_asymptomatic + gamma.i_mild * I_mild + gamma.i_severe * I_severe
+                  dD <-  mu.i_asymptomatic * I_asymptomatic + mu.i_mild * I_mild + mu.i_severe * I_severe
+                  # return the rate of cI_severenge
+                  list(c(dS, dE, dI_a, dI_m, dI_s, dR, dD))
+                })
+            }
+            # solving ode
+            output <- ode(y = pop_groups,
+                          times = times,
+                          func = ode_symptome_rhs,
+                          parms = params,
+                          method = solve_method)
+            output <- as.data.frame(output)
+            # reshape data frame into long format
+            output.melt <- melt(output, id.vars = "time")
+            # names(output.melt) <- c("time", "population_group", "fraction")
+            names(output.melt) <- c("time", "compartment", "value")
+            object@output <- output.melt
+            return(object)
+          })
+ 
 
 #' Calculate the basic reproduction number (\code{R_0}) of the system using the next generation matrix approach.
 #' @seealso \url{https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6002118/pdf/main.pdf} mathematical
@@ -242,20 +280,20 @@ ode_simulate <- function(
 #' The \code{F_i} are the new infections, while the \code{V_i} transfers of infections from one compartment to
 #' another. \code{x_0} is the disease-free equilibrium state.
 #'
-#' @param object An SEIaImIsRD class object.
-#'
-#' @return An object of class SEIaImIsRD with R0 value stored
+#' @param model A model of an SEIaImIsRD class object with initial_conditions and transmission_parameters set.
+#' @return A SEIaImIsRD class object with R0 value stored
 #' @rdname SEIaImIsRD-class
+#' @aliases R0,SEIaImIsRD-method
 #' @export
 #'
-R0_SEIaImIsRD <- function(object) {
+setMethod("R0", "SEIaImIsRD", function(model) {
   # get required parameters:
-  S <- object@initial_conditions$S
-  beta <- object@transmission_parameters$beta
-  kappa <- object@transmission_parameters$kappa
-  p_symptom <- object@transmission_parameters$p_symptom
-  gamma <- object@transmission_parameters$gamma
-  mu <- object@transmission_parameters$mu
+  S <- model@initial_conditions$S
+  beta <- model@transmission_parameters$beta
+  kappa <- model@transmission_parameters$kappa
+  p_symptom <- model@transmission_parameters$p_symptom
+  gamma <- model@transmission_parameters$gamma
+  mu <- model@transmission_parameters$mu
   # define matrices F and V:
   F <- matrix(0, 4, 4)
   V <- matrix(0, 4, 4)
@@ -269,24 +307,23 @@ R0_SEIaImIsRD <- function(object) {
   V[4, 4] <- gamma$i_severe + mu$i_severe
   # calculate R0 as the spectral radius for the matrix F x V^(-1):
   eigVals <- eigen(F %*% (solve(V)))$values
-  object@R0 <- max(abs(eigVals))
-  return(object)
-}
-
+  model@R0 <- max(abs(eigVals))
+  return(model)
+  })
 
 #' # describeIn SEIaImIsRD Plot the outcome of the ode similuation (for any dataframe)
 #'
 #' @param dataframe A dataframe in long format
 #' @param x The variable in the dataframe to be mapped to the x axis in ggploy aesthetics. Default is set to "time".
-#' @param y The variable in the dataframe to be mapped to the y axis in ggploy aesthetics. Default is set to "fraction".
-#' @param c The variable in the dataframe to be plotted in different lines with different colours. Default is set to "population_group".
+#' @param y The variable in the dataframe to be mapped to the y axis in ggploy aesthetics. Default is set to "value".
+#' @param c The variable in the dataframe to be plotted in different lines with different colours. Default is set to "compartment".
 #'
 #' @return A ggplot
 #' @rdname plot_dataframe
 #' @export
 #' @aliases plot_dataframe,ANY,ANY-method
 #'
-plot_dataframe <- function(data, x = "time", y = "fraction", c = "population_group") {
+plot_dataframe <- function(data, x = "time", y = "value", c = "compartment") {
   p <- ggplot(data, aes_string(x = x, y = y)) +
     geom_line(aes_string(colour = c)) +
     theme_classic()
