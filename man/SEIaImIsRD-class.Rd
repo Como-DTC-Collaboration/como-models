@@ -7,10 +7,8 @@
 \alias{initial_conditions,SEIaImIsRD-method}
 \alias{transmission_parameters,SEIaImIsRD-method}
 \alias{initial_conditions<-,SEIaImIsRD-method}
-\alias{initial_conditions<-,}
-\alias{SEIaImIsRD-method}
+\alias{initial_conditions<-,SEIaImIsRD}
 \alias{transmission_parameters<-,SEIaImIsRD-method}
-\alias{transmission_parameters<-,}
 \alias{run,SEIaImIsRD-method}
 \alias{R0,SEIaImIsRD-method}
 \title{SEIaImIsRD: an SEIRD model for compartments of different symptoms (asymptomatic, mild and severe) with different transmission rates (beta).}

@@ -22,9 +22,9 @@ knitr::opts_chunk$set(
 #    install.packages("kableExtra")
 
 library(comomodels)
-library(plotly) # interactive plot
+# library(plotly) # interactive plot
 library(knitr) # table layout 
-library(kableExtra) # plot and table arrangement
+# library(kableExtra) # plot and table arrangement
 ```
 
 ## Introduction
@@ -155,17 +155,18 @@ gamma <- list(i_asymptomatic = 0.9, i_mild = 0.50, i_severe = 0.05)
 mu <- list(i_asymptomatic = 0.005, i_mild = 0.05, i_severe = 0.30)
 ```
 
-Define helper function for printing out parameter values
-```{r}
-print_table_transmission_parameters <- function(model){
-  df.params <- model@transmission_parameters %>%
-    data.frame() %>%
-    t()
-  colnames(df.params) <- "value"
-  table.params <- kable(df.params) %>%
-    kable_styling(bootstrap_options = "striped", full_width = FALSE, position="left")
-  return (table.params)
-}
+
+```{r, echo=FALSE, include=FALSE}
+# Define helper function for printing out parameter values
+# print_table_transmission_parameters <- function(model){
+#   df.params <- model@transmission_parameters %>%
+#     data.frame() %>%
+#     t()
+#   colnames(df.params) <- "value"
+#   table.params <- kable(df.params) %>%
+#     kable_styling(bootstrap_options = "striped", full_width = FALSE, position="left")
+#   return (table.params)
+# }
 ```
 
 
@@ -186,37 +187,36 @@ We use the ode solver to solve the system, plot the relaxation into the steady s
 
 #### 1. Including natural loss of immunity
 Transmission from $R$ to $S$ exists; $\omega>0$
-```{r, fig.show='hide'}
+```{r, fig.show='hold'}
 par(mfrow=c(1,2))
 model <- run(model, t)
 model <- R0(model)
 
 # plot
-model.plot <- plot_dataframe(model@output, x = "time", y = "value", c = "compartment") + 
-  ggtitle(paste0("model: R0=", model@R0)) # Show R0 on the title
-model.plot <- ggplotly(p=model.plot, dynamicTicks = TRUE, originalData = FALSE)
+model.plot <- plot_dataframe(model@output, x = "time", y = "value", c = "compartment")
+# model.plot <- ggplotly(p=model.plot, dynamicTicks = TRUE, originalData = FALSE)
 
 # get parameters
-model.params.table = print_table_transmission_parameters(model)
-  
+# model.params.table = print_table_transmission_parameters(model)
+
+# <div class = "row">
+# <div class = "col-md-3">
+# model.params.table
+# </div>
+# <div class = "col-md-8">
+print(model.plot)
+# </div>
+# </div>
 ```
 
-<div class = "row">
-<div class = "col-md-4">
-```{r, echo=FALSE, fig.show='hold'}
-model.params.table
+```{r}
+print(paste0("model: R0=", model@R0))
 ```
-</div>
-<div class = "col-md-3">
-```{r, echo=FALSE, fig.show='hold'}
-model.plot
-```
-</div>
-</div>
+
 
 #### 2. No natural loss of immunity 
 No transmission from $R$ to $S$; $\omega=0$
-```{r, fig.show='hide'}
+```{r, fig.show='hold'}
 model1 <- model
 transmission_parameters(model1) <- list(beta = beta, kappa = kappa, omega = 0.00,
                                         p_symptom = p_symptom, gamma = gamma, mu = mu)
@@ -224,33 +224,31 @@ model1 <- run(model1, t)
 model1 <- R0(model1)
 
 # plot
-model1.plot <- plot_dataframe(model1@output, x = "time", y = "value", c = "compartment") +
-  ggtitle(paste0("model1: R0=", model1@R0))
-model1.plot <- ggplotly(p=model1.plot, dynamicTicks = TRUE, originalData = FALSE)
+model1.plot <- plot_dataframe(model1@output, x = "time", y = "value", c = "compartment")
+# model1.plot <- ggplotly(p=model1.plot, dynamicTicks = TRUE, originalData = FALSE)
 
 # get parameters
-model1.params.table = print_table_transmission_parameters(model1)
+# model1.params.table = print_table_transmission_parameters(model1)
+# <div class = "row">
+# <div class = "col-md-3">
+# model1.params.table
+# </div>
+# <div class = "col-md-8">
+print(model1.plot)
+# </div>
+# </div>
 ```
 
-<div class = "row">
-<div class = "col-md-4">
-```{r, echo=FALSE, fig.show='hold'}
-model1.params.table
+```{r}
+print(paste0("model1: R0=", model1@R0))
 ```
-</div>
-<div class = "col-md-3">
-```{r, echo=FALSE, fig.show='hold'}
-model1.plot
-```
-</div>
-</div>
 
 We can see whether including waning immunity may produce different epidemic behaviors under the same $\mathscr{R_0}$.
 
 
 #### 3. Altering the value(s) of $\beta$ 
 $\beta$: the rate at which an individual from any infected group $I_i$ infects $S$
-```{r, fig.show='hide'}
+```{r, fig.show='hold'}
 model2 <- model
 transmission_parameters(model2) <- list(beta = list(i_asymptomatic = 0.50, i_mild = 0.90, i_severe = 1.00),
                                         kappa = kappa, omega = omega, p_symptom = p_symptom, gamma = gamma, mu = mu)
@@ -258,23 +256,21 @@ model2 <- run(model2, t)
 model2 <- R0(model2)
 
 # plot
-model2.plot <- plot_dataframe(model2@output, x = "time", y = "value", c = "compartment") +
-  ggtitle(paste0("model2: R0=", model1@R0))
-model2.plot <- ggplotly(p=model2.plot, dynamicTicks = TRUE, originalData = FALSE)
+model2.plot <- plot_dataframe(model2@output, x = "time", y = "value", c = "compartment")
+# model2.plot <- ggplotly(p=model2.plot, dynamicTicks = TRUE, originalData = FALSE)
 
 # get parameters
-model2.params.table = print_table_transmission_parameters(model2)
+# model2.params.table = print_table_transmission_parameters(model2)
+# <div class = "row">
+# <div class = "col-md-3">
+# model2.params.table
+# </div>
+# <div class = "col-md-8">
+print(model2.plot)
+# </div>
+# </div>
 ```
 
-<div class = "row">
-<div class = "col-md-4">
-```{r, echo=FALSE, fig.show='hold'}
-model2.params.table
+```{r}
+print(paste0("model2: R0=", model2@R0))
 ```
-</div>
-<div class = "col-md-3">
-```{r, echo=FALSE, fig.show='hold'}
-model2.plot
-```
-</div>
-</div>

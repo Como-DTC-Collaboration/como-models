@@ -30,8 +30,6 @@
 #' @import deSolve
 #' @import ggplot2
 #' @import reshape2
-#' @import plotly
-#' @import kableExtra
 #'
 #' @concept objects
 #' @export SEIaImIsRD
@@ -99,7 +97,7 @@ setMethod("transmission_parameters", "SEIaImIsRD",
 #' R - recovered.
 #'
 #' @return An object of class SEIaImIsRD with initial population and parameters
-#' @aliases initial_conditions<-, SEIaImIsRD-method
+#' @aliases initial_conditions<-,SEIaImIsRD
 #' @export
 #'
 setMethod(
@@ -150,7 +148,7 @@ setMethod(
 #' gamma - a list of the rate of removal of each infected group (i.e. recovery rate of an infected individual),
 #' mu - a list of the rate of disease-caused mortality of each infected group
 #' @return An object of class SEIaImIsRD with initial population and parameters
-#' @aliases transmission_parameters<-, SEIaImIsRD-method
+#' @aliases transmission_parameters<-,SEIaImIsRD-method
 #' @export
 #'
 setMethod(

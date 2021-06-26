@@ -24,7 +24,5 @@ Imports:
     glue,
     methods,
     reshape2,
-    dplyr,
-    plotly,
-    kableExtra
+    dplyr
 VignetteBuilder: knitr
