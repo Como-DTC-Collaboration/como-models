@@ -1,0 +1,403 @@
+---
+title: "Optimisation of London data with SEIRD model"
+author: "Chon Lok Lei and Hui Jia Farm"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(comomodels)
+library(ggplot2)
+library(glue)
+library(dplyr)
+library(tidyr)
+```
+ 
+# Optimisation on simulated data (for Incidences only)
+## Simulate data
+```{r}
+my_model <- SEIRD()
+
+params <- list(beta=1, kappa=0.9, gamma=0.5, mu=0.1)
+transmission_parameters(my_model) <- params
+
+initial_conditions(my_model) <- list(S0=0.99, E0=0, I0=0.01, R0=0)
+
+times <- seq(0, 50, by = 1)
+out_df <- run(my_model, times)
+```
+
+## Add noise to simulated data
+```{r}
+testing_data <- spread(out_df$changes, compartment, value)
+noise <- rnorm(length(testing_data$Incidence), mean = 0, sd = .01)
+testing_data$Incidence <- abs(testing_data$Incidence + noise)
+print(head(testing_data, 10))
+
+```
+
+## Visualise simulation
+```{r, fig.height = 5, fig.width = 7}
+ggplot() +
+  geom_line(data=testing_data, aes(x = time, y = Incidence, color = "Incidence")) +
+  scale_color_manual(name = "Cases", values = c("Incidence" = "red")) + 
+  # scale_color_brewer(palette = "Dark2") +
+  labs(x = "time (days)", y = "fraction of the population",
+       title = glue("Evolution of different compartments over time"))
+```
+
+## Create score function
+```{r}
+LeastSquareFn <- function(parameters) {
+    
+    # set up parameters
+    transmission_para <- list(beta=parameters[1],
+                              kappa=parameters[2],
+                              gamma=parameters[3],
+                              mu=parameters[4])
+    init_cond <- list(S0=parameters[5],
+                      E0=parameters[6],
+                      I0=parameters[7],
+                      R0=1-sum(parameters[5:7]))
+    
+    # set up model
+    my_model <- SEIRD()
+    
+    transmission_parameters(my_model) <- transmission_para
+    initial_conditions(my_model) <- init_cond
+  
+    # run simulation
+    times <- seq(0, length(testing_data$Incidence) - 1, by = 1)
+    out_df <- run(my_model, times)
+    
+    data_wide <- spread(out_df$changes, compartment, value)
+    
+    # calculate loss function
+    sqrt(sum((testing_data$Incidence[-1] - data_wide$Incidence[-1])^2))
+}
+```
+
+
+## Optimisation
+Constraint conditions is not exact.
+$$ 0.99 \leq S_0 + E_0 + I_0 + R_0 \leq 1.01$$
+The condition set in the model is modified too, to accept a 0.01 difference in the sum of initial conditions.
+This is modified because initial value for `constrOptim` cannot be on the border.
+```{r}
+# trans_params_guess <- list(beta=1, kappa=0.9, gamma=0.5, mu=0.1)
+trans_params_guess <- c(0.9, 0.85, 0.35, 0.2)
+# init_conds_guess<- list(S0=0.99, E0=0, I0=0.01, R0=0)
+init_conds_guess<- c(0.97, 0.01, 0.01, 0.01)
+# result <- optim(c(trans_params_guess, init_conds_guess), LeastSquareFn,
+#       method = "L-BFGS-B",
+#       lower = rep(0, 7), upper = rep(1, 7))
+constraint_ui <- rbind(diag(8), -diag(8), c(rep(0, 4), rep(1,4)), c(rep(0, 4), rep(-1,4)))
+constraint_ci <- c(rep(0, 8), rep(-1, 8), 0.99, -1.01)
+
+result <- constrOptim(c(trans_params_guess, init_conds_guess), LeastSquareFn,
+            'NULL', constraint_ui, constraint_ci,
+            method = "Nelder-Mead")
+result$value
+
+```
+
+## Visualise optimisation result
+```{r, fig.height = 5, fig.width = 7}
+# Organise optimised parameters
+parameters <- result$par
+transmission_para <- list(beta=parameters[1],
+                              kappa=parameters[2],
+                              gamma=parameters[3],
+                              mu=parameters[4])
+init_cond <- list(S0=parameters[5],
+                  E0=parameters[6],
+                  I0=parameters[7],
+                  R0=parameters[8])
+
+# Simulate model with optimised parameters
+my_model <- SEIRD()
+    
+transmission_parameters(my_model) <- transmission_para
+initial_conditions(my_model) <- init_cond
+
+times <- seq(0, length(testing_data$Incidence[-1]), by = 1)
+out_df <- run(my_model, times)
+
+# Visualise optimised model
+cases <- out_df$changes
+cases <- spread(cases, compartment, value)
+ggplot() +
+  geom_line(data=cases, aes(x = time, y = Incidence, color = "Optimised")) +
+  geom_line(data=testing_data, aes(x = time, y = Incidence, color = "Simulated")) +
+  scale_color_manual(name = "Model", values = c("Optimised" = "black", "Simulated" = "#66CC99")) +
+  # scale_color_brewer(palette = "Dark2") +
+  labs(x = "time (days)", y = "fraction of the population",
+       title = glue("Evolution of cases over time"))
+```
+
+Compare initial value, optimised parameters and exact parameters
+```{r}
+print('Initial guess')
+print(c(trans_params_guess, init_conds_guess))
+print('Optimised parameters')
+# print(result$par)
+sprintf(result$par, fmt = '%#.3f')
+print('Actual parameters')
+print(c(1, 0.9, 0.5, 0.1, 0.99, 0, 0.01, 0))
+```
+
+# Include Deaths into optimisation
+## Add noise to simulated data (deaths)
+```{r}
+noise <- rnorm(length(testing_data$Deaths), mean = 0, sd = .001)
+testing_data$Deaths <- abs(testing_data$Deaths + noise)
+print(head(testing_data, 10))
+
+```
+
+## Visualise simulation
+```{r, fig.height = 5, fig.width = 7}
+ggplot() +
+  geom_line(data=testing_data, aes(x = time, y = Deaths, color = "Deaths")) +
+  geom_line(data=testing_data, aes(x = time, y = Incidence, color = "Incidence")) +
+  scale_color_manual(name = "Cases", values = c("Incidence" = "red", "Deaths" = "blue")) +
+  # scale_color_brewer(palette = "Dark2") +
+  labs(x = "time (days)", y = "fraction of the population",
+       title = glue("Evolution of cases over time"))
+```
+
+## Create score function
+```{r}
+LeastSquareFn <- function(parameters) {
+    
+    transmission_para <- list(beta=parameters[1],
+                              kappa=parameters[2],
+                              gamma=parameters[3],
+                              mu=parameters[4])
+    init_cond <- list(S0=parameters[5],
+                      E0=parameters[6],
+                      I0=parameters[7],
+                      R0=1-sum(parameters[5:7]))
+    
+    my_model <- SEIRD()
+    
+    transmission_parameters(my_model) <- transmission_para
+    initial_conditions(my_model) <- init_cond
+  
+    times <- seq(0, length(testing_data$Incidence) - 1, by = 1)
+    out_df <- run(my_model, times)
+    
+    data_wide <- spread(out_df$changes, compartment, value)
+    
+    # Take average of error from Incidences and Deaths
+    incidence_err <- sqrt(sum((testing_data$Incidence[-1] - data_wide$Incidence[-1])^2))
+    death_err <- sqrt(sum((testing_data$Deaths[-1] - data_wide$Deaths[-1])^2))
+    
+    (incidence_err + death_err)/2
+}
+```
+
+## Optimisation
+```{r}
+trans_params_guess <- c(0.9, 0.85, 0.35, 0.2)
+init_conds_guess<- c(0.97, 0.01, 0.01, 0.01)
+constraint_ui <- rbind(diag(8), -diag(8), c(rep(0, 4), rep(1,4)), c(rep(0, 4), rep(-1,4)))
+constraint_ci <- c(rep(0, 8), rep(-1, 8), 0.99, -1.01)
+
+result <- constrOptim(c(trans_params_guess, init_conds_guess), LeastSquareFn,
+            'NULL', constraint_ui, constraint_ci,
+            method = "Nelder-Mead")
+result$value
+
+```
+
+## Visualise optimisation result
+```{r, fig.height = 5, fig.width = 7}
+parameters <- result$par
+transmission_para <- list(beta=parameters[1],
+                              kappa=parameters[2],
+                              gamma=parameters[3],
+                              mu=parameters[4])
+init_cond <- list(S0=parameters[5],
+                  E0=parameters[6],
+                  I0=parameters[7],
+                  R0=parameters[8])
+
+my_model <- SEIRD()
+    
+transmission_parameters(my_model) <- transmission_para
+initial_conditions(my_model) <- init_cond
+
+times <- seq(0, length(testing_data$Incidence[-1]), by = 1)
+out_df <- run(my_model, times)
+
+cases <- out_df$changes
+cases <- spread(cases, compartment, value)
+ggplot() +
+  geom_line(data=cases, aes(x = time, y = Incidence, color="Optimised Incidence")) +
+  geom_line(data=cases, aes(x = time, y = Deaths, color="Optimised Deaths")) +
+  geom_line(data=testing_data, aes(x = time, y = Incidence, color = "Simulated Incidence")) +
+  geom_line(data=testing_data, aes(x = time, y = Deaths, color = "Simulated Deaths")) +
+  scale_color_manual(name = "Legend", values = c("Optimised Incidence" = "red", "Optimised Deaths" = "blue", "Simulated Incidence" = "#FF6699", "Simulated Deaths" = "#66CCFF")) +
+  # scale_color_brewer(palette = "Dark2") +
+  labs(x = "time (days)", y = "fraction of the population",
+       title = glue("Evolution of different compartments over time"))
+```
+
+Compare initial value, optimised parameters and exact parameters
+```{r}
+print('Initial guess')
+print(c(trans_params_guess, init_conds_guess))
+print('Optimisation parameters')
+# print(result$par)
+sprintf(result$par, fmt = '%#.3f')
+print('Actual parameters')
+print(c(1, 0.9, 0.5, 0.1, 0.99, 0, 0.01, 0))
+```
+
+
+# Optimisation on incidences and deaths on number of individuals
+## Simulate data
+```{r}
+my_model <- SEIRD()
+
+params <- list(beta=1, kappa=0.9, gamma=0.5, mu=0.1)
+transmission_parameters(my_model) <- params
+
+initial_conditions(my_model) <- list(S0=0.99, E0=0, I0=0.01, R0=0)
+
+times <- seq(0, 50, by = 1)
+out_df <- run(my_model, times)
+```
+
+## Add noise to simulated data (incidences and deaths)
+```{r}
+population_size <- 1e4
+
+testing_data <- spread(out_df$changes, compartment, value)
+
+noise <- rnorm(length(testing_data$Incidence), mean = 0, sd = 10)
+testing_data$Incidence <- as.integer(abs(testing_data$Incidence * population_size + noise))
+noise <- rnorm(length(testing_data$Deaths), mean = 0, sd = 10)
+testing_data$Deaths <- as.integer(abs(testing_data$Deaths *  population_size + noise))
+print(head(testing_data, 10))
+
+```
+
+## Visualise simulation
+```{r, fig.height = 5, fig.width = 7}
+
+ggplot() +
+  geom_line(data=testing_data, aes(x = time, y = Deaths, color = "Deaths")) +
+  geom_line(data=testing_data, aes(x = time, y = Incidence, color = "Incidence")) +
+  scale_color_manual(name = "Cases", values = c("Incidence" = "red", "Deaths" = "blue")) +
+  # scale_color_brewer(palette = "Dark2") +
+  labs(x = "time (days)", y = "number of the population",
+       title = glue("Evolution of different compartments over time"))
+```
+
+## Create score function
+```{r}
+London_population <- 1e4
+LeastSquareFn <- function(parameters) {
+    
+    transmission_para <- list(beta=parameters[1],
+                              kappa=parameters[2],
+                              gamma=parameters[3],
+                              mu=parameters[4])
+    init_cond <- list(S0=parameters[5],
+                      E0=parameters[6],
+                      I0=parameters[7],
+                      R0=1-sum(parameters[5:7]))
+    
+    my_model <- SEIRD()
+    
+    transmission_parameters(my_model) <- transmission_para
+    initial_conditions(my_model) <- init_cond
+  
+    times <- seq(0, length(testing_data$Incidence) - 1, by = 1)
+    out_df <- run(my_model, times)
+    
+    data_wide <- spread(out_df$changes, compartment, value)
+    data_wide$Incidence <- data_wide$Incidence * London_population
+    data_wide$Deaths <- data_wide$Deaths * London_population
+    
+    incidence_err <- sqrt(sum((testing_data$Incidence[-1] - data_wide$Incidence[-1])^2))
+    death_err <- sqrt(sum((testing_data$Deaths[-1] - data_wide$Deaths[-1])^2))
+    
+    (incidence_err + death_err)/2
+}
+```
+
+## Optimisation
+```{r}
+trans_params_guess <- c(0.9, 0.85, 0.35, 0.2)
+init_conds_guess<- c(0.97, 0.01, 0.01, 0.01)
+constraint_ui <- rbind(diag(8), -diag(8), c(rep(0, 4), rep(1,4)), c(rep(0, 4), rep(-1,4)))
+constraint_ci <- c(rep(0, 8), rep(-1, 8), 0.99, -1.01)
+
+result <- constrOptim(c(trans_params_guess, init_conds_guess), LeastSquareFn,
+            'NULL', constraint_ui, constraint_ci,
+            method = "Nelder-Mead")
+result$value
+
+```
+
+## Visualise optimisation result
+```{r, fig.height = 5, fig.width = 7}
+parameters <- result$par
+transmission_para <- list(beta=parameters[1],
+                              kappa=parameters[2],
+                              gamma=parameters[3],
+                              mu=parameters[4])
+init_cond <- list(S0=parameters[5],
+                  E0=parameters[6],
+                  I0=parameters[7],
+                  R0=parameters[8])
+
+my_model <- SEIRD()
+    
+transmission_parameters(my_model) <- transmission_para
+initial_conditions(my_model) <- init_cond
+
+times <- seq(0, length(testing_data$Incidence[-1]), by = 1)
+out_df <- run(my_model, times)
+
+cases <- out_df$changes
+cases <- spread(cases, compartment, value)
+cases$Incidence <- cases$Incidence * population_size
+cases$Deaths <- cases$Deaths * population_size
+
+ggplot() +
+  geom_line(data=cases, aes(x = time, y = Incidence, color="Optimised Incidence")) +
+  geom_line(data=cases, aes(x = time, y = Deaths, color="Optimised Deaths")) +
+  geom_line(data=testing_data, aes(x = time, y = Incidence, color = "Simulated Incidence")) +
+  geom_line(data=testing_data, aes(x = time, y = Deaths, color = "Simulated Deaths")) +
+  scale_color_manual(name = "Legend", values = c("Optimised Incidence" = "red", "Optimised Deaths" = "blue", "Simulated Incidence" = "#FF6699", "Simulated Deaths" = "#66CCFF")) +
+  # scale_color_brewer(palette = "Dark2") +
+  labs(x = "time (days)", y = "fraction of the population",
+       title = glue("Evolution of different compartments over time"))
+```
+
+Compare initial value, optimised parameters and exact parameters
+```{r}
+print('Initial guess')
+print(c(trans_params_guess, init_conds_guess))
+print('Optimisation parameters')
+# print(result$par)
+sprintf(result$par, fmt = '%#.3f')
+print('Actual parameters')
+print(c(1, 0.9, 0.5, 0.1, 0.99, 0, 0.01, 0))
+```
+
