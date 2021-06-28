@@ -1,0 +1,198 @@
+---
+title: "Optimisation of London data with SEIRD model"
+author: "Chon Lok Lei and Hui Jia Farm"
+date: "`r Sys.Date()`"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Vignette Title}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(comomodels)
+library(ggplot2)
+library(glue)
+library(dplyr)
+library(tidyr)
+```
+ 
+
+```{r}
+my_model <- SEIRD()
+
+params <- list(beta=1, kappa=0.9, gamma=0.5, mu=0.1)
+transmission_parameters(my_model) <- params
+
+initial_conditions(my_model) <- list(S0=0.99, E0=0, I0=0.01, R0=0)
+
+times <- seq(0, 50, by = 1)
+out_df <- run(my_model, times)
+```
+```{r}
+# wide <- dcast(out_df$changes, time ~ compartment, value.var = "value")
+testing_data <- spread(out_df$changes, compartment, value)
+
+```
+
+Check simulation
+```{r, fig.height = 5, fig.width = 7}
+states <- out_df$states
+
+ggplot(states, aes(x = time, y = value)) +
+  geom_line(aes(color = compartment)) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(x = "time (days)", y = "fraction of the population",
+       title = glue("Evolution of different compartments over time"))
+```
+```{r}
+getwd()
+```
+
+## Load London data
+```{r}
+# Depending on the working directory
+# Yet to set a generic one
+setwd("..")
+df_london = read.csv('./data/London_data.csv', header = TRUE)
+
+# Extracting cases and deaths and renaming columns
+#London
+cases_deaths_name_london = c('newCasesBySpecimenDate', 'newDailyNsoDeathsByDeathDate')
+df_london = df_london[cases_deaths_name_london]
+names(df_london)[names(df_london) == "newCasesBySpecimenDate"] <- "DailyCases"
+names(df_london)[names(df_london) == "newDailyNsoDeathsByDeathDate"] <- "DailyDeaths"
+df_london
+```
+
+Plot of London data
+```{r}
+plot (df_london$DailyCases[42:82], type = 'l')
+plot (df_london$DailyDeaths[42:82], type = 'l')
+# 
+London = df_london[42:82, 1:2] # Start of lockdown (23/03/2020) is 83rd day
+rownames(London) = seq(length=nrow(London))
+length(London$DailyCases)
+```
+
+## Testing score function
+```{r}
+LeastSquareFn <- function(parameters) {
+    
+    transmission_para <- parameters[1:4]
+    init_cond <- parameters[5:8]
+    my_model <- SEIRD()
+    
+    transmission_parameters(my_model) <- transmission_para
+    initial_conditions(my_model) <- init_cond
+    
+    times <- seq(0, length(testing_data$Incidence)-1, by = 1)
+    out_df <- run(my_model, times)
+    
+    data_wide <- spread(out_df$changes, compartment, value)
+    
+    sqrt(sum((testing_data$Incidence[-1] - data_wide$Incidence[-1])^2))
+}
+trans_params <- list(beta=1, kappa=0.9, gamma=0.5, mu=0.1)
+init_conds<- list(S0=0.99, E0=0, I0=0.01, R0=0)
+LeastSquareFn(c(trans_params, init_conds))
+```
+```{r}
+trans_params <- list(beta=1, kappa=0.9, gamma=0.5, mu=0.1)
+init_conds<- list(S0=0.99, E0=0, I0=0.01, R0=0)
+A <- c(trans_params, init_conds)
+A[5:8]
+```
+
+## Create score function
+```{r}
+London_population = 9*10^6
+LeastSquareFn <- function(parameters) {
+    
+    transmission_para <- list(beta=parameters[1],
+                              kappa=parameters[2],
+                              gamma=parameters[3],
+                              mu=parameters[4])
+    # transmission_para <- parameters[1:4]
+    # init_cond <- parameters[5:8]
+    init_cond <- list(S0=parameters[5],
+                      E0=parameters[6],
+                      I0=parameters[7],
+                      R0=1-sum(parameters[5:7]))
+    
+    my_model <- SEIRD()
+    
+    transmission_parameters(my_model) <- transmission_para
+    initial_conditions(my_model) <- init_cond
+  
+    times <- seq(0, length(London$DailyCases), by = 1)
+    out_df <- run(my_model, times)
+    
+    data_wide <- spread(out_df$changes, compartment, value)
+    data_wide$Incidence <- data_wide$Incidence * London_population
+    
+    sqrt(sum((London$DailyCases - data_wide$Incidence[-1])^2))
+}
+```
+
+## Optimisation
+```{r}
+# trans_params_guess <- list(beta=1, kappa=0.9, gamma=0.5, mu=0.1)
+trans_params_guess <- c(1, 0.9, 0.5, 0.1)
+# init_conds_guess<- list(S0=0.99, E0=0, I0=0.01, R0=0)
+init_conds_guess<- c(0.99, 0, 0.01)
+result <- optim(c(trans_params_guess, init_conds_guess), LeastSquareFn,
+      method = "L-BFGS-B",
+      lower = rep(0, 7), upper = rep(1, 7))
+result
+```
+```{r}
+London$time <- seq.int(nrow(London))
+London
+```
+
+```{r}
+parameters <- result$par
+transmission_para <- list(beta=parameters[1],
+                              kappa=parameters[2],
+                              gamma=parameters[3],
+                              mu=parameters[4])
+init_cond <- list(S0=parameters[5],
+                  E0=parameters[6],
+                  I0=parameters[7],
+                  R0=1-sum(parameters[5:7]))
+
+my_model <- SEIRD()
+    
+transmission_parameters(my_model) <- transmission_para
+initial_conditions(my_model) <- init_cond
+
+times <- seq(0, length(London$DailyCases), by = 1)
+out_df <- run(my_model, times)
+
+cases <- out_df$changes
+
+# ggplot() +
+#   geom_line(data=cases, aes(x = time, y = value*9*10^6), color="red") +
+#   geom_line(data=London, aes(x = time, y = DailyCases), color = "blue") +
+#   scale_color_brewer(palette = "Dark2") +
+#   labs(x = "time (days)", y = "fraction of the population",
+#        title = glue("Evolution of different compartments over time"))
+
+  
+ggplot(cases, aes(x = time, y = value*9*10^6)) +
+  geom_line(aes(color = compartment)) +
+  # geom_line(data=London, aes(x = time, y = DailyCases), color = "blue") +
+  scale_color_brewer(palette = "Dark2") +
+  labs(x = "time (days)", y = "fraction of the population",
+       title = glue("Evolution of different compartments over time"))
+
+```
+
