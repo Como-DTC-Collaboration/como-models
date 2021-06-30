@@ -1,8 +1,7 @@
 # script to compare the two versions of the urban vs. rural SEIRD models
 # set wd to folder with this file in it
 setwd("~/Documents/GitHub/DTC/como-models/R")
-source("SEIR_rural_urban.R")
-source("SEIR_rural_urban_2.R")
+source("SEIR_RU_Coft.R")
 library(deSolve)
 library(glue)
 library(reshape2)
@@ -50,28 +49,7 @@ pop_byage_2019 <- pop_byage_2019/sum(pop_byage_2019) #normalized to fractions of
 pop_byage_2019 <- c(pop_byage_2019[1:15], sum(pop_byage_2019[16:20]))
 
 # create model with NO migration, but with cross-community infection
-model_nomig <- new("SEIR_rural_urban")
-
-# compute average contact rate for urban an rural communities
-# units: number of contacts/day
-# contact_rate_urban = mean(rowSums(contact_all_urban[[country]]))
-# contact_rate_rural = mean(rowSums(contact_all_rural[[country]]))
-# scaling_urban_to_rural = contact_rate_rural/contact_rate_urban
-#res_rural = matrix(0,174,2)
-#for (i in 1:174) {
-#  n = names_common[i]
-#  rate_urban = mean(rowSums(contact_all_urban[[n]]))
-#  rate_rural = mean(rowSums(contact_all_rural[[n]]))
-#  res_rural[i,] = c(rate_urban,rate_rural)
-#}
-
-#res_rural <- data.frame("urban" = res_rural[,1], "rural" = res_rural[,2])
-#row.names(res_rural) <- names_common
-
-#ggplot(res_rural, aes(x=urban, y=rural)) + geom_point() +
-#  coord_cartesian(xlim = c(7, 18), ylim = c(7, 18)) +
-#  geom_segment(aes(x = 0, y = 0, xend = 20, yend = 20)) +
-#  geom_text(label=names_common, hjust = -0.1, vjust = -0.1)
+model_nomig <- new("SEIR_RU_Coft")
 
 # set parameters for both models, as equal as possible
 # parameters they have in common
@@ -79,11 +57,10 @@ b = 0.3 # probability of infection
 k = 0.2 # 1/(incubation period in days)
 g = 0.1# 1/(days between infection and recovery)
 m = 0.03 # probability of death, cases-fatality ratio.
-C = 1 # connectedness parameter
-transmission_parameters(model_nomig) <- list(b, k, g, m, C)
+transmission_parameters(model_nomig) <- list(b, k, g, m)
 
 # set initial conditions, same in both models
-start_infected_urban = 0.001
+start_infected_urban = 0.00001
 start_infected_rural = 0
 S0U = 1-frac_rural - start_infected_urban
 E0U = 0
@@ -101,6 +78,11 @@ contact_matrices(model_nomig) <- list(contact_all_urban[[country]],contact_all_r
 
 #set demographic data
 country_demog(model_nomig) <- list(pop_byage_2019*(1-frac_rural),pop_byage_2019*frac_rural)
+
+# set C
+t_points <- c(0, 14, 42)
+C_values <- c(0.7, 0.05, 0.3)
+C(model_nomig) <- list(t_points, C_values)
 
 # Explore role of C
 tend = 80
@@ -125,14 +107,6 @@ SEIRplot <- ggplot(SEIR_df, aes(x = time, y = value)) +
 #print(SEIRplot)
 
 case_df <- subset(out_nomig, compartment == "Incidences_U" | compartment == "Deaths_U" | compartment == "Incidences_Y" | compartment == "Deaths_Y")
-# need the next few lines only if dt in the ode solver is NOT 1.
-#for (i in 1:tend) {
-#  case_df$value[case_df$time==i & case_df$compartment == "Incidences_U"] <- sum(case_df$value[case_df$compartment == "Incidences_U" & case_df$time<(i+0.1) & case_df$time>(i-0.9)])
-#  case_df$value[case_df$time==i & case_df$compartment == "Incidences_Y"] <- sum(case_df$value[case_df$compartment == "Incidences_Y" & case_df$time<(i+0.1) & case_df$time>(i-0.9)])
-#  case_df$value[case_df$time==i & case_df$compartment == "Deaths_U"] <- sum(case_df$value[case_df$compartment == "Deaths_U" & case_df$time<(i+0.1) & case_df$time>(i-0.9)])
-#  case_df$value[case_df$time==i & case_df$compartment == "Deaths_Y"] <- sum(case_df$value[case_df$compartment == "Deaths_Y" & case_df$time<(i+0.1) & case_df$time>(i-0.9)])
-#}
-#case_df <- case_df[(case_df$time %% 1 == 0),]
 case_df$compartment <- factor(case_df$compartment, levels = c("Incidences_U", "Deaths_U", "Incidences_Y", "Deaths_Y"))
 col <- c("Incidences_U" = "grey28", "Deaths_U" = "black", "Incidences_Y" = "lightgray", "Deaths_Y" = "darkgray")
 inc_plot <- ggplot(case_df, aes(x = time, y = value, fill = compartment)) +
@@ -169,7 +143,7 @@ SEIRplot_total <- ggplot(NULL, aes(x = time, y = value)) +
   scale_colour_discrete(labels = c("Communities: S", "Communities: E","Communities: I","Communities: R",
                                    "SEIRD: S", "SEIRD: E","SEIRD: I","SEIRD: R")) +
   theme(legend.position = "bottom", legend.title = element_blank())
-print(SEIRplot_total)
+#print(SEIRplot_total)
 
 incplot_total <- ggplot(CD_total, aes(x = time, y = value, fill = compartment)) +
   geom_bar(stat="identity", position = position_dodge()) +
@@ -180,9 +154,4 @@ incplot_total <- ggplot(CD_total, aes(x = time, y = value, fill = compartment)) 
   scale_fill_discrete(labels = c("Incidences","Deaths"))
 
 #grid.arrange(SEIRplot_total,incplot_total,nrow = 1)
-
-sum(CD_total$value[CD_total$compartment=="Incidences_U"])
-sum(CD_total$value[CD_total$compartment=="Deaths_U"])
-SEIR_total$time[SEIR_total$value == max(SEIR_total$value[SEIR_total$compartment=="I_U"])]
-
 

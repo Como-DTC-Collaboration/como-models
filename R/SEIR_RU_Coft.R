@@ -1,4 +1,4 @@
-#' An S4 object representing the SEIR_rural_urban.
+#' An S4 object representing the SEIR_RU_Coft.
 #'
 #' This class represents the SEIR model, showing how populations of susceptible,
 #' exposed, infectious and recovered individuals evolve over time. The model
@@ -14,7 +14,7 @@
 #' @slot initial_cases_deaths_names name for initial cases and deaths
 #'       (characters). Default is list("C_U0", "D_U0", "C_Y0", "D_Y0").
 #' @slot transmission_parameter_names list of names of transmission parameters
-#'       (characters). Default is list("b", "k", "g", "m", "C").
+#'       (characters). Default is list("b", "k", "g", "m").
 #' @slot initial_conditions list of values for initial conditions (double).
 #' @slot initial_cases_deaths list of values for initial cases and deaths.
 #'       Both set to 0, not to be changed by user (double).
@@ -27,12 +27,13 @@
 #' @slot country_demog list of vectors with percentage of population in each age
 #'       group in urban and rural community.
 #' @slot country_demog_names list of names for urban and rural demographic data.
+#' @slot C timepoints and corresponding values of C.
 #'
 #' @import deSolve
 #' @import glue
 #' @import reshape2
 
-setClass("SEIR_rural_urban",
+setClass("SEIR_RU_Coft",
          # slots
          slots = c(
            output_names = "list",
@@ -45,7 +46,9 @@ setClass("SEIR_rural_urban",
            contact_matrices = "list",
            contact_matrices_names = "list",
            country_demog = "list",
-           country_demog_names = "list"
+           country_demog_names = "list",
+           C = "list",
+           C_names = "list"
          ),
          # prototypes for the slots, automatically set parameter names and
          # its data type
@@ -57,109 +60,129 @@ setClass("SEIR_rural_urban",
            initial_condition_names = list("S_U0", "E_U0", "I_U0", "R_U0",
                                           "S_Y0", "E_Y0", "I_Y0", "R_Y0"),
            initial_cases_deaths_names = list("C_U0", "D_U0", "C_Y0", "D_Y0"),
-           transmission_parameter_names = list("b", "k", "g", "m", "C"),
+           transmission_parameter_names = list("b", "k", "g", "m"),
            initial_conditions = vector(mode = "list", length = 8),
            initial_cases_deaths = vector(mode = "list", length = 4),
-           transmission_parameters = vector(mode = "list", length = 5),
+           transmission_parameters = vector(mode = "list", length = 4),
            contact_matrices = vector(mode = "list", length = 2),
            contact_matrices_names = list("urban", "rural"),
-           country_demog = list("urban", "rural"),
-           country_demog_names = list("urban", "rural")
+           country_demog = vector(mode = "list", length = 2),
+           country_demog_names = list("urban", "rural"),
+           C = vector(mode = "list", length = 2),
+           C_names = list("timepoints", "values")
          )
 )
 
 #-----------------------------------------------------------------------------
-#' Retrieves initial conditions of SEIR_rural_urban model.
+#' Retrieves initial conditions of SEIR_RU_Coft model.
 #'
-#' @param object An object of the class SEIR_rural_urban.
+#' @param object An object of the class SEIR_RU_Coft.
 #' @export
 
 setGeneric("initial_conditions",
            function(object) standardGeneric("initial_conditions"))
 
 
-#' @describeIn SEIR_rural_urban Retrieves initial conditions of
-#'             SEIR_rural_urban model.
+#' @describeIn SEIR_RU_Coft Retrieves initial conditions of
+#'             SEIR_RU_Coft model.
 #'
-#' @param object An object of the class SEIR_rural_urban.
+#' @param object An object of the class SEIR_RU_Coft.
 #' @aliases initial_conditions,ANY,ANY-method
 #' @export
 
-setMethod("initial_conditions", "SEIR_rural_urban",
+setMethod("initial_conditions", "SEIR_RU_Coft",
           function(object) object@initial_conditions)
 
 #-----------------------------------------------------------------------------
-#' Retrieves initial cases and deaths of SEIR_rural_urban model.
+#' Retrieves initial cases and deaths of SEIR_RU_Coft model.
 #'
-#' @param object An object of the class SEIR_rural_urban.
+#' @param object An object of the class SEIR_RU_Coft.
 #' @export
 
 setGeneric("initial_cases_deaths",
            function(object) standardGeneric("initial_cases_deaths"))
 
-#' @describeIn SEIR_rural_urban Retrieves initial cases and deaths of
-#'             SEIR_rural_urban model.
+#' @describeIn SEIR_RU_Coft Retrieves initial cases and deaths of
+#'             SEIR_RU_Coft model.
 #'
-#' @param object An object of the class SEIR_rural_urban.
+#' @param object An object of the class SEIR_RU_Coft.
 #' @aliases initial_cases_deaths,ANY,ANY-method
 #' @export
 
-setMethod("initial_cases_deaths", "SEIR_rural_urban",
+setMethod("initial_cases_deaths", "SEIR_RU_Coft",
           function(object) object@initial_cases_deaths)
 
 #-----------------------------------------------------------------------------
 #' Retrieves transmission parameters of SEIR model.
 #'
-#' @param object An object of the class SEIR_rural_urban.
+#' @param object An object of the class SEIR_RU_Coft.
 #' @export
 
 setGeneric("transmission_parameters",
            function(object) standardGeneric("transmission_parameters"))
 
-#' @describeIn SEIR_rural_urban Retrieves transmission parameters of SEIR model.
+#' @describeIn SEIR_RU_Coft Retrieves transmission parameters of SEIR model.
 #'
-#' @param object An object of the class SEIR_rural_urban.
+#' @param object An object of the class SEIR_RU_Coft.
 #' @aliases transmission_parameters,ANY,ANY-method
 #' @export
 
-setMethod("transmission_parameters", "SEIR_rural_urban",
+setMethod("transmission_parameters", "SEIR_RU_Coft",
           function(object) object@transmission_parameters)
 
 #-----------------------------------------------------------------------------
 #' Retrieves contact_matrices of SEIR model.
 #'
-#' @param object An object of the class SEIR_rural_urban.
+#' @param object An object of the class SEIR_RU_Coft.
 #' @export
 
 setGeneric("contact_matrices",
            function(object) standardGeneric("contact_matrices"))
 
-#' @describeIn SEIR_rural_urban Retrieves contact matrices of SEIR model.
+#' @describeIn SEIR_RU_Coft Retrieves contact matrices of SEIR model.
 #'
-#' @param object An object of the class SEIR_rural_urban.
+#' @param object An object of the class SEIR_RU_Coft.
 #' @aliases contact_matrices,ANY,ANY-method
 #' @export
 
-setMethod("contact_matrices", "SEIR_rural_urban",
+setMethod("contact_matrices", "SEIR_RU_Coft",
           function(object) object@contact_matrices)
 
 #-----------------------------------------------------------------------------
 #' Retrieves demographic data of SEIR model.
 #'
-#' @param object An object of the class SEIR_rural_urban.
+#' @param object An object of the class SEIR_RU_Coft.
 #' @export
 
 setGeneric("country_demog",
            function(object) standardGeneric("country_demog"))
 
-#' @describeIn SEIR_rural_urban Retrieves demographic data of SEIR model.
+#' @describeIn SEIR_RU_Coft Retrieves demographic data of SEIR model.
 #'
-#' @param object An object of the class SEIR_rural_urban.
+#' @param object An object of the class SEIR_RU_Coft.
 #' @aliases country_demog,ANY,ANY-method
 #' @export
 
-setMethod("country_demog", "SEIR_rural_urban",
+setMethod("country_demog", "SEIR_RU_Coft",
           function(object) object@country_demog)
+
+#-----------------------------------------------------------------------------
+#' Retrieves time-dependent C data of SEIR model.
+#'
+#' @param object An object of the class SEIR_RU_Coft.
+#' @export
+
+setGeneric("C",
+           function(object) standardGeneric("C"))
+
+#' @describeIn SEIR_RU_Coft Retrieves time-dependent C data of SEIR model.
+#'
+#' @param object An object of the class SEIR_RU_Coft.
+#' @aliases C,ANY,ANY-method
+#' @export
+
+setMethod("C", "SEIR_RU_Coft",
+          function(object) object@C)
 
 #-----------------------------------------------------------------------------
 #' Setter method for initial conditions (S0, E0, I0 and R0) for both communities
@@ -168,11 +191,11 @@ setMethod("country_demog", "SEIR_rural_urban",
 #' All initial conditions must sum up to 1.
 #' If the initial conditions provided to do not sum to 1, an error is thrown.
 #'
-#' @param object an object of the class SEIR_rural_urban
+#' @param object an object of the class SEIR_RU_Coft
 #' @param value (list) list of initial conditions S_U0, E_U0, I_U0, R_U0, S_Y0,
 #' E_Y0, I_Y0, R_Y0.
 #'
-#' @return object of class SEIR_rural_urban with initial conditions assigned.
+#' @return object of class SEIR_RU_Coft with initial conditions assigned.
 #'
 #' @export
 
@@ -182,23 +205,23 @@ setGeneric(
     standardGeneric("initial_conditions<-")
   })
 
-#' @describeIn SEIR_rural_urban Setter method for initial conditions
+#' @describeIn SEIR_RU_Coft Setter method for initial conditions
 #' (S0, E0, I0 and R0) for both communities in the SEIR model.
 #'
 #' All initial conditions must sum up to 1.
 #' If the initial conditions provided to do not sum to 1, an error is thrown.
 #'
-#' @param object an object of the class SEIR_rural_urban
+#' @param object an object of the class SEIR_RU_Coft
 #' @param value (list) list of initial conditions S_U0, E_U0, I_U0, R_U0, S_Y0,
 #' E_Y0, I_Y0, R_Y0.
 #'
-#' @return object of class SEIR_rural_urban with initial conditions assigned.
+#' @return object of class SEIR_RU_Coft with initial conditions assigned.
 #'
 #' @aliases initial_conditions<-,ANY,ANY-method
 #' @export
 
 setMethod(
-  "initial_conditions<-", "SEIR_rural_urban",
+  "initial_conditions<-", "SEIR_RU_Coft",
   function(object, value) {
 
     # create list of parameter values
@@ -236,15 +259,15 @@ setMethod(
 
 #-----------------------------------------------------------------------------
 #' Setter method for transmission parameters
-#' (b, k, g, m and C) of the SEIR model.
+#' (b, k, g, m ) of the SEIR model.
 #'
 #' If the transmission parameters provided to are not 1-dimensional an error is
 #' thrown.
 #'
-#' @param object (SEIR_rural_urban model)
-#' @param value (list) list of values for b, k, g, m, C, respectively.
+#' @param object (SEIR_RU_Coft model)
+#' @param value (list) list of values for b, k, g, m, respectively.
 #'
-#' @return object of class SEIR_rural_urban with transmission parameter values
+#' @return object of class SEIR_RU_Coft with transmission parameter values
 #' assigned.
 #' @export
 
@@ -255,22 +278,22 @@ setGeneric(
   })
 
 
-#' @describeIn SEIR_rural_urban Setter method for transmission parameters
-#' (b, k, g, m and C) of the SEIR model.
+#' @describeIn SEIR_RU_Coft Setter method for transmission parameters
+#' (b, k, g, m) of the SEIR model.
 #'
 #' If the transmission parameters provided to are not 1-dimensional an error is
 #' thrown.
 #'
-#' @param object (SEIR_rural_urban model)
-#' @param value (list) list of values for b, k, g, m, C,respectively.
+#' @param object (SEIR_RU_Coft model)
+#' @param value (list) list of values for b, k, g, m, respectively.
 #'
-#' @return object of class SEIR_rural_urban with transmission parameter values
+#' @return object of class SEIR_RU_Coft with transmission parameter values
 #' assigned.
 #' @aliases transmission_parameters<-,ANY,ANY-method
 #' @export
 
 setMethod(
-  "transmission_parameters<-", "SEIR_rural_urban",
+  "transmission_parameters<-", "SEIR_RU_Coft",
   function(object, value) {
 
     # create list of parameter values
@@ -279,19 +302,14 @@ setMethod(
     # add names to each value
     names(trans_params) <- object@transmission_parameter_names
 
-    # check format of parameters b, k, g, m, C
+    # check format of parameters b, k, g, m
     if (length(trans_params$b) != 1
         | length(trans_params$k) != 1
         | length(trans_params$g) != 1
-        | length(trans_params$m) != 1
-        | length(trans_params$C) != 1) {
+        | length(trans_params$m) != 1) {
       stop("The parameter values should be 1-dimensional.")
     }
 
-    # check that the connectedness parameter C is between 0 and 1
-    if (trans_params$C < 0 | trans_params$C > 1) {
-      stop("Connectedness parameter C must be in the range 0-1.")
-    }
     # if all above tests are passed, assign the trans_params namelist to the
     # object
     object@transmission_parameters <- trans_params
@@ -303,10 +321,10 @@ setMethod(
 #' Setter method for contact matrices for urban and rural communities in the
 #' SEIR model. Matrices must be of type double.
 #'
-#' @param object (SEIR_rural_urban model)
+#' @param object (SEIR_RU_Coft model)
 #' @param value (list) list of contact matrices
 #'
-#' @return object of class SEIR_rural_urban with contact matrices
+#' @return object of class SEIR_RU_Coft with contact matrices
 #' assigned.
 #' @export
 
@@ -316,20 +334,20 @@ setGeneric(
     standardGeneric("contact_matrices<-")
   })
 
-#' @describeIn SEIR_rural_urban #' Setter method for contact matrices for
+#' @describeIn SEIR_RU_Coft #' Setter method for contact matrices for
 #' urban and rural communities in the SEIR model.
 #' Matrices must be of type double
 #'
-#' @param object (SEIR_rural_urban model)
+#' @param object (SEIR_RU_Coft model)
 #' @param value (list) list of contact matrices
 #'
-#' @return object of class SEIR_rural_urban with contact matrices
+#' @return object of class SEIR_RU_Coft with contact matrices
 #' assigned.
 #' @aliases contact_matrices<-,ANY,ANY-method
 #' @export
 
 setMethod(
-  "contact_matrices<-", "SEIR_rural_urban",
+  "contact_matrices<-", "SEIR_RU_Coft",
   function(object, value) {
 
     # create list of parameter values
@@ -355,10 +373,10 @@ setMethod(
 #' Setter method for demographic data for urban and rural communities in the
 #' SEIR model. both vectors together must sum to 1.
 #'
-#' @param object (SEIR_rural_urban model)
+#' @param object (SEIR_RU_Coft model)
 #' @param value (list) list of 2 sets of population fractions by age group
 #'
-#' @return object of class SEIR_rural_urban with  contact matrices
+#' @return object of class SEIR_RU_Coft with  contact matrices
 #' assigned.
 #' @export
 
@@ -368,19 +386,19 @@ setGeneric(
     standardGeneric("country_demog<-")
   })
 
-#' @describeIn SEIR_rural_urban Setter method for demographic data for urban
+#' @describeIn SEIR_RU_Coft Setter method for demographic data for urban
 #' and rural communities in the SEIR model. both vectors together must sum to 1.
 #'
-#' @param object (SEIR_rural_urban model)
+#' @param object (SEIR_RU_Coft model)
 #' @param value (list) list of 2 set of population fractions by age group
 #'
-#' @return object of class SEIR_rural_urban with demographic data
+#' @return object of class SEIR_RU_Coft with demographic data
 #' assigned.
 #' @aliases country_demog<-,ANY,ANY-method
 #' @export
 
 setMethod(
-  "country_demog<-", "SEIR_rural_urban",
+  "country_demog<-", "SEIR_RU_Coft",
   function(object, value) {
 
     # create list of parameter values
@@ -411,9 +429,76 @@ setMethod(
   })
 
 #-----------------------------------------------------------------------------
-# SEIR_rural_urban class specific functions
+#' Setter method for time-dependent C.
+#'
+#' @param object (SEIR_RU_Coft model)
+#' @param value (list) list of one set of timepoints and one set of values of C.
+#'
+#' @return object of class SEIR_RU_Coft with values of C assigned.
+#' @export
 
-#' Solves ODEs of the SEIR_rural_urban specified in object
+setGeneric(
+  "C<-",
+  function(object, value) {
+    standardGeneric("C<-")
+  })
+
+#' @describeIn Setter method for time-dependent C.
+#'
+#' @param object (SEIR_RU_Coft model)
+#' @param value (list) list of one set of timepoints and one set of values of C.
+#'
+#' @return object of class SEIR_RU_Coft with values of C assigned.
+#' @aliases C<-,ANY,ANY-method
+#' @export
+
+setMethod(
+  "C<-", "SEIR_RU_Coft",
+  function(object, value) {
+    
+    # create list of parameter values
+    C_data <- value
+    
+    # add names to each value
+    names(C_data) <- object@C_names
+    print(C_data)
+    
+    # check if at least one value is supplied
+    if (length(C_data$timepoints) < 1) {
+      stop("at least one value for C must be supplied")
+    }
+    
+    #check if first timepoint is zero
+    if (C_data$timepoints[1] != 0) {
+      stop("The first value of C must be supplied for timepoint 0.")
+    }
+    
+    # check format of lists
+    if (typeof(C_data$timepoints) != "double"
+        | typeof(C_data$values) != "double") {
+      stop("Timepoints and values of C must be of type double.")
+    }
+    
+    # check that lists are the same length
+    if (length(C_data$timepoints) != length(C_data$values)) {
+      stop("the number of timepoints is not the same as the number of values
+           for C supplied.")
+    }
+    
+    # set final timepoint as infinity
+    C_data$timepoints <- c(C_data$timepoints, Inf)
+    
+    # if all above tests are passed, assign the contact_mat namelist to the
+    # object
+    object@C <- C_data
+    
+    return(object)
+  })
+
+#-----------------------------------------------------------------------------
+# SEIR_RU_Coft class specific functions
+
+#' Solves ODEs of the SEIR_RU_Coft specified in object
 #' for the time points specified in times and integration method specified in
 #' solve_method.
 #' For the urban community:
@@ -440,7 +525,7 @@ setMethod(
 #'
 #' This function relies on the package deSolve.
 #'
-#' @param object an object of the class SEIR_rural_urban
+#' @param object an object of the class SEIR_RU_Coft
 #' @param times (double) a sequence of time points at which the solution to
 #' the system of ODEs should be returned. Must be of the form
 #' seq(t_start, t_end, by=t_step). Default time series is seq(0, 100, by = 1).
@@ -450,7 +535,7 @@ setMethod(
 #'
 #' @return a dataframe with the time steps, time series of S, E, I and R
 #' population fractions, and incidence numbers and deaths of the
-#' SEIR_rural_urban model.
+#' SEIR_RU_Coft model.
 #' @export
 
 setGeneric(name = "run",
@@ -458,7 +543,7 @@ setGeneric(name = "run",
                           solve_method = "lsoda") {
              standardGeneric("run")})
 
-#' @describeIn SEIR_rural_urban Solves ODEs of the SEIR_rural_urban specified
+#' @describeIn SEIR_RU_Coft Solves ODEs of the SEIR_RU_Coft specified
 #' in object for the time points specified in times and integration method
 #' specified in solve_method.
 #'
@@ -486,7 +571,7 @@ setGeneric(name = "run",
 #'
 #' This function relies on the package deSolve.
 #'
-#' @param object an object of the class SEIR_rural_urban
+#' @param object an object of the class SEIR_RU_Coft
 #' @param times (double) a sequence of time points at which the solution to
 #' the system of ODEs should be returned. Must be of the form
 #' seq(t_start, t_end, by=t_step). Default time series is seq(0, 100, by = 1).
@@ -496,12 +581,12 @@ setGeneric(name = "run",
 #'
 #' @return a dataframe with the time steps, time series of S, E, I and R
 #' population fractions, and incidence numbers and deaths for both communities
-#' in the SEIR_rural_urban model.
+#' in the SEIR_RU_Coft model.
 #' @aliases run,ANY,ANY-method
 #' @export
 
 setMethod(
-  "run", "SEIR_rural_urban",
+  "run", "SEIR_RU_Coft",
   function(object, times, solve_method = "lsoda") {
     if (!is.double(times)) {
       stop("Evaluation times of the model storage format must be a vector.")
@@ -546,6 +631,17 @@ setMethod(
                     f_urban = f_urban,
                     f_rural = f_rural
                     )
+    # function for C at time t
+    C_now <- function(t){
+      if (length(C(object)$timepoints)==1) {
+        return(C(object)$values)
+      }
+      for (i in 1:length(C(object)$timepoints)) {
+        if (t < C(object)$timepoints[i+1]) {
+          return(C(object)$values[i])
+        }
+      }
+    }
     # function for RHS of ode system
     right_hand_side <- function(t, state, parameters) {
       with(as.list(c(state, parameters)), {
@@ -561,6 +657,8 @@ setMethod(
           ry <- state[10]
           cy <- state[11]
           dy <- state[12]
+          # set C
+          C <- C_now(t)
           # rate of change: urban
           dsu <- - (b * su * (iu + iy) * (f_urban * N_U + f_rural * N_Y) * C +
                     b * su * (iu / f_urban) * N_U * (1 - C))

@@ -21,7 +21,7 @@ names_common <- intersect(names_urban,names_rural)
 
 # specify country and obtain population data
 # NOTE: World bank data and contact matrix data use the same three-letter country codes!
-country <- "TUN"
+country <- "AFG"
 if (!(country %in% names_common)) {
   stop(paste(country," is not a valid three-letter country code."))
 }
@@ -52,19 +52,19 @@ pop_byage_2019 <- c(pop_byage_2019[1:15], sum(pop_byage_2019[16:20]))
 model_nomig <- new("SEIRD")
 
 N_U <- sum(rowSums(contact_all_urban[[country]]) *
-             pop_byage_2019*(1-frac_rural)) / 2
+             (pop_byage_2019*(1-frac_rural)/sum(pop_byage_2019*(1-frac_rural)))) / 2
 N_Y <- sum(rowSums(contact_all_rural[[country]]) *
-             pop_byage_2019*frac_rural) / 2
-
+             (pop_byage_2019*frac_rural/sum(pop_byage_2019*frac_rural))) / 2
+print((1-frac_rural) * N_U + frac_rural * N_Y)
 # set parameters for both models, as equal as possible
 # parameters they have in common
-b = 0.3*((1-frac_rural) * N_U + frac_rural * N_Y) # probability of infection
+b = 0.3*8.453869#*((1-frac_rural) * N_U + frac_rural * N_Y) # probability of infection
 k = 0.2 # 1/(incubation period in days)
 g = 0.1# 1/(days between infection and recovery)
 m = 0.03 # probability of death, cases-fatality ratio.
 
 # set initial conditions, same in both models
-start_infected = 0.01
+start_infected = 0.001
 S0 = 1 - start_infected
 E0 = 0
 I0 = start_infected
@@ -74,8 +74,7 @@ initial_conditions(model_nomig) <- list("S0" = S0, "E0" = E0, "I0" = I0, "R0" = 
 # Explore role of C
 tend = 80
 time = seq(0, tend, by = 1)
-#for (i in seq(0,1,0.05)) {
-#  C = i # connectedness parameter
+
 transmission_parameters(model_nomig) <- list("beta" = b, "kappa" = k, "gamma" = g, "mu" = m)
 out_nomig <- run(model_nomig, time)
 
@@ -85,6 +84,9 @@ i <- sapply(out_nomig, is.factor)
 out_nomig[i] <- lapply(out_nomig[i], as.character)
 SEIRD_df <- out_nomig$states
 SEIRD_df$compartment <- factor(SEIRD_df$compartment, levels = c("S", "E", "I", "R"))
+n1 <- (tend+1)*4+1
+n2 <- (tend+1)*5
+SEIRD_df <- SEIRD_df[-c(n1:n2),]
 col <- c("S" = "blue", "E" = "green", "I" = "yellow", "R" = "red")
 SEIRDplot <- ggplot(SEIRD_df, aes(x = time, y = value)) +
   geom_line(aes(color = compartment), size = 1.5) +
@@ -92,19 +94,21 @@ SEIRDplot <- ggplot(SEIRD_df, aes(x = time, y = value)) +
        title = glue("Basic SEIRDD model")) +
   theme(legend.position = "bottom", legend.title = element_blank()) +
   scale_color_manual(values = col)
-#print(SEIRDplot)
+print(SEIRDplot)
 
 case_df <- out_nomig$changes
-case_df$compartment <- factor(case_df$compartment, levels = c("Incidences", "Deaths"))
-col <- c("Incidences" = "grey28", "Deaths" = "black")
-inc_plot <- ggplot(case_df, aes(x = time, y = value, fill = compartment)) +
-  geom_bar(stat="identity", position = position_dodge()) +
-  labs(x = "time", y = "fraction of the population per day",
-       title = glue("Incidences and deaths")) +
-  theme(legend.position = "bottom", legend.title = element_blank()) +
-  scale_color_manual(values = col)
+case_df$compartment <- factor(case_df$compartment, levels = c("Incidence", "Deaths"))
+#col <- c("Incidences" = "grey28", "Deaths" = "black")
+#inc_plot <- ggplot(case_df, aes(x = time, y = value, fill = compartment)) +
+#  geom_bar(stat="identity", position = position_dodge()) +
+#  labs(x = "time", y = "fraction of the population per day",
+#       title = glue("Incidences and deaths")) +
+#  theme(legend.position = "bottom", legend.title = element_blank()) +
+#  scale_color_manual(values = col)
 #print(inc_plot)
 
-grid.arrange(SEIRDplot,inc_plot,nrow = 1)
+#grid.arrange(SEIRDplot,inc_plot,nrow = 1)
 
-
+sum(case_df$value[case_df$compartment=="Incidence"])
+sum(case_df$value[case_df$compartment=="Deaths"])
+SEIRD_df$time[SEIRD_df$value == max(SEIRD_df$value[SEIRD_df$compartment=="I"])]
