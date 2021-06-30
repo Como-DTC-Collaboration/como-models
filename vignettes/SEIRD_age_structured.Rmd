@@ -122,7 +122,7 @@ c_combined_wider <- c_combined %>%
   ungroup() %>% 
   select(-age_infectee) %>% 
   as.matrix()
-model <- comomodels::SEIRAge(n_age_categories = n_ages,
+model <- comomodels::SEIRDAge(n_age_categories = n_ages,
                  contact_matrix = c_combined_wider,
                  age_ranges = as.list(age_names))
 transmission_parameters(model) <- list(b=1, k=0.5, g=0.5, mu = 0.01)
@@ -167,10 +167,10 @@ res %>%
 We now simulate the same model but with different distributions of initial infections to show the sensitivity of the model
 to initial conditions. First, we place all initial infections to 1% of the population in age groups between 15 and 30. Second, we place all infections initially in the age groups 50-70. 
 ```{r}
-model_1530 <- comomodels::SEIRAge(n_age_categories = n_ages,
+model_1530 <- comomodels::SEIRDAge(n_age_categories = n_ages,
                  contact_matrix = c_combined_wider,
                  age_ranges = as.list(age_names))
-model_5070 <- comomodels::SEIRAge(n_age_categories = n_ages,
+model_5070 <- comomodels::SEIRDAge(n_age_categories = n_ages,
                  contact_matrix = c_combined_wider,
                  age_ranges = as.list(age_names))
 
