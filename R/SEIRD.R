@@ -116,7 +116,12 @@ setMethod(
     }
 
     # check that the initial conditions are properly normalized
-    if (init_cond$S0 + init_cond$E0 + init_cond$I0 + init_cond$R0 != 1) {
+    ###################################################################
+    # if (init_cond$S0 + init_cond$E0 + init_cond$I0 + init_cond$R0 != 1) {
+    #   stop("Invalid initial conditions. Must add up to 1.")
+    # }
+    ###################################################################
+    if (abs(1 - init_cond$S0 - init_cond$E0 - init_cond$I0 - init_cond$R0) > 0.01) {
       stop("Invalid initial conditions. Must add up to 1.")
     }
 
