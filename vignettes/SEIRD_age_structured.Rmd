@@ -39,6 +39,13 @@ can become infected from any age class: to capture this aspect of the model, inf
 age are supposed to inter-mix, with the mixing rate dictated by a so-called "contact matrix", $C$.
 
 The elements of contact matrices, $C_{i,j}$ indicate the expected number of contacts an individual of age class $i$ experiences with age class $j$ per day. In this package, we include country-level estimates of contact matrices (Prem et al., 2017; for full details see data documentation). There are actually four types of contact matrix corresponding to daily numbers of contacts at home, work, school and all other settings. Here, we visualise these for India.
+```{r}
+load(file = "../data/contact_home.rda")
+load(file = "../data/contact_work.rda")
+load(file = "../data/contact_school.rda")
+load(file = "../data/contact_other.rda")
+```
+
 ```{r, fig.width=10, fig.height=8}
 # reformat matrices for plotting
 ages <- seq(0, 80, 5)
