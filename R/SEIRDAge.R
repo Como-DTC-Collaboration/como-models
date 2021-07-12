@@ -97,7 +97,7 @@ setMethod(
     R0 = value$R0
     D0 = value$D0
     # check that ICs are valid
-    if (sum(S0, E0, I0, R0, D0) != 1) {
+    if (abs(sum(S0, E0, I0, R0, D0)-1)>=10^(-3)) {
       stop('Invalid initial conditions. Must sum to 1.')
     }
 
@@ -116,7 +116,7 @@ setMethod(
       if(!is.numeric(ic[[p]])){
         stop(glue('{p} format must be numeric'))}
     }
-    if(sum(S0, E0, I0, R0, D0) != 1){
+    if(abs(sum(S0, E0, I0, R0, D0)-1)>=10^(-3)){
       stop('All compartments need to sum up to 1.')
     }
 
@@ -230,6 +230,12 @@ setMethod(
     if(!is.double(times)){
       stop('Evaluation times of the model storage format must be a vector.')
     }
+    if(!is.numeric(times)){
+      stop('Evaluation times of the model storage format must numeric.')
+    }
+    if(!(all(diff(times) > 0))){
+      stop('Evaluation times of the model storage format must be increasing')
+    }
     
     #fetch number of age catagories
     age <- object@n_age_categories
@@ -309,7 +315,6 @@ setMethod(
 
     # melt the incidence dataframe to long format
     incidence_temp = melt(n_inc, id.vars=NULL)
-    print(incidence_temp)
     
     # add time, compartment and age_range columns as above
     incidence_temp$time = rep(times, age)

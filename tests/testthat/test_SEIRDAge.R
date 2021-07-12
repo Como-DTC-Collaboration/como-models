@@ -194,8 +194,10 @@ test_that("can run simulation for the SEIRDAge", {
   # Test input errors
   expect_error({
     run(my_model, '0')
+    run(my_model, c('0', 1, 2, 3))
+    run(my_model, c(0, 1, 2, 3, 3, 4.5))
     run(my_model, seq(0, 2, by = 1))})
-
+  
   # Snapshot testing to check that outputs to the command line as expected
   # expect_snapshot_output(run(my_model, seq(0, 2, by = 1)))
 
