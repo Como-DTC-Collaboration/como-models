@@ -19,22 +19,16 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(comomodels)
-library(glue)
 library(tidyverse)
-library(tidyr)
-library(dplyr)
-library(reshape2)
-library(forcats)
 library(ggplot2)
-library(deSolve)
 library(socialmixr)
 load(file = "../data/population.rda")
 ```
 
 ## Introduction
 
-Age-structured compartmental models such as the SEIR implemented in this
-repository use contact matrices to control the spread of a disease within and
+Age-structured compartmental models such as the SEIRD implemented in this
+repository use contact matrices to specify the spread of a disease within and
 between age groups. Given a contact matrix $C$, each element $C_{i,j}$
 indicates the expected number of contacts someone from age group $i$ has per
 day with people from age group $j$.
@@ -50,15 +44,14 @@ which represent the uncertainty in the contact matrix, we show significant
 uncertainty in the numbers of infected individuals.
 
 For details and explanation of the SEIR model, see the following notebook:
-<link>.
+https://github.com/Como-DTC-Collaboration/como-models/blob/main/vignettes/SEIRD_age_structured.Rmd
 
 ## Bootstrap samples of contact matrices
 
 We obtain samples of the contact matrix using the socialmixr library which
-accesses the POLYMOD data. This library provides functionality to obtain
-bootstrap samples of the contact matrix for countries covered by the study. The
-first step is to generate 250 bootstrap samples for the contact matrix in the
-United Kingdom.
+accesses the POLYMOD data. This library allows us to generate bootstrap samples
+of the contact matrix for countries covered by the study. The first step is to
+generate 200 of these samples for the contact matrix in the United Kingdom.
 
 ```{r}
 
@@ -77,7 +70,7 @@ pop_fraction <- pop_fraction[1:16]
 n_ages <- 16
 
 # Load the contact matrix data from POLYMOD
-n_bootstrap <- 250
+n_bootstrap <- 200
 data(polymod)
 polymod_data <- contact_matrix(polymod,
                                n=n_bootstrap,
@@ -109,27 +102,30 @@ ggplot(data, aes(x=ages_list, y=contacts_same_age), l) + geom_boxplot() +
   xlab("Age group") + ylab("Number of contacts with same age group")
 ```
 
-The plot shows high numbers of contacts within the age group, with significant
-uncertainty, for schoolchildren (ages 5--20). In most of the other age groups,
-the uncertainty is small but it does not appear non-negligible. In the next
-section, the effect of these uncertainties on the SEIR outputs will be studied.
+The plot shows the most uncertainty for ages 5--20 (schoolchildren). In most
+of the other age groups, the uncertainty is small but nowhere does it appear 
+negligible. In the next section, the effect of these uncertainties on the
+SEIR outputs will be studied.
 
-## SEIR simulations
+## SEIRD simulations
 
-In this step, we run the age-structured SEIR model once for each bootstrap
+In this step, we run the age-structured SEIRD model once for each bootstrap
 sample of the contact matrix. We use fixed values for the other parameters of
-the model. Namely, we set $\beta=1$, $\kappa=0.5$, and $\gamma=0.5$, with an
-initial exposed group compartment equal to 1% of the population size, and all
-other individuals in the susceptible group.
+the model. In particular, we set $\beta=2$, $\kappa=1$, and $\gamma=1$, with
+an initial exposed group compartment equal to 1% of the population size, and
+all other individuals in the susceptible group.
 
-The age structured model takes another parameter $\mu$ which specifies the 
-death rate. For this parameter, we will provide a vector giving a separate
-value for each age group. The $\mu$ we provide reflects higher death rates for
-older people and the very young.
+The age-structured model takes another parameter $\mu$ which specifies the rate
+at which infecteds enter the deceased compartment. For this parameter, we will
+provide a vector giving a separate value for each age group. The values are
+selected to resemble the death rates of the COVID-19 outbreak in mainland China
+during January and February 2020 (Verity, R, et al. "Estimates of the severity
+of coronavirus disease 2019: a model-based analysis." The Lancet Infectious
+Diseases 20.6 (2020): 669-677.)
 
 ```{r}
-mu=c(0.05, 0.025, 0.01, 0.005, 0.005, 0.005, 0.01, 0.02, 0.03, 0.04, 
-     0.05, 0.06, 0.07, 0.08, 0.09, 0.1)
+mu=c(0.000016, 0.000016, 0.00007, 0.00007, 0.00031, 0.00031, 0.0026, 0.0026,
+     0.0048, 0.0048, 0.006, 0.006, 0.019, 0.019, 0.043, 0.043)
 ```
 
 ```{r, include=FALSE}
@@ -143,12 +139,12 @@ for (i in 1:n_bootstrap){
   # Keep the data for ages 0-80, in 5 year increments
   matrix <- matrix[1:16,1:16]
 
-  model <- SEIRAge(n_age_categories=n_ages,
+  model <- comomodels::SEIRDAge(n_age_categories=n_ages,
                    contact_matrix=matrix,
                    age_ranges=as.list(age_names))
 
   # Set the other parameters of the model
-  transmission_parameters(model) <- list(b=1, k=0.5, g=0.5, mu=mu)
+  transmission_parameters(model) <- list(b=2.0, k=1.0, g=1.0, mu=mu)
   initial_conditions(model) <- list(S0=pop_fraction*0.999,
                                     E0=rep(0, n_ages),
                                     I0=pop_fraction*0.001,
@@ -167,7 +163,7 @@ for (i in 1:n_bootstrap){
 
 Having obtained the simulation results, we plot the central 90% probability
 interval of the number in the infected compartment over time for two selected
-age groups (15--20 and 55--60).
+age groups (15--20 and 75--80).
 
 
 ```{r, fig.width=7, fig.height=5}
@@ -186,7 +182,7 @@ ggplot(quants_df, aes(x = time)) +
   geom_ribbon(aes(ymin=X5., ymax=X95.), fill="blue", alpha=0.5) +
   ylab("I compartment, age 15-20")
 
-I_data <- filter(all_results, age_range=="55-60", compartment=="I")
+I_data <- filter(all_results, age_range=="75-80", compartment=="I")
 data <- I_data$value * sum(pops)
 dim(data) <- c(length(I_data$time)/n_bootstrap, n_bootstrap)
 quants <- t(apply(data, 1, quantile, probs=c(0.05, 0.5, 0.95), na.rm=TRUE))
@@ -198,7 +194,7 @@ ggplot(quants_df, aes(x = time)) +
   geom_line(aes(y=X50.)) +
   geom_line(aes(y=X95.)) +
   geom_ribbon(aes(ymin=X5., ymax=X95.), fill="blue", alpha=0.5) +
-  ylab("I compartment, age 55-60")
+  ylab("I compartment, age 75-80")
 
 ```
 
@@ -207,7 +203,7 @@ similar for all contact matrices in the bootstrap sample, the number of people
 in the I compartment exhibits significant uncertainty, particularly near the
 peak of the epidemic.
 
-Next, we perform the same uncertainty analysis for the number in the recovered
+Next, we perform the uncertainty analysis for the number in the recovered
 compartment at the final time point, for all age groups.
 
 

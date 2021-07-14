@@ -271,7 +271,7 @@ setMethod(
           # rate of change
           dS <- -b * S * C %*% I
           dE <- b * S * C %*% I - k * E
-          dI <- k * E - g * I
+          dI <- k * E - g * I - mu * I
           dR <- g * I
           dD <- mu * I
           # return the rate of change

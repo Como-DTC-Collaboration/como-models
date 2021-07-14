@@ -10,14 +10,14 @@ Encoding: UTF-8
 LazyData: true
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
-Suggests: 
+Suggests:
     covr,
     testthat (>= 3.0.0),
     knitr,
     markdown,
     rmarkdown
 Config/testthat/edition: 3
-Imports: 
+Imports:
     forcats,
     deSolve,
     ggplot2,
@@ -28,6 +28,7 @@ Imports:
     magrittr,
     rlang,
     dplyr,
+    socialmixr,
 VignetteBuilder: knitr
-Depends: 
+Depends:
     R (>= 2.10)
