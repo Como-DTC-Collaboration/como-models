@@ -58,73 +58,95 @@ test_that("can set new initial conditions for the SEIRDAge", {
                expected_ics)
 
   # Test input errors
-  expect_error(
-    initial_conditions(my_model) <- list(S0=c(0.4, 0, 0.4),
-                                         E0=c(0, 0),
-                                         I0=c(0.5, 0.15),
-                                         R0=c(0, 0),                                   
-                                         D0 = c(0, 0))
-    )
-  expect_error(
+  expect_error({
     initial_conditions(my_model) <- list(S0=c(0.4, 0, 0.4),
                                          E0=c(0, 0),
                                          I0=c(0.05, 0.15),
-                                         R0=c(0, 0),
+                                         R0=c(0, 0),                                   
                                          D0 = c(0, 0))
-  )
-  expect_error(
     initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
                                          E0=c(0, 0, 0),
                                          I0=c(0.05, 0.15),
                                          R0=c(0, 0),
                                          D0 = c(0, 0))
-    
-  )
-   expect_error( 
     initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
                                          E0=c(0, 0),
                                          I0=c(0.05, 0, 0.15),
                                          R0=c(0, 0),
                                          D0 = c(0, 0))
-    
-   )
-   expect_error(
     initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
                                          E0=c(0, 0),
                                          I0=c(0.05, 0.15),
                                          R0=c(0, 0, 0),
                                          D0 = c(0, 0))
-   
-   )
-    expect_error( 
+    initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
+                                         E0=c(0, 0),
+                                         I0=c(0.05, 0.15),
+                                         R0=c(0, 0),
+                                         D0 = c(0, 0, 0))
+  })
+
+    expect_error({
     initial_conditions(my_model) <- list(S0=0,
                                          E0=c(0, 0),
                                          I0=c(0.05, 0.15),
                                          R0=c(0, 0),
                                          D0 = c(0, 0))
-    
-    )
-    expect_error( 
     initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
                                          E0=0,
                                          I0=c(0.05, 0.15),
                                          R0=c(0, 0),
                                          D0 = c(0, 0))
-    
-    )
-    expect_error( 
     initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
                                          E0=c(0, 0),
                                          I0=0,
                                          R0=c(0, 0),
                                          D0 = c(0, 0))
-    
-    )
-    expect_error( 
     initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
                                          E0=c(0, 0),
                                          I0=c(0.05, 0.15),
                                          R0=0,
+                                         D0 = c(0, 0))
+    initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
+                                         E0=c(0, 0),
+                                         I0=c(0.05, 0.15),
+                                         R0=c(0, 0),
+                                         D0 = 0)
+    })
+
+    expect_error({
+    initial_conditions(my_model) <- list(S0=c('0.4', 0.4),
+                                         E0=c(0, 0),
+                                         I0=c(0.05, 0.15),
+                                         R0=c(0, 0),
+                                         D0 = c(0, 0))
+    initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
+                                         E0=c(0, '0'),
+                                         I0=c(0.05, 0.15),
+                                         R0=c(0, 0),
+                                         D0 = c(0, 0))
+    initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
+                                         E0=c(0, 0),
+                                         I0=c(0.05, '0.15'),
+                                         R0=c(0, 0),
+                                         D0 = c(0, 0))
+    initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
+                                         E0=c(0, 0),
+                                         I0=c(0.05, 0.15),
+                                         R0=c('0', 0),
+                                         D0 = c(0, 0))
+    initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
+                                         E0=c(0, 0),
+                                         I0=c(0.05, 0.15),
+                                         R0=c(0, 0),
+                                         D0 = c(0, '0'))
+    })
+
+    expect_error(
+    initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
+                                         E0=c(0, 0),
+                                         I0=c(0.5, 0.15),
+                                         R0=c(0, 0),
                                          D0 = c(0, 0))
     
     )
@@ -194,8 +216,10 @@ test_that("can run simulation for the SEIRDAge", {
   # Test input errors
   expect_error({
     run(my_model, '0')
+    run(my_model, c('0', 1, 2, 3))
+    run(my_model, c(0, 1, 2, 3, 3, 4.5))
     run(my_model, seq(0, 2, by = 1))})
-
+  
   # Snapshot testing to check that outputs to the command line as expected
   # expect_snapshot_output(run(my_model, seq(0, 2, by = 1)))
 
