@@ -215,7 +215,6 @@ initial_conditions(model_5070) <- list(S0=S0_5070,
 Now we simulate both models and plot the infections over time. We can see that for the model initialised with infections among 15-30 years olds, the peak of infections appears earlier and dies away quicker than the model initialised with infections in 50-70 year olds. Despite this difference, the magnitude of the infection peaks in both bases are comparable as well as the distribution of infections for each age group. 
 
 ```{r, fig.width=8, fig.height=5}
-
 res <- run(model_1530, time=seq(0, 50, by = 0.1))
 res %>%
   filter(compartment=="I") %>% 
