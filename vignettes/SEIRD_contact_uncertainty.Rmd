@@ -112,7 +112,7 @@ SEIR outputs will be studied.
 In this step, we run the age-structured SEIRD model once for each bootstrap
 sample of the contact matrix. We use fixed values for the other parameters of
 the model. In particular, we set $\beta=2$, $\kappa=1$, and $\gamma=1$, with
-an initial exposed group compartment equal to 1% of the population size, and
+an initial exposed group compartment equal to 0.1% of the population size, and
 all other individuals in the susceptible group.
 
 The age-structured model takes another parameter $\mu$ which specifies the rate
