@@ -109,19 +109,21 @@ Specifically, the term $S_i \Sigma_{j}C_{ij} I_j$ effectively indicates the expe
 
 ## Simulation examples 
 
-Now we create a model that includes this age-structured mixing. Since the contact matrices have 16 age classes, we instantiate a model with this number of classes. We also give it transmission parameters, populate the age classes with initial conditions and provide it with our overall contact matrix.
+Now we create a model that includes this age-structured mixing. Since the contact matrices have 16 age classes, we instantiate a model with this number of classes. We also give it transmission parameters, populate the age classes with initial conditions and use our overall contact matrix.
 
-We use more demographics loaded from the population data file provided by the como model and, for this example, initialise the model
-with a uniform initial infected population of 1% across all age groups. The remaining 99% of the population starts
+We use country-level demographics from the UN and, for this example, initialise the model with a uniform initial infected population of 1% across all age groups. The remaining 99% of the population starts
 as susceptibles.
 ```{r}
 load(file = "../data/population.rda")
 
+# use demographic data to create normalised population fractions
 pops = population[population$country == 'India', ]$pop
 pop_fraction = pops/sum(pops)
+## the contact matrix has an upper group of 80+, so we sum the remaining fractions beyond this point
 pop_fraction[16] = sum(pop_fraction[16:21])
 pop_fraction = pop_fraction[1:16]
 
+# reshape contact matrix into 16x16 form
 n_ages <- 16
 c_combined_wider <- c_combined %>% 
   pivot_wider(id_cols = age_infectee, names_from = age_infector,
@@ -129,6 +131,8 @@ c_combined_wider <- c_combined %>%
   ungroup() %>% 
   select(-age_infectee) %>% 
   as.matrix()
+
+# create model
 model <- comomodels::SEIRDAge(n_age_categories = n_ages,
                  contact_matrix = c_combined_wider,
                  age_ranges = as.list(age_names))
