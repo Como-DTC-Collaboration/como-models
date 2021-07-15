@@ -30,7 +30,7 @@ follow:
 \frac{\text{d}S_i}{\text{d}t} &= -\beta S_i I_i\\
 \frac{\text{d}E_i}{\text{d}t} &= \beta S_i I_i -\kappa E_i\\
 \frac{\text{d}I_i}{\text{d}t} &= \kappa E_i - (\gamma + \mu) I_i\\
-\frac{\text{d}R_i}{\text{d}t} &= \gamma I_i - \alpha R_i\\
+\frac{\text{d}R_i}{\text{d}t} &= \gamma I_i\\
 \frac{\text{d}D_i}{\text{d}t} &= \mu I_i
 \end{align}
 

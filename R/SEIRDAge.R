@@ -1,3 +1,5 @@
+#' An S4 object representing the SEIRDAge.
+#' 
 #' Defines an age-structured SEIRD model and solves the set of
 #' ordinary differential equations of the model with a chosen method of
 #' numerical integration.
@@ -194,10 +196,10 @@ setMethod(
 #' (I), Recovered (R) and Dead (D) groups in a given age group indexed by i is 
 #' given by
 #'
-#' \deqn{\frac{dS_i(t)}{dt} = - b S_i(t) \Sigma_{j}C_{ij} I_j(t)}
-#' \deqn{\frac{dE_i(t)}{dt} = b S_i(t) \Sigma_{j}C_{ij} I_j(t)} - k E_i(t)}
-#' \deqn{\frac{dI_i(t)}{dt} = k E_i(t) - g I_i(t)} - \mu I_i(t)}
-#' \deqn{\frac{dR_i(t)}{dt} = g I_i(t)}
+#' \deqn{\frac{dS_i(t)}{dt} = - \beta S_i(t) \Sigma_{j}C_{ij} I_j(t)}
+#' \deqn{\frac{dE_i(t)}{dt} = \beta S_i(t) \Sigma_{j}C_{ij} I_j(t)} - \kappa E_i(t)}
+#' \deqn{\frac{dI_i(t)}{dt} = \kappa E_i(t) - \gamma I_i(t)} - \mu I_i(t)}
+#' \deqn{\frac{dR_i(t)}{dt} = \gamma I_i(t)}
 #' \deqn{\frac{dD_i(t)}{dt} = \mu I_i(t)}
 
 #' where C is a contact matrix whose elements represents the
