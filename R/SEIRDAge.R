@@ -196,7 +196,7 @@ setMethod(
 #'
 #' \deqn{\frac{dS_i(t)}{dt} = - b S_i(t) \Sigma_{j}C_{ij} I_j(t)}
 #' \deqn{\frac{dE_i(t)}{dt} = b S_i(t) \Sigma_{j}C_{ij} I_j(t)} - k E_i(t)}
-#' \deqn{\frac{dI_i(t)}{dt} = k E_i(t) - g I_i(t)}
+#' \deqn{\frac{dI_i(t)}{dt} = k E_i(t) - g I_i(t)} - \mu I_i(t)}
 #' \deqn{\frac{dR_i(t)}{dt} = g I_i(t)}
 #' \deqn{\frac{dD_i(t)}{dt} = \mu I_i(t)}
 
@@ -271,7 +271,7 @@ setMethod(
           # rate of change
           dS <- -b * S * C %*% I
           dE <- b * S * C %*% I - k * E
-          dI <- k * E - g * I
+          dI <- k * E - g * I  - mu * I
           dR <- g * I
           dD <- mu * I
           # return the rate of change
