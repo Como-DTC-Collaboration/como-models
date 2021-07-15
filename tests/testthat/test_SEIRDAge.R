@@ -190,25 +190,33 @@ test_that("can run simulation for the SEIRDAge", {
 
   transmission_parameters(my_model) <- list(b=1, k=0.5, g=0.5, mu = 0.01)
 
-  expected_output <- data.frame('time'=rep(0:2, 12),
-                                'value'=c(rep(0.6, 3), rep(0.4, 3), rep(0, 30)))
+  expected_output_states <- data.frame('time'=rep(0:2, 10),
+                                'value'=c(rep(0.6, 3), rep(0.4, 3), rep(0, 24)))
+  
+  expected_output_changes <- data.frame('time'=rep(0:2, 4),
+                                'value'=rep(0, 12))
                                 
   times = seq(0, 2, by = 1)
-  expected_output$compartment = c(replicate(length(times)*2, "S"),
+  expected_output_states$compartment = c(replicate(length(times)*2, "S"),
                            replicate(length(times)*2, "E"),
                            replicate(length(times)*2, "I"),
                            replicate(length(times)*2, "R"),
-                           replicate(length(times)*2, "D"),
-                           replicate(length(times)*2, "Incidence"))
-  expected_output$age_range = unlist(rep(my_model@age_ranges, each=3))
-  expected_output <- expected_output %>% 
+                           replicate(length(times)*2, "D"))
+  expected_output_states$age_range = unlist(rep(my_model@age_ranges, each=3))
+  expected_output_states <- expected_output_states %>% 
     dplyr::mutate(compartment=as.factor(compartment)) %>% 
     dplyr::mutate(compartment=forcats::fct_relevel(compartment, "S", "E", "I",
                                                    "R", "D")) %>% 
     dplyr::mutate(age_range=as.factor(age_range)) %>% 
     dplyr::mutate(age_range=forcats::fct_relevel(age_range, my_model@age_ranges))
   
+  expected_output_changes$compartment = c(replicate(length(times)*2, "Incidence"),
+                            replicate(length(times)*2, "Death"))
   
+  expected_output_changes$age_range = unlist(rep(my_model@age_ranges, each=3))
+    
+  expected_output = list("states" = expected_output_states,
+                         "changes" = expected_output_changes)
   # Test output is correct
   expect_equal(run(my_model, seq(0, 2, by = 1)),
                expected_output)
