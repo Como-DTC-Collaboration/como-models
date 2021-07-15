@@ -1,4 +1,4 @@
-#' Defines an age-structured SEIR model and solves the set of
+#' Defines an age-structured SEIRD model and solves the set of
 #' ordinary differential equations of the model with a chosen method of
 #' numerical integration.
 #'
@@ -9,7 +9,7 @@
 #' @slot transmission_parameter_names names of the transmission parameters used
 #'     by the model.
 #' @slot initial_conditions named list containing the initial conditions of the
-#'     model. Initial values for each compartment, S0, E0, I0, R0.
+#'     model. Initial values for each compartment, S0, E0, I0, R0, D0.
 #' @slot transmission_parameters named list containing the transmission
 #'     parameters of the model. Transmission parameters b, k, g represent the
 #'     rates of changes between the compartments.
@@ -59,10 +59,10 @@ SEIRDAge <- setClass('SEIRDAge',
 )
 
 # Setter and getter methods for initial_conditions of an age-structured
-# SEIR model.
+# SEIRD model.
 
 #' Retrieves initial_conditions for an
-#' age-structured SEIR model.
+#' age-structured SEIRD model.
 #'
 #' @param object An object of the class SEIRDAge.
 #'
@@ -74,7 +74,7 @@ setMethod('initial_conditions', 'SEIRDAge',
           function(object) object@initial_conditions)
 
 #' Sets initial_conditions of an age-structured
-#' SEIR model.
+#' SEIRD model.
 #'
 #' If the initial conditions provided to do not sum to 1 or of different
 #' sizes compared to the number of age groups, an error is thrown.
@@ -84,7 +84,7 @@ setMethod('initial_conditions', 'SEIRDAge',
 #' of vector of doubles, with each element corresponding to the fraction for a
 #' single age group.
 #'
-#' @return Updated version of the age-structured SEIR model.
+#' @return Updated version of the age-structured SEIRD model.
 #' @aliases initial_conditions<-,ANY,ANY-method
 #' @rdname SEIRDAge-class
 #' @export
@@ -127,10 +127,10 @@ setMethod(
   })
 
 # Setter and getter methods for transmission_parameters of an age-structured
-# SEIR model.
+# SEIRD model.
 
 #' Retrieves transmission_parameters for an
-#' age-structured SEIR model.
+#' age-structured SEIRD model.
 #'
 #' @param object An object of the class SEIRDAge.
 #'
@@ -141,7 +141,7 @@ setMethod(
 setMethod('transmission_parameters', 'SEIRDAge',
           function(object) object@transmission_parameters)
 #' Sets transmission_parameters of an
-#' age-structured SEIR model.
+#' age-structured SEIRD model.
 #'
 #' If the transmission parameters provided to are not 1-dimensional an error is
 #' thrown.
@@ -151,7 +151,7 @@ setMethod('transmission_parameters', 'SEIRDAge',
 #' All rates of change between compartments are equal regardless of
 #' age group.
 #'
-#' @return Updated version of the age-structured SEIR model.
+#' @return Updated version of the age-structured SEIRD model.
 #' @aliases transmission_parameters<-,ANY,ANY-method
 #' @rdname SEIRDAge-class
 #' @export
@@ -188,8 +188,8 @@ setMethod(
 
 #' Method to simulate output using from model.
 #' 
-#' Solves a system to ODEs which form an
-#' age-structured simple SEIR model. The system of equations for the time
+#' Solves a system of ODEs which form an
+#' age-structured SEIRD model. The system of equations for the time
 #' evolution of population fractions in Susceptible (S), Exposed (E), Infected
 #' (I), Recovered (R) and Dead (D) groups in a given age group indexed by i is 
 #' given by
@@ -325,7 +325,7 @@ setMethod(
     incidence_temp = incidence_temp %>% 
       dplyr::select(-.data$variable)
 
-    # bind SEIR and incidence dataframes
+    # bind SEIRD and incidence dataframes
     output = rbind(out_temp, incidence_temp)
 
     return(output)
