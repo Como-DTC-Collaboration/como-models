@@ -47,8 +47,8 @@ The total initial population size is normalised to 1.
 The current model does not include natural death or birth.	
 The ODEs describing how these six populations evolve over time are
 $$\frac{\text{d}S}{\text{d}t} = -S (\beta_{I_a}I_a + \beta_{I_m}I_m + \beta_{I_s}I_s) + \omega R,$$
-where $\beta$ denotes the rate, at which an infected individual exposes susceptible individuals,
-and $\omega$ denotes the rate, at which recovered individuals become susceptible.
+where $\beta$ denotes the rate at which an infected individual infects susceptible individuals,
+and $\omega$ denotes the rate at which recovered individuals become susceptible.
 $$\frac{\text{d}E}{\text{d}t} = S (\beta_{I_a}I_a + \beta_{I_m}I_m + \beta_{I_s}I_s) - \kappa E,$$
 where $\kappa$ denotes the rate at which exposed individuals become infected.
 $$\frac{dI_{a}}{dt} = \eta_{E->I_a} \kappa E - (\gamma_{I_a} + \mu_{I_a})I_{a},$$
@@ -56,19 +56,19 @@ $$\frac{dI_{a}}{dt} = \eta_{E->I_a} \kappa E - (\gamma_{I_a} + \mu_{I_a})I_{a},$
 
 $$\frac{dI_{m}}{dt} = \eta_{E->I_m} \kappa E - (\gamma_{I_m} + \mu_{I_a})I_{m},$$
 $$\frac{dI_{s}}{dt} = \eta_{E->I_s} \kappa E - (\gamma_{I_s} + \mu_{I_a})I_{s},$$
-where $\eta_{E->I_a}$, $\eta_{E->I_m}$, $\eta_{E->I_s}$ denote the fraction of exposed individuals that develop asymptomatic, mild and symptoms, respectively (in the code the fraction is denoted by 'p_symptom').
-The rate, at which each infected group recovers, is denoted by $\gamma_I$.
+where $\eta_{E->I_a}$, $\eta_{E->I_m}$, $\eta_{E->I_s}$ denote the fraction of exposed individuals that develop asymptomatic, mild and severe symptoms, respectively (in the code the fraction is denoted by 'p_symptom').
+The rate at which each infected group recovers is denoted by $\gamma_I$.
 The rate of disease-caused mortality of each infected group is denoted by $\mu_I$.
 
 $$\frac{\text{d}R}{\text{d}t} = - \omega R +\mu_{I_a}  * I_{a} + \mu_{I_m}  * I_{m} + \mu_{I_s}  * I_{s}.$$
 
 The rate at which susceptible individuals are infected depends on the fraction
 of the population that is susceptible, the fraction of the population that is
-infectious, and the probability of an infectious individual infecting a 
+infectious, and the rate at which an infectious individual infects a 
 susceptible individual, $\beta$. This is represented in the
 first terms on the right-hand side of $\text{d}S/ \text{d}t$ and $\text{d}I/ \text{d}t$.
 Exposed individuals become infectious at rate $\kappa$. The reciprocal value $1/ \kappa$ is
-the incubation time of the virus, i.e. how many days after exposure the individual
+the mean incubation time of the virus, i.e. how many days after exposure the individual
 becomes infectious to others. Infectious individuals can either recover or die
 because of the disease. Infectious individuals in group $i\in {a,m,s}$ recover in $1/ \beta_i$
 days, thus individuals recover at rate $\beta_i$. Similarly, infectious
@@ -83,11 +83,7 @@ $$S(0) = S_0,\ E(0) = E_0,\ I(0) = I_0,\ R(0) = R_0,\ C(0) = C_0,\ D(0) = D_0,$$
 In the implementation in this package, the variables are normalized so 
 $S(t) + E(t) + I_a(t) + I_m(t) + I_s(t) + R(t) + D(t) \equiv 1$ for any given $t$.
 
-Steady states of the system described above are computed by setting the right-hand
-sides of the ODEs equal to zero. 
-
-Because we build on this basic model to develop more complex epidemiological models,
-we solve the ODEs over time instead of just solving for the steady states. The
+Steady states of the system described above are computed by setting the right-hand sides of the ODEs equal to zero. However, here, we solve the ODEs over time instead of just solving for the steady states. The
 next section shows an example of how to use the **SEIaImIsRD** model class.
 
 ### Basic reproduction number
@@ -95,8 +91,7 @@ The mathematical details refer to [this paper](https://www.ncbi.nlm.nih.gov/pmc/
 
 We calculate the basic reproduction number ($\mathscr{R_0}$) using the next generation matrix approach:
 
-First, define 
-$x\in (x_1, x_2,...,x_n)^T$ be the number of individuals in each compartment, where the first $m < n$ compartments contain exposed or infected individuals. In the **SEIaImIsRD** model, these compartments $E$, $I_a$, $I_m$ and $I_s$). 
+First, define $x\in (x_1, x_2,...,x_n)^T$ to be the number of individuals in each compartment, where the first $m < n$ compartments contain exposed or infected individuals. In the **SEIaImIsRD** model, these correspond to compartments $E$, $I_a$, $I_m$ and $I_s$. 
 
 Assume that a disease free equilibrium (DFE) $x_0$ exists and is stable in the absence of disease, and that the linearized equations for $x_1, ..., x_m$ at the DFE decouple from the other equations. Consider these equations written in the form $\frac{\text{d}x_i}{\text{d}t} = \mathscr{F_i}(x) - \mathscr{V_i}(x)$ for $i \in \{1, 2, ..., m\}$. In this splitting, $\mathscr{F_i}(x)$ is the rate of appearance of new infections in compartment $i$, and $\mathscr{V_i}(x)$ is the rate of other transitions between compartment $i$ and other infected compartments. It is assumed that $\mathscr{F_i}=0$ for $i\in\{m+1, m+2, ..., n\}$.
 
@@ -274,3 +269,4 @@ print(model2.plot)
 ```{r}
 print(paste0("model2: R0=", model2@R0))
 ```
+
