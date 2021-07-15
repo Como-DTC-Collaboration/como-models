@@ -14,9 +14,7 @@
 \alias{transmission_parameters<-,ANY,ANY-method}
 \alias{run,SEIRDAge-method}
 \alias{run,ANY,ANY-method}
-\title{Defines an age-structured SEIRD model and solves the set of
-ordinary differential equations of the model with a chosen method of
-numerical integration.}
+\title{An S4 object representing the SEIRDAge.}
 \usage{
 \S4method{initial_conditions}{SEIRDAge}(object)
 
@@ -58,6 +56,10 @@ D population fractions for each age group outputs with incidence numbers
 for each age group.
 }
 \description{
+Defines an age-structured SEIRD model and solves the set of
+ordinary differential equations of the model with a chosen method of
+numerical integration.
+
 If the initial conditions provided to do not sum to 1 or of different
 sizes compared to the number of age groups, an error is thrown.
 
