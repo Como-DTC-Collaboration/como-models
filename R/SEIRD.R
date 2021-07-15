@@ -1,10 +1,10 @@
-#' An S4 object representing the SEIRD.
+#' An S4 object representing the SEIRD model.
 #'
-#' This class represents the SEIR model, showing how populations of susceptible,
+#' This class represents the SEIRD model, which can be used to determine how populations of susceptible,
 #' exposed, infectious and recovered individuals evolve over time.
 #'
-#' @slot output_names list of compartments name which are used by the model and
-#'       incidence.
+#' @slot output_names list of compartment names which are used by the model and, additionally,
+#'       incidence and deaths.
 #' @slot initial_condition_names list of names of initial conditions
 #'       (characters). Default is list("S0", "E0", "I0", R0").
 #' @slot transmission_parameter_names list of names of transmission parameters
@@ -39,7 +39,7 @@ SEIRD <- setClass("SEIRD",
 )
 #' Retrieves initial conditions of SEIRD model.
 #'
-#' @param object An object of the class SEIRD.
+#' @param object An object of class SEIRD.
 #' @export
 setGeneric("initial_conditions",
            function(object) standardGeneric("initial_conditions"))
@@ -53,14 +53,14 @@ setGeneric("initial_conditions",
 setMethod("initial_conditions", "SEIRD",
           function(object) object@initial_conditions)
 
-#' Retrieves transmission parameters of SEIR model.
+#' Retrieves transmission parameters of SEIRD model.
 #'
 #' @param object An object of the class SEIRD.
 #' @export
 setGeneric("transmission_parameters",
            function(object) standardGeneric("transmission_parameters"))
 
-#' @describeIn SEIRD Retrieves transmission parameters of SEIR model.
+#' @describeIn SEIRD Retrieves transmission parameters of SEIRD model.
 #'
 #' @param object An object of the class SEIRD.
 #' @aliases transmission_parameters,ANY,ANY-method
@@ -68,7 +68,7 @@ setGeneric("transmission_parameters",
 setMethod("transmission_parameters", "SEIRD",
           function(object) object@transmission_parameters)
 
-#' Set initial conditions (S0, E0, I0 and R0) of the SEIR model.
+#' Set initial conditions (S0, E0, I0 and R0) of the SEIRD model.
 #'
 #' All initial conditions must sum up to 1.
 #' If the initial conditions provided to do not sum to 1, an error is thrown.
@@ -86,9 +86,9 @@ setGeneric(
   })
 
 #' @describeIn SEIRD Setter method for initial conditions (S0, E0, I0 and R0)
-#' of the SEIR model.
+#' of the SEIRD model (note that the "D0" compartment is set to 0).
 #'
-#' All initial conditions must sum up to 1.
+#' All initial conditions must sum to 1.
 #' If the initial conditions provided to do not sum to 1, an error is thrown.
 #'
 #' @param object an object of the class SEIRD
@@ -131,7 +131,7 @@ setMethod(
 #' thrown.
 #'
 #' @param object (SEIRD model)
-#' @param value (list) list of values for beta, kappa, gamma, mu, respectively.
+#' @param value (list) named list of values for beta, kappa, gamma, mu, respectively.
 #'
 #' @return object of class SEIRD with transmission parameter values
 #' assigned.
@@ -144,13 +144,13 @@ setGeneric(
 
 
 #' @describeIn SEIRD Set transmission parameters (beta, kappa, gamma and mu)
-#' of the SEIR model.
+#' of the SEIRD model.
 #'
 #' If the transmission parameters provided to are not 1-dimensional an error is
 #' thrown.
 #'
 #' @param object (SEIRD model)
-#' @param value (list) list of values for beta, kappa, gamma, mu, respectively.
+#' @param value (list) named list of values for beta, kappa, gamma, mu, respectively.
 #'
 #' @return object of class SEIRD with transmission parameter values
 #' assigned.
@@ -193,10 +193,9 @@ setMethod(
 #' \deqn{\frac{dR(t)}{dt} = gamma I(t)}
 #' \deqn{\frac{dC(t)}{dt} = beta S(t) I(t)}
 #' \deqn{\frac{dD(t)}{dt} = mu I(t)}
-#'
 #' This function relies on the package deSolve.
 #'
-#' @param object an object of the class SEIRD
+#' @param object an object of class SEIRD
 #' @param times (double) a sequence of time points at which the solution to
 #' the system of ODEs should be returned. Must be of the form
 #' seq(t_start, t_end, by=t_step). Default time series is seq(0, 100, by = 1).
@@ -205,8 +204,8 @@ setMethod(
 #' the ode function in the deSolve package used in this function.
 #'
 #' @return two dataframes: one with the time steps, age range, time series of S,
-#' E, I and R population fractions, and one with the time steps, age range,
-#' time series of incidences and deaths population fraction.
+#' E, I, R and D population fractions, and another with the time steps, age range,
+#' time series of incidences and deaths as a fraction of the population.
 #' @export
 setGeneric(name = "run",
            def = function(object, times = seq(0, 100, by = 1),
@@ -320,7 +319,7 @@ setMethod(
 #'
 #' @param model a model object from comomodels package
 #'
-#' @return an R0 value
+#' @return an R0 value.
 #' @export
 setGeneric("R0", def = function(model) {
   standardGeneric("R0")
@@ -333,7 +332,7 @@ setGeneric("R0", def = function(model) {
 #'
 #' @param model an SEIRD model
 #'
-#' @return an R0 value
+#' @return an R0 value.
 #' @export
 #' @aliases R0,ANY,ANY-method
 setMethod("R0", "SEIRD", function(model) {

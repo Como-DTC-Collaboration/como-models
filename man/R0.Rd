@@ -10,7 +10,7 @@ R0(model)
 \item{model}{a model object from comomodels package}
 }
 \value{
-an R0 value
+an R0 value.
 }
 \description{
 Calculates basic reproduction number

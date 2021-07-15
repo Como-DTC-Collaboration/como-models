@@ -9,7 +9,7 @@ solve_method.}
 run(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
 }
 \arguments{
-\item{object}{an object of the class SEIRD}
+\item{object}{an object of class SEIRD}
 
 \item{times}{(double) a sequence of time points at which the solution to
 the system of ODEs should be returned. Must be of the form
@@ -21,8 +21,8 @@ the ode function in the deSolve package used in this function.}
 }
 \value{
 two dataframes: one with the time steps, age range, time series of S,
-E, I and R population fractions, and one with the time steps, age range,
-time series of incidences and deaths population fraction.
+E, I, R and D population fractions, and another with the time steps, age range,
+time series of incidences and deaths as a fraction of the population.
 }
 \description{
 \deqn{\frac{dS(t)}{dt} = - beta S(t) I(t)}
@@ -31,7 +31,5 @@ time series of incidences and deaths population fraction.
 \deqn{\frac{dR(t)}{dt} = gamma I(t)}
 \deqn{\frac{dC(t)}{dt} = beta S(t) I(t)}
 \deqn{\frac{dD(t)}{dt} = mu I(t)}
-}
-\details{
 This function relies on the package deSolve.
 }

@@ -9,7 +9,7 @@ transmission_parameters(object) <- value
 \arguments{
 \item{object}{(SEIRD model)}
 
-\item{value}{(list) list of values for beta, kappa, gamma, mu, respectively.}
+\item{value}{(list) named list of values for beta, kappa, gamma, mu, respectively.}
 }
 \value{
 object of class SEIRD with transmission parameter values

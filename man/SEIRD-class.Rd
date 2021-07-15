@@ -16,7 +16,7 @@
 \alias{run,ANY,ANY-method}
 \alias{R0,SEIRD-method}
 \alias{R0,ANY,ANY-method}
-\title{An S4 object representing the SEIRD.}
+\title{An S4 object representing the SEIRD model.}
 \usage{
 \S4method{initial_conditions}{SEIRD}(object)
 
@@ -33,7 +33,7 @@
 \arguments{
 \item{object}{an object of the class SEIRD}
 
-\item{value}{(list) list of values for beta, kappa, gamma, mu, respectively.}
+\item{value}{(list) named list of values for beta, kappa, gamma, mu, respectively.}
 
 \item{times}{(double) a sequence of time points at which the solution to
 the system of ODEs should be returned. Must be of the form
@@ -55,26 +55,26 @@ two dataframes: one with the time steps, age range, time series of S,
 E, I and R population fractions, and one with the time steps, age range,
 time series of incidences and deaths population fraction.
 
-an R0 value
+an R0 value.
 }
 \description{
-This class represents the SEIR model, showing how populations of susceptible,
+This class represents the SEIRD model, which can be used to determine how populations of susceptible,
 exposed, infectious and recovered individuals evolve over time.
 }
 \section{Methods (by generic)}{
 \itemize{
 \item \code{initial_conditions}: Retrieves initial conditions of SEIRD model.
 
-\item \code{transmission_parameters}: Retrieves transmission parameters of SEIR model.
+\item \code{transmission_parameters}: Retrieves transmission parameters of SEIRD model.
 
 \item \code{initial_conditions<-}: Setter method for initial conditions (S0, E0, I0 and R0)
-of the SEIR model.
+of the SEIRD model (note that the "D0" compartment is set to 0).
 
-All initial conditions must sum up to 1.
+All initial conditions must sum to 1.
 If the initial conditions provided to do not sum to 1, an error is thrown.
 
 \item \code{transmission_parameters<-}: Set transmission parameters (beta, kappa, gamma and mu)
-of the SEIR model.
+of the SEIRD model.
 
 If the transmission parameters provided to are not 1-dimensional an error is
 thrown.
@@ -101,8 +101,8 @@ The R0 parameter is given by:
 \section{Slots}{
 
 \describe{
-\item{\code{output_names}}{list of compartments name which are used by the model and
-incidence.}
+\item{\code{output_names}}{list of compartment names which are used by the model and, additionally,
+incidence and deaths.}
 
 \item{\code{initial_condition_names}}{list of names of initial conditions
 (characters). Default is list("S0", "E0", "I0", R0").}

@@ -7,7 +7,7 @@
 initial_conditions(object)
 }
 \arguments{
-\item{object}{An object of the class SEIRD.}
+\item{object}{An object of class SEIRD.}
 }
 \description{
 Retrieves initial conditions of SEIRD model.

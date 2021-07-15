@@ -2,7 +2,7 @@
 % Please edit documentation in R/SEIRD.R
 \name{transmission_parameters}
 \alias{transmission_parameters}
-\title{Retrieves transmission parameters of SEIR model.}
+\title{Retrieves transmission parameters of SEIRD model.}
 \usage{
 transmission_parameters(object)
 }
@@ -10,5 +10,5 @@ transmission_parameters(object)
 \item{object}{An object of the class SEIRD.}
 }
 \description{
-Retrieves transmission parameters of SEIR model.
+Retrieves transmission parameters of SEIRD model.
 }
