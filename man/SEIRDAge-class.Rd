@@ -14,7 +14,7 @@
 \alias{transmission_parameters<-,ANY,ANY-method}
 \alias{run,SEIRDAge-method}
 \alias{run,ANY,ANY-method}
-\title{Defines an age-structured SEIR model and solves the set of
+\title{Defines an age-structured SEIRD model and solves the set of
 ordinary differential equations of the model with a chosen method of
 numerical integration.}
 \usage{
@@ -47,11 +47,11 @@ default for the ode function in the deSolve package used in this function.}
 \value{
 Initial conditions of SEIRDAge model.
 
-Updated version of the age-structured SEIR model.
+Updated version of the age-structured SEIRD model.
 
 Transmission parameters of SEIRDAge model.
 
-Updated version of the age-structured SEIR model.
+Updated version of the age-structured SEIRD model.
 
 data frame containing the time vector and time series of S, R, I and
 D population fractions for each age group outputs with incidence numbers
@@ -64,8 +64,8 @@ sizes compared to the number of age groups, an error is thrown.
 If the transmission parameters provided to are not 1-dimensional an error is
 thrown.
 
-Solves a system to ODEs which form an
-age-structured simple SEIR model. The system of equations for the time
+Solves a system of ODEs which form an
+age-structured SEIRD model. The system of equations for the time
 evolution of population fractions in Susceptible (S), Exposed (E), Infected
 (I), Recovered (R) and Dead (D) groups in a given age group indexed by i is
 given by
@@ -86,7 +86,7 @@ model.}
 by the model.}
 
 \item{\code{initial_conditions}}{named list containing the initial conditions of the
-model. Initial values for each compartment, S0, E0, I0, R0.}
+model. Initial values for each compartment, S0, E0, I0, R0, D0.}
 
 \item{\code{transmission_parameters}}{named list containing the transmission
 parameters of the model. Transmission parameters b, k, g represent the
