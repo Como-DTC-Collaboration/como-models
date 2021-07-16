@@ -58,3 +58,15 @@
 #'
 #' @source \url{https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1005697#sec020}
 "contact_other"
+
+#' population
+#'
+#' A tibble containing populations, birth rates and death rates for 152
+#' countries split into 5 year age groups. These age groups range from 0-4 y.o.
+#' to 100+ y.o. 
+#' 
+#' @format A tibble with dimensions 4221x5.
+#'
+#' @source \url{https://population.un.org/wpp/Download/Standard/Population/}
+"population"
+
