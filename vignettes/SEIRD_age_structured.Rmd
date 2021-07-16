@@ -228,11 +228,8 @@ res %>%
   geom_line() +
   facet_wrap(~compartment)
 
-<<<<<<< HEAD
-res <- run(model_5570, time=seq(0, 50, by = 0.1))
-=======
-res <- run(model_5070, time=seq(0, 50, by = 0.1))$states
->>>>>>> 740808d06f7b4d34c425b023a9bba2e64dc0783b
+res <- run(model_5570, time=seq(0, 50, by = 0.1))$states
+
 res %>%
   filter(compartment=="I") %>% 
   ggplot(aes(x=time, y=value, colour=age_range)) +
