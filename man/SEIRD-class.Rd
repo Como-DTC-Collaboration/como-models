@@ -4,42 +4,31 @@
 \name{SEIRD-class}
 \alias{SEIRD-class}
 \alias{SEIRD}
-\alias{initial_conditions}
 \alias{initial_conditions,SEIRD-method}
 \alias{initial_conditions,ANY,ANY-method}
-\alias{transmission_parameters}
 \alias{transmission_parameters,SEIRD-method}
 \alias{transmission_parameters,ANY,ANY-method}
-\alias{initial_conditions<-}
 \alias{initial_conditions<-,SEIRD-method}
 \alias{initial_conditions<-,ANY,ANY-method}
-\alias{transmission_parameters<-}
 \alias{transmission_parameters<-,SEIRD-method}
 \alias{transmission_parameters<-,ANY,ANY-method}
-\alias{run}
 \alias{run,SEIRD-method}
 \alias{run,ANY,ANY-method}
+\alias{R0,SEIRD-method}
+\alias{R0,ANY,ANY-method}
 \title{An S4 object representing the SEIRD.}
 \usage{
-initial_conditions(object)
-
 \S4method{initial_conditions}{SEIRD}(object)
-
-transmission_parameters(object)
 
 \S4method{transmission_parameters}{SEIRD}(object)
 
-initial_conditions(object) <- value
-
 \S4method{initial_conditions}{SEIRD}(object) <- value
-
-transmission_parameters(object) <- value
 
 \S4method{transmission_parameters}{SEIRD}(object) <- value
 
-run(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
-
 \S4method{run}{SEIRD}(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
+
+\S4method{R0}{SEIRD}(model)
 }
 \arguments{
 \item{object}{an object of the class SEIRD}
@@ -53,15 +42,12 @@ seq(t_start, t_end, by=t_step). Default time series is seq(0, 100, by = 1).}
 \item{solve_method}{(string) a string of chosen numerical integration method
 for solving the ode system. Default is "lsoda" which is also the default for
 the ode function in the deSolve package used in this function.}
+
+\item{model}{an SEIRD model}
 }
 \value{
 object of class SEIRD with initial conditions assigned.
 
-object of class SEIRD with initial conditions assigned.
-
-object of class SEIRD with transmission parameter values
-assigned.
-
 object of class SEIRD with transmission parameter values
 assigned.
 
@@ -69,25 +55,33 @@ two dataframes: one with the time steps, age range, time series of S,
 E, I and R population fractions, and one with the time steps, age range,
 time series of incidences and deaths population fraction.
 
-two dataframes: one with the time steps, age range, time series of S,
-E, I and R population fractions, and one with the time steps, age range,
-time series of incidences and deaths population fraction.
+an R0 value
 }
 \description{
 This class represents the SEIR model, showing how populations of susceptible,
 exposed, infectious and recovered individuals evolve over time.
+}
+\section{Methods (by generic)}{
+\itemize{
+\item \code{initial_conditions}: Retrieves initial conditions of SEIRD model.
+
+\item \code{transmission_parameters}: Retrieves transmission parameters of SEIR model.
+
+\item \code{initial_conditions<-}: Setter method for initial conditions (S0, E0, I0 and R0)
+of the SEIR model.
 
 All initial conditions must sum up to 1.
 If the initial conditions provided to do not sum to 1, an error is thrown.
 
-All initial conditions must sum up to 1.
-If the initial conditions provided to do not sum to 1, an error is thrown.
+\item \code{transmission_parameters<-}: Set transmission parameters (beta, kappa, gamma and mu)
+of the SEIR model.
 
 If the transmission parameters provided to are not 1-dimensional an error is
 thrown.
 
-If the transmission parameters provided to are not 1-dimensional an error is
-thrown.
+\item \code{run}: Solves ODEs of the SEIRD specified in object
+for the time points specified in times and integration method specified in
+solve_method.
 
 \deqn{\frac{dS(t)}{dt} = - beta S(t) I(t)}
 \deqn{\frac{dE(t)}{dt} =  beta S(t) I(t) - kappa E(t)}
@@ -96,18 +90,14 @@ thrown.
 \deqn{\frac{dC(t)}{dt} = beta S(t) I(t)}
 \deqn{\frac{dD(t)}{dt} = mu I(t)}
 
-\deqn{\frac{dS(t)}{dt} = - beta S(t) I(t)}
-\deqn{\frac{dE(t)}{dt} =  beta S(t) I(t) - kappa E(t)}
-\deqn{\frac{dI(t)}{dt} = kappa E(t) - (gamma + mu) I(t)}
-\deqn{\frac{dR(t)}{dt} = gamma I(t)}
-\deqn{\frac{dC(t)}{dt} = beta S(t) I(t)}
-\deqn{\frac{dD(t)}{dt} = mu I(t)}
-}
-\details{
 This function relies on the package deSolve.
 
-This function relies on the package deSolve.
-}
+\item \code{R0}: Calculates basic reproduction number for SEIRD model
+
+The R0 parameter is given by:
+\deqn{R_0 = \beta/(\gamma + \mu)}
+}}
+
 \section{Slots}{
 
 \describe{

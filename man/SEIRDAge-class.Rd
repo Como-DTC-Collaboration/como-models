@@ -12,8 +12,6 @@
 \alias{transmission_parameters,ANY,ANY-method}
 \alias{transmission_parameters<-,SEIRDAge-method}
 \alias{transmission_parameters<-,ANY,ANY-method}
-\alias{run,SEIRDAge-method}
-\alias{run,ANY,ANY-method}
 \title{An S4 object representing the SEIRDAge.}
 \usage{
 \S4method{initial_conditions}{SEIRDAge}(object)
@@ -23,8 +21,6 @@
 \S4method{transmission_parameters}{SEIRDAge}(object)
 
 \S4method{transmission_parameters}{SEIRDAge}(object) <- value
-
-\S4method{run}{SEIRDAge}(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
 }
 \arguments{
 \item{object}{An object of the class SEIRDAge.}
@@ -33,14 +29,6 @@
 
 All rates of change between compartments are equal regardless of
 age group.}
-
-\item{times}{(vector) time sequence over which to solve the model.
-Must be of the form seq(t_start,t_end,by=t_step). Default time series
-is seq(0, 100, by = 1).}
-
-\item{solve_method}{A string indicating the chosen numerical integration
-method for solving the ode system. Default is \code{lsoda} which is also the
-default for the ode function in the deSolve package used in this function.}
 }
 \value{
 Initial conditions of SEIRDAge model.
@@ -50,31 +38,33 @@ Updated version of the age-structured SEIRD model.
 Transmission parameters of SEIRDAge model.
 
 Updated version of the age-structured SEIRD model.
-
-data frame containing the time vector and time series of S, R, I and
-D population fractions for each age group outputs with incidence numbers
-for each age group.
 }
 \description{
 Defines an age-structured SEIRD model and solves the set of
 ordinary differential equations of the model with a chosen method of
 numerical integration.
+}
+\section{Methods (by generic)}{
+\itemize{
+\item \code{initial_conditions}: Retrieves initial_conditions for an
+age-structured SEIRD model.
+
+\item \code{initial_conditions<-}: Sets initial_conditions of an age-structured
+SEIRD model.
 
 If the initial conditions provided to do not sum to 1 or of different
 sizes compared to the number of age groups, an error is thrown.
 
+\item \code{transmission_parameters}: Retrieves transmission_parameters for an
+age-structured SEIRD model.
+
+\item \code{transmission_parameters<-}: Sets transmission_parameters of an
+age-structured SEIRD model.
+
 If the transmission parameters provided to are not 1-dimensional an error is
 thrown.
+}}
 
-Solves a system of ODEs which form an
-age-structured SEIRD model. The system of equations for the time
-evolution of population fractions in Susceptible (S), Exposed (E), Infected
-(I), Recovered (R) and Dead (D) groups in a given age group indexed by i is
-given by
-}
-\details{
-
-}
 \section{Slots}{
 
 \describe{

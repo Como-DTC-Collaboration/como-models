@@ -2,7 +2,6 @@
 
 export("initial_conditions<-")
 export("transmission_parameters<-")
-export(R0)
 export(SEIRD)
 export(SEIRDAge)
 export(initial_conditions)

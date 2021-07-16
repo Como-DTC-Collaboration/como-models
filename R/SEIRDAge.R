@@ -63,19 +63,19 @@ SEIRDAge <- setClass('SEIRDAge',
 # Setter and getter methods for initial_conditions of an age-structured
 # SEIRD model.
 
-#' Retrieves initial_conditions for an
+#' @describeIn SEIRDAge Retrieves initial_conditions for an
 #' age-structured SEIRD model.
 #'
 #' @param object An object of the class SEIRDAge.
 #'
 #' @return Initial conditions of SEIRDAge model.
-#' @aliases initial_conditions,ANY,ANY-method
-#' @rdname SEIRDAge-class
 #' @export
+#' @aliases initial_conditions,ANY,ANY-method
+#' 
 setMethod('initial_conditions', 'SEIRDAge',
           function(object) object@initial_conditions)
 
-#' Sets initial_conditions of an age-structured
+#' @describeIn SEIRDAge Sets initial_conditions of an age-structured
 #' SEIRD model.
 #'
 #' If the initial conditions provided to do not sum to 1 or of different
@@ -87,9 +87,9 @@ setMethod('initial_conditions', 'SEIRDAge',
 #' single age group.
 #'
 #' @return Updated version of the age-structured SEIRD model.
-#' @aliases initial_conditions<-,ANY,ANY-method
-#' @rdname SEIRDAge-class
 #' @export
+#' @aliases initial_conditions<-,ANY,ANY-method
+#' 
 setMethod(
   'initial_conditions<-', 'SEIRDAge',
   function(object, value) {
@@ -131,18 +131,19 @@ setMethod(
 # Setter and getter methods for transmission_parameters of an age-structured
 # SEIRD model.
 
-#' Retrieves transmission_parameters for an
+#' @describeIn SEIRDAge Retrieves transmission_parameters for an
 #' age-structured SEIRD model.
 #'
 #' @param object An object of the class SEIRDAge.
 #'
 #' @return Transmission parameters of SEIRDAge model.
-#' @aliases transmission_parameters,ANY,ANY-method
-#' @rdname SEIRDAge-class
 #' @export
+#' @aliases transmission_parameters,ANY,ANY-method
+#' 
 setMethod('transmission_parameters', 'SEIRDAge',
           function(object) object@transmission_parameters)
-#' Sets transmission_parameters of an
+
+#' @describeIn SEIRDAge Sets transmission_parameters of an
 #' age-structured SEIRD model.
 #'
 #' If the transmission parameters provided to are not 1-dimensional an error is
@@ -154,9 +155,9 @@ setMethod('transmission_parameters', 'SEIRDAge',
 #' age group.
 #'
 #' @return Updated version of the age-structured SEIRD model.
-#' @aliases transmission_parameters<-,ANY,ANY-method
-#' @rdname SEIRDAge-class
 #' @export
+#' @aliases transmission_parameters<-,ANY,ANY-method
+#' 
 setMethod(
   'transmission_parameters<-', 'SEIRDAge',
   function(object, value) {
@@ -188,7 +189,7 @@ setMethod(
     return(object)
   })
 
-#' Method to simulate output using from model.
+#' @describeIn SEIRDAge Method to simulate output using from model.
 #' 
 #' Solves a system of ODEs which form an
 #' age-structured SEIRD model. The system of equations for the time
@@ -219,11 +220,11 @@ setMethod(
 #' @return data frame containing the time vector and time series of S, R, I and
 #' D population fractions for each age group outputs with incidence numbers
 #' for each age group.
-#' @rdname SEIRDAge-class
+#' 
+#' 
 #' @aliases run,ANY,ANY-method
 #' @importFrom magrittr "%>%"
 #' @importFrom rlang .data
-#' @export
 setMethod(
   "run", 'SEIRDAge',
   function(object, times, solve_method = 'lsoda') {
