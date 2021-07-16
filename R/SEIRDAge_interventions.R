@@ -316,23 +316,46 @@ setMethod(
     n_inc <- rbind(rep(0, age),
                    total_inf[2:nrow(total_inf),]-total_inf[1:nrow(total_inf)-1,]
     )
+    # compute death number
+    total_dth <- output[, (4*age+2):(5*age+1)]
+    n_dth <- rbind(rep(0, age),
+                   total_dth[2:nrow(total_dth),]-total_dth[1:nrow(total_dth)-1,]
+    )
     
     # melt the incidence dataframe to long format
     incidence_temp = melt(n_inc, id.vars=NULL)
-    print(incidence_temp)
+    
+    # melt the deaths dataframe to long format
+    death_temp = melt(n_dth, id.vars=NULL)
     
     # add time, compartment and age_range columns as above
     incidence_temp$time = rep(times, age)
     incidence_temp$compartment = rep('Incidence', age*length(times))
     incidence_temp$age_range = unlist(rep(object@age_ranges, each=length(times)))
+    incidence_temp =  incidence_temp %>% 
+      dplyr::relocate(value, .after=time)
+    
+    # add time, compartment and age_range columns as above
+    death_temp$time = rep(times, age)
+    death_temp$compartment = rep('Death', age*length(times))
+    death_temp$age_range = unlist(rep(object@age_ranges, each=length(times)))
+    death_temp = death_temp %>% 
+      dplyr::relocate(value, .after=time)
     
     # drop the old variable column
     incidence_temp = incidence_temp %>% 
       dplyr::select(-.data$variable)
     
-    # bind SEIR and incidence dataframes
-    output = rbind(out_temp, incidence_temp)
     
-    return(output)
+    # drop the old variable column
+    death_temp = death_temp %>% 
+      dplyr::select(-.data$variable)
+    
+    # bind incidence and deaths dataframes
+    changes = rbind(incidence_temp, death_temp)
+    
+    states = out_temp
+    
+    return(list("states" = states, "changes" = changes))
   })
 
