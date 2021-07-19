@@ -33,7 +33,8 @@
 \arguments{
 \item{object}{an object of the class SEIRD}
 
-\item{value}{(list) named list of values for beta, kappa, gamma, mu, respectively.}
+\item{value}{(list) named list of values for beta, kappa, gamma, mu,
+respectively.}
 
 \item{times}{(double) a sequence of time points at which the solution to
 the system of ODEs should be returned. Must be of the form
@@ -58,8 +59,9 @@ time series of incidences and deaths population fraction.
 an R0 value.
 }
 \description{
-This class represents the SEIRD model, which can be used to determine how populations of susceptible,
-exposed, infectious and recovered individuals evolve over time.
+This class represents the SEIRD model, which can be used to determine how
+populations of susceptible, exposed, infectious and recovered individuals
+evolve over time.
 }
 \section{Methods (by generic)}{
 \itemize{
@@ -101,8 +103,8 @@ The R0 parameter is given by:
 \section{Slots}{
 
 \describe{
-\item{\code{output_names}}{list of compartment names which are used by the model and, additionally,
-incidence and deaths.}
+\item{\code{output_names}}{list of compartment names which are used by the model and,
+additionally, incidence and deaths.}
 
 \item{\code{initial_condition_names}}{list of names of initial conditions
 (characters). Default is list("S0", "E0", "I0", R0").}

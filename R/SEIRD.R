@@ -1,10 +1,11 @@
 #' An S4 object representing the SEIRD model.
 #'
-#' This class represents the SEIRD model, which can be used to determine how populations of susceptible,
-#' exposed, infectious and recovered individuals evolve over time.
+#' This class represents the SEIRD model, which can be used to determine how
+#' populations of susceptible, exposed, infectious and recovered individuals
+#' evolve over time.
 #'
-#' @slot output_names list of compartment names which are used by the model and, additionally,
-#'       incidence and deaths.
+#' @slot output_names list of compartment names which are used by the model and,
+#'       additionally, incidence and deaths.
 #' @slot initial_condition_names list of names of initial conditions
 #'       (characters). Default is list("S0", "E0", "I0", R0").
 #' @slot transmission_parameter_names list of names of transmission parameters
@@ -131,7 +132,8 @@ setMethod(
 #' thrown.
 #'
 #' @param object (SEIRD model)
-#' @param value (list) named list of values for beta, kappa, gamma, mu, respectively.
+#' @param value (list) named list of values for beta, kappa, gamma, mu,
+#' respectively.
 #'
 #' @return object of class SEIRD with transmission parameter values
 #' assigned.
@@ -150,7 +152,8 @@ setGeneric(
 #' thrown.
 #'
 #' @param object (SEIRD model)
-#' @param value (list) named list of values for beta, kappa, gamma, mu, respectively.
+#' @param value (list) named list of values for beta, kappa, gamma, mu,
+#' respectively.
 #'
 #' @return object of class SEIRD with transmission parameter values
 #' assigned.
@@ -204,8 +207,8 @@ setMethod(
 #' the ode function in the deSolve package used in this function.
 #'
 #' @return two dataframes: one with the time steps, age range, time series of S,
-#' E, I, R and D population fractions, and another with the time steps, age range,
-#' time series of incidences and deaths as a fraction of the population.
+#' E, I, R and D population fractions, and another with the time steps, age
+#' range, time series of incidences and deaths as a fraction of the population.
 #' @export
 setGeneric(name = "run",
            def = function(object, times = seq(0, 100, by = 1),

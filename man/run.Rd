@@ -21,8 +21,8 @@ the ode function in the deSolve package used in this function.}
 }
 \value{
 two dataframes: one with the time steps, age range, time series of S,
-E, I, R and D population fractions, and another with the time steps, age range,
-time series of incidences and deaths as a fraction of the population.
+E, I, R and D population fractions, and another with the time steps, age
+range, time series of incidences and deaths as a fraction of the population.
 }
 \description{
 \deqn{\frac{dS(t)}{dt} = - beta S(t) I(t)}
