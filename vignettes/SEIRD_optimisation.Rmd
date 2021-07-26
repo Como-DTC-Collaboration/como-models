@@ -25,11 +25,17 @@ library(dplyr)
 library(tidyr)
 ```
 
+# Check for cached data
+```{r}
+# TRUE if plot saved data, FALSE to run optimisation
+cached_bool <- FALSE
+```
+
 ## Optimisation on synthetic data (incidences and deaths)
 
 ## Simulate data
 
-```{r}
+```{r, eval=!cached_bool}
 model <- SEIRD()
 simulating_para <- c(9.1e-1, 8.7e-1, 5.3e-1, 9.7e-2,
                      9.999e-1, 1e-7, 1e-7, 1e-6)
@@ -47,7 +53,7 @@ out_df <- run(model, times)
 
 ## Add noise to simulated data (incidences and deaths)
 
-```{r}
+```{r, eval=!cached_bool}
 population_size <- 1e4
 
 # add noise
@@ -70,6 +76,10 @@ testing_data <- testing_data[-1,]
 # save results
 write.csv(testing_data, "synthetic_data.csv", row.names = FALSE)
 ```
+```{r, eval=cached_bool}
+testing_data <- read.csv("synthetic_data.csv")
+```
+
 
 ## Visualise simulation
 
@@ -178,6 +188,7 @@ ggplot() +
 
 ```{r}
 profile_parameters <- c('beta', 'kappa', 'gamma', 'mu')
+
 beta_range <- seq(0.7, 1.3, by = 0.02)
 kappa_range <- seq(0.6, 1.2, by = 0.02)
 gamma_range <- seq(0.3, 0.8, by = 0.02)
@@ -193,7 +204,7 @@ range_transmission <- rbind(range_transmission, data.frame(
 
 # Run optimisation
 
-```{r}
+```{r, eval=!cached_bool}
 previous_param <- rep(0, 8)
 profile_likelihood <- data.frame(parameter=character(), fixed_value=double(),
                                  error_value=double(), optim_beta=double(),
@@ -201,6 +212,7 @@ profile_likelihood <- data.frame(parameter=character(), fixed_value=double(),
                                  optim_mu=double(), optim_S0=double(),
                                  optim_E0=double(), optim_I0=double(),
                                  optim_R0=double())
+profile_likelihood$parameter <- as.character(profile_likelihood$parameter)
 
 for (param_name in profile_parameters){
   err_value <- 0
@@ -230,23 +242,9 @@ for (param_name in profile_parameters){
 }
 
 ```
-
-# Visualisation
-
-```{r, fig.height = 5, fig.width = 7}
+```{r, eval=!cached_bool}
 profile_likelihood <- transform(profile_likelihood, fixed_value=as.numeric(fixed_value))
 profile_likelihood <- transform(profile_likelihood, error_value=as.numeric(error_value))
-profile_beta <- ggplot(profile_likelihood %>% filter(parameter == 'beta'), aes(x = fixed_value, y = error_value)) +
-  geom_vline(xintercept = simulating_para[1]) + geom_point()
-profile_kappa <- ggplot(profile_likelihood %>% filter(parameter == 'kappa'), aes(x = fixed_value, y = error_value)) +
-  geom_vline(xintercept = simulating_para[2]) + geom_point()
-profile_gamma <- ggplot(profile_likelihood %>% filter(parameter == 'gamma'), aes(x = fixed_value, y = error_value)) +
-  geom_vline(xintercept = simulating_para[3]) + geom_point()
-profile_mu <- ggplot(profile_likelihood %>% filter(parameter == 'mu'), aes(x = fixed_value, y = error_value)) +
-  geom_vline(xintercept = simulating_para[4]) + geom_point()
-grid.arrange(profile_beta, profile_kappa, profile_gamma, profile_mu, nrow = 2, ncol = 2)
-
-prof_likelihood_name <- c('optim_beta', 'optim_kappa', 'optim_gamma', 'optim_mu', 'optim_S0', 'optim_E0', 'optim_I0', 'optim_R0')
 profile_likelihood <- transform(profile_likelihood, optim_beta=as.numeric(optim_beta))
 profile_likelihood <- transform(profile_likelihood, optim_kappa=as.numeric(optim_kappa))
 profile_likelihood <- transform(profile_likelihood, optim_gamma=as.numeric(optim_gamma))
@@ -258,13 +256,33 @@ profile_likelihood <- transform(profile_likelihood, optim_R0=as.numeric(optim_R0
 
 # save results
 write.csv(profile_likelihood, "synthetic_full_trend_profile_error.csv", row.names = FALSE)
+```
+
+```{r, eval=cached_bool}
+profile_likelihood <- read.csv("synthetic_full_trend_profile_error.csv")
+```
+
+# Visualisation
+
+```{r, fig.height = 5, fig.width = 7}
+profile_beta <- ggplot(profile_likelihood %>% filter(parameter == 'beta'), aes(x = fixed_value, y = error_value)) +
+  geom_vline(xintercept = simulating_para[1]) + geom_point()
+profile_kappa <- ggplot(profile_likelihood %>% filter(parameter == 'kappa'), aes(x = fixed_value, y = error_value)) +
+  geom_vline(xintercept = simulating_para[2]) + geom_point()
+profile_gamma <- ggplot(profile_likelihood %>% filter(parameter == 'gamma'), aes(x = fixed_value, y = error_value)) +
+  geom_vline(xintercept = simulating_para[3]) + geom_point()
+profile_mu <- ggplot(profile_likelihood %>% filter(parameter == 'mu'), aes(x = fixed_value, y = error_value)) +
+  geom_vline(xintercept = simulating_para[4]) + geom_point()
+grid.arrange(profile_beta, profile_kappa, profile_gamma, profile_mu, nrow = 2, ncol = 2)
 
 count <- 0
 for (param_name in profile_parameters){
   temp <- profile_likelihood %>% filter(parameter == param_name)
   for (i in 1:nrow(temp)){
     model <- SEIRD()
-    transmission_parameters(model) <- list(beta=temp[i,4], kappa=temp[i,5], gamma=temp[i,6], mu=temp[i,7])
+  	trans_param <- list(beta=temp[i,4], kappa=temp[i,5], gamma=temp[i,6], mu=temp[i,7])
+    trans_param[names(trans_param) == param_name] <- temp[i,2]
+    transmission_parameters(model) <- trans_param
     initial_conditions(model) <- list(S0=temp[i,8], E0=temp[i,9], I0=temp[i,10], R0=temp[i,11])
     
     out_df <- run(model, times)
@@ -377,7 +395,7 @@ ggplot() +
 
 # Run optimisation
 
-```{r}
+```{r, eval=!cached_bool}
 previous_param <- rep(0, 8)
 profile_likelihood <- data.frame(parameter=character(), fixed_value=double(),
                                  error_value=double(), optim_beta=double(),
@@ -385,6 +403,7 @@ profile_likelihood <- data.frame(parameter=character(), fixed_value=double(),
                                  optim_mu=double(), optim_S0=double(),
                                  optim_E0=double(), optim_I0=double(),
                                  optim_R0=double())
+profile_likelihood$parameter <- as.character(profile_likelihood$parameter)
 
 for (param_name in profile_parameters){
   err_value <- 0
@@ -414,22 +433,9 @@ for (param_name in profile_parameters){
 
 ```
 
-# Visualisation
-
-```{r, fig.height = 5, fig.width = 7}
+```{r, eval=!cached_bool}
 profile_likelihood <- transform(profile_likelihood, fixed_value=as.numeric(fixed_value))
 profile_likelihood <- transform(profile_likelihood, error_value=as.numeric(error_value))
-profile_beta <- ggplot(profile_likelihood %>% filter(parameter == 'beta'), aes(x = fixed_value, y = error_value)) +
-  geom_vline(xintercept = simulating_para[1]) + geom_point()
-profile_kappa <- ggplot(profile_likelihood %>% filter(parameter == 'kappa'), aes(x = fixed_value, y = error_value)) +
-  geom_vline(xintercept = simulating_para[2]) + geom_point()
-profile_gamma <- ggplot(profile_likelihood %>% filter(parameter == 'gamma'), aes(x = fixed_value, y = error_value)) +
-  geom_vline(xintercept = simulating_para[3]) + geom_point()
-profile_mu <- ggplot(profile_likelihood %>% filter(parameter == 'mu'), aes(x = fixed_value, y = error_value)) +
-  geom_vline(xintercept = simulating_para[4]) + geom_point()
-grid.arrange(profile_beta, profile_kappa, profile_gamma, profile_mu, nrow = 2, ncol = 2)
-
-prof_likelihood_name <- c('optim_beta', 'optim_kappa', 'optim_gamma', 'optim_mu', 'optim_S0', 'optim_E0', 'optim_I0', 'optim_R0')
 profile_likelihood <- transform(profile_likelihood, optim_beta=as.numeric(optim_beta))
 profile_likelihood <- transform(profile_likelihood, optim_kappa=as.numeric(optim_kappa))
 profile_likelihood <- transform(profile_likelihood, optim_gamma=as.numeric(optim_gamma))
@@ -441,13 +447,35 @@ profile_likelihood <- transform(profile_likelihood, optim_R0=as.numeric(optim_R0
 
 # save results
 write.csv(profile_likelihood, "synthetic_half_trend_profile_error.csv", row.names = FALSE)
+```
+
+```{r, eval=cached_bool}
+profile_likelihood <- read.csv("synthetic_half_trend_profile_error.csv")
+```
+
+# Visualisation
+
+```{r, fig.height = 5, fig.width = 7}
+profile_beta <- ggplot(profile_likelihood %>% filter(parameter == 'beta'), aes(x = fixed_value, y = error_value)) +
+  geom_vline(xintercept = simulating_para[1]) + geom_point()
+profile_kappa <- ggplot(profile_likelihood %>% filter(parameter == 'kappa'), aes(x = fixed_value, y = error_value)) +
+  geom_vline(xintercept = simulating_para[2]) + geom_point()
+profile_gamma <- ggplot(profile_likelihood %>% filter(parameter == 'gamma'), aes(x = fixed_value, y = error_value)) +
+  geom_vline(xintercept = simulating_para[3]) + geom_point()
+profile_mu <- ggplot(profile_likelihood %>% filter(parameter == 'mu'), aes(x = fixed_value, y = error_value)) +
+  geom_vline(xintercept = simulating_para[4]) + geom_point()
+grid.arrange(profile_beta, profile_kappa, profile_gamma, profile_mu, nrow = 2, ncol = 2)
+
+# prof_likelihood_name <- c('optim_beta', 'optim_kappa', 'optim_gamma', 'optim_mu', 'optim_S0', 'optim_E0', 'optim_I0', 'optim_R0')
 
 count <- 0
 for (param_name in profile_parameters){
   temp <- profile_likelihood %>% filter(parameter == param_name)
   for (i in 1:nrow(temp)){
     model <- SEIRD()
-    transmission_parameters(model) <- list(beta=temp[i,4], kappa=temp[i,5], gamma=temp[i,6], mu=temp[i,7])
+	trans_param <- list(beta=temp[i,4], kappa=temp[i,5], gamma=temp[i,6], mu=temp[i,7]) 
+    trans_param[names(trans_param) == param_name] <- temp[i,2]
+    transmission_parameters(model) <- trans_param 
     initial_conditions(model) <- list(S0=temp[i,8], E0=temp[i,9], I0=temp[i,10], R0=temp[i,11])
     
     out_df <- run(model, times)
@@ -530,7 +558,7 @@ ggplot() +
 
 ## Optimisation
 
-```{r}
+```{r, eval=!cached_bool}
 repeat_num <- 100
 for (repeats in 1:repeat_num){
     trans_params_guess <- runif(4, min = 0, max = 1)
@@ -552,6 +580,14 @@ for (repeats in 1:repeat_num){
     # initial_guesses <- rbind(initial_guesses, c("beta" = trans_params_guess[1], "kappa" = trans_params_guess[2], "gamma" = trans_params_guess[3], "mu" = trans_params_guess[4]))
     }
 }
+
+# save optimised parameters
+write.csv(optimised_para, "London_parameters_100_optimisations.csv", row.names = FALSE)
+```
+
+```{r, eval=cached_bool}
+optimised_para <- read.csv("London_parameters_100_optimisations.csv")
+repeat_num <- nrow(optimised_para)
 ```
 
 ## Visualise optimised result
@@ -578,8 +614,6 @@ for (repeats in 1:repeat_num){
     }
 }
 
-# save optimised parameters
-write.csv(optimised_para, "London_parameters_100_optimisations.csv", row.names = FALSE)
 
 cases_repeats <- spread(cases_repeats, compartment, value)
 b <- ggplot()
