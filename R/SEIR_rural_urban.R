@@ -31,6 +31,7 @@
 #' @import deSolve
 #' @import glue
 #' @import reshape2
+#' @import matlib
 
 setClass("SEIR_rural_urban",
          # slots
@@ -395,7 +396,7 @@ setMethod(
       stop("Contact matrices must be of type double.")
     }
 
-    # check that matrices are normalized: loosing some precision in division
+    # check that vectors are normalized: loosing some precision in division
     # so want to make sure it is accurate to 0.1% of the population
     if (1 - sum(demo_data$urban) - sum(demo_data$rural) > 0.001) {
       stop("Sum over all age groups and both communities must be 1. The
@@ -463,7 +464,7 @@ setGeneric(name = "run",
 #' specified in solve_method.
 #'
 #' For the urban community:
-#' \deqn{\frac{dS_U(t)}{dt} = - b S_U (I_U + I_Y) N_U/ C
+#' \deqn{\frac{dS_U(t)}{dt} = - b S_U (I_U + I_Y) N_U C
 #'                            - b S_U/f_urban I_U/f_urban N_U (1-C)}
 #' \deqn{\frac{dE_U(t)}{dt} =  b S_U (I_U + I_Y) N_U C
 #'                            + b S_U/f_urban I_U/f_urban N_U (1-C) -k E_U}
@@ -619,3 +620,67 @@ setMethod(
 
     return(output)
   })
+#----------------------------------------------------------------------------
+#' Returns the value of R0 for the model with the specified parameter values.
+#' R0 is computed using the next generation matrix method.
+#'
+#' @param object an object of the class SEIR_rural_urban
+#'
+#' @return the value of R0
+#' @export
+  
+  setGeneric(name = "R0",
+             def = function(object) {
+               standardGeneric("R0")})
+  
+#' @describeIn Returns the value of R0 for the model with the specified parameter values.
+#' R0 is computed using the next generation matrix method.
+#'
+#' @param object an object of the class SEIR_rural_urban
+#'
+#' @return the alue of R0
+#' @aliases R0,ANY,ANY-method
+#' @export
+  
+  setMethod(
+    "R0", "SEIR_rural_urban",
+    function(object) {
+      # initial susceptible populations
+      S0U = initial_conditions(object)$S_U0
+      S0Y = initial_conditions(object)$S_Y0
+      # required parameter values
+      b = transmission_parameters(object)$b
+      k = transmission_parameters(object)$k
+      g = transmission_parameters(object)$g
+      m = transmission_parameters(object)$m
+      C = transmission_parameters(object)$C
+      # compute contacts N_U and N_Y from contact matrices
+      # number of urban contacts for an urban individual, normalized over the
+      # whole population through the age demographics
+      NU <- sum(rowSums(contact_matrices(object)$urban) *
+                   (country_demog(object)$urban/sum(country_demog(object)$urban))) / 2
+      # number of rural contacts for a rural individual, normalized over the
+      # whole population through the age demographics
+      NY <- sum(rowSums(contact_matrices(object)$rural) *
+                   (country_demog(object)$rural/sum(country_demog(object)$rural))) / 2
+      # fraction of the population that is urban
+      f_urban <- sum(country_demog(object)$urban)
+      #fraction of the population that is rural
+      f_rural <- sum(country_demog(object)$rural)
+      # convenience parameter
+      K <- ((1-f_rural)* NU + f_rural*NY)
+      
+      matF <- matrix(data = c(0, 0, b*S0U*(K*C + NU/(1-frac_rural)*(1-C)),              b*S0U*K*C,
+                              0, 0,              b*S0Y*K*C,                b*S0Y*(K*C + NY/frac_rural*(1-C)),     
+                              0, 0,                 0,                                   0,
+                              0, 0,                 0,                                   0), 
+                     nrow = 4, ncol = 4, byrow = TRUE)
+      matV <- matrix(data = c(k, 0, 0, 0,
+                              0, k, 0, 0,
+                              -k, 0, (g+m), 0,
+                              0, -k, 0, (g+m)),
+                     nrow = 4, ncol = 4, byrow = TRUE)
+      
+      R0 <- max(abs(eigen(matF %*% inv(matV))$values))
+      return(R0)
+    })

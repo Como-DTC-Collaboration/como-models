@@ -119,7 +119,7 @@ in object for the time points specified in times and integration method
 specified in solve_method.
 
 For the urban community:
-\deqn{\frac{dS_U(t)}{dt} = - b S_U (I_U + I_Y) N_U/ C
+\deqn{\frac{dS_U(t)}{dt} = - b S_U (I_U + I_Y) N_U C
                            - b S_U/f_urban I_U/f_urban N_U (1-C)}
 \deqn{\frac{dE_U(t)}{dt} =  b S_U (I_U + I_Y) N_U C
                            + b S_U/f_urban I_U/f_urban N_U (1-C) -k E_U}

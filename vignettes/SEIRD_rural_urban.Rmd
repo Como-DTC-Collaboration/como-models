@@ -1,9 +1,10 @@
 ---
-title: "The SEIR model with urban and rural communities"
+title: "The SEIRD model with urban and rural communities"
 author: "Solveig A. van der Vegt"
 output: rmarkdown::html_vignette
+bibliography: references.bib
 vignette: >
-  %\VignetteIndexEntry{The SEIR model with urban and rural communities}
+  %\VignetteIndexEntry{The SEIRD model with urban and rural communities}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -19,161 +20,253 @@ knitr::opts_chunk$set(
 library(comomodels)
 library(ggplot2)
 library(glue)
+library(readxl)
+library(deSolve)
+library(reshape2)
+library(gridExtra)
+library(readxl)
+library(viridis)
+library(matlib)
 ```
 
 ## Introduction
-This document explains a version of the SEIR model that considers the difference
-in contact patterns in and between urban and rural populations. The model describes
-how populations of susceptible, exposed, infectious and recovered
-individuals evolve over time in each community. A simple
-ordinary differential equation (ODE) is defined for each of the populations.
-The S4 object class `SEIR_rural_urban` lets the user
-define and simulate such a model, choosing the initial conditions and parameter values.
+Here we consider an extension to the basic SEIRD model that considers multiple interacting communities. For simplicity, we consider only two interacting communities here. Each community consists of a susceptible, exposed, infectious and recovered population. Although one can consider two generic communities, in this implementation we consider specifically one urban and one rural community, and use data from the WHO and UN to specify contacts in each community. In the following sections, we will explain the equations of the model, the implementation in this package and how to use it, and discuss briefly how the connectedness level between communities affects the results.
 
-## The SEIR Model with rural and urban communities
-The basic SEIR model has been explained in other vignettes. When we consider 
-rural and urban communities, there are multiple ways to model this. In this section
-I will propose two ways of modeling how these communities interact: (1) rural and urban individuals remain in their separate populations but these populations interact so infectious individuals from each population can infect susceptibles from both populations at differing rates, or (2) individuals can move between communities but only individuals within each community can infect each other.
-
-We start with a model where people are assumed to maintain their urban or rural lifestyle throughout the modeling time frame, so they do not move between communities. The motivation for this type of model comes from the fact that rural and urban populations will likely spend most of their time in their own community, but might visit the other occasionally. We therefor ``sort'' each individual into either the rural or urban population and assume that they maintain their rural or urban lifestyle most of time. These populations do interact and can infect each other, but individuals do not move between populations. We set $X_U$ to mean an urban populations and $U_Y$ to signify a rural population, to get 
-
-$$\frac{\text{d}S_U}{\text{d}t} = -\beta_U S_U I_U - \beta_{UY} S_U I_Y$$
-$$\frac{\text{d}S_Y}{\text{d}t} = -\beta_Y S_Y I_Y - \beta_{YU} S_Y I_U$$
-where $\beta_U$, $\beta_Y$, $\beta_{UY}$ and $\beta_{YU}$ are positive contact parameters/matrices specifying the probability of infection within and between populations. Because the only interactions between populations that would have an effect on the dynamics of the model are those in which a susceptible and infectious individual meet, the remaining ODEs of the SEIR model would remain the same for each population:
+## The mathematical model
+### The equations
+We base our model of connected communities on the model presented by Tun et al. [-@Tun21]. We designate the urban community $U$ and the rural community $Y$. Following the same naming pattern for variables and parameters as used for the basic SEIRD model, the ordinary differential equations describing how the populations evolve are as follows, where variable $X_Z$ designates the population of individuals with infectedness status $X$ in community $Z$,
 
 \begin{equation}
 \begin{split}
-    \frac{\text{d}E_U}{\text{d}t} = &  \beta_U S_U I_U + \beta_{UY} S_U I_Y - \kappa E_U\\
-    \frac{\text{d}E_Y}{\text{d}t} = & \beta_Y S_Y I_Y + \beta_{YU} S_Y I_U - \kappa E_Y\\
-    \frac{\text{d}I_U}{\text{d}t} = & \kappa E_U - (\gamma + \mu)I_U\\
-    \frac{\text{d}I_Y}{\text{d}t} = & \kappa E_Y - (\gamma + \mu)I_Y\\
-    \frac{\text{d}R_U}{\text{d}t} = & \gamma I_U\\
-    \frac{\text{d}R_Y}{\text{d}t} = & \gamma I_Y\\
+    \frac{\text{d}S_U}{\text{d}t} = &-\beta S_U \left((I_U+I_Y) (\phi_U N_U + \phi_Y N_Y) C + \frac{I_U}{\phi_U}N_U(1-C)\right),\\
+    \frac{\text{d}S_Y}{\text{d}t} = &-\beta S_Y \left((I_U+I_Y) (\phi_U N_U + \phi_Y N_Y) C + \frac{I_Y}{\phi_Y}N_Y(1-C)\right),\\
+    \frac{\text{d}E_U}{\text{d}t} = &  \beta S_U \left((I_U+I_Y) (\phi_U N_U + \phi_Y N_Y) C + \frac{I_U}{\phi_U}N_U(1-C)\right) - \kappa E_U,\\
+    \frac{\text{d}E_Y}{\text{d}t} = & \beta S_Y \left((I_U+I_Y) (\phi_U N_U + \phi_Y N_Y) C + \frac{I_Y}{\phi_Y}N_Y(1-C)\right)  - \kappa E_Y,\\
+    \frac{\text{d}I_U}{\text{d}t} = & \kappa E_U - (\gamma + \mu)I_U ,\\
+    \frac{\text{d}I_Y}{\text{d}t} = & \kappa E_Y - (\gamma + \mu)I_Y,\\
+    \frac{\text{d}R_U}{\text{d}t} = & \gamma I_U,\\
+    \frac{\text{d}R_Y}{\text{d}t} = & \gamma I_Y,\\
+    \frac{\text{d}D_U}{\text{d}t} = & \mu I_U,\\
+    \frac{\text{d}D_Y}{\text{d}t} = & \mu I_Y.\\
 \end{split}
 \end{equation}
-\noindent where $\kappa$, $\gamma$, and $\mu$ are positive parameters which don't necessarily differ between the communities as some or all disease characteristics remain the same in both communities. Although, one could imagine that individuals in a remote rural community are more likely to die of the disease so these parameter values can be varied.
-The big advantage of this model is that it is much simpler than the  model which includes migration explicitly, discussed below.
 
-In this next model we consider that although people might be in a rural or urban setting originally, they can move between the two easily. We then only have to consider infection within a population as individuals will have to be in the same setting as another individual to infect them, and thus become part of the same population. This makes the ODEs a lot more complicated as we now have to consider migration of all populations.
+\noindent In the above equations, $\phi_U$ is the fraction of the population that lives in an urban environment, $\phi_Y$ is the fraction of the population that lives in a rural environment, $N_U$ is the average number of contacts that an urban individual has in a day (normalized over the whole population), and $N_Y$ is the average number of contacts that a rural individual has in a day (normalized over the whole population), so $(\phi_U N_U + \phi_Y N_Y)$ is the normalized average number of contacts for any individual. $C$ is the connectedness parameter, where $C=1$ means the communities are well-mixed with each other, and $C=0$ means the two communities do not interact at all.
 
+The difference between this model and the basic SEIRD model is the computation of the number of infectious contacts that a susceptible individual has. This is reflected in the equations for $S_Z$ and $E_Z$. Individuals in either community can either come into contact with people from their own community or from the other community. The extent to which the later happens is determined by the connectedness parameter $C$. If the communities are completely separate, i.e. $C=0$, the probability that a susceptible individual in community $Z$ interacts with an infectious individual is the number of contacts that someone in that community has, $N_Z$, multiplied by the probability that a contact is infectious, $I_Z/\phi_Z$. If the communities are well-mixed with each other, the probability is again the number of contacts multiplied by the probability that a contact is infectious, although now the number of contacts that an individual has is averaged over the communities, so $\phi_U N_U + \phi_Y N_Y$, and the individual can encounter people from either community so the probability of an infectious contact is $I_U+I_Y$. The extent to which the communities are connected, designated by $C$, determines to which extent the two extreme contact patterns play a role, and thus we obtain the weighted average that appears in the equations above which designates the total probability of a susceptible individual in $Z$ having an infectious contact: $(I_U+I_Y) (\phi_U N_U + \phi_Y N_Y) C + \frac{I_Z}{\phi_Z}N_Z(1-C)$.
+
+### The contact parameters $N_Z$
+The average number of contacts for an individual in a given community $Z$, $N_Z$, is computed based on the country-specific contact matrices [@Prem20], age demographics [@UN], and urban/rural populations split [@WB]. For a detailed discussion of the contact matrices, see the age-structured model. The number of contacts in community $Z$ of a specific country is computed by first adding up all the contacts in the contact matrix for each age group so we obtain the total number of contacts that an individual in a specific age group has in a day. We obtain the vector with population by age for community $Z$ by taking the age demographic data for the whole country and multiplying it by the percentage of the population that lives in community $Z$. We then take a weighted average over the age groups, using the age demographic data as weights. Lastly, we normalize the number of contacts by dividing through by the total population of the country. We thus get
 \begin{equation}
-\begin{split}
-    \frac{\text{d}S_U}{\text{d}t} = &-\beta_U S_U I_U + \phi_{SY}S_Y - \phi_{SU}S_U\\
-    \frac{\text{d}S_Y}{\text{d}t} = &-\beta_Y S_Y I_Y+ \phi_{SU}S_U - \phi_{SY}S_Y\\
-    \frac{\text{d}E_U}{\text{d}t} = &  \beta_U S_U I_U - \kappa E_U + \phi_{EY}E_Y - \phi_{EU}E_U\\
-    \frac{\text{d}E_Y}{\text{d}t} = & \beta_Y S_Y I_Y  - \kappa E_Y + \phi_{EU}E_U - \phi_{EY}E_Y\\
-    \frac{\text{d}I_U}{\text{d}t} = & \kappa E_U - (\gamma + \mu)I_U + \phi_{IY}I_Y - \phi_{IU}I_U\\
-    \frac{\text{d}I_Y}{\text{d}t} = & \kappa E_Y - (\gamma + \mu)I_Y + \phi_{IU}I_U - \phi_{IY}I_Y\\
-    \frac{\text{d}R_U}{\text{d}t} = & \gamma I_U + \phi_{RY}R_Y - \phi_{RU}R_U\\
-    \frac{\text{d}R_Y}{\text{d}t} = & \gamma I_Y + \phi_{RU}R_U - \phi_{RY}R_Y\\
-\end{split}
+    N_{Z} = \frac{ \sum_{m = 1}^K c_Z(n,m)\cdot y_Z}{\text{total population}}, 
 \end{equation}
-\noindent where $\phi_{YX}$ are migration rates of population $Y$ from community $X$ to the other community.
+where $c_Z(n,m)$ is the entry in contact matrix $c$ for community $Z$ denoting the number of contacts someone in age group $n$ has with individuals in age group $m$, and $y_Z$ is the vector designating the number of individuals in each age group in community $Z$.
 
-## The `SEIR_rural_urban` class
-In this section we will walk through an example of how to use the `SEIR_rural_urban`
-class. This model is contained in the package comomodels. We also compare the two different approaches discussed above to assess whether they are qualitatively different.
+## Implementation and use
+In this section, we walk through how to use the model. First, we will show how to load and prep the appropriate data, which is included in the package. We'll then walk through an example simulation. In the last subsection, we'll briefly discuss the effect of varying the connectedness parameter $C$.
 
-To create a new model of either class, we run:
+### Loading and prepping country-specific data
+First, we load the contact matrices for the urban and rural communities. Because the two sets of contact matrices don't cover the exact same countries, we also make a list of countries for which we have both contact matrices, which we can use later to check if the choice of country is valid.
 ```{r}
-my_model <- new("SEIR_rural_urban")
-my_model2 <- new("SEIR_rural_urban_2")
+# load contact matrices
+load("../Data/contact_all_urban.rdata")
+contact_all_urban <- contact_all # ROWS are age of person, COLUMNS are age of contact
+names_urban <- names(contact_all_urban)
+load("../Data/contact_all_rural.rdata")
+contact_all_rural <- contact_all
+names_rural <- names(contact_all_rural)
+names_common <- intersect(names_urban,names_rural)
+```
+We also load in all demographic data from the excel sheets, and load in a list showing the which three-letter code for each country.
+```{r}
+#import all demographic data
+# data on percentage of the population that is rural
+country_pop_rural <- read_excel("../Data/Country_ruralpop_data.xlsx", sheet = "Data", skip = 3)
+# age demographic breakdown into 5 year age categories
+country_pop_byage <- read_excel("../Data/Populationper5yearagegroup.xlsx", sheet = "ESTIMATES", skip = 16)
+
+# conversion table from 3 letter country codes to full names
+code_to_country <-  read_excel("../Data/Country_totalpop_data.xlsx", sheet = "Metadata - Countries")
 ```
 
-Next, we set the parameter values for $\beta_u$, $\beta_y$, $\beta_{uy}$, $\beta_{yu}$, $\kappa$, $\gamma$ and $\mu$ for model 1 and $\beta_u$, $\beta_y$, $\kappa$, $\gamma$ , $\mu$, $\phi_{su}$, $\phi_{sy}$, $\phi_{eu}$, $\phi_{ey}$, $\phi_{iu}$, $\phi_{iy}$, $\phi_{ru}$, and $\phi_{ry}$ for model 2:
+Next, we select a country, in this case Tunisia. This needs to happen with a three letter code. We check if the country is valid choice by checking if it appears in the list of countries for which we have both a rural and urban contact matrix.
 ```{r}
-transmission_parameters(my_model) <- list(1, 0.5, 0.1, 0.1, 0.9, 0.5, 0.1)
-transmission_parameters2(my_model2) <- list(1, 0.5, 0.9, 0.5, 0.1, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01)
+# specify country
+country <- "TUN"
+if (!(country %in% names_common)) {
+  stop(paste(country," is not a valid three-letter country code."))
+}
 ```
 
-To check that the parameters have been set correctly, we call
+Now that we have specified a country, we extract from the data what percentage of its population is rural. Because the most recent year that all our data source have in common is 2019, we select all our data from that year.
 ```{r}
-transmission_parameters(my_model)
-transmission_parameters2(my_model2)
+# get fraction of population that is rural
+country_rural <- country_pop_rural$`2019`[country_pop_rural$`Country Code` == country]
+frac_rural <- country_rural/100 #turn percentage into fraction
 ```
 
-We now need to set the initial conditions for the model. We only set the initial
-conditions $S(0)$, $E(0)$, $I(0)$ and $R(0)$. The value of $C(0)$ is computed
-automatically and $D(0)=0$ always. We set them the same for both models to get a good comparison.
+The last step in our data prep is to create the vector of normalized population per age group for the specific country. The contact matrices have 5-year age groups with the oldest group begin 80+. Because the age demographics go up to 100+, we need to sum the last five age groups in the demographics vector to ensure compatibility with the contact matrices.
+
 ```{r}
-initial_conditions(my_model) <- list(0.45, 0, 0.05, 0, 0.45, 0, 0.05, 0)
-initial_conditions2(my_model2) <- list(0.45, 0, 0.05, 0, 0.45, 0, 0.05, 0)
+# get fraction of population in each 5-year age range
+# get full name of country
+country_fullname <- code_to_country$`TableName`[code_to_country$`Country Code` == country]
+# extract age demographic vector
+pop_byage_2019 <- country_pop_byage[(country_pop_byage$`Region, subregion, country or area *` == country_fullname & country_pop_byage$`Reference date (as of 1 July)` == 2019),9:29]
+pop_byage_2019 <- as.double(pop_byage_2019)
+# normalize to fractions of the total population
+pop_byage_2019 <- pop_byage_2019/sum(pop_byage_2019) 
+# must sum last five entries because contact matrices have an 80+ category instead of 100+
+pop_byage_2019 <- c(pop_byage_2019[1:15], sum(pop_byage_2019[16:20]))
 ```
 
-
-Now we can simulate the system.
+### Basic simulation
+We start by creating an instance of the model class,
 ```{r}
-out_df <- simulate_SEIR_rural_urban(my_model, seq(0, 50, by = 0.1))
-out_df2 <- simulate_SEIR_rural_urban_2(my_model2, seq(0, 50, by = 0.1))
+model <- new("SEIR_rural_urban")
 ```
 
-The function `simulate_SEIR_rural_urban` solves `my_model` from the initial conditions specified
-previously, over the time sequence `seq(0, 50, by = 0.1)`. This particular simulation
-goes out to 50 days. The function returns
-a data frame where the columns are the time sequence, $S$, $E$, $I$, $R$, $C$ and $D$.
-Lastly, we visualize the results, plotting the six variables against time.
-```{r fig1, fig.height = 5, fig.width = 7}
-i <- sapply(out_df, is.factor)
-out_df[i] <- lapply(out_df[i], as.character)
-SEIR_df <- subset(out_df, compartment != "Incidences_U" & compartment != "Deaths_U" & compartment != "Incidences_Y" & compartment != "Deaths_Y")
+followed by setting the parameter values of the model that are not determined by the demographics or contact matrices.
+```{r}
+b = 0.3 # probability of infection
+k = 0.2 # 1/(incubation period in days)
+g = 0.1# 1/(days between infection and recovery)
+m = 0.03 # probability of death, cases-fatality ratio.
+C = 1 # connectedness parameter
+transmission_parameters(model) <- list(b, k, g, m, C)
+```
+
+Next we set the initial conditions of the model, where we specify separately what fraction of the population is infected in the urban community and what fraction is infected in the rural community. Note here that these are fractions of the total population across both communities! Because the populations are normalized, all initial conditions together must sum to one.
+```{r}
+start_infected_urban = 0.0001
+start_infected_rural = 0
+S0U = 1-frac_rural - start_infected_urban
+E0U = 0
+I0U = start_infected_urban
+R0U = 0
+S0Y = frac_rural - start_infected_rural
+E0Y = 0
+I0Y = start_infected_rural
+R0Y = 0
+initial_conditions(model) <- list(S0U, E0U, I0U, R0U,
+                                        S0Y, E0Y, I0Y, R0Y)
+```
+
+We now assign the contact matrices and demographic data to the model. These are used in the class to compute the number of contacts, etc.
+```{r}
+# set contact matrices
+contact_matrices(model) <- list(contact_all_urban[[country]],contact_all_rural[[country]])
+
+#set demographic data
+country_demog(model) <- list(pop_byage_2019*(1-frac_rural),pop_byage_2019*frac_rural)
+```
+
+The last thing to do is to set the time span over which to simulate the model, and then run it.
+```{r}
+tend = 80
+time = seq(0, tend, by = 1)
+
+# run simulation
+output <- run(model, time)
+```
+
+The output from the model can then be plotted such that all populations are plotted separately for both communities
+```{r, fig.height = 4, fig.width = 7}
+# Communities plotted separately
+i <- sapply(output, is.factor)
+output[i] <- lapply(output[i], as.character)
+SEIR_df <- subset(output, compartment != "Incidences_U" & compartment != "Deaths_U" & compartment != "Incidences_Y" & compartment != "Deaths_Y")
 SEIR_df$compartment <- factor(SEIR_df$compartment, levels = c("S_U", "E_U", "I_U", "R_U", "S_Y", "E_Y", "I_Y", "R_Y"))
 col <- c("S_U" = "blue", "E_U" = "green", "I_U" = "yellow", "R_U" = "red", "S_Y" = "lightblue1", "E_Y" = "lightgreen", "I_Y" = "lightyellow", "R_Y" = "indianred")
 SEIRplot <- ggplot(SEIR_df, aes(x = time, y = value)) +
-    geom_line(aes(color = compartment), size = 1.5) +
-    labs(x = "time", y = "fraction of the population",
-         title = glue("SEIR model with urban and rural communities: no migration")) +
-    theme(legend.position = "right") +
-    scale_color_manual(values = col)
+  geom_line(aes(color = compartment), size = 1.5) +
+  labs(x = "time (days)", y = "fraction of the population",
+       title = glue("Urban and rural populations")) +
+  theme(legend.position = "bottom", legend.title = element_blank()) +
+  scale_color_manual(values = col)
 
-print(SEIRplot)
-
-```
-```{r fig2, fig.height = 5, fig.width = 7}
-case_df <- subset(out_df, compartment == "Incidences_U" | compartment == "Deaths_U" | compartment == "Incidences_Y" | compartment == "Deaths_Y")
+case_df <- subset(output, compartment == "Incidences_U" | compartment == "Deaths_U" | compartment == "Incidences_Y" | compartment == "Deaths_Y")
 case_df$compartment <- factor(case_df$compartment, levels = c("Incidences_U", "Deaths_U", "Incidences_Y", "Deaths_Y"))
-col <- c("Incidences_U" = "gray", "Deaths_U" = "black", "Incidences_Y" = "lightgray", "Deaths_Y" = "darkgray")
-inc_plot <- ggplot(case_df, aes(x = time, y = value)) +
-    geom_line(aes(color = compartment), size = 1.5) +
-    labs(x = "time", y = "fraction of the population",
-         title = glue("Incidences and deaths")) +
-    theme(legend.position = "right") +
-    scale_color_manual(values = col)
+col <- c("Cases_U" = "grey28", "Deaths_U" = "black", "Cases_Y" = "lightgray", "Deaths_Y" = "darkgray")
+inc_plot <- ggplot(case_df, aes(x = time, y = value, fill = compartment)) +
+  geom_bar(stat="identity", position = position_dodge()) +
+  labs(x = "time (days)", y = "fraction of the population",
+       title = glue("Cases and deaths")) +
+  theme(legend.position = "bottom", legend.title = element_blank()) +
+  scale_fill_discrete(labels = c("Cases_U","Deaths_U","Cases_Y","Deaths_Y"))
 
-print(inc_plot)
+grid.arrange(SEIRplot,inc_plot,nrow = 1)
+```
+or such that the populations are summed across the communities and we can observe the dynamics of the susceptible, exposed, infectious, recovered and dead individuals in the whole population.
+
+```{r , fig.height = 4, fig.width = 7}
+SEIR_total <- SEIR_df
+CD_total <- case_df
+
+SEIR_total$value[SEIR_total$compartment == "S_U"] <- SEIR_df$value[SEIR_df$compartment == "S_U"] + SEIR_df$value[SEIR_df$compartment == "S_Y"]
+SEIR_total$value[SEIR_total$compartment == "E_U"] <- SEIR_df$value[SEIR_df$compartment == "E_U"] + SEIR_df$value[SEIR_df$compartment == "E_Y"]
+SEIR_total$value[SEIR_total$compartment == "I_U"] <- SEIR_df$value[SEIR_df$compartment == "I_U"] + SEIR_df$value[SEIR_df$compartment == "I_Y"]
+SEIR_total$value[SEIR_total$compartment == "R_U"] <- SEIR_df$value[SEIR_df$compartment == "R_U"] + SEIR_df$value[SEIR_df$compartment == "R_Y"]
+CD_total$value[CD_total$compartment == "Incidences_U"] <- case_df$value[case_df$compartment == "Incidences_U"] + case_df$value[case_df$compartment == "Incidences_Y"]
+CD_total$value[CD_total$compartment == "Deaths_U"] <- case_df$value[case_df$compartment == "Deaths_U"] + case_df$value[case_df$compartment == "Deaths_Y"] 
+
+SEIR_total <- SEIR_total[SEIR_total$compartment != "S_Y" & SEIR_total$compartment != "E_Y" & SEIR_total$compartment != "I_Y" & SEIR_total$compartment != "R_Y",]
+CD_total <- CD_total[CD_total$compartment != "Incidences_Y" & CD_total$compartment != "Deaths_Y",]
+
+SEIRplot_total <- ggplot(NULL, aes(x = time, y = value)) +
+  geom_line(data = SEIR_total, aes(color = compartment), size = 1.5) +
+  labs(x = "time (days)", y = "fraction of the population",
+       title = glue("Summed populations"),
+       subtitle = country_fullname) +
+  scale_colour_discrete(labels = c("Total S", " Total E","Total I","Total R")) +
+  theme(legend.position = "bottom", legend.title = element_blank())
+
+incplot_total <- ggplot(CD_total, aes(x = time, y = value, fill = compartment)) +
+  geom_bar(stat="identity", position = position_dodge()) +
+  labs(x = "time (days)", y = "fraction of the population",
+       title = glue("Cases and deaths"),
+       subtitle = country_fullname) +
+  theme(legend.position = "bottom", legend.title = element_blank()) +
+  scale_fill_discrete(labels = c("Cases","Deaths"))
+
+grid.arrange(SEIRplot_total,incplot_total,nrow = 1)
+```
+
+### The basic reproduction number: R0
+We can compute the basic reproduction number using the next generation matrix method explained by van den Driessche [-@vandenDriessche17]. The basic reproduction for the model can be displayed by simply calling
+```{r}
+print(R0(model))
+```
+
+## The effect of varying $C$
+The connectedness parameter $C$ indicates how connected the two communities are, i.e. how much the individuals in each are expected to interact with each other. At the extreme ends we have the communities completely connected and acting as one big community for $C=1$, and completely disconnected and acting as separate communities for $C=0$. We explore what happens for intermediate values by simulating the model for a range of values of $C$ and plotting the summed the infectious population for each simulation.
+
+```{r , fig.height = 4, fig.width = 7}
+  for (i in c(0,0.001,0.005,0.01,0.05,0.1,0.5,1)) {
+    C = i # connectedness parameter
+    transmission_parameters(model) <- list(b, k, g, m, C)
+    out_C <- run(model, time)
+    temp_I <- data.frame(C = C, t = time,compartment = "U",value = out_C$value[out_C$compartment == "I_U"] + out_C$value[out_C$compartment == "I_Y"])
+    #temp_IY <- data.frame(Cvalue = C, t = time,compartment = "Y",value = out_C$value[out_C$compartment == "I_Y"])
+    if (i == 0){
+      result <- temp_I
+    } else {
+      result <- rbind(result,temp_I)
+    }
+  }
+
+ggplot(result, aes(x = t, y = value)) +
+  geom_line(aes(color = as.factor(C)), size = 1) +
+  labs(x = "time", y = "fraction of the population",
+       title = glue("Urban vs rural model for different levels of connectedness")) +
+  scale_color_viridis(discrete = TRUE)+ 
+  labs(color = "C")
 
 ```
 
-We now do the same for the second model.
+The above plot shows that up to approximately $C=0.1$, the value of $C$ has a significant impact on total number of infectious individuals across the communities. Varying the value of $C$ between 0.1 and one, however, barely makes a difference. As both communities are subject to the same parameter values and the average number of contacts that individuals in both communities have don't differ a lot in most countries, this is results is not surprising. Above a certain level of interaction, the few infectious people in one community will quickly interact with individuals from the other community, spreading the infection. At that point, both communities develop their own epidemic under the same parameter values and the mixing between them further helps in synchronizing the waves of the epidemic in both communities. Only for very low levels of interaction does the initial difference in the number of infectious individuals have a lasting effect on epidemic dynamics. 
 
-```{r fig3, fig.height = 5, fig.width = 7}
-i <- sapply(out_df2, is.factor)
-out_df2[i] <- lapply(out_df2[i], as.character)
-SEIR_df2 <- subset(out_df2, compartment != "Incidences_U" & compartment != "Deaths_U" & compartment != "Incidences_Y" & compartment != "Deaths_Y")
-SEIR_df2$compartment <- factor(SEIR_df2$compartment, levels = c("S_U", "E_U", "I_U", "R_U", "S_Y", "E_Y", "I_Y", "R_Y"))
-col <- c("S_U" = "blue", "E_U" = "green", "I_U" = "yellow", "R_U" = "red", "S_Y" = "lightblue1", "E_Y" = "lightgreen", "I_Y" = "lightyellow", "R_Y" = "indianred")
-SEIRplot2 <- ggplot(SEIR_df2, aes(x = time, y = value)) +
-    geom_line(aes(color = compartment), size = 1.5) +
-    labs(x = "time", y = "fraction of the population",
-         title = glue("SEIR model with urban and rural communities: migration")) +
-    theme(legend.position = "right") +
-    scale_color_manual(values = col)
 
-print(SEIRplot2)
 
-```
-```{r fig4, fig.height = 5, fig.width = 7}
-case_df2 <- subset(out_df2, compartment == "Incidences_U" | compartment == "Deaths_U" | compartment == "Incidences_Y" | compartment == "Deaths_Y")
-case_df2$compartment <- factor(case_df2$compartment, levels = c("Incidences_U", "Deaths_U", "Incidences_Y", "Deaths_Y"))
-col <- c("Incidences_U" = "gray", "Deaths_U" = "black", "Incidences_Y" = "lightgray", "Deaths_Y" = "darkgray")
-inc_plot2 <- ggplot(case_df2, aes(x = time, y = value)) +
-    geom_line(aes(color = compartment), size = 1.5) +
-    labs(x = "time", y = "fraction of the population",
-         title = glue("Incidences and deaths")) +
-    theme(legend.position = "right") +
-    scale_color_manual(values = col)
 
-print(inc_plot2)
-
-```
-
-From the above plots we can see that there is some difference between the two models. Looking at the cases and deaths, they are remarkably the same, but we do see that the populations in model 2 are much more well-mixed. In the model with no migration (but with between-community infection) there is a stronger difference between communities when it comes to the dynamics of the populations whereas the model where migration is allowed (but only intra-community infection is possible) the communities behave much more the same way. The smaller the migration rates in the second model, the more the dynamics of the two communities diverge but even for a small rate like 1% of the population per day, they communities behave much more similarly than in model 1. Also, because the populations mix in model two, a steady state for this population means that the fraction of susceptibles (and other populations) in both communities is the same at steady state whereas this is not necessarily true for model 1. This is partly an artifact of the fact that migration rates between communities for each population are the same (i.e. $\phi_{SU} = \phi_{SY}$, etc.), but it is easy to see from the ODEs that once there are no infectious or exposed individuals, the conditions for steady state are balanced migration of susceptibles and recovered. I guess whether or not the migration rates between the communities are balanced in model 2 depends on the time frame and the country that you are looking at. As migration to urban environments is common in some countries, maybe that should be reflected in the model. However, on the time scale that we are currently modeling (on the order of months) this is not really relevant and it might be better to consider people "migrating" fort shorter time periods such as communting for work, in which case the rates should be the same as people will return to their own community relatively quickly. It is then just a measure of how much the populations mix on a given day, i.e. how fast infections will spread between communities.
+## References
