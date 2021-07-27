@@ -17,4 +17,10 @@ Config/testthat/edition: 3
 Imports: 
     forcats,
     deSolve,
-    ggplot2
+    ggplot2,
+    glue,
+    matlib,
+    reshape2,
+    methods,
+    readxl,
+    gridExtra

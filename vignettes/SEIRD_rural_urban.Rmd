@@ -81,12 +81,14 @@ We also load in all demographic data from the excel sheets, and load in a list s
 ```{r}
 #import all demographic data
 # data on percentage of the population that is rural
-country_pop_rural <- read_excel("../Data/Country_ruralpop_data.xlsx", sheet = "Data", skip = 3)
+#country_pop_rural <- read_excel("../Country_ruralpop_data.xlsx", sheet = "Data", skip = 3)
+country_pop_rural <- read_excel(system.file("extdata", "Country_ruralpop_data.xlsx", package = "como-models", mustWork = TRUE), sheet = "Data", skip = 3)
 # age demographic breakdown into 5 year age categories
-country_pop_byage <- read_excel("../Data/Populationper5yearagegroup.xlsx", sheet = "ESTIMATES", skip = 16)
-
+#country_pop_byage <- read_excel("../Populationper5yearagegroup.xlsx", sheet = "ESTIMATES", skip = 16)
+country_pop_byage <- read_excel(system.file("extdata", "Populationper5yearagegroup.xlsx", package = "como-models", mustWork = TRUE), sheet = "ESTIMATES", skip = 16)
 # conversion table from 3 letter country codes to full names
-code_to_country <-  read_excel("../Data/Country_totalpop_data.xlsx", sheet = "Metadata - Countries")
+#code_to_country <-  read_excel("../Country_totalpop_data.xlsx", sheet = "Metadata - Countries")
+code_to_country <- read_excel(system.file("extdata", "Country_totalpop_data.xlsx", package = "como-models", mustWork = TRUE), sheet = "Metadata - Countries")
 ```
 
 Next, we select a country, in this case Tunisia. This needs to happen with a three letter code. We check if the country is valid choice by checking if it appears in the list of countries for which we have both a rural and urban contact matrix.
@@ -123,7 +125,7 @@ pop_byage_2019 <- c(pop_byage_2019[1:15], sum(pop_byage_2019[16:20]))
 ### Basic simulation
 We start by creating an instance of the model class,
 ```{r}
-model <- new("SEIR_rural_urban")
+model <- new("SEIRD_RU")
 ```
 
 followed by setting the parameter values of the model that are not determined by the demographics or contact matrices.
@@ -168,6 +170,7 @@ time = seq(0, tend, by = 1)
 
 # run simulation
 output <- run(model, time)
+dim(output)
 ```
 
 The output from the model can then be plotted such that all populations are plotted separately for both communities
