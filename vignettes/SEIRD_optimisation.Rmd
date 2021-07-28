@@ -26,16 +26,17 @@ library(tidyr)
 ```
 
 # Check for cached data
-```{r}
-# TRUE if plot saved data, FALSE to run optimisation
+```{r bool-cached-data}
+# TRUE to plot saved data, FALSE to run optimisation
 cached_bool <- FALSE
+set.seed(0)
 ```
 
 ## Optimisation on synthetic data (incidences and deaths)
 
 ## Simulate data
 
-```{r, eval=!cached_bool}
+```{r setup-model, eval=!cached_bool}
 model <- SEIRD()
 simulating_para <- c(9.1e-1, 8.7e-1, 5.3e-1, 9.7e-2,
                      9.999e-1, 1e-7, 1e-7, 1e-6)
@@ -53,7 +54,7 @@ out_df <- run(model, times)
 
 ## Add noise to simulated data (incidences and deaths)
 
-```{r, eval=!cached_bool}
+```{r add-noise, eval=!cached_bool}
 population_size <- 1e4
 
 # add noise
@@ -77,13 +78,14 @@ testing_data <- testing_data[-1,]
 write.csv(testing_data, "synthetic_data.csv", row.names = FALSE)
 ```
 ```{r, eval=cached_bool}
+population_size <- 1e4
 testing_data <- read.csv("synthetic_data.csv")
 ```
 
 
 ## Visualise simulation
 
-```{r, fig.height = 5, fig.width = 7}
+```{r plot-synthetic-data, fig.height = 5, fig.width = 7}
 ggplot() +
   geom_line(data=testing_data, aes(x = time, y = DeathNoise, color = "Deaths")) +
   geom_line(data=testing_data, aes(x = time, y = IncNoise, color = "Incidence")) +
@@ -94,7 +96,7 @@ ggplot() +
 
 ## Create error function
 
-```{r}
+```{r error-fn}
 ErrorFn <- function(parameters, model=SEIRD(), inc_numbers=0, death_numbers=0,
                     fixed_parameter=FALSE, fixed_parameter_value=0) {
   
@@ -109,7 +111,8 @@ ErrorFn <- function(parameters, model=SEIRD(), inc_numbers=0, death_numbers=0,
                     E0=parameters[6],
                     I0=parameters[7],
                     R0=parameters[8]) # 1-sum(parameters[5:7])
-  
+  str(transmission_para)
+  str(init_cond)
   transmission_parameters(model) <- transmission_para
   initial_conditions(model) <- init_cond
   
@@ -117,13 +120,18 @@ ErrorFn <- function(parameters, model=SEIRD(), inc_numbers=0, death_numbers=0,
   out_df <- run(model, times)
   
   data_wide <- spread(out_df$changes, compartment, value)
-  data_wide$Incidence <- data_wide$Incidence * population_size
-  data_wide$Deaths <- data_wide$Deaths * population_size
+  data_wide$Incidence <- abs(data_wide$Incidence) * population_size
+  data_wide$Deaths <- abs(data_wide$Deaths) * population_size
   
-  incidence_err <- sqrt(sum((inc_numbers - data_wide$Incidence[-1])^2))
-  death_err <- sqrt(sum((death_numbers - data_wide$Deaths[-1])^2))
+  logIncidence <- log(data_wide$Incidence[-1])
+  #logIncidence[logIncidence == -Inf] <- -1
+  incidence_likelihood <- sum(- inc_numbers * logIncidence + data_wide$Incidence[-1])
+#  death_likelihood <- -sqrt(sum((death_numbers - data_wide$Deaths[-1])^2))
+  logDeaths <- log(data_wide$Deaths[-1])
+  #logDeaths[logDeaths == -Inf] <- -1
+  death_likelihood <- sum(- death_numbers * logDeaths + data_wide$Deaths[-1])
 
-  (incidence_err + death_err)/2
+  (incidence_likelihood + death_likelihood)/2
 }
 ```
 
@@ -131,7 +139,7 @@ ErrorFn <- function(parameters, model=SEIRD(), inc_numbers=0, death_numbers=0,
 
 # Set up constraints and data structure for results
 
-```{r}
+```{r constraints}
 # set constraints
 constraint_ui <- rbind(diag(8), -diag(8)[5:8,], c(rep(0, 4), rep(1,4)), c(rep(0, 4), rep(-1,4)))
 constraint_ci <- c(rep(0, 8), rep(-1, 4), 0.99, -1.01)
@@ -139,7 +147,7 @@ constraint_ci <- c(rep(0, 8), rep(-1, 4), 0.99, -1.01)
 
 # Run single optimisation
 
-```{r}
+```{r single-opt}
 init_guess <- c(0.9, 0.8, 0.5, 0.01, 0.997, 0.001, 0.001, 0.001)
 result <- constrOptim(init_guess, ErrorFn,
                       'NULL', constraint_ui, constraint_ci,
@@ -150,7 +158,7 @@ result <- constrOptim(init_guess, ErrorFn,
 
 # Visualise optimisation result
 
-```{r, fig.height = 5, fig.width = 7}
+```{r plot-opt, fig.height = 5, fig.width = 7}
 parameters <- result$par
 transmission_para <- list(beta=parameters[1],
                               kappa=parameters[2],
@@ -186,13 +194,13 @@ ggplot() +
 
 # Set ranges for error profile
 
-```{r}
+```{r profile-range}
 profile_parameters <- c('beta', 'kappa', 'gamma', 'mu')
 
 beta_range <- seq(0.7, 1.3, by = 0.02)
-kappa_range <- seq(0.6, 1.2, by = 0.02)
-gamma_range <- seq(0.3, 0.8, by = 0.02)
-mu_range <- seq(0.05, 0.15, by = 0.005)
+kappa_range <- seq(0.5, 1.3, by = 0.02)
+gamma_range <- seq(0.2, 0.9, by = 0.02)
+mu_range <- seq(0.02, 0.15, by = 0.005)
 range_transmission <- data.frame(parameter=rep('beta', length(beta_range)), fixed_value=beta_range)
 range_transmission <- rbind(range_transmission, data.frame(
   parameter=rep('kappa', length(kappa_range)), fixed_value=kappa_range))
@@ -204,7 +212,7 @@ range_transmission <- rbind(range_transmission, data.frame(
 
 # Run optimisation
 
-```{r, eval=!cached_bool}
+```{r profile-opt, eval=!cached_bool}
 previous_param <- rep(0, 8)
 profile_likelihood <- data.frame(parameter=character(), fixed_value=double(),
                                  error_value=double(), optim_beta=double(),
@@ -242,7 +250,7 @@ for (param_name in profile_parameters){
 }
 
 ```
-```{r, eval=!cached_bool}
+```{r transform-data, eval=!cached_bool}
 profile_likelihood <- transform(profile_likelihood, fixed_value=as.numeric(fixed_value))
 profile_likelihood <- transform(profile_likelihood, error_value=as.numeric(error_value))
 profile_likelihood <- transform(profile_likelihood, optim_beta=as.numeric(optim_beta))
@@ -264,15 +272,19 @@ profile_likelihood <- read.csv("synthetic_full_trend_profile_error.csv")
 
 # Visualisation
 
-```{r, fig.height = 5, fig.width = 7}
+```{r plot-profile, fig.height = 5, fig.width = 7}
 profile_beta <- ggplot(profile_likelihood %>% filter(parameter == 'beta'), aes(x = fixed_value, y = error_value)) +
-  geom_vline(xintercept = simulating_para[1]) + geom_point()
+  geom_vline(xintercept = simulating_para[1]) + geom_point() +
+  ggtitle("beta")
 profile_kappa <- ggplot(profile_likelihood %>% filter(parameter == 'kappa'), aes(x = fixed_value, y = error_value)) +
-  geom_vline(xintercept = simulating_para[2]) + geom_point()
+  geom_vline(xintercept = simulating_para[2]) + geom_point() +
+  ggtitle("kappa")
 profile_gamma <- ggplot(profile_likelihood %>% filter(parameter == 'gamma'), aes(x = fixed_value, y = error_value)) +
-  geom_vline(xintercept = simulating_para[3]) + geom_point()
+  geom_vline(xintercept = simulating_para[3]) + geom_point() +
+  ggtitle("gamma")
 profile_mu <- ggplot(profile_likelihood %>% filter(parameter == 'mu'), aes(x = fixed_value, y = error_value)) +
-  geom_vline(xintercept = simulating_para[4]) + geom_point()
+  geom_vline(xintercept = simulating_para[4]) + geom_point() +
+  ggtitle("mu")
 grid.arrange(profile_beta, profile_kappa, profile_gamma, profile_mu, nrow = 2, ncol = 2)
 
 count <- 0
@@ -304,27 +316,35 @@ for (param_name in profile_parameters){
     count <- count + 1
   }
 }
-total_cases <- transform(total_cases, fixed_value=as.character(fixed_value))
+total_cases <- transform(total_cases, fixed_value=as.numeric(fixed_value))
 case_beta <- ggplot(total_cases %>% filter(parameter == 'beta'), aes(x = time, y = Incidence, color=fixed_value)) +
   geom_line() +
-  scale_color_grey() +
+  scale_color_gradient(low = "grey70", high = "grey40") +
+  guides(colour = guide_colorbar(reverse=TRUE)) +
   geom_line(data=testing_data, aes(x = time, y = IncNoise), color='red') +
-  geom_line(data=testing_data, aes(x = time, y = DeathNoise), color='blue')
+  geom_line(data=testing_data, aes(x = time, y = DeathNoise), color='blue') +
+  ggtitle("beta")
 case_kappa <- ggplot(total_cases %>% filter(parameter == 'kappa'), aes(x = time, y = Incidence, color=fixed_value)) +
   geom_line() +
-  scale_color_grey() +
+  scale_color_gradient(low = "grey70", high = "grey40") +
+  guides(colour = guide_colorbar(reverse=TRUE)) +
   geom_line(data=testing_data, aes(x = time, y = IncNoise), color='red') +
-  geom_line(data=testing_data, aes(x = time, y = DeathNoise), color='blue')
+  geom_line(data=testing_data, aes(x = time, y = DeathNoise), color='blue') +
+  ggtitle("kappa")
 case_gamma <- ggplot(total_cases %>% filter(parameter == 'gamma'), aes(x = time, y = Incidence, color=fixed_value)) +
   geom_line() +
-  scale_color_grey() +
+  scale_color_gradient(low = "grey70", high = "grey40") +
+  guides(colour = guide_colorbar(reverse=TRUE)) +
   geom_line(data=testing_data, aes(x = time, y = IncNoise), color='red') +
-  geom_line(data=testing_data, aes(x = time, y = DeathNoise), color='blue')
+  geom_line(data=testing_data, aes(x = time, y = DeathNoise), color='blue') +
+  ggtitle("gamma")
 case_mu <- ggplot(total_cases %>% filter(parameter == 'mu'), aes(x = time, y = Incidence, color=fixed_value)) +
   geom_line() +
-  scale_color_grey() +
+  scale_color_gradient(low = "grey70", high = "grey40") +
+  guides(colour = guide_colorbar(reverse=TRUE)) +
   geom_line(data=testing_data, aes(x = time, y = IncNoise), color='red') +
-  geom_line(data=testing_data, aes(x = time, y = DeathNoise), color='blue')
+  geom_line(data=testing_data, aes(x = time, y = DeathNoise), color='blue') +
+  ggtitle("mu")
 grid.arrange(case_beta, case_kappa, case_gamma, case_mu, nrow = 2, ncol = 2)
 ```
 
@@ -332,7 +352,7 @@ grid.arrange(case_beta, case_kappa, case_gamma, case_mu, nrow = 2, ncol = 2)
 
 ## Visualise simulation
 
-```{r, fig.height = 5, fig.width = 7}
+```{r plot-data, fig.height = 5, fig.width = 7}
 testing_data <- testing_data[1:70,]
 
 ggplot() +
@@ -457,13 +477,17 @@ profile_likelihood <- read.csv("synthetic_half_trend_profile_error.csv")
 
 ```{r, fig.height = 5, fig.width = 7}
 profile_beta <- ggplot(profile_likelihood %>% filter(parameter == 'beta'), aes(x = fixed_value, y = error_value)) +
-  geom_vline(xintercept = simulating_para[1]) + geom_point()
+  geom_vline(xintercept = simulating_para[1]) + geom_point() +
+  ggtitle("beta")
 profile_kappa <- ggplot(profile_likelihood %>% filter(parameter == 'kappa'), aes(x = fixed_value, y = error_value)) +
-  geom_vline(xintercept = simulating_para[2]) + geom_point()
+  geom_vline(xintercept = simulating_para[2]) + geom_point() +
+  ggtitle("kappa")
 profile_gamma <- ggplot(profile_likelihood %>% filter(parameter == 'gamma'), aes(x = fixed_value, y = error_value)) +
-  geom_vline(xintercept = simulating_para[3]) + geom_point()
+  geom_vline(xintercept = simulating_para[3]) + geom_point() +
+  ggtitle("gamma")
 profile_mu <- ggplot(profile_likelihood %>% filter(parameter == 'mu'), aes(x = fixed_value, y = error_value)) +
-  geom_vline(xintercept = simulating_para[4]) + geom_point()
+  geom_vline(xintercept = simulating_para[4]) + geom_point() +
+  ggtitle("mu")
 grid.arrange(profile_beta, profile_kappa, profile_gamma, profile_mu, nrow = 2, ncol = 2)
 
 # prof_likelihood_name <- c('optim_beta', 'optim_kappa', 'optim_gamma', 'optim_mu', 'optim_S0', 'optim_E0', 'optim_I0', 'optim_R0')
@@ -497,27 +521,35 @@ for (param_name in profile_parameters){
     count <- count + 1
   }
 }
-total_cases <- transform(total_cases, fixed_value=as.character(fixed_value))
+total_cases <- transform(total_cases, fixed_value=as.numeric(fixed_value))
 case_beta <- ggplot(total_cases %>% filter(parameter == 'beta'), aes(x = time, y = Incidence, color=fixed_value)) +
   geom_line() +
-  scale_color_grey() +
+  scale_color_gradient(low = "grey70", high = "grey40") +
+  guides(colour = guide_colorbar(reverse=TRUE)) +
   geom_line(data=testing_data, aes(x = time, y = IncNoise), color='red') +
-  geom_line(data=testing_data, aes(x = time, y = DeathNoise), color='blue')
+  geom_line(data=testing_data, aes(x = time, y = DeathNoise), color='blue') +
+  ggtitle("beta")
 case_kappa <- ggplot(total_cases %>% filter(parameter == 'kappa'), aes(x = time, y = Incidence, color=fixed_value)) +
   geom_line() +
-  scale_color_grey() +
+  scale_color_gradient(low = "grey70", high = "grey40") +
+  guides(colour = guide_colorbar(reverse=TRUE)) +
   geom_line(data=testing_data, aes(x = time, y = IncNoise), color='red') +
-  geom_line(data=testing_data, aes(x = time, y = DeathNoise), color='blue')
+  geom_line(data=testing_data, aes(x = time, y = DeathNoise), color='blue') +
+  ggtitle("kappa")
 case_gamma <- ggplot(total_cases %>% filter(parameter == 'gamma'), aes(x = time, y = Incidence, color=fixed_value)) +
   geom_line() +
-  scale_color_grey() +
+  scale_color_gradient(low = "grey70", high = "grey40") +
+  guides(colour = guide_colorbar(reverse=TRUE)) +
   geom_line(data=testing_data, aes(x = time, y = IncNoise), color='red') +
-  geom_line(data=testing_data, aes(x = time, y = DeathNoise), color='blue')
+  geom_line(data=testing_data, aes(x = time, y = DeathNoise), color='blue') +
+  ggtitle("gamma")
 case_mu <- ggplot(total_cases %>% filter(parameter == 'mu'), aes(x = time, y = Incidence, color=fixed_value)) +
   geom_line() +
-  scale_color_grey() +
+  scale_color_gradient(low = "grey70", high = "grey40") +
+  guides(colour = guide_colorbar(reverse=TRUE)) +
   geom_line(data=testing_data, aes(x = time, y = IncNoise), color='red') +
-  geom_line(data=testing_data, aes(x = time, y = DeathNoise), color='blue')
+  geom_line(data=testing_data, aes(x = time, y = DeathNoise), color='blue') +
+  ggtitle("mu")
 grid.arrange(case_beta, case_kappa, case_gamma, case_mu, nrow = 2, ncol = 2)
 ```
 
