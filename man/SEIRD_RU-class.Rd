@@ -108,7 +108,7 @@ If the initial conditions provided to do not sum to 1, an error is thrown.
 If the transmission parameters provided to are not 1-dimensional an error is
 thrown.
 
-\item \code{contact_matrices<-}: #' Setter method for contact matrices for
+\item \code{contact_matrices<-}: Setter method for contact matrices for
 urban and rural communities in the SEIR model.
 Matrices must be of type double
 
@@ -172,7 +172,7 @@ Both set to 0, not to be changed by user (double).}
 and one for rural communities, normalized to population size (double).}
 
 \item{\code{contact_matrices_names}}{list of names for two contact matrices,
-one for urban communties and one for rural communities}
+one for urban communities and one for rural communities}
 
 \item{\code{country_demog}}{list of vectors with percentage of population in each age
 group in urban and rural community.}

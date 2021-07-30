@@ -23,7 +23,7 @@
 #' @slot contact_matrices list of two contact matrices, one for urban communties
 #'       and one for rural communities, normalized to population size (double).
 #' @slot contact_matrices_names list of names for two contact matrices,
-#'       one for urban communties and one for rural communities
+#'       one for urban communities and one for rural communities
 #' @slot country_demog list of vectors with percentage of population in each age
 #'       group in urban and rural community.
 #' @slot country_demog_names list of names for urban and rural demographic data.
@@ -32,6 +32,8 @@
 #' @import glue
 #' @import reshape2
 #' @import matlib
+#' 
+#' @export SEIRD_RU
 
 SEIRD_RU <- setClass("SEIRD_RU",
          # slots
@@ -208,12 +210,19 @@ setMethod(
     # add names to each value
     names(init_cond) <- object@initial_condition_names
 
-    # raise errors if age category dimensions do not match initial state vectors
-    # also raise errors if initial state and parameter values are not doubles
+    # raise errors if initial state and parameter values are not doubles
     for (p in list("S_U0", "E_U0", "I_U0", "R_U0",
                    "S_Y0", "E_Y0", "I_Y0", "R_Y0")) {
       if (!is.numeric(init_cond[[p]])) {
         stop(glue("{p} format must be numeric"))
+      }
+    }
+    
+    # raise errors if initial states are not one value each
+    for (p in list("S_U0", "E_U0", "I_U0", "R_U0",
+                   "S_Y0", "E_Y0", "I_Y0", "R_Y0")) {
+      if (length(init_cond[[p]]) != 1) {
+        stop(glue("{p} must be one value"))
       }
     }
 
@@ -317,7 +326,7 @@ setGeneric(
     standardGeneric("contact_matrices<-")
   })
 
-#' @describeIn SEIRD_RU #' Setter method for contact matrices for
+#' @describeIn SEIRD_RU Setter method for contact matrices for
 #' urban and rural communities in the SEIR model.
 #' Matrices must be of type double
 #'
@@ -620,12 +629,12 @@ setMethod(
 
     return(output)
   })
+
 #----------------------------------------------------------------------------
 #' Returns the value of R0 for the model with the specified parameter values.
 #' R0 is computed using the next generation matrix method.
 #'
 #' @param object an object of the class SEIRD_RU
-#'
 #' @return the value of R0
 #' @export
   
@@ -638,8 +647,9 @@ setMethod(
 #'
 #' @param object an object of the class SEIRD_RU
 #'
-#' @return the alue of R0
+#' @return the value of R0
 #' @aliases R0,ANY,ANY-method
+#' 
 #' @export
   
   setMethod(
@@ -670,8 +680,8 @@ setMethod(
       # convenience parameter
       K <- ((1-f_rural)* NU + f_rural*NY)
       
-      matF <- matrix(data = c(0, 0, b*S0U*(K*C + NU/(1-frac_rural)*(1-C)),              b*S0U*K*C,
-                              0, 0,              b*S0Y*K*C,                b*S0Y*(K*C + NY/frac_rural*(1-C)),     
+      matF <- matrix(data = c(0, 0, b*S0U*(K*C + NU/(1-f_rural)*(1-C)),              b*S0U*K*C,
+                              0, 0,              b*S0Y*K*C,                b*S0Y*(K*C + NY/f_rural*(1-C)),     
                               0, 0,                 0,                                   0,
                               0, 0,                 0,                                   0), 
                      nrow = 4, ncol = 4, byrow = TRUE)

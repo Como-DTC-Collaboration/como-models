@@ -56,20 +56,25 @@ test_that("SEIR model runs correctly", {
   transmission_parameters(my_model) <- list(b=0, k=0, g=0, m=0, C=0.5)
   
   # load contact matrices
-  data(contact_all_urban)
-  contact_all_urban <- contact_all # ROWS are age of person, COLUMNS are age of contact
+  load("./testing_data/contact_all_urban.rdata") 
+  contact_all_urban <- contact_all
   names_urban <- names(contact_all_urban)
-  data("contact_all_rural")
+  load("./testing_data/contact_all_rural.rdata")
   contact_all_rural <- contact_all
   names_rural <- names(contact_all_rural)
   names_common <- intersect(names_urban,names_rural)
+  
   #import all demographic data
   # data on percentage of the population that is rural
-  country_pop_rural <- readxl::read_excel("/Country_ruralpop_data.xlsx", sheet = "Data", skip = 3)
+  load("./testing_data/percentrural_by_country.rdata")
+  country_pop_rural <- x
   # age demographic breakdown into 5 year age categories
-  country_pop_byage <- readxl::read_excel("/Populationper5yearagegroup.xlsx", sheet = "ESTIMATES", skip = 16)
+  load("./testing_data/agedemographics_by_country.rdata")
+  country_pop_byage <- x
   # conversion table from 3 letter country codes to full names
-  code_to_country <-  readxl::read_excel("/Country_totalpop_data.xlsx", sheet = "Metadata - Countries")
+  load("./testing_data/country_codetoname.rdata")
+  code_to_country <- x
+  
   # specify country
   country <- "TUN"
   if (!(country %in% names_common)) {
@@ -80,7 +85,7 @@ test_that("SEIR model runs correctly", {
   frac_rural <- country_rural/100 #turn percentage into fraction
   # get fraction of population in each 5-year age range
   # get full name of country
-  country_fullname <- code_to_country$`TableName`[code_to_country$`Country Code` == country]
+  country_fullname <- code_to_country$CountryName[code_to_country$CountryCode == country]
   # extract age demographic vector
   pop_byage_2019 <- country_pop_byage[(country_pop_byage$`Region, subregion, country or area *` == country_fullname & country_pop_byage$`Reference date (as of 1 July)` == 2019),9:29]
   pop_byage_2019 <- as.double(pop_byage_2019)
@@ -101,12 +106,12 @@ test_that("SEIR model runs correctly", {
   # Check output value for rates equal 0s
   expected_data <- data.frame(
     S_U = 0.699, E_U = 0, I_U = 0.001, R_U = 0,
+    Incidences_U = 0, Deaths_U = 0,
     S_Y = 0.3, E_Y = 0, I_Y= 0, R_Y = 0,
-    C_U = 0, D_U = 0, C_Y = 0, DY = 0)
+    Incidences_Y = 0, Deaths_Y = 0)
   out_df_temp <- dcast(out_df, time ~ compartment, value.var = "value")
-  test_data <- out_df_SEIR[101, 2:13]
-  row.names(test_data_SEIR) <- NULL
-  row.names(test_data_CD) <- NULL
+  test_data <- out_df_temp[101, 2:13]
+  row.names(test_data) <- NULL
   expect_identical(test_data, expected_data)
   
   # Check that sum of states is sufficiently close to one at all times
@@ -115,9 +120,9 @@ test_that("SEIR model runs correctly", {
   out_df_temp <- dcast(out_df, time ~ compartment, value.var = "value")
   out_df_temp$Deaths_U <- cumsum(out_df_temp$Deaths_U)
   out_df_temp$Deaths_Y <- cumsum(out_df_temp$Deaths_Y)
-  test <- rowSums(out_df_temp[, c(2:13)]) + out_df_temp$Deaths_U + out_df_temp$Deaths_Y
+  test <- rowSums(out_df_temp[, c(2:5,8:11)]) + out_df_temp$Deaths_U + out_df_temp$Deaths_Y
   expected <- as.double(rep(1, 101))
-  expect_equal(test, expected)
+  expect_equal(test,expected)
   
   # Test input errors
   expect_error(run(my_model, "a"))
@@ -148,20 +153,25 @@ test_that("R0 works for SEIRD model", {
   transmission_parameters(my_model) <- list(b=b, k=k,
                                             g=g, m=m, C=C)
   # load contact matrices
-  data("contact_all_urban")
-  contact_all_urban <- contact_all # ROWS are age of person, COLUMNS are age of contact
+  load("./testing_data/contact_all_urban.rdata") # ROWS are age of person, COLUMNS are age of contact
+  contact_all_urban <- contact_all
   names_urban <- names(contact_all_urban)
-  data("contact_all_rural")
+  load("./testing_data/contact_all_rural.rdata")
   contact_all_rural <- contact_all
   names_rural <- names(contact_all_rural)
   names_common <- intersect(names_urban,names_rural)
+  
   #import all demographic data
   # data on percentage of the population that is rural
-  country_pop_rural <- readxl::read_excel("Country_ruralpop_data.xlsx", sheet = "Data", skip = 3)
+  load("./testing_data/percentrural_by_country.rdata")
+  country_pop_rural <- x
   # age demographic breakdown into 5 year age categories
-  country_pop_byage <- readxl::read_excel("Populationper5yearagegroup.xlsx", sheet = "ESTIMATES", skip = 16)
+  load("./testing_data/agedemographics_by_country.rdata")
+  country_pop_byage <- x
   # conversion table from 3 letter country codes to full names
-  code_to_country <-  readxl::read_excel("Country_totalpop_data.xlsx", sheet = "Metadata - Countries")
+  load("./testing_data/country_codetoname.rdata")
+  code_to_country <- x
+  
   # specify country
   country <- "TUN"
   if (!(country %in% names_common)) {
@@ -172,7 +182,7 @@ test_that("R0 works for SEIRD model", {
   frac_rural <- country_rural/100 #turn percentage into fraction
   # get fraction of population in each 5-year age range
   # get full name of country
-  country_fullname <- code_to_country$`TableName`[code_to_country$`Country Code` == country]
+  country_fullname <- code_to_country$CountryName[code_to_country$CountryCode == country]
   # extract age demographic vector
   pop_byage_2019 <- country_pop_byage[(country_pop_byage$`Region, subregion, country or area *` == country_fullname & country_pop_byage$`Reference date (as of 1 July)` == 2019),9:29]
   pop_byage_2019 <- as.double(pop_byage_2019)
@@ -185,5 +195,5 @@ test_that("R0 works for SEIRD model", {
   #set demographic data
   country_demog(my_model) <- list(pop_byage_2019*(1-frac_rural),pop_byage_2019*frac_rural)
   
-  expect_equal(R0(my_model), 15.84408)
+  expect_equal(round(R0(my_model),digits = 5), 15.84408)
 })
