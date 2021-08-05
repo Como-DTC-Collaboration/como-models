@@ -170,7 +170,7 @@ states %>%
 Which is reflected in the incidences.
 ```{r, fig.width=8, fig.height=5}
 changes %>%
-  filter(compartment=="Incidence")
+  filter(compartment=="Incidence") %>% 
   ggplot(aes(x=time, y=value, colour=age_range)) +
   geom_line() +
   facet_wrap(~compartment, scales="free")
