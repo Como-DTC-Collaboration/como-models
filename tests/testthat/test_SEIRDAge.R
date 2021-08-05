@@ -209,17 +209,19 @@ test_that("can run simulation for the SEIRDAge", {
                                                    "R", "D")) %>% 
     dplyr::mutate(age_range=as.factor(age_range)) %>% 
     dplyr::mutate(age_range=forcats::fct_relevel(age_range, my_model@age_ranges))
-  
-  expected_output_changes$compartment = c(replicate(length(times)*2, "Incidence"),
-                            replicate(length(times)*2, "Death"))
-  
-  expected_output_changes$age_range = unlist(rep(my_model@age_ranges, each=3))
+  expected_output_changes$age_range <- unlist(rep(my_model@age_ranges, each=3))
+  expected_output_changes <- expected_output_changes %>% 
+    dplyr::mutate(age_range=as.factor(age_range)) %>% 
+    dplyr::mutate(age_range=forcats::fct_relevel(age_range, my_model@age_ranges)) %>% 
+    dplyr::mutate(compartment = c(replicate(length(times)*2, "Deaths"),
+                            replicate(length(times)*2, "Incidence"))) %>% 
+    dplyr::select("time", "value", "compartment", "age_range")
     
   expected_output = list("states" = expected_output_states,
                          "changes" = expected_output_changes)
   # Test output is correct
-  expect_equal(run(my_model, seq(0, 2, by = 1)),
-               expected_output)
+  actual_output <- run(my_model, seq(0, 2, by = 1))
+  expect_equal(actual_output, expected_output)
 
   # Test input errors
   expect_error({

@@ -4,9 +4,7 @@
 \name{population}
 \alias{population}
 \title{population}
-\format{
-A tibble with dimensions 4221x5.
-}
+\format{A tibble with dimensions 4221x5.}
 \source{
 \url{https://population.un.org/wpp/Download/Standard/Population/}
 }

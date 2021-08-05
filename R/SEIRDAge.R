@@ -241,14 +241,15 @@ setMethod(
     }
     
     #fetch number of age catagories
-    age <- object@n_age_categories
+    n_age <- object@n_age_categories
 
     # set initial state vector
     state <- c(S = initial_conditions(object)$S0,
                E = initial_conditions(object)$E0,
                I = initial_conditions(object)$I0,
                R = initial_conditions(object)$R0,
-               D = initial_conditions(object)$D0)
+               D = initial_conditions(object)$D0,
+               cc = rep(0, n_age))
 
     # set parameters vector
     parameters <- c(b = transmission_parameters(object)$b,
@@ -264,11 +265,12 @@ setMethod(
       with(
         as.list(c(state, parameters)),
         {
-          S <- state[1:age]
-          E <- state[(age + 1):(2 * age)]
-          I <- state[(2 * age + 1):(3 * age)]
-          R <- state[(3 * age + 1):(4 * age)]
-          D <- state[(4 * age + 1):(5 * age)]
+          S <- state[1:n_age]
+          E <- state[(n_age + 1):(2 * n_age)]
+          I <- state[(2 * n_age + 1):(3 * n_age)]
+          R <- state[(3 * n_age + 1):(4 * n_age)]
+          D <- state[(4 * n_age + 1):(5 * n_age)]
+          cc <- state[(5 * n_age + 1):(6 * n_age)]
           
           
           # rate of change
@@ -277,8 +279,9 @@ setMethod(
           dI <- k * E - g * I  - mu * I
           dR <- g * I
           dD <- mu * I
+          dcc <- b * S * C %*% I
           # return the rate of change
-          list(c(dS, dE, dI, dR, dD))
+          list(c(dS, dE, dI, dR, dD, dcc))
         })
     }
 
@@ -294,11 +297,13 @@ setMethod(
     out_temp = melt(output, 'time')
 
     # add compartment and age range columns
-    out_temp$compartment = c(replicate(length(times)*age, "S"),
-                             replicate(length(times)*age, "E"),
-                             replicate(length(times)*age, "I"),
-                             replicate(length(times)*age, "R"),
-                             replicate(length(times)*age, "D"))
+    n_compartment_measurements <- length(times) * n_age
+    out_temp$compartment = c(replicate(n_compartment_measurements, "S"),
+                             replicate(n_compartment_measurements, "E"),
+                             replicate(n_compartment_measurements, "I"),
+                             replicate(n_compartment_measurements, "R"),
+                             replicate(n_compartment_measurements, "D"),
+                             replicate(n_compartment_measurements, "cc"))
 
     out_temp$age_range = unlist(rep(object@age_ranges, each=length(times)))
 
@@ -306,55 +311,25 @@ setMethod(
     out_temp = out_temp %>% 
       dplyr::select(-.data$variable) %>% 
       dplyr::mutate(compartment=as.factor(compartment)) %>% 
-      dplyr::mutate(compartment=forcats::fct_relevel(compartment, "S", "E", "I", "R","D")) %>% 
+      dplyr::mutate(compartment=forcats::fct_relevel(compartment, "S", "E", "I", "R", "D", "cc")) %>% 
       dplyr::mutate(age_range=as.factor(age_range)) %>% 
       dplyr::mutate(age_range=forcats::fct_relevel(age_range, object@age_ranges))
 
-    # compute incidence number
-    total_inf <- output[, (2*age+2):(3*age+1)] + output[, (3*age+2):(4*age+1)]
-    n_inc <- rbind(rep(0, age),
-                   total_inf[2:nrow(total_inf),]-total_inf[1:nrow(total_inf)-1,]
-                   )
-    # compute death number
-    total_dth <- output[, (4*age+2):(5*age+1)]
-    n_dth <- rbind(rep(0, age),
-                   total_dth[2:nrow(total_dth),]-total_dth[1:nrow(total_dth)-1,]
-    )
-
-    # melt the incidence dataframe to long format
-    incidence_temp = melt(n_inc, id.vars=NULL)
+    # compute incidence and deaths
+    changes <- out_temp %>% 
+      dplyr::filter(compartment %in% c("cc", "D")) %>% 
+      dplyr::group_by(compartment, age_range) %>% 
+      dplyr::mutate(value = c(0, diff(value))) %>% 
+      dplyr::mutate(compartment = dplyr::if_else(compartment == "cc", "Incidence",
+                                                 "Deaths")) %>% 
+      dplyr::ungroup() %>% 
+      as.data.frame()
     
-    # melt the deaths dataframe to long format
-    death_temp = melt(n_dth, id.vars=NULL)
-    
-    # add time, compartment and age_range columns as above
-    incidence_temp$time = rep(times, age)
-    incidence_temp$compartment = rep('Incidence', age*length(times))
-    incidence_temp$age_range = unlist(rep(object@age_ranges, each=length(times)))
-    incidence_temp =  incidence_temp %>% 
-      dplyr::relocate(value, .after=time)
-    
-    # add time, compartment and age_range columns as above
-    death_temp$time = rep(times, age)
-    death_temp$compartment = rep('Death', age*length(times))
-    death_temp$age_range = unlist(rep(object@age_ranges, each=length(times)))
-    death_temp = death_temp %>% 
-      dplyr::relocate(value, .after=time)
-
-    # drop the old variable column
-    incidence_temp = incidence_temp %>% 
-      dplyr::select(-.data$variable)
-    
-    
-    # drop the old variable column
-    death_temp = death_temp %>% 
-      dplyr::select(-.data$variable)
-
-    # bind incidence and deaths dataframes
-    changes = rbind(incidence_temp, death_temp) %>% 
-      dplyr::mutate(age_range=forcats::fct_relevel(age_range, object@age_ranges))
-    
-    states = out_temp
+    # remove cumulative cases column from state vector
+    states = out_temp %>% 
+      dplyr::filter(compartment != "cc") %>% 
+      droplevels() %>% 
+      dplyr::ungroup()
 
     return(list("states" = states, "changes" = changes))
   })

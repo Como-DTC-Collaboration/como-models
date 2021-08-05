@@ -147,7 +147,7 @@ initial_conditions(model) <- list(S0=pop_fraction*0.99,
 
 We next simulate the model and visualise all the dynamics of each compartment.
 ```{r, fig.width=10, fig.height=5}
-res <- run(model, time=seq(0, 50, by = 0.1))
+res <- run(model, times=seq(0, 50, by = 0.1))
 
 states = res$states
 changes = res$changes
@@ -167,19 +167,16 @@ states %>%
   facet_wrap(~compartment)
 ```
 
-Which is reflected in the incidences.
+Which is reflected in the incidences and deaths.
 ```{r, fig.width=8, fig.height=5}
 changes %>%
-  filter(compartment=="Incidence") %>% 
   ggplot(aes(x=time, y=value, colour=age_range)) +
   geom_line() +
-  facet_wrap(~compartment)
+  facet_wrap(~compartment, scales="free")
 ```
 
-## Testing Initial Conditions
-
-We now simulate the same model but with different distributions of initial infections to show the sensitivity of the model
-to initial conditions. First, we set all initial infections to 0.3% of the total population and place this 0.1% uniformly across age groups between 15 and 30. Second, we place all infections (also 0.3% of the total population) uniformly across age groups 55-70. 
+## Sensitivity to initial conditions
+We now simulate the same model but with different distributions of initial infections to show the sensitivity of the model to initial conditions. First, we set all initial infections to 0.3% of the total population and place this 0.1% uniformly across age groups between 15 and 30. Second, we place all infections (also 0.3% of the total population) uniformly across age groups 55-70. 
 ```{r}
 model_1530 <- comomodels::SEIRDAge(n_age_categories = n_ages,
                  contact_matrix = c_combined_wider,
