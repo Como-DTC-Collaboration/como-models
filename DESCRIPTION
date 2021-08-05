@@ -18,16 +18,13 @@ Suggests:
     rmarkdown
 Config/testthat/edition: 3
 Imports: 
-    forcats,
     deSolve,
-    ggplot2,
     glue,
     reshape2,
     tidyverse,
     methods,
     magrittr,
-    rlang,
-    dplyr,
+    rlang
 VignetteBuilder: knitr
 Depends: 
     R (>= 2.10)

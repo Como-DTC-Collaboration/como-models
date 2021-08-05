@@ -302,7 +302,7 @@ setMethod(
 
     out_temp$age_range = unlist(rep(object@age_ranges, each=length(times)))
 
-    #drop the old variable column
+    # drop the old variable column
     out_temp = out_temp %>% 
       dplyr::select(-.data$variable) %>% 
       dplyr::mutate(compartment=as.factor(compartment)) %>% 
@@ -351,7 +351,8 @@ setMethod(
       dplyr::select(-.data$variable)
 
     # bind incidence and deaths dataframes
-    changes = rbind(incidence_temp, death_temp)
+    changes = rbind(incidence_temp, death_temp) %>% 
+      dplyr::mutate(age_range=forcats::fct_relevel(age_range, object@age_ranges))
     
     states = out_temp
 
