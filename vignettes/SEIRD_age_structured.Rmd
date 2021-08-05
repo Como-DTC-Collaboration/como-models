@@ -1,5 +1,5 @@
 ---
-title: "SEIRD_age_structured"
+title: "The age-structured SEIRD model"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{SEIR_age_structured}
@@ -167,16 +167,17 @@ states %>%
   facet_wrap(~compartment)
 ```
 
-Which is reflected in the incidences and deaths.
+Which is reflected in the incidences.
 ```{r, fig.width=8, fig.height=5}
 changes %>%
+  filter(compartment=="Incidence")
   ggplot(aes(x=time, y=value, colour=age_range)) +
   geom_line() +
   facet_wrap(~compartment, scales="free")
 ```
 
 ## Sensitivity to initial conditions
-We now simulate the same model but with different distributions of initial infections to show the sensitivity of the model to initial conditions. First, we set all initial infections to 0.3% of the total population and place this 0.1% uniformly across age groups between 15 and 30. Second, we place all infections (also 0.3% of the total population) uniformly across age groups 55-70. 
+We now simulate the same model but with different distributions of initial infections to show the sensitivity of the model to initial conditions. First, we set all initial infections to 0.3% of the total population and place this uniformly across age groups between 15 and 30. Second, we place all infections (also 0.3% of the total population) uniformly across age groups 55-70. 
 ```{r}
 model_1530 <- comomodels::SEIRDAge(n_age_categories = n_ages,
                  contact_matrix = c_combined_wider,
@@ -188,12 +189,12 @@ model_5570 <- comomodels::SEIRDAge(n_age_categories = n_ages,
 transmission_parameters(model_1530) <- list(b=1, k=0.5, g=0.5, mu=0.01)
 transmission_parameters(model_5570) <- list(b=1, k=0.5, g=0.5, mu=0.01)
 
-S0_1530 = pop_fraction*1
+S0_1530 = pop_fraction
 S0_1530[4:6] = S0_1530[4:6] - 0.001
 I0_1530 = rep(0, n_ages)
 I0_1530[4:6] = 0.001
 
-S0_5570 = pop_fraction*1
+S0_5570 = pop_fraction
 S0_5570[12:14] = S0_5570[12:14] - 0.001
 I0_5570 = rep(0, n_ages)
 I0_5570[12:14] = 0.001
@@ -212,7 +213,7 @@ initial_conditions(model_5570) <- list(S0=S0_5570,
 ```
 
 
-Now we simulate both models and plot the infections over time. We can see that for the model initialised with infections among 15-30 years olds, the peak of infections appears earlier and dies away quicker than the model initialised with infections in 55-70 year olds. Despite this difference, the magnitude of the infection peaks in both bases are comparable as well as the distribution of infections for each age group. 
+Now we simulate both models and plot the infections over time. We can see that for the model initialised with infections among 15-30 years olds, the peak of infections appears earlier and dies away quicker than the model initialised with infections in 55-70 year olds. Despite this difference, the magnitude of the infection peaks in both cases are comparable as well as the distribution of infections for each age group. 
 
 ```{r, fig.width=8, fig.height=5}
 res <- run(model_1530, time=seq(0, 50, by = 0.1))$states
