@@ -28,7 +28,7 @@ library(tidyr)
 # Check for cached data
 ```{r bool-cached-data}
 # TRUE to plot saved data, FALSE to run optimisation
-cached_bool <- FALSE
+cached_bool <- TRUE
 set.seed(0)
 ```
 
@@ -735,7 +735,7 @@ ggplot(data, aes(x=error_value, y=value)) +
 ```{r, fig.height = 5, fig.width = 7}
 
 chosen_repeats <- 20
-optimised_para <- optimised_para[order(optimised_para$obj_fn),]
+optimised_para <- optimised_para[order(-optimised_para$obj_fn),]
 top_optimised_para <- optimised_para[1:chosen_repeats,]
 
 for (repeats in 1:chosen_repeats){
