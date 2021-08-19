@@ -41,15 +41,6 @@ SEIRDV <- setClass("SEIRDV",
                     transmission_parameters = vector(mode = "list", length = 7)
                   )
 )
-#' Retrieves initial conditions of SEIRV model.
-#'
-#' @param object An object of the class SEIRDV.
-#' 
-#' 
-#' @export
-setGeneric("initial_conditions",
-           function(object) standardGeneric("initial_conditions"))
-
 
 #' @describeIn SEIRDV Retrieves initial conditions of SEIRV model.
 #'
@@ -79,24 +70,6 @@ setGeneric("transmission_parameters",
 #' @export
 setMethod("transmission_parameters", "SEIRDV",
           function(object) object@transmission_parameters)
-
-#' Set initial conditions (S0, E0, I0, R0 and V0) of the SEIRV model.
-#'
-#' All initial conditions must sum up to 1.
-#' If the initial conditions provided to do not sum to 1, an error is thrown.
-#'
-#' @param object an object of the class SEIRDV
-#' @param value (list) list of initial conditions S0, E0, I0, R0, V0.
-#'
-#' @return object of class SEIRDV with initial conditions assigned.
-#' 
-#' 
-#' @export
-setGeneric(
-  "initial_conditions<-",
-  function(object, value) {
-    standardGeneric("initial_conditions<-")
-  })
 
 #' @describeIn SEIRDV Setter method for initial conditions (S0, E0, I0, R0 and V0)
 #' of the SEIRV model.
@@ -139,27 +112,6 @@ setMethod(
     
     object
   })
-
-#' Set transmission parameters for SEIRDV model
-#'
-#' If the transmission parameters provided to are not 1-dimensional an error is
-#' thrown.
-#'
-#' @param object (SEIRDV model)
-#' @param value (list) list of values for beta, kappa, gamma, mu, nu, delta_V and
-#' delta_R respectively.
-#'
-#' @return object of class SEIRDV with transmission parameter values
-#' assigned.
-#' 
-#' 
-#' @export
-setGeneric(
-  "transmission_parameters<-",
-  function(object, value) {
-    standardGeneric("transmission_parameters<-")
-  })
-
 
 #' @describeIn SEIRDV Set transmission parameters (beta, kappa, gamma, mu, nu,
 #' delta_V, delta_R) of the SEIRV model.
@@ -206,39 +158,6 @@ setMethod(
   })
 
 # SEIRDV class specific functions
-
-#' Solves ODEs of the SEIRDV specified in object
-#' for the time points specified in times and integration method specified in
-#' solve_method.
-#'
-#' \deqn{\frac{dS(t)}{dt} = - beta S(t) I(t) - nu S(t) + delta_V V(t) + delta_R R(t)}
-#' \deqn{\frac{dE(t)}{dt} =  beta S(t) I(t) - kappa E(t)}
-#' \deqn{\frac{dI(t)}{dt} = kappa E(t) - (gamma + mu) I(t)}
-#' \deqn{\frac{dR(t)}{dt} = gamma I(t) - delta_R R(t)}
-#' \deqn{\frac{dC(t)}{dt} = beta S(t) I(t)}
-#' \deqn{\frac{dD(t)}{dt} = mu I(t)}
-#' \deqn{\frac{dV(t)}{dt} = nu S(t) - delta_V V(t)}
-#'
-#' This function relies on the package deSolve.
-#'
-#' @param object an object of the class SEIRDV
-#' @param times (double) a sequence of time points at which the solution to
-#' the system of ODEs should be returned. Must be of the form
-#' seq(t_start, t_end, by=t_step). Default time series is seq(0, 100, by = 1).
-#' @param solve_method (string) a string of chosen numerical integration method
-#' for solving the ode system. Default is "lsoda" which is also the default for
-#' the ode function in the deSolve package used in this function.
-#'
-#' @return two dataframes: one with the time steps, age range, time series of S,
-#' E, I, R and V population fractions, and one with the time steps, age range,
-#' time series of incidences and deaths population fraction.
-#' 
-#' 
-#' @export
-setGeneric(name = "run",
-           def = function(object, times = seq(0, 100, by = 1),
-                          solve_method = "lsoda") {
-             standardGeneric("run")})
 
 #' @describeIn SEIRDV Solves ODEs of the SEIRDV specified in object
 #' for the time points specified in times and integration method specified in
@@ -351,18 +270,6 @@ setMethod(
     
     list("states" = states, "changes" = changes)
   })
-
-#' Calculates basic reproduction number
-#'
-#' @param model a model object from comomodels package
-#'
-#' @return an R0 value
-#' 
-#' 
-#' 
-setGeneric("R0", def = function(model) {
-  standardGeneric("R0")
-})
 
 #' @describeIn SEIRDV Calculates basic reproduction number for SEIRDV model
 #'
