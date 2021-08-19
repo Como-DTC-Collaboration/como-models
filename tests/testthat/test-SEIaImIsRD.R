@@ -30,7 +30,8 @@ test_that("SEIaImIsRD validate", {
   initial_conditions(model) <- list(S = S, E = E, I_asymptomatic = I_asymptomatic, I_mild = I_mild, I_severe = I_severe, R = R, D = D)
   # 3. ode simulation and plot
   model <- run(model, t)
-  p <- plot_dataframe(model@output, x = "time", y = "value", c = "compartment")
+  p1 <- plot_dataframe(model@output$states, x = "time", y = "value", c = "compartment")
+  p2 <- plot_dataframe(model@output$changes, x = "time", y = "value", c = "compartment")
   # 4. calculate basic reproduction number (R0)
   model <- R0(model)
 
@@ -39,12 +40,13 @@ test_that("SEIaImIsRD validate", {
   # print out R0 value
   print(paste0("R0 = ", model@R0))
   # view plot
-  print(p)
+  print(p1)
+  print(p2)
 
   # check @output
-  expect_equal(colnames(model@output),
-               c("time", "compartment", "value"))
-  output_wide <- dcast(model@output, time~compartment)
+  expect_equal(colnames(model@output$states),
+               c("time", "value", "compartment", "age_range"))
+  output_wide <- dcast(model@output$states, time~compartment)
   expect_equal(dim(output_wide),
                c(length(t), length(model@initial_conditions) + 1))
   expect_equal(colnames(output_wide),

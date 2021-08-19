@@ -168,7 +168,7 @@ model <- run(model, t)
 model <- R0(model)
 
 # plot
-model.plot <- plot_dataframe(model@output, x = "time", y = "value", c = "compartment")
+model.plot <- plot_dataframe(model@output$states, x = "time", y = "value", c = "compartment")
 # model.plot <- ggplotly(p=model.plot, dynamicTicks = TRUE, originalData = FALSE)
 
 # get parameters
@@ -200,7 +200,7 @@ model1 <- run(model1, t)
 model1 <- R0(model1)
 
 # plot
-model1.plot <- plot_dataframe(model1@output, x = "time", y = "value", c = "compartment")
+model1.plot <- plot_dataframe(model1@output$states, x = "time", y = "value", c = "compartment")
 # model1.plot <- ggplotly(p=model1.plot, dynamicTicks = TRUE, originalData = FALSE)
 
 # get parameters
@@ -229,14 +229,18 @@ we see no change! This is because the basic reproduction number only indicates w
 Lastly, we consider what happens to the model dynamics if we change the infection rate. For example, what if asymptomatic individuals are significantly less infectious than mildly or severely symptomic ones? We investigate this by lowering $\beta_{I_a}$ from 0.8 to 0.5 so that it is now half the infection rate of infectious individuals with severe symptoms.
 ```{r, fig.show='hold'}
 model2 <- model
-transmission_parameters(model2) <- list(beta = list(i_asymptomatic = 0.50, i_mild =  0.90, i_severe = 1.00), kappa = kappa, omega = omega, 
-                                        p_symptom = p_symptom, gamma = gamma, mu = mu)
+transmission_parameters(model2) <- list(beta = list(i_asymptomatic = 0.50, i_mild =  0.90, i_severe = 1.00), 
+                                        kappa = kappa, 
+                                        omega = omega, 
+                                        p_symptom = p_symptom, 
+                                        gamma = gamma, 
+                                        mu = mu)
 
 model2 <- run(model2, t)
 model2 <- R0(model2)
 
 # plot
-model2.plot <- plot_dataframe(model2@output, x = "time", y = "value", c = "compartment")
+model2.plot <- plot_dataframe(model2@output$states, x = "time", y = "value", c = "compartment")
 # model2.plot <- ggplotly(p=model2.plot, dynamicTicks = TRUE, originalData = FALSE)
 
 # get parameters

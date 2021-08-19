@@ -104,7 +104,8 @@ of the SEIaImIsRD model.
 \item{\code{output_names}}{list of compartments name which are used by the model and
 incidence.}
 
-\item{\code{output}}{dataframe of output in long format}
+\item{\code{output}}{a list of two dataframes of the model simulation result (1. Cumulative population sizes of
+compartments S, E, I.., R, D; 2. Daily Incidence and deaths).}
 }}
 
 \seealso{

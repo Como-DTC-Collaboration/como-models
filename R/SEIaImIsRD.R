@@ -25,7 +25,8 @@
 #' @slot R0 basic reproduction number (double).
 #' @slot output_names list of compartments name which are used by the model and
 #'       incidence.
-#' @slot output dataframe of output in long format
+#' @slot output a list of two dataframes of the model simulation result (1. Cumulative population sizes of 
+#'       compartments S, E, I.., R, D; 2. Daily Incidence and deaths).
 #'
 #' @import deSolve
 #' @import ggplot2
@@ -52,8 +53,9 @@ SEIaImIsRD <- setClass(Class = "SEIaImIsRD",
            transmission_parameters = vector(mode = "list", length = 6),
            R0 = NA_real_,
            output_names = list("S", "E", "I_asymptomatic",
-                               "I_mild", "I_severe", "R", "D"),
-           output = data.frame()
+                               "I_mild", "I_severe", "R", "D",
+                               "Incidence", "Deaths"),
+           output = list("states" = data.frame(), "changes" = data.frame())
          ))
 
 
@@ -228,7 +230,8 @@ setMethod("run",
                             I_mild = object@initial_conditions$I_mild,
                             I_severe = object@initial_conditions$I_severe,
                             R = object@initial_conditions$R,
-                            D = object@initial_conditions$D)
+                            D = object@initial_conditions$D,
+                            C = 0)
             # parameters
             params <- c(beta = object@transmission_parameters$beta,
                         kappa = object@transmission_parameters$kappa,
@@ -248,8 +251,9 @@ setMethod("run",
                   dI_s <- p_symptom.i_severe * kappa * E - (gamma.i_severe + mu.i_severe) * I_severe
                   dR <- -omega * R + gamma.i_asymptomatic * I_asymptomatic + gamma.i_mild * I_mild + gamma.i_severe * I_severe
                   dD <-  mu.i_asymptomatic * I_asymptomatic + mu.i_mild * I_mild + mu.i_severe * I_severe
+                  dC <- S * (beta.i_asymptomatic * I_asymptomatic + beta.i_mild * I_mild + beta.i_severe * I_severe)
                   # return the rate of cI_severenge
-                  list(c(dS, dE, dI_a, dI_m, dI_s, dR, dD))
+                  list(c(dS, dE, dI_a, dI_m, dI_s, dR, dD, dC))
                 })
             }
             # solving ode
@@ -259,11 +263,33 @@ setMethod("run",
                           parms = params,
                           method = solve_method)
             output <- as.data.frame(output)
+            
+            
+            # Compute incidences and deaths
+            cases <- c(0, diff(output$C))
+            deaths <- c(0, diff(output$D))
+            output$Incidence <- cases
+            output$Deaths <- deaths
+            output <- output[, c("time", unlist(object@output_names))]
+            
+            # Create long format of output
+            output <- melt(output, id.vars = "time")
+            output <- output[, c("time", "value", "variable")]
+            names(output) <- c("time", "value", "compartment")
+
+            # Added for consistency of output format across models
+            output$age_range <- rep("0-150", length(output$time))
+
+            # Split output into 2 dataframes: one with S,E,I, and R and one with C and D
+            states <- subset(output, !output$compartment %in% c("Incidence", "Deaths"))
+            states <- droplevels(states)
+            changes <- subset(output, output$compartment %in% c("Incidence", "Deaths"))
+            changes <- droplevels(changes)
             # reshape data frame into long format
-            output.melt <- melt(output, id.vars = "time")
-            # names(output.melt) <- c("time", "population_group", "fraction")
-            names(output.melt) <- c("time", "compartment", "value")
-            object@output <- output.melt
+            # output <- melt(output, id.vars = "time")
+            # names(output) <- c("time", "population_group", "fraction")
+            # names(output) <- c("time", "compartment", "value")
+            object@output <- list("states" = states, "changes" = changes)
             return(object)
           })
  
