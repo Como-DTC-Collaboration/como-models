@@ -161,14 +161,15 @@ setGeneric(
   })
 
 
-#' @describeIn SEIRDV Set transmission parameters (beta, kappa, gamma, mu )
-#' of the SEIRV model.
+#' @describeIn SEIRDV Set transmission parameters (beta, kappa, gamma, mu, nu,
+#' delta_V, delta_R) of the SEIRV model.
 #'
 #' If the transmission parameters provided to are not 1-dimensional an error is
 #' thrown.
 #'
 #' @param object (SEIRDV model)
-#' @param value (list) list of values for beta, kappa, gamma, mu, respectively.
+#' @param value (list) list of values for beta, kappa, gamma, mu, nu, delta_V and
+#' delta_R respectively.
 #'
 #' @return object of class SEIRDV with transmission parameter values
 #' assigned.
@@ -190,7 +191,10 @@ setMethod(
     if (length(trans_params$b) != 1
         | length(trans_params$k) != 1
         | length(trans_params$g) != 1
-        | length(trans_params$m) != 1) {
+        | length(trans_params$m) != 1
+        | length(trans_params$n) != 1
+        | length(trans_params$d_v) != 1
+        | length(trans_params$d_r) != 1) {
       stop("The parameter values should be 1-dimensional.")
     }
     
@@ -226,7 +230,7 @@ setMethod(
 #' the ode function in the deSolve package used in this function.
 #'
 #' @return two dataframes: one with the time steps, age range, time series of S,
-#' E, I and R population fractions, and one with the time steps, age range,
+#' E, I, R and V population fractions, and one with the time steps, age range,
 #' time series of incidences and deaths population fraction.
 #' 
 #' 
@@ -240,12 +244,13 @@ setGeneric(name = "run",
 #' for the time points specified in times and integration method specified in
 #' solve_method.
 #'
-#' \deqn{\frac{dS(t)}{dt} = - beta S(t) I(t)}
+#' \deqn{\frac{dS(t)}{dt} = - beta S(t) I(t) - nu S(t) + delta_V V(t) + delta_R R(t)}
 #' \deqn{\frac{dE(t)}{dt} =  beta S(t) I(t) - kappa E(t)}
 #' \deqn{\frac{dI(t)}{dt} = kappa E(t) - (gamma + mu) I(t)}
-#' \deqn{\frac{dR(t)}{dt} = gamma I(t)}
+#' \deqn{\frac{dR(t)}{dt} = gamma I(t) - delta_R R(t)}
 #' \deqn{\frac{dC(t)}{dt} = beta S(t) I(t)}
 #' \deqn{\frac{dD(t)}{dt} = mu I(t)}
+#' \deqn{\frac{dV(t)}{dt} = nu S(t) - delta_V V(t)}
 #'
 #' This function relies on the package deSolve.
 #'
@@ -258,7 +263,7 @@ setGeneric(name = "run",
 #' the ode function in the deSolve package used in this function.
 #'
 #' @return two dataframes: one with the time steps, age range, time series of S,
-#' E, I and R population fractions, and one with the time steps, age range,
+#' E, I, R and V population fractions, and one with the time steps, age range,
 #' time series of incidences and deaths population fraction.
 #' 
 #' @aliases run,ANY,ANY-method
@@ -281,13 +286,17 @@ setMethod(
                E = initial_conditions(object)$E0,
                I = initial_conditions(object)$I0,
                R = initial_conditions(object)$R0,
+               V = initial_conditions(object)$V0,
                C = 0,
                D = 0)
     # set transmission parameters vector
     parameters <- c(b = transmission_parameters(object)$beta,
                     k = transmission_parameters(object)$kappa,
                     g = transmission_parameters(object)$gamma,
-                    m = transmission_parameters(object)$mu)
+                    m = transmission_parameters(object)$mu,
+                    n = transmission_parameters(object)$nu,
+                    d_v = transmission_parameters(object)$delta_V,
+                    d_r = transmission_parameters(object)$delta_R)
     # function for RHS of ode system
     right_hand_side <- function(t, state, parameters) {
       with(
@@ -296,17 +305,19 @@ setMethod(
           e <- state[2]
           i <- state[3]
           r <- state[4]
-          c <- state[5]
-          d <- state[6]
+          v <- state[5]
+          c <- state[6]
+          d <- state[7]
           # rate of change
-          ds <- -b * s * i
+          ds <- -b * s * i - n * s + d_v * v + d_r * r
           de <- b * s * i - k * e
           di <- k * e - (g + m) * i
-          dr <- g * i
+          dr <- g * i - d_r * r
+          dv <- n * s - d_v * v
           dc <- b * s * i
           d_death <- m * i
           # return the rate of change
-          list(c(ds, de, di, dr, dc, d_death))
+          list(c(ds, de, di, dr, dv, dc, d_death))
         })
     }
     
@@ -332,7 +343,7 @@ setMethod(
     # Added for consistency of output format across models
     output$age_range <- rep("0-150", length(output$time))
     
-    # Split output into 2 dataframes: one with S,E,I, and R and one with C and D
+    # Split output into 2 dataframes: one with S,E,I,R and V and one with C and D
     states <- subset(output, !output$compartment %in% c("Incidence", "Deaths"))
     states <- droplevels(states)
     changes <- subset(output, output$compartment %in% c("Incidence", "Deaths"))
