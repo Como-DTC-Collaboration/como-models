@@ -1,0 +1,241 @@
+---
+title: "The age-structured SEIRD model"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{SEIR_age_structured}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(comomodels)
+library(tidyverse)
+```
+
+## Introduction
+This document explains the basics of an age-structured SEIRD model. The model describes
+how populations of susceptible, exposed, infectious, recovered and dead individuals evolve over time.
+In this model, each age class, $i$, has its own system of five coupled differential equations governing
+movements between these compartments. If age classes did not interact with one another, these set of equations would
+follow:
+
+\begin{align}
+\frac{\text{d}S_i}{\text{d}t} &= -\beta S_i I_i\\
+\frac{\text{d}E_i}{\text{d}t} &= \beta S_i I_i -\kappa E_i\\
+\frac{\text{d}I_i}{\text{d}t} &= \kappa E_i - (\gamma + \mu) I_i\\
+\frac{\text{d}R_i}{\text{d}t} &= \gamma I_i\\
+\frac{\text{d}D_i}{\text{d}t} &= \mu I_i
+\end{align}
+
+However, in reality, a susceptible individual from a given age class
+can become infected from any age class: to capture this aspect of the model, infected individuals of any
+age are supposed to inter-mix, with the mixing rate dictated by a so-called "contact matrix", $C$.
+
+The elements of contact matrices, $C_{i,j}$ indicate the expected number of contacts an individual of age class $i$ experiences with age class $j$ per day. In this package, we include country-level estimates of contact matrices (Prem et al., 2017; for full details see data documentation). There are actually four types of contact matrix corresponding to daily numbers of contacts at home, work, school and all other settings. Here, we visualise these for India.
+```{r}
+load(file = "../data/contact_home.rda")
+load(file = "../data/contact_work.rda")
+load(file = "../data/contact_school.rda")
+load(file = "../data/contact_other.rda")
+```
+
+```{r, fig.width=10, fig.height=8}
+# reformat matrices for plotting
+ages <- seq(0, 80, 5)
+age_names <- vector(length = 16)
+for(i in seq_along(age_names)) {
+  age_names[i] <- paste0(ages[i], "-", ages[i + 1])
+}
+
+format_matrix <- function(contact_matrix, age_names) {
+  colnames(contact_matrix) <- age_names
+  contact_matrix$age_infectee <- age_names
+  contact_matrix %>%
+    pivot_longer(all_of(age_names)) %>% 
+    rename(age_infector=name) %>% 
+    mutate(age_infector=fct_relevel(age_infector, age_names)) %>% 
+    mutate(age_infectee=fct_relevel(age_infectee, age_names))
+}
+
+
+c_home <- format_matrix(contact_home$India, age_names) %>% mutate(type="home")
+c_work <- format_matrix(contact_work$India, age_names) %>% mutate(type="work")
+c_school <- format_matrix(contact_school$India, age_names) %>% mutate(type="school")
+c_other <- format_matrix(contact_other$India, age_names) %>% mutate(type="other")
+
+c_all <- c_home %>%
+  bind_rows(c_work) %>% 
+  bind_rows(c_school) %>% 
+  bind_rows(c_other)
+
+# plot all
+c_all %>%
+  ggplot(aes(x=age_infector, y=age_infectee, fill=value)) +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  facet_wrap(~type)
+```
+
+We can see that the majority of contacts fall between younger individuals, occurring at home or "other" locations. At home, however, there is more substantial intergenerational mixing than in other settings.
+
+The model we introduce here does not compartmentalise individuals according to location, so we make an overall contact matrix by summming these together.
+```{r, fig.width=8, fig.height=5}
+c_combined <- c_all %>% 
+  group_by(age_infectee, age_infector) %>% 
+  summarise(value=sum(value))
+c_combined %>% 
+  ggplot(aes(x=age_infector, y=age_infectee, fill=value)) +
+  geom_tile() +
+  scale_fill_viridis_c()
+```
+
+We now use this contact matrix to allow infections to pass between age groups. To do so, we amend the governing equations for the susceptibles and exposed individuals within age class $i$:
+
+\begin{align}
+\frac{\text{d}S_i}{\text{d}t} &= -\beta S_i \Sigma_{j}C_{ij} I_j\\
+\frac{\text{d}E_i}{\text{d}t} &= \beta S_i \Sigma_{j}C_{ij} I_j -\kappa E_i\\
+\end{align}
+
+Specifically, the term $S_i \Sigma_{j}C_{ij} I_j$ effectively indicates the expected number of contacts between susceptible individuals of age class $i$ with infected individuals across all classes.
+
+
+
+## Simulation examples 
+
+Now we create a model that includes this age-structured mixing. Since the contact matrices have 16 age classes, we instantiate a model with this number of classes. We also give it transmission parameters, populate the age classes with initial conditions and use our overall contact matrix.
+
+We use country-level demographics from the UN and, for this example, initialise the model with a uniform initial infected population of 1% across all age groups. The remaining 99% of the population starts
+as susceptible.
+```{r}
+load(file = "../data/population.rda")
+
+# use demographic data to create normalised population fractions
+pops = population[population$country == 'India', ]$pop
+pop_fraction = pops/sum(pops)
+## the contact matrix has an upper group of 80+, so we sum the remaining fractions beyond this point
+pop_fraction[16] = sum(pop_fraction[16:21])
+pop_fraction = pop_fraction[1:16]
+
+# reshape contact matrix into 16x16 form
+n_ages <- 16
+c_combined_wider <- c_combined %>% 
+  pivot_wider(id_cols = age_infectee, names_from = age_infector,
+              values_from=value) %>% 
+  ungroup() %>% 
+  select(-age_infectee) %>% 
+  as.matrix()
+
+# create model
+model <- comomodels::SEIRDAge(n_age_categories = n_ages,
+                 contact_matrix = c_combined_wider,
+                 age_ranges = as.list(age_names))
+transmission_parameters(model) <- list(b=1, k=0.5, g=0.5, mu = 0.01)
+
+initial_conditions(model) <- list(S0=pop_fraction*0.99,
+                                  E0=rep(0, n_ages),
+                                  I0=pop_fraction*0.01,
+                                  R0=rep(0, n_ages),
+                                  D0=rep(0, n_ages))
+```
+
+We next simulate the model and visualise all the dynamics of each compartment.
+```{r, fig.width=10, fig.height=5}
+res <- run(model, times=seq(0, 50, by = 0.1))
+
+states = res$states
+changes = res$changes
+
+states %>%
+  ggplot(aes(x=time, y=value, colour=age_range)) +
+  geom_line() +
+  facet_wrap(~compartment)
+```
+
+Zooming in on the infected population, we see that the younger age groups have the highest peak infected population levels.
+```{r, fig.width=8, fig.height=5}
+states %>%
+  filter(compartment=="I") %>% 
+  ggplot(aes(x=time, y=value, colour=age_range)) +
+  geom_line() +
+  facet_wrap(~compartment)
+```
+
+Which is reflected in the incidences.
+```{r, fig.width=8, fig.height=5}
+changes %>%
+  filter(compartment=="Incidence") %>% 
+  ggplot(aes(x=time, y=value, colour=age_range)) +
+  geom_line() +
+  facet_wrap(~compartment, scales="free")
+```
+
+## Sensitivity to initial conditions
+We now simulate the same model but with different distributions of initial infections to show the sensitivity of the model to initial conditions. First, we set all initial infections to 0.3% of the total population and place this uniformly across age groups between 15 and 30. Second, we place all infections (also 0.3% of the total population) uniformly across age groups 55-70. 
+```{r}
+model_1530 <- comomodels::SEIRDAge(n_age_categories = n_ages,
+                 contact_matrix = c_combined_wider,
+                 age_ranges = as.list(age_names))
+model_5570 <- comomodels::SEIRDAge(n_age_categories = n_ages,
+                 contact_matrix = c_combined_wider,
+                 age_ranges = as.list(age_names))
+
+transmission_parameters(model_1530) <- list(b=1, k=0.5, g=0.5, mu=0.01)
+transmission_parameters(model_5570) <- list(b=1, k=0.5, g=0.5, mu=0.01)
+
+S0_1530 = pop_fraction
+S0_1530[4:6] = S0_1530[4:6] - 0.001
+I0_1530 = rep(0, n_ages)
+I0_1530[4:6] = 0.001
+
+S0_5570 = pop_fraction
+S0_5570[12:14] = S0_5570[12:14] - 0.001
+I0_5570 = rep(0, n_ages)
+I0_5570[12:14] = 0.001
+
+initial_conditions(model_1530) <- list(S0=S0_1530,
+                                  E0=rep(0, n_ages),
+                                  I0=I0_1530,
+                                  R0=rep(0, n_ages),
+                                  D0=rep(0, n_ages))
+
+initial_conditions(model_5570) <- list(S0=S0_5570,
+                                  E0=rep(0, n_ages),
+                                  I0=I0_5570,
+                                  R0=rep(0, n_ages),
+                                  D0=rep(0, n_ages))
+```
+
+
+Now we simulate both models and plot the infections over time. We can see that for the model initialised with infections among 15-30 years olds, the peak of infections appears earlier and dies away quicker than the model initialised with infections in 55-70 year olds. Despite this difference, the magnitude of the infection peaks in both cases are comparable as well as the distribution of infections for each age group. 
+
+```{r, fig.width=8, fig.height=5}
+res <- run(model_1530, time=seq(0, 50, by = 0.1))$states
+res %>%
+  filter(compartment=="I") %>% 
+  ggplot(aes(x=time, y=value, colour=age_range)) +
+  ggtitle("Infections (15-30 years Initialised)") +
+  xlab("Time") + ylab("I Fraction") +
+  theme(plot.title = element_text(size=20)) +
+  geom_line() +
+  facet_wrap(~compartment)
+
+res <- run(model_5570, time=seq(0, 50, by = 0.1))$states
+
+res %>%
+  filter(compartment=="I") %>% 
+  ggplot(aes(x=time, y=value, colour=age_range)) +
+  ggtitle("Infections (55-70 years Initialised)") +
+  xlab("Time") + ylab("I Fraction") +
+  theme(plot.title = element_text(size=20)) +
+  geom_line() +
+  facet_wrap(~compartment)
+```
+
+
