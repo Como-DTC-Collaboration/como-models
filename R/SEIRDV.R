@@ -32,7 +32,7 @@ SEIRDV <- setClass("SEIRDV",
                   # prototypes for the slots, automatically set parameter names and
                   # its data type
                   prototype = list(
-                    output_names = list("S", "E", "I", "R", "D", "V", "Incidence", "Deaths"),
+                    output_names = list("S", "E", "I", "R", "V", "D", "Incidence", "Deaths"),
                     initial_condition_names = list("S0", "E0", "I0", "R0", "V0"),
                     transmission_parameter_names = list("beta", "kappa", "gamma",
                                                         "mu", "nu", "delta_V",
@@ -51,15 +51,6 @@ SEIRDV <- setClass("SEIRDV",
 #' @export
 setMethod("initial_conditions", "SEIRDV",
           function(object) object@initial_conditions)
-
-#' Retrieves transmission parameters of SEIRV model.
-#'
-#' @param object An object of the class SEIRDV.
-#' 
-#' 
-#' @export
-setGeneric("transmission_parameters",
-           function(object) standardGeneric("transmission_parameters"))
 
 #' @describeIn SEIRDV Retrieves transmission parameters of SEIRV model.
 #'
@@ -140,13 +131,13 @@ setMethod(
     trans_params <- value
     
     # check format of parameters
-    if (length(trans_params$b) != 1
-        | length(trans_params$k) != 1
-        | length(trans_params$g) != 1
-        | length(trans_params$m) != 1
-        | length(trans_params$n) != 1
-        | length(trans_params$d_v) != 1
-        | length(trans_params$d_r) != 1) {
+    if (length(trans_params$beta) != 1
+        | length(trans_params$kappa) != 1
+        | length(trans_params$gamma) != 1
+        | length(trans_params$mu) != 1
+        | length(trans_params$nu) != 1
+        | length(trans_params$delta_V) != 1
+        | length(trans_params$delta_R) != 1) {
       stop("The parameter values should be 1-dimensional.")
     }
     
@@ -167,9 +158,9 @@ setMethod(
 #' \deqn{\frac{dE(t)}{dt} =  beta S(t) I(t) - kappa E(t)}
 #' \deqn{\frac{dI(t)}{dt} = kappa E(t) - (gamma + mu) I(t)}
 #' \deqn{\frac{dR(t)}{dt} = gamma I(t) - delta_R R(t)}
+#' \deqn{\frac{dV(t)}{dt} = nu S(t) - delta_V V(t)}
 #' \deqn{\frac{dC(t)}{dt} = beta S(t) I(t)}
 #' \deqn{\frac{dD(t)}{dt} = mu I(t)}
-#' \deqn{\frac{dV(t)}{dt} = nu S(t) - delta_V V(t)}
 #'
 #' This function relies on the package deSolve.
 #'

@@ -225,6 +225,8 @@ setMethod(
 #' @aliases run,ANY,ANY-method
 #' @importFrom magrittr "%>%"
 #' @importFrom rlang .data
+#' 
+#' @export
 setMethod(
   "run", 'SEIRDAge',
   function(object, times, solve_method = 'lsoda') {
