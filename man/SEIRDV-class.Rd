@@ -14,8 +14,6 @@
 \alias{transmission_parameters<-,ANY,ANY-method}
 \alias{run,SEIRDV-method}
 \alias{run,ANY,ANY-method}
-\alias{R0,SEIRDV-method}
-\alias{R0,ANY,ANY-method}
 \title{An S4 object representing the SEIRDV.}
 \usage{
 \S4method{initial_conditions}{SEIRDV}(object)
@@ -27,8 +25,6 @@
 \S4method{transmission_parameters}{SEIRDV}(object) <- value
 
 \S4method{run}{SEIRDV}(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
-
-\S4method{R0}{SEIRDV}(model)
 }
 \arguments{
 \item{object}{an object of the class SEIRDV}
@@ -43,8 +39,6 @@ seq(t_start, t_end, by=t_step). Default time series is seq(0, 100, by = 1).}
 \item{solve_method}{(string) a string of chosen numerical integration method
 for solving the ode system. Default is "lsoda" which is also the default for
 the ode function in the deSolve package used in this function.}
-
-\item{model}{an SEIRDV model}
 }
 \value{
 object of class SEIRDV with initial conditions assigned.
@@ -55,8 +49,6 @@ assigned.
 two dataframes: one with the time steps, age range, time series of S,
 E, I, R and V population fractions, and one with the time steps, age range,
 time series of incidences and deaths population fraction.
-
-an R0 value
 }
 \description{
 This class represents the SEIRV model, showing how populations of susceptible,
@@ -94,11 +86,6 @@ solve_method.
 \deqn{\frac{dD(t)}{dt} = mu I(t)}
 
 This function relies on the package deSolve.
-
-\item \code{R0}: Calculates basic reproduction number for SEIRDV model
-
-The R0 parameter is given by:
-\deqn{R_0 = \beta/(\gamma + \mu)}
 }}
 
 \section{Slots}{

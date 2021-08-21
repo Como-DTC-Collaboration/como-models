@@ -1,9 +1,9 @@
 ---
-title: "The SEIRD model"
-author: "Hui Jia Farm and Solveig A. van der Vegt"
+title: "The SEIRDV model"
+author: "Ioana Bouros"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{The basic SEIR model}
+  %\VignetteIndexEntry{The SEIRV model}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -23,30 +23,35 @@ library(dplyr)
 ```
 
 ## Introduction
-This document explains the basics of the SEIRV model. The model describes
-how populations of susceptible, exposed, infectious and recovered
-individuals evolve over time. A simple
-ordinary differential equation (ODE) is defined for each of the populations. In `comomodels`, we provide users with a premade SEIR model and here use it to illustrate how this type of model works.
+This document explains the basics of the SEIR model. The model describes
+how populations of susceptible, exposed, infectious, recovered and vaccinated
+individuals evolve over time. Waning immunity is also considered in this model,
+so there is a constant supply of susceptibles in the population and make the model
+more realistic.
 
-## The SEIRD Model
-The SEIRD model consists of four ODEs describing four populations of susceptible,
-recovered, infectious and recovered individuals. Susceptible
+## The SEIRDV Model
+The SEIRDV model consists of five ODEs describing five populations of susceptible,
+recovered, infectious, recovered and vaccinated individuals. Susceptible
 individuals ($S$) have not been exposed to the virus. Exposed individuals ($E$) have been
 exposed to the virus and have been infected but are not yet infectious to others; they are 
 in the incubation period. Infectious individuals ($I$) can spread the virus to 
-others. Recovered individuals ($R$) are no longer
-infectious, and, in this model, have acquired immunity as they do not return
-to the susceptible population. Births and deaths unrelated to the infection are not considered in this model.
-The ODEs describing how the four populations evolve over time are
-$$\frac{\text{d}S}{\text{d}t} = -\beta S I ,$$
+others.  Recovered individuals ($R$) are no longer
+infectious, but they can return to the susceptible population when they lose their
+immunity. Vaccinated individuals ($R$) cannot become infected and are not ill at
+the time, but as it was the case with the recovered population, their immunity
+is temporarily and can become susceptible again with a certain rate. Births and
+deaths unrelated to the infection are not considered in this model. The ODEs describing
+how the five populations evolve over time are
+$$\frac{\text{d}S}{\text{d}t} = -\beta S I - \nu S + \delta_V V + \delta_R R,$$
 $$\frac{\text{d}E}{\text{d}t} = \beta S I -\kappa E,$$
 $$\frac{\text{d}I}{\text{d}t} = \kappa E - (\gamma + \mu) I,$$
-$$\frac{\text{d}R}{\text{d}t} = \gamma I,$$
-where $\beta$, $\kappa$, $\gamma$ and $\mu$ are positive parameters.
-The rate at which susceptible individuals are infected depends on the fraction
-of the population that is susceptible, the fraction of the population that is
-infectious, and the probability of an infectious individual infecting a 
-susceptible individual, $\beta$. This is represented in the
+$$\frac{\text{d}R}{\text{d}t} = \gamma I - \delta_R R,$$
+$$\frac{\text{d}V}{\text{d}t} = \nu S - \delta_V V$$
+where $\beta$, $\kappa$, $\gamma$, $\mu$, $\nu$, $\delta_V$ and $\delta_R$ are
+positive parameters. The rate at which susceptible individuals are infected
+depends on the fraction of the population that is susceptible, the fraction of
+the population that is infectious, and the probability of an infectious individual
+infecting a susceptible individual, $\beta$. This is represented in the
 first terms on the right-hand side of $\text{d}S/ \text{d}t$ and $\text{d}E/ \text{d}t$.
 Exposed individuals become infectious at rate $\kappa$. $1/ \kappa$ is
 the incubation time of the virus, i.e. how many days after exposure the individual
@@ -54,6 +59,10 @@ becomes infectious to others. Infectious individuals can either recover or die
 because of the disease. Infectious individuals recover in $1/ \gamma$
 days, thus individuals recover at rate $\gamma$. Similarly, infectious
 individuals die due to the infection after $1/ \mu$ days, making the death rate $\mu$.
+Individuals are vaccinated at rate $\nu$. Among those who are immune (
+recovered and vaccinated), people lose their immunity against the virus at different
+rates depending on what type of immunity they acquired: $\delta_V$ for those vaccinated
+and $\delta_R$ respectively for those previously infected.
 
 In addition to these four main ODEs, the model also keeps track of the cumulative number 
 of cases ($C$) and the cumulative number of disease-related deaths ($D$) over time
@@ -61,31 +70,26 @@ $$\frac{\text{d}C}{\text{d}t} = \beta S I,$$
 $$\frac{\text{d}D}{\text{d}t} = \mu I.$$
 
 The system is closed by specifying the initial conditions
-$$S(0) = S_0,\ E(0) = E_0,\ I(0) = I_0,\ R(0) = R_0,\ C(0) = C_0,\ D(0) = D_0,$$
+$$S(0) = S_0,\ E(0) = E_0,\ I(0) = I_0,\ R(0) = R_0,\ V(0) = V_0,\ C(0) = C_0,\ D(0) = D_0,$$
 where $C_0 = E_0 + I_0 + R_0$ to ensure the cases that occur before $t=0$ are
 also counted.
 In the implementation of the model in this package, the variables are normalized so 
-$S(t) + E(t) + I(t) + R(t) + D(t) \equiv 1$ for any given $t$. This means that each of these state variables represents the fraction of the population in each of these states at a given point in time.
-
-Steady states of the system described above are computed by setting the right-hand sides of the ODEs equal to zero. Taking the equation for the susceptibles:
-
-$$\frac{\text{d}S}{\text{d}t} = -\beta S I = 0.$$
-
-This only has solutions if either $S=0$, in which case there are no individuals left to infect; or $I=0$, in which case there are no infectious individuals, and the disease does not invade the population. Considering all four ODEs, we see that $I=0$ is required to ensure that $\frac{\text{d}R}{\text{d}t} = 0$ and that $E$ must be zero to ensure that $\frac{\text{d}E}{\text{d}t}= 0$. $S$ and $R$ are then free to take any non-negative value
-as long as $S + R + D = 1$.
+$S(t) + E(t) + I(t) + R(t) + V(t) + D(t) \equiv 1$ for any given $t$. This means that each of these state variables represents the fraction of the population in each of these states at a given point in time.
 
 We next illustrate how this model works using functionality available in `comomodels`.
 
-## The `SEIRD` class
+## The `SEIRDV` class
 
-We first create an `SEIRD` object that we will use to run simulations.
+We first create an `SEIRDV` object that we will use to run simulations.
 ```{r}
-my_model <- SEIRD()
+my_model <- SEIRDV()
 ```
 
-Next, we set the parameter values for $\beta$, $\kappa$, $\gamma$ and $\mu$:
+Next, we set the parameter values for $\beta$, $\kappa$, $\gamma$, $\mu$, $\nu$,
+$\delta_V$ and $\delta_R$:
 ```{r}
-params <- list(beta=1, kappa=0.9, gamma=0.5, mu=0.1)
+params <- list(beta=1, kappa=0.9, gamma=0.5, mu=0.1, nu=0.4, delta_V=0.1,
+               delta_R=0.05)
 transmission_parameters(my_model) <- params
 ```
 
@@ -94,9 +98,9 @@ To check that the parameters have been set correctly, we call
 transmission_parameters(my_model)
 ```
 
-We now need to set the initial conditions for the model. We only set the initial conditions $S(0)$, $E(0)$, $I(0)$ and $R(0)$.
+We now need to set the initial conditions for the model. We only set the initial conditions $S(0)$, $E(0)$, $I(0)$, $R(0)$ and $V(0)$.
 ```{r}
-initial_conditions(my_model) <- list(S0=0.99, E0=0, I0=0.01, R0=0)
+initial_conditions(my_model) <- list(S0=0.99, E0=0, I0=0.01, R0=0, V0=0)
 ```
 The initial conditions must sum to one. If they do not, an error is thrown.
 
@@ -142,9 +146,10 @@ number of deaths per day over time.
 ```{r, fig.height = 5, fig.width = 7}
 # function to setup and run model for different beta values
 run_seird <- function(beta_val) {
-  inits <- list(S0=0.99, E0=0, I0=0.01, R0=0)
-  params <- list(beta=beta_val, kappa=0.9, gamma=0.5, mu=0.1)
-  model <- SEIRD(initial_conditions = inits,
+  inits <- list(S0=0.99, E0=0, I0=0.01, R0=0, V0=0)
+  params <- list(beta=beta_val, kappa=0.9, gamma=0.5, mu=0.1, nu=0.4, delta_V=0.1,
+                 delta_R=0.05)
+  model <- SEIRDV(initial_conditions = inits,
                 transmission_parameters=params)
   times <- seq(0, 50, by = 1)
   out_df <- run(model, times)
@@ -172,27 +177,39 @@ result %>%
   theme(legend.position = "bottom", legend.title = element_blank())
 
 ```
-
-Why do some epidemics die out quickly but others don't? This is can be explored through the basic reproductive number, $R_0$, which is the expected number of people infected by a
-single infectious individual in a population where everyone is susceptible (i.e $S_0 \approx 1$). Note that this basic reproductive number is unrelated to the initial condition for the recovered population! If $R_0>1$, an infectious individual infects more than one other person and the epidemic initially grows exponentially; if $R_0<1$, an infectious individual infects less than one other person and the epidemic dies out quickly. In an SEIRD model with normalized populations, the reproductive number is given by:
-
-$$R_0 = \beta S_0/(\gamma + \mu).$$
-We now calculate $R_0$ for $\beta=0.1$ and $\beta=0.75$.
+We now investigate the sensitivity of the number of deaths to the vaccination rate, $\nu$. We run the model for varying values of $\nu$ and plot the
+number of deaths per day over time.
 ```{r, fig.height = 5, fig.width = 7}
-inits <- list(S0=0.99, E0=0, I0=0.01, R0=0)
+# function to setup and run model for different nu values
+run_seird <- function(nu_val) {
+  inits <- list(S0=0.99, E0=0, I0=0.01, R0=0, V0=0)
+  params <- list(beta=1, kappa=0.9, gamma=0.5, mu=0.1, nu=nu_val, delta_V=0.1,
+                 delta_R=0.05)
+  model <- SEIRDV(initial_conditions = inits,
+                transmission_parameters=params)
+  times <- seq(0, 50, by = 1)
+  out_df <- run(model, times)
+  out_df$changes
+}
 
-beta_val <- 0.1
-params <- list(beta=beta_val, kappa=0.9, gamma=0.5, mu=0.1)
-model1 <- SEIRD(initial_conditions = inits,
-              transmission_parameters=params)
+# run model across different nu values
+nu_vals <- c(0.1, 0.25, 0.5, 0.75, 1)
+for(i in seq_along(nu_vals)) {
+  nu_temp <- nu_vals[i]
+  temp <- run_seird(nu_temp) %>% mutate(nu=nu_temp)
+  if(i == 1)
+    result <- temp %>% mutate(nu=nu_temp)
+  else
+    result <- result %>% bind_rows(temp)
+}
 
-beta_val <- 0.75
-params <- list(beta=beta_val, kappa=0.9, gamma=0.5, mu=0.1)
-model2 <- SEIRD(initial_conditions = inits,
-              transmission_parameters=params)
-paste0("R0(beta=0.1) = ", R0(model1))
-paste0("R0(beta=0.75) = ", R0(model2))
+# plot results
+result %>% 
+  filter(compartment=="Deaths") %>% 
+  ggplot(aes(x=time, y=value, fill = as.factor(nu))) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  labs(x = "time (days)", y = "Fraction of the population that died per day",
+       title = glue("Number of deaths for differing values of beta")) +
+  theme(legend.position = "bottom", legend.title = element_blank())
+
 ```
-
-We see that for $\beta = 0.1$, $R_0 < 1$ and for $\beta = 0.75$, $R_0 > 1$. This explains why in the first case the epidemic died out quickly, and in the second case the
-infection initially spreads fast!

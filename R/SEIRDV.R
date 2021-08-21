@@ -261,22 +261,3 @@ setMethod(
     
     list("states" = states, "changes" = changes)
   })
-
-#' @describeIn SEIRDV Calculates basic reproduction number for SEIRDV model
-#'
-#' The R0 parameter is given by:
-#' \deqn{R_0 = \beta/(\gamma + \mu)}
-#'
-#' @param model an SEIRDV model
-#'
-#' @return an R0 value
-#' 
-#' @aliases R0,ANY,ANY-method
-#' 
-#' @export
-setMethod("R0", "SEIRDV", function(model) {
-  beta <- model@transmission_parameters$beta
-  gamma <- model@transmission_parameters$gamma
-  mu <- model@transmission_parameters$mu
-  beta / (gamma + mu)
-})

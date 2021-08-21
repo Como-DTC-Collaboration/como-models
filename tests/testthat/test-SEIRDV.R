@@ -96,29 +96,3 @@ test_that("Running model before setting parameters fails", {
                                             nu = 0.1, delta_V = 0.1, delta_R = 0.1)
   expect_error(run(my_model, t), "Initial conditions must be set before running.")
 })
-
-test_that("R0 works for SEIRDV model", {
-  my_model <- SEIRDV()
-  initial_conditions(my_model) <- list(S0=0.9, E0=0, I0=0.1, R0=0, V0=0)
-  beta <- 1.1
-  gamma <- 0.4
-  mu <- 0.2
-  nu <- 0.1
-  delta_V <- 0.1
-  delta_R <- 0.1
-  transmission_parameters(my_model) <- list(beta=beta, kappa=0.1,
-                                            gamma=gamma, mu=mu, nu=nu,
-                                            delta_V=delta_V, delta_R=delta_R)
-  expect_equal(R0(my_model), beta/(gamma+mu))
-  
-  beta <- 1.4
-  gamma <- 0.8
-  mu <- 0.1
-  nu <- 0.1
-  delta_V <- 0.1
-  delta_R <- 0.1
-  transmission_parameters(my_model) <- list(beta=beta, kappa=0.1,
-                                            gamma=gamma, mu=mu, nu=nu,
-                                            delta_V=delta_V, delta_R=delta_R)
-  expect_equal(R0(my_model), beta/(gamma+mu))
-})
