@@ -173,7 +173,7 @@ setMethod(
     # add names to each value
     names(trans_params) = object@transmission_parameter_names
 
-    # check format of parameters b, k and g
+    # check format of parameters b, k, g an mu
     if(length(b) != 1 | length(k) != 1 | length(g) != 1| length(mu) != 1){
       stop('The parameter values should be 1-dimensional.')
     }

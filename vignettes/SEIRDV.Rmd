@@ -23,10 +23,10 @@ library(dplyr)
 ```
 
 ## Introduction
-This document explains the basics of the SEIR model. The model describes
+This document explains the basics of the SEIRV model. The model describes
 how populations of susceptible, exposed, infectious, recovered and vaccinated
 individuals evolve over time. Waning immunity is also considered in this model,
-so there is a constant supply of susceptibles in the population and make the model
+so there is a constant supply of susceptibles in the population which makes the model
 more realistic.
 
 ## The SEIRDV Model
@@ -37,9 +37,9 @@ exposed to the virus and have been infected but are not yet infectious to others
 in the incubation period. Infectious individuals ($I$) can spread the virus to 
 others.  Recovered individuals ($R$) are no longer
 infectious, but they can return to the susceptible population when they lose their
-immunity. Vaccinated individuals ($R$) cannot become infected and are not ill at
+immunity. Vaccinated individuals ($V$) cannot become infected and are not ill at
 the time, but as it was the case with the recovered population, their immunity
-is temporarily and can become susceptible again with a certain rate. Births and
+is temporary and they can become susceptible again with a certain rate. Births and
 deaths unrelated to the infection are not considered in this model. The ODEs describing
 how the five populations evolve over time are
 $$\frac{\text{d}S}{\text{d}t} = -\beta S I - \nu S + \delta_V V + \delta_R R,$$
@@ -50,7 +50,7 @@ $$\frac{\text{d}V}{\text{d}t} = \nu S - \delta_V V$$
 where $\beta$, $\kappa$, $\gamma$, $\mu$, $\nu$, $\delta_V$ and $\delta_R$ are
 positive parameters. The rate at which susceptible individuals are infected
 depends on the fraction of the population that is susceptible, the fraction of
-the population that is infectious, and the probability of an infectious individual
+the population that is infectious, and the odds of an infectious individual
 infecting a susceptible individual, $\beta$. This is represented in the
 first terms on the right-hand side of $\text{d}S/ \text{d}t$ and $\text{d}E/ \text{d}t$.
 Exposed individuals become infectious at rate $\kappa$. $1/ \kappa$ is
@@ -59,8 +59,8 @@ becomes infectious to others. Infectious individuals can either recover or die
 because of the disease. Infectious individuals recover in $1/ \gamma$
 days, thus individuals recover at rate $\gamma$. Similarly, infectious
 individuals die due to the infection after $1/ \mu$ days, making the death rate $\mu$.
-Individuals are vaccinated at rate $\nu$. Among those who are immune (
-recovered and vaccinated), people lose their immunity against the virus at different
+Susceptible individuals are vaccinated at rate $\nu$. Among those who are immune
+(recovered and vaccinated), people lose their immunity against the virus at different
 rates depending on what type of immunity they acquired: $\delta_V$ for those vaccinated
 and $\delta_R$ respectively for those previously infected.
 
@@ -70,9 +70,7 @@ $$\frac{\text{d}C}{\text{d}t} = \beta S I,$$
 $$\frac{\text{d}D}{\text{d}t} = \mu I.$$
 
 The system is closed by specifying the initial conditions
-$$S(0) = S_0,\ E(0) = E_0,\ I(0) = I_0,\ R(0) = R_0,\ V(0) = V_0,\ C(0) = C_0,\ D(0) = D_0,$$
-where $C_0 = E_0 + I_0 + R_0$ to ensure the cases that occur before $t=0$ are
-also counted.
+$$S(0) = S_0,\ E(0) = E_0,\ I(0) = I_0,\ R(0) = R_0,\ V(0) = V_0,\ C(0) = 0,\ D(0) = 0.$$
 In the implementation of the model in this package, the variables are normalized so 
 $S(t) + E(t) + I(t) + R(t) + V(t) + D(t) \equiv 1$ for any given $t$. This means that each of these state variables represents the fraction of the population in each of these states at a given point in time.
 
@@ -110,15 +108,23 @@ times <- seq(0, 50, by = 1)
 out_df <- run(my_model, times)
 ```
 
-The simulation returns two objects: one is a data frame comprising the states over time. Here, there's a peak in the infectious proportion between $t=15$ and $t=20$.
+The simulation returns two objects: one is a data frame comprising the states over time. Here, there's a peak in the infectious proportion close to $t=10$ with the number declining and remaining low afterwards.
 ```{r, fig.height = 5, fig.width = 7}
 states <- out_df$states
 
-ggplot(states, aes(x = time, y = value)) +
+sv <- subset(states, states$compartment %in% c("S", "V"))
+ggplot(sv, aes(x = time, y = value)) +
   geom_line(aes(color = compartment)) +
   scale_color_brewer(palette = "Dark2") +
   labs(x = "time (days)", y = "fraction of the population",
-       title = glue("Evolution of different compartments over time"))
+       title = glue("Evolution of different compartments over time (S, V)"))
+
+eird <- subset(states, !states$compartment %in% c("S", "V"))
+ggplot(eird, aes(x = time, y = value)) +
+  geom_line(aes(color = compartment)) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(x = "time (days)", y = "fraction of the population",
+       title = glue("Evolution of different compartments over time (E, I, R, D)"))
 ```
 
 The simulation also outputs incidence and deaths. These are derived from the state variables. Incidence is just the difference between the cumulative number of cases between two time points,
@@ -173,7 +179,7 @@ result %>%
   ggplot(aes(x=time, y=value, fill = as.factor(delta_V))) +
   geom_bar(stat = "identity", position = position_dodge()) +
   labs(x = "time (days)", y = "Fraction of the population that died per day",
-       title = glue("Number of deaths for differing values of delta_V")) +
+       title = glue("Number of deaths for differing values of δ_V")) +
   theme(legend.position = "bottom", legend.title = element_blank())
 
 ```
@@ -209,7 +215,7 @@ result %>%
   ggplot(aes(x=time, y=value, fill = as.factor(nu))) +
   geom_bar(stat = "identity", position = position_dodge()) +
   labs(x = "time (days)", y = "Fraction of the population that died per day",
-       title = glue("Number of deaths for differing values of nu")) +
+       title = glue("Number of deaths for differing values of ν")) +
   theme(legend.position = "bottom", legend.title = element_blank())
 
 ```
