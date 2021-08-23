@@ -1,6 +1,6 @@
 ---
 title: "SEIaImIsRD model"
-author: "Liangti Dai and David Seiferth"
+author: "Liangti Dai, David Seiferth and Solveig van der Vegt"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{SEIaImIsRD model}
@@ -20,10 +20,10 @@ knitr::opts_chunk$set(
 #    install.packages("plotly")
 #if (!requireNamespace("kableExtra", quietly = TRUE))
 #    install.packages("kableExtra")
-
+devtools::load_all()
 library(comomodels)
-# library(plotly) # interactive plot
 library(knitr) # table layout 
+# library(plotly) # interactive plot
 # library(kableExtra) # plot and table arrangement
 ```
 
@@ -33,49 +33,56 @@ This document explains the basics of the SEIaImIsRD model. This model is an exte
 Here, we introduce the object class `SEIaImIsRD` included in the `comomodels` package, which lets the user simulate the SEIaImIsRD model, choosing the initial conditions and parameter values.
 
 ## The SEIaImIsRD Model
-The SEIaImIsRD model describes how populations of susceptible ($S$), exposed ($E$), asymptomatic infectious ($I_a$), mildly symptomatic infectious ($I_m$), severely symptomatic infectious ($I_s$), and recovered ($R$) individuals evolve over time.
-An ordinary differential equation (ODE) is defined for each of the populations.
+The SEIaImIsRD model describes the following population groups:
 
-The SEIaImIsRD model consists of six ODEs describing the six populations. Susceptible
-individuals have not been exposed to the virus. Exposed individuals have been exposed to the virus and have been infected but are not yet infectious to others; they are in the incubation period. Infectious individuals can spread the virus to others. Recovered individuals have recovered from the disease and obtained immunity to it. They cannot be infected again until they lose their immunity and return to the susceptible population. The total population size is normalised to 1 and the model does not include natural death or birth.	
-The number of susceptible individuals evolves over time according to
+* **Susceptible** ($S$) - individuals that have not been exposed to the virus, which can be infected by infectious individuals;
+
+* **Exposed** ($E$) - individuals that have been exposed to the virus and have been infected, but are not yet infectious to others as they are within the incubation period;
+
+* Infectious - individuals that can spread the virus to others. In this model, we subdivide Infectious individuals into three sub-categories depending on their symptoms.  
+  * **Asymptomatic infectious** ($I_{asymptomatic}$, or $I_a$ for short);
+  * **Mildly symptomatic infectious** ($I_{mild}$, or $I_m$ for short),
+  * **Severely symptomatic infectious** ($I_{severe}$, or $I_s$ for short).
+Each category is set with different transmission parameters.
+
+* **Recovered** ($R$) - individuals that have recovered from the disease and obtained immunity to it. They cannot be infected again until they lose their immunity and return to the susceptible population.
+
+
+The SEIaImIsRD model consists of an ordinary differential equation (ODE) system of six ODEs, each describing the rate of the size changing of a population group evolves over time:
+
+
 $$\frac{\text{d}S}{\text{d}t} = -S (\beta_{I_a}I_a + \beta_{I_m}I_m + \beta_{I_s}I_s) + \omega R,$$
-where $\beta_{I_X}$ and $\omega$ are positive parameter. The parameters $\beta_{I_X}$ denote the rate at which an infected individual of symptom level $X$ infects susceptible individuals,
-and $\omega$ denotes the rate at which recovered individuals become susceptible again.
-
-The number of exposed individuals evolves over time according to
 $$\frac{\text{d}E}{\text{d}t} = S (\beta_{I_a}I_a + \beta_{I_m}I_m + \beta_{I_s}I_s) - \kappa E,$$
-where $\kappa$ is a positive parameter denoting the rate at which exposed individuals become infectious. The incubation period thus lasts $1/\kappa$ days.
-The number of asymptomatic infectious individuals evolves over time according to
 $$\frac{dI_{a}}{dt} = \eta_{E->I_a} \kappa E - (\gamma_{I_a} + \mu_{I_a})I_{a},$$
-where $\eta_{E->I_a}$, $\gamma_{I_a}$ and $\mu_{I_a}$ are positive parameters. $\eta_{E->I_a}$ is the fraction of exposed individuals that, after the incubation period, became infectious but asymptomatic. $\gamma_{I_a}$ denotes the rate at which asymptomatic individuals recover from the disease and $\mu_{I_a}$ denotes the rate at which they die of the disease.
-
-The number of mildly asymptomatic infectious individuals evolves over time according to
 $$\frac{dI_{m}}{dt} = \eta_{E->I_m} \kappa E - (\gamma_{I_m} + \mu_{I_a})I_{m},$$
-where $\eta_{E->I_M}$, $\gamma_{I_M}$ and $\mu_{I_M}$ are positive parameters. $\eta_{E->I_a}$ is the fraction of exposed individuals that, after the incubation period, became infectious with mild symptoms. $\gamma_{I_M}$ denotes the rate at which mildly symptomatic individuals recover from the disease and $\mu_{I_M}$ denotes the rate at which they die of the disease.
-
-The number of severely asymptomatic infectious individuals evolves over time according to
 $$\frac{dI_{s}}{dt} = \eta_{E->I_s} \kappa E - (\gamma_{I_s} + \mu_{I_a})I_{s},$$
-where $\eta_{E->I_S}$, $\gamma_{I_S}$ and $\mu_{I_S}$ are positive parameters. $\eta_{E->I_a}$ is the fraction of exposed individuals that, after the incubation period, became infectious with severe symptoms. $\gamma_{I_S}$ denotes the rate at which severely symptomatic individuals recover from the disease and $\mu_{I_S}$ denotes the rate at which they die of the disease.
-
-The number of recovered individuals evolves over time according to
 $$\frac{\text{d}R}{\text{d}t} =  \mu_{I_a}  I_{a} + \mu_{I_m}  I_{m} + \mu_{I_s}  I_{s} - \omega R,$$
-where the first three terms indicate recovery of infectious individuals with different levels of symptoms and the last term indicates loss of immunity.
+with the following parameters (values between 0 and 1 for all):
+* $\beta_{I_i}$ - the rate at which an infected individual of symptom group $i$ infects susceptible individuals ($i\in\{a, m, s\}$).
+* $\omega$ - the rate at which recovered individuals become susceptible again.
+* $\kappa$ - the rate at which exposed individuals become infectious. The incubation period thus lasts $1/\kappa$ days.
+* $\eta_{E->I_i}$ - the fraction of exposed individuals that, after the incubation period, became infectious of symptom group $i$. $\sum_i\eta_{E->I_i}=1$, $i\in\{a, m, s\}$.
+* $\gamma_{I_i}$ - the rate at which individuals of symptom group $i$ recover from the disease ($i\in\{a, m, s\}$).
+* $\mu_{I_i}$ - the rate at which individuals of symptom group $i$ die of the disease ($i\in\{a, m, s\}$).
 
 In addition to these six main ODEs above, the model also keeps track the number of 
-disease-related deaths ($D$) over time, which evolve according to
-$$\frac{\text{d}D}{\text{d}t} = \mu_{I_a} I_{a} +  \mu_{I_m}I_{m} +  \mu_{I_s} I_{s},$$
-and the total number of cases ($C$) over time
-$$\frac{\text{d}C}{\text{d}t} = S (\beta_{I_a}I_a + \beta_{I_m}I_m + \beta_{I_s}I_s).$$
+disease-related deaths ($D$) and the total number of cases ($C$) over time: $$\frac{\text{d}D}{\text{d}t} = \mu_{I_a} I_{a} +  \mu_{I_m}I_{m} +  \mu_{I_s} I_{s}$$, 
+$$\frac{\text{d}C}{\text{d}t} = S (\beta_{I_a}I_a + \beta_{I_m}I_m + \beta_{I_s}I_s)$$.
+
 The system is closed by specifying the initial conditions
-$$S(0) = S_0,\ E(0) = E_0,\ I_a(0) = I_{a,0},\ I_m(0) = I_{m,0},\ I_s(0) = I_{s,0},\ R(0) = R_0,\ C(0) = C_0,\ D(0) = D_0.$$
-In the implementation in this package, the variables are normalized so 
-$S(t) + E(t) + I_a(t) + I_m(t) + I_s(t) + R(t) + D(t) \equiv 1$ for any given $t$, so we require $S_0 + E_0 + I_{a,0} + I_{m,0} + I_{s,0} + R_0 = 1$, where we assume that there initially zero disease-related deaths.
+$S(0) = S_0,\ E(0) = E_0,\ I_a(0) = I_{a,0},\ I_m(0) = I_{m,0},\ I_s(0) = I_{s,0},\ R(0) = R_0,\ C(0) = C_0,\ D(0) = D_0.$
+
+In the package implementation, the model does not include natural death or birth, and the total population size is normalised to 1 at each time point, i.e. 
+$S(t) + E(t) + I_a(t) + I_m(t) + I_s(t) + R(t) + D(t) \equiv 1$ for any given $t$, so we require $S_0 + E_0 + I_{a,0} + I_{m,0} + I_{s,0} + R_0 = 1$, where we assume that there is initially zero disease-related deaths.
+
+
 
 ## Basic reproduction number
 The basic reproduction number, $R_0$, is widely used metric in epidemiological modelling to tell whether or not a disease outbreak will occur. The value of $R_0$ is the number of individuals that an infectious person will infect in a population where everyone is susceptible. If $R_0>1$, the infectious individual will infect more than one other individuals and an epidemic will occur. If $R_0<1$, no epidemic occurs. In this section, we compute the value of $R_0$ for SEIaImIsRD model. For more mathematical detail on the method used, we refer the interested reader to [van den Driessche (2017)](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6002118/pdf/main.pdf).
 
 We calculate the basic reproduction number ($R_0$) using the next generation matrix approach. First, we select those populations in the model that contain exposed or infectious individuals, so $E$, $I_a$, $I_m$ and $I_s$. We define $x = [E, I_a, I_m, I_s]$ and rewrite the ODEs of the variables in $x$ to be of the form $$\frac{\text{d}x_i}{\text{d}t} = \mathscr{F_i}(x) - \mathscr{V_i}(x)$$, where $\mathscr{F_i}(x)$ is the rate of appearance of new infections in compartment $i$, and $\mathscr{V_i}(x)$ is the rate of other transitions between compartment $i$ and other infected compartments. For example, if we take $x_i = E$, then $\mathscr{F_i}(x) = S (\beta_{I_a}I_a + \beta_{I_m}I_m + \beta_{I_s}I_s)$ and $\mathscr{V_i}(x) = \kappa E$. Similarly, for $x_i = I_a$ $\mathscr{F_i}(x) = \eta_{E->I_a} \kappa E$ and $\mathscr{V_i}(x) = (\gamma_{I_a} + \mu_{I_a})I_{a}$.
+
+where the first three terms indicate recovery of infectious individuals with different levels of symptoms and the last term indicates loss of immunity.
 
 We now compute 
 $$F=\frac{\partial \mathscr{F_i}{(x_0)}}{\partial x_j}\hspace{5mm}\text{and }\hspace{5mm}V=\frac{\partial \mathscr{V_i}{(x_0)}}{\partial x_j},$$
@@ -137,8 +144,17 @@ transmission_parameters(model) <- list(beta = beta, kappa = kappa, omega = omega
                                        p_symptom = p_symptom, gamma = gamma, mu = mu)
 ```
 
+Define helper function for plotting output dataframe of simulation result
+```{r}
+plot_dataframe <- function(dataframe, x = "time", y = "value", c = "compartment") {
+  p <- ggplot(dataframe, aes_string(x = x, y = y)) +
+    geom_line(aes_string(colour = c)) +
+    theme_classic()
+  return(p)
+}
+```
 
-```{r, echo=FALSE, include=FALSE}
+```{r include=FALSE, echo=FALSE}
 # Define helper function for printing out parameter values
 # print_table_transmission_parameters <- function(model){
 #   df.params <- model@transmission_parameters %>%
@@ -162,13 +178,14 @@ The system of ODEs is solved by calling the function `run(model,t)`. In the next
 
 #### 1. Including natural loss of immunity
 We first assume that immunity does not last forever, so individuals that have recovered from the disease eventually return to the susceptible population. This is called waning immunity and is included in the model when $\omega>0$, as we assigned it above.
-```{r, fig.show='hold'}
+```{r, fig.height = 5, fig.width = 5, fig.align = "center", fig.show="hold"}
 par(mfrow=c(1,2))
 model <- run(model, t)
 model <- R0(model)
 
 # plot
 model.plot <- plot_dataframe(model@output$states, x = "time", y = "value", c = "compartment")
+print(model.plot)
 # model.plot <- ggplotly(p=model.plot, dynamicTicks = TRUE, originalData = FALSE)
 
 # get parameters
@@ -179,7 +196,6 @@ model.plot <- plot_dataframe(model@output$states, x = "time", y = "value", c = "
 # model.params.table
 # </div>
 # <div class = "col-md-8">
-print(model.plot)
 # </div>
 # </div>
 ```
@@ -192,7 +208,7 @@ We see that for this set of parameter values, $R_0>1$, and indeed we see in the 
 
 #### 2. No natural loss of immunity 
 We now assume that recovered individuals remain immune forever, i.e. $\omega=0$.
-```{r, fig.show='hold'}
+```{r,  fig.height = 5, fig.width = 5, fig.align = "center", fig.show="hold"}
 model1 <- model
 transmission_parameters(model1) <- list(beta = beta, kappa = kappa, omega = 0.00,
                                         p_symptom = p_symptom, gamma = gamma, mu = mu)
@@ -201,18 +217,7 @@ model1 <- R0(model1)
 
 # plot
 model1.plot <- plot_dataframe(model1@output$states, x = "time", y = "value", c = "compartment")
-# model1.plot <- ggplotly(p=model1.plot, dynamicTicks = TRUE, originalData = FALSE)
-
-# get parameters
-# model1.params.table = print_table_transmission_parameters(model1)
-# <div class = "row">
-# <div class = "col-md-3">
-# model1.params.table
-# </div>
-# <div class = "col-md-8">
 print(model1.plot)
-# </div>
-# </div>
 ```
 
 We can see that this affects the dynamics of the model quite a bit. The damped oscillations that we saw in the graph for the model with waning immunity have disappeared, we see less deaths, and the number of recovered individuals doesn't approach zero.
@@ -227,32 +232,15 @@ we see no change! This is because the basic reproduction number only indicates w
 
 #### 3. Altering the value(s) of $\beta$ 
 Lastly, we consider what happens to the model dynamics if we change the infection rate. For example, what if asymptomatic individuals are significantly less infectious than mildly or severely symptomic ones? We investigate this by lowering $\beta_{I_a}$ from 0.8 to 0.5 so that it is now half the infection rate of infectious individuals with severe symptoms.
-```{r, fig.show='hold'}
+```{r, fig.height = 5, fig.width = 5, fig.align = "center", fig.show="hold"}
 model2 <- model
-transmission_parameters(model2) <- list(beta = list(i_asymptomatic = 0.50, i_mild =  0.90, i_severe = 1.00), 
-                                        kappa = kappa, 
-                                        omega = omega, 
-                                        p_symptom = p_symptom, 
-                                        gamma = gamma, 
-                                        mu = mu)
-
+transmission_parameters(model2) <- list(beta = list(i_asymptomatic = 0.50, i_mild =  0.90, i_severe = 1.00), kappa = kappa, omega = omega, p_symptom = p_symptom, gamma = gamma, mu = mu)
 model2 <- run(model2, t)
 model2 <- R0(model2)
 
 # plot
 model2.plot <- plot_dataframe(model2@output$states, x = "time", y = "value", c = "compartment")
-# model2.plot <- ggplotly(p=model2.plot, dynamicTicks = TRUE, originalData = FALSE)
-
-# get parameters
-# model2.params.table = print_table_transmission_parameters(model2)
-# <div class = "row">
-# <div class = "col-md-3">
-# model2.params.table
-# </div>
-# <div class = "col-md-8">
 print(model2.plot)
-# </div>
-# </div>
 ```
 We see that when $\beta_{I_a}$ is lowered, a far smaller fraction of the population gets infected. This is what we would expect. When we now compute $R_0$ for the model with this new parameter set, we get
 ```{r}

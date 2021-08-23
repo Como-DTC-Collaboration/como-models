@@ -1,6 +1,14 @@
 # Tests for functions in symptome_compartment_class.R on simulated test data
 # --------------------------------------------------------------------------
 
+# define function to plot output dataframe of simulation result
+plot_dataframe <- function(dataframe, x = "time", y = "value", c = "compartment") {
+  p <- ggplot(dataframe, aes_string(x = x, y = y)) +
+    geom_line(aes_string(colour = c)) +
+    theme_classic()
+  return(p)
+}
+
 # set up test data:
 # initial population (in fraction)
 S <- 0.99
@@ -67,5 +75,7 @@ test_that("model error input", {
     initial_conditions(model) <- list(E = E, I_asymptomatic = I_asymptomatic, I_mild = I_mild, I_severe = I_severe, R = R, D = D)
     # missing parameter (beta)
     transmission_parameters(model) <- list(kappa = kappa, omega = omega, p_symptom = p_symptom, gamma = gamma, mu = mu)
+    # p_symptom sum greater than 1
+    transmission_parameters(model) <- list(kappa = kappa, omega = omega, p_symptom = list(i_mild=0.7, i_severe=0.8), gamma = gamma, mu = mu)
     })
 })

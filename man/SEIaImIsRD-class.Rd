@@ -29,12 +29,12 @@
 \item{object}{An object of class SEIaImIsRD}
 
 \item{value}{A numeric named list of values for transmission parameters:
-beta - a list of the effective contact rate from each infected group (i.e. rate at which an infected individual exposes susceptible),
+beta - a named list of the effective contact rate from each infected group (i.e. rate at which an infected individual exposes susceptible), each element with value in \link{0,1}
 kappa - rate of progression from exposed to infectious (the reciprocal is the incubation period),
 omega - rate at which recovered individuals become susceptible,
-p_symptom - a list of fraction of different infected groups,
-gamma - a list of the rate of removal of each infected group (i.e. recovery rate of an infected individual),
-mu - a list of the rate of disease-caused mortality of each infected group}
+p_symptom - a named list of fraction of different infected groups, only need to specify values for mild and severe symptom groups, whose sum should be <=1.
+gamma - a list of the rate of removal of each infected group (i.e. recovery rate of an infected individual), each element with value in \link{0,1}
+mu - a list of the rate of disease-caused mortality of each infected group, each element with value in \link{0,1}}
 
 \item{times}{A list of time points of the simulation period}
 
@@ -60,7 +60,7 @@ that are composed of different symptome compartments: asymptomatic, mild and sev
 \deqn{\frac{dI_{asymptomatic}(t)}{dt} = p_symptom.i_{asymptomatic} \kappa E(t) - (\gamma.i_{asymptomatic} + \mu.i_{asymptomatic}) I_{asymptomatic}(t)}
 \deqn{\frac{dI_{mild}(t)}{dt} = p_symptom.i_{mild}\kappa E(t) - (\gamma.i_{mild} + \mu.i_{mild}) I_{mild}(t)}
 \deqn{\frac{dI_{severe}(t)}{dt} = p_symptom.i_{severe}\kappa E(t) - (\gamma.i_{severe} + \mu.i_{severe}) I_{severe}(t)}
-\deqn{\frac{dR(t)}{dt} = -\omega R(t) + \gamma.i_{mild} I_{mild}(t) + \gamma.i_{severe} I_{severe}(t)}
+\deqn{\frac{dR(t)}{dt} = -\omega R(t) + \gamma.i_{asymptomatic} I_{asymptomatic}(t) + \gamma.i_{mild} I_{mild}(t) + \gamma.i_{severe} I_{severe}(t)}
 \deqn{\frac{dD(t)}{dt} =  \mu.i_{asymptomatic} I_{asymptomatic}(t) + \mu.i_{mild} I_{mild}(t) + \mu.i_{severe} I_{severe}(t)}
 }
 \details{

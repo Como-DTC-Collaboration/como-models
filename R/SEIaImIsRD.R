@@ -143,12 +143,12 @@ setMethod(
 #'
 #' @param object An object of class SEIaImIsRD
 #' @param value A numeric named list of values for transmission parameters:
-#' beta - a list of the effective contact rate from each infected group (i.e. rate at which an infected individual exposes susceptible),
+#' beta - a named list of the effective contact rate from each infected group (i.e. rate at which an infected individual exposes susceptible), each element with value in [0,1]
 #' kappa - rate of progression from exposed to infectious (the reciprocal is the incubation period),
 #' omega - rate at which recovered individuals become susceptible,
-#' p_symptom - a list of fraction of different infected groups,
-#' gamma - a list of the rate of removal of each infected group (i.e. recovery rate of an infected individual),
-#' mu - a list of the rate of disease-caused mortality of each infected group
+#' p_symptom - a named list of fraction of different infected groups, only need to specify values for mild and severe symptom groups, whose sum should be <=1. 
+#' gamma - a list of the rate of removal of each infected group (i.e. recovery rate of an infected individual), each element with value in [0,1]
+#' mu - a list of the rate of disease-caused mortality of each infected group, each element with value in [0,1]
 #' @return An object of class SEIaImIsRD with initial population and parameters
 #' @aliases transmission_parameters<-,SEIaImIsRD-method
 #' @export
@@ -158,8 +158,12 @@ setMethod(
   "SEIaImIsRD",
   function(
     object,
-    value = list(beta = list(), kappa = NA_real_, omega = NA_real_,
-    p_symptom = list(), gamma = list(), mu = list())) {
+    value = list(beta = list(i_asymptomatic = NA_real_, i_mild = NA_real_, i_severe = NA_real_), 
+    kappa = NA_real_, 
+    omega = NA_real_,
+    p_symptom = list(i_mild = NA_real_, i_severe = NA_real_), 
+    gamma = list(i_asymptomatic = NA_real_, i_mild = NA_real_, i_severe = NA_real_), 
+    mu = list(i_asymptomatic = NA_real_, i_mild = NA_real_, i_severe = NA_real_))) {
     param_list <- value
     names(param_list) <- object@transmission_parameter_names
     object@transmission_parameters <- param_list
@@ -192,6 +196,16 @@ setMethod(
         "Length of parameter mu,", n_mu, ", is not equal to the setting ", 3)
       errors <- c(errors, msg)
     }
+    n_p_symptom <- length(param_list$p_symptom)
+    if (n_p_symptom != 2) {
+      msg <- paste0(
+        "Length of parameter p_symptom,", n_mu, ", is not equal to the setting ", 2)
+      errors <- c(errors, msg)
+    }
+    else if (param_list$p_symptom %>% unlist %>% sum > 1){
+      msg <- paste0("Sum of p_symptom, ", param_list$p_symptom %>% unlist %>% sum, ", is greater than ", 1)
+      errors <- c(errors, msg)
+    }
     if (length(errors) == 0) {
       object@transmission_parameters <- param_list
       object
@@ -206,7 +220,7 @@ setMethod(
 #' \deqn{\frac{dI_{asymptomatic}(t)}{dt} = p_symptom.i_{asymptomatic} \kappa E(t) - (\gamma.i_{asymptomatic} + \mu.i_{asymptomatic}) I_{asymptomatic}(t)}
 #' \deqn{\frac{dI_{mild}(t)}{dt} = p_symptom.i_{mild}\kappa E(t) - (\gamma.i_{mild} + \mu.i_{mild}) I_{mild}(t)}
 #' \deqn{\frac{dI_{severe}(t)}{dt} = p_symptom.i_{severe}\kappa E(t) - (\gamma.i_{severe} + \mu.i_{severe}) I_{severe}(t)}
-#' \deqn{\frac{dR(t)}{dt} = -\omega R(t) + \gamma.i_{mild} I_{mild}(t) + \gamma.i_{severe} I_{severe}(t)}
+#' \deqn{\frac{dR(t)}{dt} = -\omega R(t) + \gamma.i_{asymptomatic} I_{asymptomatic}(t) + \gamma.i_{mild} I_{mild}(t) + \gamma.i_{severe} I_{severe}(t)}
 #' \deqn{\frac{dD(t)}{dt} =  \mu.i_{asymptomatic} I_{asymptomatic}(t) + \mu.i_{mild} I_{mild}(t) + \mu.i_{severe} I_{severe}(t)}
 #'
 #' @param object An object of class SEIaImIsRD
@@ -336,21 +350,3 @@ setMethod("R0", "SEIaImIsRD", function(model) {
   return(model)
   })
 
-#' # describeIn SEIaImIsRD Plot the outcome of the ode similuation (for any dataframe)
-#'
-#' @param dataframe A dataframe in long format
-#' @param x The variable in the dataframe to be mapped to the x axis in ggploy aesthetics. Default is set to "time".
-#' @param y The variable in the dataframe to be mapped to the y axis in ggploy aesthetics. Default is set to "value".
-#' @param c The variable in the dataframe to be plotted in different lines with different colours. Default is set to "compartment".
-#'
-#' @return A ggplot
-#' @rdname plot_dataframe
-#' @export
-#' @aliases plot_dataframe,ANY,ANY-method
-#'
-plot_dataframe <- function(dataframe, x = "time", y = "value", c = "compartment") {
-  p <- ggplot(dataframe, aes_string(x = x, y = y)) +
-    geom_line(aes_string(colour = c)) +
-    theme_classic()
-  return(p)
-}
