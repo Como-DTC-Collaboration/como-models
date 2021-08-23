@@ -173,7 +173,7 @@ result %>%
   ggplot(aes(x=time, y=value, fill = as.factor(delta_V))) +
   geom_bar(stat = "identity", position = position_dodge()) +
   labs(x = "time (days)", y = "Fraction of the population that died per day",
-       title = glue("Number of deaths for differing values of beta")) +
+       title = glue("Number of deaths for differing values of delta_V")) +
   theme(legend.position = "bottom", legend.title = element_blank())
 
 ```
@@ -209,7 +209,7 @@ result %>%
   ggplot(aes(x=time, y=value, fill = as.factor(nu))) +
   geom_bar(stat = "identity", position = position_dodge()) +
   labs(x = "time (days)", y = "Fraction of the population that died per day",
-       title = glue("Number of deaths for differing values of beta")) +
+       title = glue("Number of deaths for differing values of nu")) +
   theme(legend.position = "bottom", legend.title = element_blank())
 
 ```
