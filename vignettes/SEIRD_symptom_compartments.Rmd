@@ -46,23 +46,23 @@ Each category is set with different transmission parameters.
 The SEIaImIsRD model consists of an ordinary differential equation (ODE) system of six ODEs, each describing the rate of the size changing of a population group evolves over time:
 
 
-$$\frac{\text{d}S}{\text{d}t} = -S (\beta_{I_a}I_a + \beta_{I_m}I_m + \beta_{I_s}I_s) + \omega R,$$
-$$\frac{\text{d}E}{\text{d}t} = S (\beta_{I_a}I_a + \beta_{I_m}I_m + \beta_{I_s}I_s) - \kappa E,$$
-$$\frac{dI_{a}}{dt} = \eta_{E->I_a} \kappa E - (\gamma_{I_a} + \mu_{I_a})I_{a},$$
-$$\frac{dI_{m}}{dt} = \eta_{E->I_m} \kappa E - (\gamma_{I_m} + \mu_{I_a})I_{m},$$
-$$\frac{dI_{s}}{dt} = \eta_{E->I_s} \kappa E - (\gamma_{I_s} + \mu_{I_a})I_{s},$$
-$$\frac{\text{d}R}{\text{d}t} =  \mu_{I_a}  I_{a} + \mu_{I_m}  I_{m} + \mu_{I_s}  I_{s} - \omega R,$$
+$$\frac{\text{d}S}{\text{d}t} = -S (\beta_aI_a + \beta_mI_m + \beta_aI_s) + \omega R,$$
+$$\frac{\text{d}E}{\text{d}t} = S (\beta_aI_a + \beta_mI_m + \beta_sI_s) - \kappa E,$$
+$$\frac{dI_{a}}{dt} = \eta_a \kappa E - (\gamma_a + \mu_a)I_a,$$
+$$\frac{dI_{m}}{dt} = \eta_m \kappa E - (\gamma_m + \mu_m)I_m,$$
+$$\frac{dI_{s}}{dt} = \eta_s\kappa E - (\gamma_s + \mu_s)I_s,$$
+$$\frac{\text{d}R}{\text{d}t} =  \mu_a  I_a + \mu_m I_m + \mu_sI_s - \omega R,$$
 with the following parameters (values between 0 and 1 for all):
-* $\beta_{I_i}$ - the rate at which an infected individual of symptom group $i$ infects susceptible individuals ($i\in\{a, m, s\}.$)
+
+* $\beta_i$ - the rate at which an infected individual of symptom group $i$ infects susceptible individuals ($i\in\{a, m, s\}.$)
 * $\omega$ - the rate at which recovered individuals become susceptible again.
 * $\kappa$ - the rate at which exposed individuals become infectious. The incubation period thus lasts $1/\kappa$ days.
-* $\eta_{E->I_i}$ - the fraction of exposed individuals that, after the incubation period, became infectious of symptom group $i$. $\sum_i\eta_{E->I_i}=1$, $i\in\{a, m, s\}.$
-* $\gamma_{I_i}$ - the rate at which individuals of symptom group $i$ recover from the disease ($i\in\{a, m, s\}.$)
-* $\mu_{I_i}$ - the rate at which individuals of symptom group $i$ die of the disease ($i\in\{a, m, s\}.$)
+* $\eta_i$ - the probability of exposed individuals that, after the incubation period, moving into each of the different infected groups $i$. $\sum_i\eta_{E->I_i}=1$, $i\in\{a, m, s\}.$
+* $\gamma_i$ - the rate at which individuals of symptom group $i$ recover from the disease ($i\in\{a, m, s\}.$)
+* $\mu_i$ - the rate at which individuals of symptom group $i$ die of the disease ($i\in\{a, m, s\}.$)
 
 In addition to these six main ODEs above, the model also keeps track the number of 
-disease-related deaths ($D$) and the total number of cases ($C$) over time: $$\frac{\text{d}D}{\text{d}t} = \mu_{I_a} I_{a} +  \mu_{I_m}I_{m} +  \mu_{I_s} I_{s},$$ 
-$$\frac{\text{d}C}{\text{d}t} = S (\beta_{I_a}I_a + \beta_{I_m}I_m + \beta_{I_s}I_s).$$
+disease-related deaths ($D$) and the total number of cases ($C$) over time.
 
 The system is closed by specifying the initial conditions
 $S(0) = S_0,\ E(0) = E_0,\ I_a(0) = I_{a,0},\ I_m(0) = I_{m,0},\ I_s(0) = I_{s,0},\ R(0) = R_0,\ C(0) = C_0,\ D(0) = D_0.$
@@ -77,7 +77,7 @@ The basic reproduction number, $R_0$, is widely used metric in epidemiological m
 
 We calculate the basic reproduction number ($R_0$) using the next generation matrix approach. First, we select those populations in the model that contain exposed or infectious individuals, so $E$, $I_a$, $I_m$ and $I_s$. We define $x = [E, I_a, I_m, I_s]$ and rewrite the ODEs of the variables in $x$ to be of the form 
 $$\frac{\text{d}x_i}{\text{d}t} = \mathscr{F_i}(x) - \mathscr{V_i}(x),$$ 
-where $\mathscr{F_i}(x)$ is the rate of appearance of new infections in compartment $i$, and $\mathscr{V_i}(x)$ is the rate of other transitions between compartment $i$ and other infected compartments. For example, if we take $x_i = E$, then $\mathscr{F_i}(x) = S (\beta_{I_a}I_a + \beta_{I_m}I_m + \beta_{I_s}I_s)$ and $\mathscr{V_i}(x) = \kappa E$. Similarly, for $x_i = I_a$ $\mathscr{F_i}(x) = \eta_{E->I_a} \kappa E$ and $\mathscr{V_i}(x) = (\gamma_{I_a} + \mu_{I_a})I_{a}$.
+where $\mathscr{F_i}(x)$ is the rate of appearance of new infections in compartment $i$, and $\mathscr{V_i}(x)$ is the rate of other transitions between compartment $i$ and other infected compartments. For example, if we take $x_i = E$, then $\mathscr{F_i}(x) = S (\beta_aI_a + \beta_mI_m + \beta_sI_s)$ and $\mathscr{V_i}(x) = \kappa E$. Similarly, for $x_i = I_a$ $\mathscr{F_i}(x) = \eta_a \kappa E$ and $\mathscr{V_i}(x) = (\gamma_a + \mu_a)I_a$.
 
 where the first three terms indicate recovery of infectious individuals with different levels of symptoms and the last term indicates loss of immunity.
 
@@ -98,9 +98,9 @@ F = \left(\begin{array}{cc}
 \end{array}\right), 
 \hspace{5mm}V = \left(\begin{array}{cc} 
 \kappa & 0 & 0 & 0\\
--\kappa \eta_{E->I_a} & \gamma_{I_a} + \mu_{I_a} & 0 & 0\\
--\kappa \eta_{E->I_m} & 0 & \gamma_{I_m} + \mu_{I_m} & 0\\
--\kappa \eta_{E->I_s} & 0 & 0 & \gamma_{I_s} + \mu_{I_s}
+-\kappa \eta_a & \gamma_a + \mu_a & 0 & 0\\
+-\kappa \eta_m & 0 & \gamma_m + \mu_m & 0\\
+-\kappa \eta_s & 0 & 0 & \gamma_s + \mu_s
 \end{array}\right)
 $$
 where $S_0$ is the initial number of susceptibles, which is equal one as the whole population is assumed to be susceptible when $R_0$ holds. $R_0$ is then calculated as $R_0 = \rho(FV^{-1})$.
@@ -154,7 +154,7 @@ plot_dataframe <- function(dataframe, x = "time", y = "value", c = "compartment"
 
 Lastly, we set time span and time step for the simulation:
 ```{r}
-t <- seq(0, 2000, by = 1)
+t <- seq(0, 1000, by = 1)
 ```
 Here, it makes sense to go with a time step of one as data for an epidemic, such as number of cases and deaths, is often reported per day, so time resolution of hours or minutes is not useful.
 
@@ -162,7 +162,7 @@ The system of ODEs is solved by calling the function `run(model,t)`. In the next
 
 #### 1. Including natural loss of immunity
 We first assume that immunity does not last forever, so individuals that have recovered from the disease eventually return to the susceptible population. This is called waning immunity and is included in the model when $\omega>0$, as we assigned it above.
-```{r, fig.height = 5, fig.width = 5, fig.align = "center", fig.show="hold"}
+```{r, fig.height = 10, fig.width = 10, fig.align = "center", fig.show="hold"}
 par(mfrow=c(1,2))
 model <- run(model, t)
 model <- R0(model)
@@ -180,7 +180,7 @@ We see that for this set of parameter values, $R_0>1$, and indeed we see in the 
 
 #### 2. No natural loss of immunity 
 We now assume that recovered individuals remain immune forever, i.e. $\omega=0$.
-```{r,  fig.height = 5, fig.width = 5, fig.align = "center", fig.show="hold"}
+```{r,  fig.height = 10, fig.width = 10, fig.align = "center", fig.show="hold"}
 model1 <- model
 transmission_parameters(model1) <- list(beta = beta, kappa = kappa, omega = 0.00,
                                         p_symptom = p_symptom, gamma = gamma, mu = mu)
@@ -203,8 +203,8 @@ we see no change! This is because the basic reproduction number only indicates w
 
 
 #### 3. Altering the value(s) of $\beta$ 
-Lastly, we consider what happens to the model dynamics if we change the infection rate. For example, what if asymptomatic individuals are significantly less infectious than mildly or severely symptomic ones? We investigate this by lowering $\beta_{I_a}$ from 0.8 to 0.5 so that it is now half the infection rate of infectious individuals with severe symptoms.
-```{r, fig.height = 5, fig.width = 5, fig.align = "center", fig.show="hold"}
+Lastly, we consider what happens to the model dynamics if we change the infection rate. For example, what if asymptomatic individuals are significantly less infectious than mildly or severely symptomic ones? We investigate this by lowering $\beta_a$ from 0.8 to 0.5 so that it is now half the infection rate of infectious individuals with severe symptoms.
+```{r, fig.height = 10, fig.width = 10, fig.align = "center", fig.show="hold"}
 model2 <- model
 transmission_parameters(model2) <- list(beta = list(asymptomatic = 0.50, mild =  0.90, severe = 1.00), kappa = kappa, omega = omega, p_symptom = p_symptom, gamma = gamma, mu = mu)
 model2 <- run(model2, t)
