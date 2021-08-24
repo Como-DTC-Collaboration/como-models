@@ -16,15 +16,10 @@ knitr::opts_chunk$set(
 ```
 
 ```{r setup}
-#if (!requireNamespace("plotly", quietly = TRUE))
-#    install.packages("plotly")
-#if (!requireNamespace("kableExtra", quietly = TRUE))
-#    install.packages("kableExtra")
-devtools::load_all()
 library(comomodels)
-library(knitr) # table layout 
-# library(plotly) # interactive plot
-# library(kableExtra) # plot and table arrangement
+library(devtools)
+library(knitr) # table layout
+devtools::load_all()
 ```
 
 ## Introduction
@@ -58,34 +53,37 @@ $$\frac{dI_{m}}{dt} = \eta_{E->I_m} \kappa E - (\gamma_{I_m} + \mu_{I_a})I_{m},$
 $$\frac{dI_{s}}{dt} = \eta_{E->I_s} \kappa E - (\gamma_{I_s} + \mu_{I_a})I_{s},$$
 $$\frac{\text{d}R}{\text{d}t} =  \mu_{I_a}  I_{a} + \mu_{I_m}  I_{m} + \mu_{I_s}  I_{s} - \omega R,$$
 with the following parameters (values between 0 and 1 for all):
-* $\beta_{I_i}$ - the rate at which an infected individual of symptom group $i$ infects susceptible individuals ($i\in\{a, m, s\}$).
+* $\beta_{I_i}$ - the rate at which an infected individual of symptom group $i$ infects susceptible individuals ($i\in\{a, m, s\}.$)
 * $\omega$ - the rate at which recovered individuals become susceptible again.
 * $\kappa$ - the rate at which exposed individuals become infectious. The incubation period thus lasts $1/\kappa$ days.
-* $\eta_{E->I_i}$ - the fraction of exposed individuals that, after the incubation period, became infectious of symptom group $i$. $\sum_i\eta_{E->I_i}=1$, $i\in\{a, m, s\}$.
-* $\gamma_{I_i}$ - the rate at which individuals of symptom group $i$ recover from the disease ($i\in\{a, m, s\}$).
-* $\mu_{I_i}$ - the rate at which individuals of symptom group $i$ die of the disease ($i\in\{a, m, s\}$).
+* $\eta_{E->I_i}$ - the fraction of exposed individuals that, after the incubation period, became infectious of symptom group $i$. $\sum_i\eta_{E->I_i}=1$, $i\in\{a, m, s\}.$
+* $\gamma_{I_i}$ - the rate at which individuals of symptom group $i$ recover from the disease ($i\in\{a, m, s\}.$)
+* $\mu_{I_i}$ - the rate at which individuals of symptom group $i$ die of the disease ($i\in\{a, m, s\}.$)
 
 In addition to these six main ODEs above, the model also keeps track the number of 
-disease-related deaths ($D$) and the total number of cases ($C$) over time: $$\frac{\text{d}D}{\text{d}t} = \mu_{I_a} I_{a} +  \mu_{I_m}I_{m} +  \mu_{I_s} I_{s}$$, 
-$$\frac{\text{d}C}{\text{d}t} = S (\beta_{I_a}I_a + \beta_{I_m}I_m + \beta_{I_s}I_s)$$.
+disease-related deaths ($D$) and the total number of cases ($C$) over time: $$\frac{\text{d}D}{\text{d}t} = \mu_{I_a} I_{a} +  \mu_{I_m}I_{m} +  \mu_{I_s} I_{s},$$ 
+$$\frac{\text{d}C}{\text{d}t} = S (\beta_{I_a}I_a + \beta_{I_m}I_m + \beta_{I_s}I_s).$$
 
 The system is closed by specifying the initial conditions
 $S(0) = S_0,\ E(0) = E_0,\ I_a(0) = I_{a,0},\ I_m(0) = I_{m,0},\ I_s(0) = I_{s,0},\ R(0) = R_0,\ C(0) = C_0,\ D(0) = D_0.$
 
 In the package implementation, the model does not include natural death or birth, and the total population size is normalised to 1 at each time point, i.e. 
-$S(t) + E(t) + I_a(t) + I_m(t) + I_s(t) + R(t) + D(t) \equiv 1$ for any given $t$, so we require $S_0 + E_0 + I_{a,0} + I_{m,0} + I_{s,0} + R_0 = 1$, where we assume that there is initially zero disease-related deaths.
+$S(t) + E(t) + I_a(t) + I_m(t) + I_s(t) + R(t) + D(t) \equiv 1$ for any given $t$, so we require $S_0 + E_0 + I_{a,0} + I_{m,0} + I_{s,0} + R_0 = 1,$ where we assume that there is initially zero disease-related deaths.
 
 
 
 ## Basic reproduction number
 The basic reproduction number, $R_0$, is widely used metric in epidemiological modelling to tell whether or not a disease outbreak will occur. The value of $R_0$ is the number of individuals that an infectious person will infect in a population where everyone is susceptible. If $R_0>1$, the infectious individual will infect more than one other individuals and an epidemic will occur. If $R_0<1$, no epidemic occurs. In this section, we compute the value of $R_0$ for SEIaImIsRD model. For more mathematical detail on the method used, we refer the interested reader to [van den Driessche (2017)](https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6002118/pdf/main.pdf).
 
-We calculate the basic reproduction number ($R_0$) using the next generation matrix approach. First, we select those populations in the model that contain exposed or infectious individuals, so $E$, $I_a$, $I_m$ and $I_s$. We define $x = [E, I_a, I_m, I_s]$ and rewrite the ODEs of the variables in $x$ to be of the form $$\frac{\text{d}x_i}{\text{d}t} = \mathscr{F_i}(x) - \mathscr{V_i}(x)$$, where $\mathscr{F_i}(x)$ is the rate of appearance of new infections in compartment $i$, and $\mathscr{V_i}(x)$ is the rate of other transitions between compartment $i$ and other infected compartments. For example, if we take $x_i = E$, then $\mathscr{F_i}(x) = S (\beta_{I_a}I_a + \beta_{I_m}I_m + \beta_{I_s}I_s)$ and $\mathscr{V_i}(x) = \kappa E$. Similarly, for $x_i = I_a$ $\mathscr{F_i}(x) = \eta_{E->I_a} \kappa E$ and $\mathscr{V_i}(x) = (\gamma_{I_a} + \mu_{I_a})I_{a}$.
+We calculate the basic reproduction number ($R_0$) using the next generation matrix approach. First, we select those populations in the model that contain exposed or infectious individuals, so $E$, $I_a$, $I_m$ and $I_s$. We define $x = [E, I_a, I_m, I_s]$ and rewrite the ODEs of the variables in $x$ to be of the form 
+$$\frac{\text{d}x_i}{\text{d}t} = \mathscr{F_i}(x) - \mathscr{V_i}(x),$$ 
+where $\mathscr{F_i}(x)$ is the rate of appearance of new infections in compartment $i$, and $\mathscr{V_i}(x)$ is the rate of other transitions between compartment $i$ and other infected compartments. For example, if we take $x_i = E$, then $\mathscr{F_i}(x) = S (\beta_{I_a}I_a + \beta_{I_m}I_m + \beta_{I_s}I_s)$ and $\mathscr{V_i}(x) = \kappa E$. Similarly, for $x_i = I_a$ $\mathscr{F_i}(x) = \eta_{E->I_a} \kappa E$ and $\mathscr{V_i}(x) = (\gamma_{I_a} + \mu_{I_a})I_{a}$.
 
 where the first three terms indicate recovery of infectious individuals with different levels of symptoms and the last term indicates loss of immunity.
 
-We now compute 
+We now compute
 $$F=\frac{\partial \mathscr{F_i}{(x_0)}}{\partial x_j}\hspace{5mm}\text{and }\hspace{5mm}V=\frac{\partial \mathscr{V_i}{(x_0)}}{\partial x_j},$$
+
 for all variables in $x$. The basic reproduction number for the SEIaImIsRD model is then defined as
 $$R_0 = \rho(FV^{-1}),$$
 where $\rho$ denotes the spectral radius of a matrix (i.e. the largest absolute value of its eigenvalues). Matrix $FV^{-1}$ is called the next generation matrix and its $(i,j)$ entry is equal to the expected number of secondary infections in compartment $i$ produced by an infected individual introduced in compartment $j$.
@@ -121,24 +119,24 @@ Next, we set the initial conditions and assign the values to the model. Because 
 ```{r}
 S <- 0.99
 E <- 0.01
-I_asymptomatic <- 0
-I_mild <- 0
-I_severe <- 0
+asymptomatic <- 0
+mild <- 0
+severe <- 0
 R <- 0
 D <- 0
 
-initial_conditions(model) <- list(S = S, E = E, I_asymptomatic = I_asymptomatic,
-                                  I_mild = I_mild, I_severe = I_severe, R = R, D = D)
+initial_conditions(model) <- list(S = S, E = E, asymptomatic = asymptomatic,
+                                  mild = mild, severe = severe, R = R, D = D)
 ```
 
 We set the parameter values, and assign them to the model.
 ```{r}
-beta <- list(i_asymptomatic = 0.80, i_mild = 0.90, i_severe = 1.00)
+beta <- list(asymptomatic = 0.80, mild = 0.90, severe = 1.00)
 kappa <- 0.50
 omega <- 0.01
-p_symptom <- list(i_mild = 0.35, i_severe = 0.05)
-gamma <- list(i_asymptomatic = 0.9, i_mild = 0.50, i_severe = 0.05)
-mu <- list(i_asymptomatic = 0.005, i_mild = 0.05, i_severe = 0.30)
+p_symptom <- list(mild = 0.35, severe = 0.05)
+gamma <- list(asymptomatic = 0.9, mild = 0.50, severe = 0.05)
+mu <- list(asymptomatic = 0.005, mild = 0.05, severe = 0.30)
 
 transmission_parameters(model) <- list(beta = beta, kappa = kappa, omega = omega,
                                        p_symptom = p_symptom, gamma = gamma, mu = mu)
@@ -153,20 +151,6 @@ plot_dataframe <- function(dataframe, x = "time", y = "value", c = "compartment"
   return(p)
 }
 ```
-
-```{r include=FALSE, echo=FALSE}
-# Define helper function for printing out parameter values
-# print_table_transmission_parameters <- function(model){
-#   df.params <- model@transmission_parameters %>%
-#     data.frame() %>%
-#     t()
-#   colnames(df.params) <- "value"
-#   table.params <- kable(df.params) %>%
-#     kable_styling(bootstrap_options = "striped", full_width = FALSE, position="left")
-#   return (table.params)
-# }
-```
-
 
 Lastly, we set time span and time step for the simulation:
 ```{r}
@@ -186,18 +170,6 @@ model <- R0(model)
 # plot
 model.plot <- plot_dataframe(model@output$states, x = "time", y = "value", c = "compartment")
 print(model.plot)
-# model.plot <- ggplotly(p=model.plot, dynamicTicks = TRUE, originalData = FALSE)
-
-# get parameters
-# model.params.table = print_table_transmission_parameters(model)
-
-# <div class = "row">
-# <div class = "col-md-3">
-# model.params.table
-# </div>
-# <div class = "col-md-8">
-# </div>
-# </div>
 ```
 
 We can look at the basic reproduction number for this model:
@@ -234,7 +206,7 @@ we see no change! This is because the basic reproduction number only indicates w
 Lastly, we consider what happens to the model dynamics if we change the infection rate. For example, what if asymptomatic individuals are significantly less infectious than mildly or severely symptomic ones? We investigate this by lowering $\beta_{I_a}$ from 0.8 to 0.5 so that it is now half the infection rate of infectious individuals with severe symptoms.
 ```{r, fig.height = 5, fig.width = 5, fig.align = "center", fig.show="hold"}
 model2 <- model
-transmission_parameters(model2) <- list(beta = list(i_asymptomatic = 0.50, i_mild =  0.90, i_severe = 1.00), kappa = kappa, omega = omega, p_symptom = p_symptom, gamma = gamma, mu = mu)
+transmission_parameters(model2) <- list(beta = list(asymptomatic = 0.50, mild =  0.90, severe = 1.00), kappa = kappa, omega = omega, p_symptom = p_symptom, gamma = gamma, mu = mu)
 model2 <- run(model2, t)
 model2 <- R0(model2)
 

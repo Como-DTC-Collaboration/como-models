@@ -20,12 +20,12 @@ R <- 0
 D <- 0
 
 # params
-beta <- list(i_asymptomatic = 0.80, i_mild = 0.90, i_severe = 1.00)
+beta <- list(asymptomatic = 0.80, mild = 0.90, severe = 1.00)
 kappa <- 0.50
 omega <- 0.01
-p_symptom <- list(i_mild = 0.35, i_severe = 0.05)
-gamma <- list(i_asymptomatic = 0.9, i_mild = 0.50, i_severe = 0.05)
-mu <- list(i_asymptomatic = 0.005, i_mild = 0.05, i_severe = 0.30)
+p_symptom <- list(mild = 0.35, severe = 0.05)
+gamma <- list(asymptomatic = 0.9, mild = 0.50, severe = 0.05)
+mu <- list(asymptomatic = 0.005, mild = 0.05, severe = 0.30)
 # simulation period: 3000 time points (to relaxation)
 t <- seq(0, 2000, by = 1)
 
@@ -76,6 +76,6 @@ test_that("model error input", {
     # missing parameter (beta)
     transmission_parameters(model) <- list(kappa = kappa, omega = omega, p_symptom = p_symptom, gamma = gamma, mu = mu)
     # p_symptom sum greater than 1
-    transmission_parameters(model) <- list(kappa = kappa, omega = omega, p_symptom = list(i_mild=0.7, i_severe=0.8), gamma = gamma, mu = mu)
+    transmission_parameters(model) <- list(kappa = kappa, omega = omega, p_symptom = list(mild=0.7, severe=0.8), gamma = gamma, mu = mu)
     })
 })

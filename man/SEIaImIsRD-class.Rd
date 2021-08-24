@@ -32,7 +32,10 @@
 beta - a named list of the effective contact rate from each infected group (i.e. rate at which an infected individual exposes susceptible), each element with value in \link{0,1}
 kappa - rate of progression from exposed to infectious (the reciprocal is the incubation period),
 omega - rate at which recovered individuals become susceptible,
-p_symptom - a named list of fraction of different infected groups, only need to specify values for mild and severe symptom groups, whose sum should be <=1.
+p_symptom - a named list of the probability of exposed individuals moving into each of the different infected groups,
+Here, only probabilities for the mild (p_symptom.mild) and severe (p_symptom.severe) groups need be specified and
+the asymptomatic probability is the remainder (1 - p_symptom.mild - p_symptom.severe). Thus we require
+p_symptom.mild + p_symptom.severe <= 1.
 gamma - a list of the rate of removal of each infected group (i.e. recovery rate of an infected individual), each element with value in \link{0,1}
 mu - a list of the rate of disease-caused mortality of each infected group, each element with value in \link{0,1}}
 
@@ -55,13 +58,13 @@ A SEIaImIsRD class object with R0 value stored
 An S4 object representing the SEIaImIsRD model: SEIRD with infected population
 that are composed of different symptome compartments: asymptomatic, mild and severe (current settings).
 
-\deqn{\frac{dS(t)}{dt} = -S(t)(\beta.i_{asymptomatic} I_{asymptomatic}(t) + \beta.i_{mild} I_{mild}(t) + \beta.i_{severe} I_{severe}(t)) + \omega R(t)}
-\deqn{\frac{dE(t)}{dt} = S(t)(\beta.i_{asymptomatic} I_{asymptomatic}(t) + \beta.i_{mild} I_{mild}(t) + \beta.i_{severe} I_{severe}(t)) - \kappa E(t)}
-\deqn{\frac{dI_{asymptomatic}(t)}{dt} = p_symptom.i_{asymptomatic} \kappa E(t) - (\gamma.i_{asymptomatic} + \mu.i_{asymptomatic}) I_{asymptomatic}(t)}
-\deqn{\frac{dI_{mild}(t)}{dt} = p_symptom.i_{mild}\kappa E(t) - (\gamma.i_{mild} + \mu.i_{mild}) I_{mild}(t)}
-\deqn{\frac{dI_{severe}(t)}{dt} = p_symptom.i_{severe}\kappa E(t) - (\gamma.i_{severe} + \mu.i_{severe}) I_{severe}(t)}
-\deqn{\frac{dR(t)}{dt} = -\omega R(t) + \gamma.i_{asymptomatic} I_{asymptomatic}(t) + \gamma.i_{mild} I_{mild}(t) + \gamma.i_{severe} I_{severe}(t)}
-\deqn{\frac{dD(t)}{dt} =  \mu.i_{asymptomatic} I_{asymptomatic}(t) + \mu.i_{mild} I_{mild}(t) + \mu.i_{severe} I_{severe}(t)}
+\deqn{\frac{dS(t)}{dt} = -S(t)(\beta.asymptomatic I_{asymptomatic}(t) + \beta.mild I_{mild}(t) + \beta.severe I_{severe}(t)) + \omega R(t)}
+\deqn{\frac{dE(t)}{dt} = S(t)(\beta.asymptomatic I_{asymptomatic}(t) + \beta.mild I_{mild}(t) + \beta.severe I_{severe}(t)) - \kappa E(t)}
+\deqn{\frac{dI_{asymptomatic}(t)}{dt} = p_symptom.asymptomatic \kappa E(t) - (\gamma.asymptomatic + \mu.asymptomatic) I_{asymptomatic}(t)}
+\deqn{\frac{dI_{mild}(t)}{dt} = p_symptom.mild\kappa E(t) - (\gamma.mild + \mu.mild) I_{mild}(t)}
+\deqn{\frac{dI_{severe}(t)}{dt} = p_symptom.severe\kappa E(t) - (\gamma.severe + \mu.severe) I_{severe}(t)}
+\deqn{\frac{dR(t)}{dt} = -\omega R(t) + \gamma.asymptomatic I_{asymptomatic}(t) + \gamma.mild I_{mild}(t) + \gamma.severe I_{severe}(t)}
+\deqn{\frac{dD(t)}{dt} =  \mu.asymptomatic I_{asymptomatic}(t) + \mu.mild I_{mild}(t) + \mu.severe I_{severe}(t)}
 }
 \details{
 This class represents an extension of the SEIRD model, showing how populations of susceptible,

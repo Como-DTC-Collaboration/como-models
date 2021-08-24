@@ -146,7 +146,10 @@ setMethod(
 #' beta - a named list of the effective contact rate from each infected group (i.e. rate at which an infected individual exposes susceptible), each element with value in [0,1]
 #' kappa - rate of progression from exposed to infectious (the reciprocal is the incubation period),
 #' omega - rate at which recovered individuals become susceptible,
-#' p_symptom - a named list of fraction of different infected groups, only need to specify values for mild and severe symptom groups, whose sum should be <=1. 
+#' p_symptom - a named list of the probability of exposed individuals moving into each of the different infected groups, 
+#' Here, only probabilities for the mild (p_symptom.mild) and severe (p_symptom.severe) groups need be specified and 
+#' the asymptomatic probability is the remainder (1 - p_symptom.mild - p_symptom.severe). Thus we require 
+#' p_symptom.mild + p_symptom.severe <= 1.
 #' gamma - a list of the rate of removal of each infected group (i.e. recovery rate of an infected individual), each element with value in [0,1]
 #' mu - a list of the rate of disease-caused mortality of each infected group, each element with value in [0,1]
 #' @return An object of class SEIaImIsRD with initial population and parameters
@@ -158,12 +161,12 @@ setMethod(
   "SEIaImIsRD",
   function(
     object,
-    value = list(beta = list(i_asymptomatic = NA_real_, i_mild = NA_real_, i_severe = NA_real_), 
+    value = list(beta = list(asymptomatic = NA_real_, mild = NA_real_, severe = NA_real_), 
     kappa = NA_real_, 
     omega = NA_real_,
-    p_symptom = list(i_mild = NA_real_, i_severe = NA_real_), 
-    gamma = list(i_asymptomatic = NA_real_, i_mild = NA_real_, i_severe = NA_real_), 
-    mu = list(i_asymptomatic = NA_real_, i_mild = NA_real_, i_severe = NA_real_))) {
+    p_symptom = list(mild = NA_real_, severe = NA_real_), 
+    gamma = list(asymptomatic = NA_real_, mild = NA_real_, severe = NA_real_), 
+    mu = list(asymptomatic = NA_real_, mild = NA_real_, severe = NA_real_))) {
     param_list <- value
     names(param_list) <- object@transmission_parameter_names
     object@transmission_parameters <- param_list
@@ -215,13 +218,13 @@ setMethod(
 
 #' Solves the ode system.
 #'
-#' \deqn{\frac{dS(t)}{dt} = -S(t)(\beta.i_{asymptomatic} I_{asymptomatic}(t) + \beta.i_{mild} I_{mild}(t) + \beta.i_{severe} I_{severe}(t)) + \omega R(t)}
-#' \deqn{\frac{dE(t)}{dt} = S(t)(\beta.i_{asymptomatic} I_{asymptomatic}(t) + \beta.i_{mild} I_{mild}(t) + \beta.i_{severe} I_{severe}(t)) - \kappa E(t)}
-#' \deqn{\frac{dI_{asymptomatic}(t)}{dt} = p_symptom.i_{asymptomatic} \kappa E(t) - (\gamma.i_{asymptomatic} + \mu.i_{asymptomatic}) I_{asymptomatic}(t)}
-#' \deqn{\frac{dI_{mild}(t)}{dt} = p_symptom.i_{mild}\kappa E(t) - (\gamma.i_{mild} + \mu.i_{mild}) I_{mild}(t)}
-#' \deqn{\frac{dI_{severe}(t)}{dt} = p_symptom.i_{severe}\kappa E(t) - (\gamma.i_{severe} + \mu.i_{severe}) I_{severe}(t)}
-#' \deqn{\frac{dR(t)}{dt} = -\omega R(t) + \gamma.i_{asymptomatic} I_{asymptomatic}(t) + \gamma.i_{mild} I_{mild}(t) + \gamma.i_{severe} I_{severe}(t)}
-#' \deqn{\frac{dD(t)}{dt} =  \mu.i_{asymptomatic} I_{asymptomatic}(t) + \mu.i_{mild} I_{mild}(t) + \mu.i_{severe} I_{severe}(t)}
+#' \deqn{\frac{dS(t)}{dt} = -S(t)(\beta.asymptomatic I_{asymptomatic}(t) + \beta.mild I_{mild}(t) + \beta.severe I_{severe}(t)) + \omega R(t)}
+#' \deqn{\frac{dE(t)}{dt} = S(t)(\beta.asymptomatic I_{asymptomatic}(t) + \beta.mild I_{mild}(t) + \beta.severe I_{severe}(t)) - \kappa E(t)}
+#' \deqn{\frac{dI_{asymptomatic}(t)}{dt} = p_symptom.asymptomatic \kappa E(t) - (\gamma.asymptomatic + \mu.asymptomatic) I_{asymptomatic}(t)}
+#' \deqn{\frac{dI_{mild}(t)}{dt} = p_symptom.mild\kappa E(t) - (\gamma.mild + \mu.mild) I_{mild}(t)}
+#' \deqn{\frac{dI_{severe}(t)}{dt} = p_symptom.severe\kappa E(t) - (\gamma.severe + \mu.severe) I_{severe}(t)}
+#' \deqn{\frac{dR(t)}{dt} = -\omega R(t) + \gamma.asymptomatic I_{asymptomatic}(t) + \gamma.mild I_{mild}(t) + \gamma.severe I_{severe}(t)}
+#' \deqn{\frac{dD(t)}{dt} =  \mu.asymptomatic I_{asymptomatic}(t) + \mu.mild I_{mild}(t) + \mu.severe I_{severe}(t)}
 #'
 #' @param object An object of class SEIaImIsRD
 #' @param times A list of time points of the simulation period
@@ -258,14 +261,14 @@ setMethod("run",
             ode_symptome_rhs <- function(t, pop_groups, parameters) {
               with(
                 as.list(c(pop_groups, params)), {
-                  dS <- -S * (beta.i_asymptomatic * I_asymptomatic + beta.i_mild * I_mild + beta.i_severe * I_severe) + omega * R
-                  dE <- S * (beta.i_asymptomatic * I_asymptomatic + beta.i_mild * I_mild + beta.i_severe * I_severe) - kappa * E
-                  dI_a <- (1.0 - p_symptom.i_mild - p_symptom.i_severe) * kappa * E - (gamma.i_asymptomatic + mu.i_asymptomatic) * I_asymptomatic
-                  dI_m <- p_symptom.i_mild * kappa * E - (gamma.i_mild + mu.i_mild) * I_mild
-                  dI_s <- p_symptom.i_severe * kappa * E - (gamma.i_severe + mu.i_severe) * I_severe
-                  dR <- -omega * R + gamma.i_asymptomatic * I_asymptomatic + gamma.i_mild * I_mild + gamma.i_severe * I_severe
-                  dD <-  mu.i_asymptomatic * I_asymptomatic + mu.i_mild * I_mild + mu.i_severe * I_severe
-                  dC <- S * (beta.i_asymptomatic * I_asymptomatic + beta.i_mild * I_mild + beta.i_severe * I_severe)
+                  dS <- -S * (beta.asymptomatic * I_asymptomatic + beta.mild * I_mild + beta.severe * I_severe) + omega * R
+                  dE <- S * (beta.asymptomatic * I_asymptomatic + beta.mild * I_mild + beta.severe * I_severe) - kappa * E
+                  dI_a <- (1.0 - p_symptom.mild - p_symptom.severe) * kappa * E - (gamma.asymptomatic + mu.asymptomatic) * I_asymptomatic
+                  dI_m <- p_symptom.mild * kappa * E - (gamma.mild + mu.mild) * I_mild
+                  dI_s <- p_symptom.severe * kappa * E - (gamma.severe + mu.severe) * I_severe
+                  dR <- -omega * R + gamma.asymptomatic * I_asymptomatic + gamma.mild * I_mild + gamma.severe * I_severe
+                  dD <-  mu.asymptomatic * I_asymptomatic + mu.mild * I_mild + mu.severe * I_severe
+                  dC <- S * (beta.asymptomatic * I_asymptomatic + beta.mild * I_mild + beta.severe * I_severe)
                   # return the rate of cI_severenge
                   list(c(dS, dE, dI_a, dI_m, dI_s, dR, dD, dC))
                 })
@@ -336,14 +339,14 @@ setMethod("R0", "SEIaImIsRD", function(model) {
   # define matrices F and V:
   F <- matrix(0, 4, 4)
   V <- matrix(0, 4, 4)
-  F[1, 2:4] <-  c(S * beta$i_asymptomatic, S * beta$i_mild, S * beta$i_severe)
+  F[1, 2:4] <-  c(S * beta$asymptomatic, S * beta$mild, S * beta$severe)
   V[1, 1] <- kappa
-  V[2, 1] <- -kappa * (1 - p_symptom$i_mild - p_symptom$i_severe)
-  V[2, 2] <- gamma$i_asymptomatic + mu$i_asymptomatic
-  V[3, 1] <- -kappa * p_symptom$i_mild
-  V[3, 3] <- gamma$i_mild + mu$i_mild
-  V[4, 1] <- -kappa * p_symptom$i_severe
-  V[4, 4] <- gamma$i_severe + mu$i_severe
+  V[2, 1] <- -kappa * (1 - p_symptom$mild - p_symptom$severe)
+  V[2, 2] <- gamma$asymptomatic + mu$asymptomatic
+  V[3, 1] <- -kappa * p_symptom$mild
+  V[3, 3] <- gamma$mild + mu$mild
+  V[4, 1] <- -kappa * p_symptom$severe
+  V[4, 4] <- gamma$severe + mu$severe
   # calculate R0 as the spectral radius for the matrix F x V^(-1):
   eigVals <- eigen(F %*% (solve(V)))$values
   model@R0 <- max(abs(eigVals))
