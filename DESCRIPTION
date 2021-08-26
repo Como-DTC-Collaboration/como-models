@@ -12,15 +12,25 @@ Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
 Suggests: 
     covr,
-    testthat (>= 3.0.0)
+    testthat (>= 3.0.0),
+    knitr,
+    markdown,
+    rmarkdown
 Config/testthat/edition: 3
 Imports: 
-    forcats,
     deSolve,
-    ggplot2,
-    glue,
     matlib,
-    reshape2,
-    methods,
     readxl,
     gridExtra
+    glue,
+    reshape2,
+    tidyverse,
+    methods,
+    magrittr,
+    rlang,
+    dplyr,
+    forcats,
+    ggplot2
+VignetteBuilder: knitr
+Depends: 
+    R (>= 2.10)

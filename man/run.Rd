@@ -15,6 +15,7 @@ For the urban community:
 \deqn{\frac{dC_U(t)}{dt} = b S_U (I_U + I_Y) N_U/P_total C
                            + b S_U I_U N_U/P_U (1-C)}
 \deqn{\frac{dD_U(t)}{dt} = m I_U}}
+
 \usage{
 run(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
 }
