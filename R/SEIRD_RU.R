@@ -32,7 +32,6 @@
 #' @import glue
 #' @import reshape2
 #' @import matlib
-#' 
 #' @export SEIRD_RU
 
 SEIRD_RU <- setClass("SEIRD_RU",
@@ -649,7 +648,6 @@ setMethod(
 #'
 #' @return the value of R0
 #' @aliases R0,ANY,ANY-method
-#' 
 #' @export
   
   setMethod(
