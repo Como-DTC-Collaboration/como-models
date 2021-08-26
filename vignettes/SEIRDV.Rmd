@@ -108,7 +108,7 @@ times <- seq(0, 50, by = 1)
 out_df <- run(my_model, times)
 ```
 
-The simulation returns two objects: one is a data frame comprising the states over time. Here, there's a peak in the infectious proportion close to $t=10$ with the number declining and remaining low afterwards.
+The simulation returns two objects: one is a data frame comprising the states over time. Here, the infectious proportion is steadily declining, plummeting to 0 after $t=20$.
 ```{r, fig.height = 5, fig.width = 7}
 states <- out_df$states
 
