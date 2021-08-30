@@ -180,7 +180,7 @@ setMethod(
         stop(glue("{p} format must be numeric"))
       }
     }
-    
+
     # raise errors if initial states are not one value each
     for (p in list("S_U0", "E_U0", "I_U0", "R_U0",
                    "S_Y0", "E_Y0", "I_Y0", "R_Y0")) {
@@ -430,11 +430,11 @@ setMethod(
     # number of urban contacts for an urban individual, normalized over the
     # whole population through the age demographics
     N_U <- sum(rowSums(contact_matrices(object)$urban) *
-                (country_demog(object)$urban/sum(country_demog(object)$urban))) / 2
+                (country_demog(object)$urban / sum(country_demog(object)$urban))) / 2
     # number of rural contacts for a rural individual, normalized over the
     # whole population through the age demographics
     N_Y <- sum(rowSums(contact_matrices(object)$rural) *
-                (country_demog(object)$rural/sum(country_demog(object)$rural))) / 2
+                (country_demog(object)$rural / sum(country_demog(object)$rural))) / 2
 
     # fraction of the population that is urban
     f_urban <- sum(country_demog(object)$urban)
@@ -492,12 +492,12 @@ setMethod(
                  dsy, dey, diy, dry, dcy, d_deathy))
         })
     }
-    
+
     # call ode solver
     out <- ode(
       y = state, times = times, func = right_hand_side,
       parms = parameters, method = solve_method)
-    
+
     output <- as.data.frame.array(out)
 
     # Compute incidences and deaths: urban
@@ -527,54 +527,54 @@ setMethod(
   })
 
 #----------------------------------------------------------------------------
-#' @describeIn Returns the value of R0 for the model with the specified parameter values.
+#' @describeIn Returns the value of R0 for the model with the specified
+#' parameter values.
 #' R0 is computed using the next generation matrix method.
 #'
-#' @param model an model of the class SEIRD_RU
+#' @param model a model of the class SEIRD_RU
 #'
 #' @return the value of R0
 #' @aliases R0,ANY,ANY-method
 #' @export
   
   setMethod(
-    "R0", "SEIRD_RU",
-    function(model) {
+    "R0", "SEIRD_RU", function(model) {
       # initial susceptible populations
-      S0U = initial_conditions(model)$S_U0
-      S0Y = initial_conditions(model)$S_Y0
+      S0U <- initial_conditions(model)$S_U0
+      S0Y <- initial_conditions(model)$S_Y0
       # required parameter values
-      b = transmission_parameters(model)$b
-      k = transmission_parameters(model)$k
-      g = transmission_parameters(model)$g
-      m = transmission_parameters(model)$m
-      C = transmission_parameters(model)$C
+      b <- transmission_parameters(model)$b
+      k <- transmission_parameters(model)$k
+      g <- transmission_parameters(model)$g
+      m <- transmission_parameters(model)$m
+      C <- transmission_parameters(model)$C
       # compute contacts N_U and N_Y from contact matrices
       # number of urban contacts for an urban individual, normalized over the
       # whole population through the age demographics
       NU <- sum(rowSums(contact_matrices(model)$urban) *
-                   (country_demog(model)$urban/sum(country_demog(model)$urban))) / 2
+                   (country_demog(model)$urban / sum(country_demog(model)$urban))) / 2
       # number of rural contacts for a rural individual, normalized over the
       # whole population through the age demographics
       NY <- sum(rowSums(contact_matrices(model)$rural) *
-                   (country_demog(model)$rural/sum(country_demog(model)$rural))) / 2
+                   (country_demog(model)$rural / sum(country_demog(model)$rural))) / 2
       # fraction of the population that is urban
       f_urban <- sum(country_demog(model)$urban)
       #fraction of the population that is rural
       f_rural <- sum(country_demog(model)$rural)
       # convenience parameter
-      K <- ((1-f_rural)* NU + f_rural*NY)
-      
-      matF <- matrix(data = c(0, 0, b*S0U*(K*C + NU/(1-f_rural)*(1-C)),              b*S0U*K*C,
-                              0, 0,              b*S0Y*K*C,                b*S0Y*(K*C + NY/f_rural*(1-C)),     
+      K <- ((1 - f_rural) * NU + f_rural * NY)
+
+      matF <- matrix(data = c(0, 0, b * S0U * (K * C + NU / (1 - f_rural) * (1 - C)), b * S0U * K * C,
+                              0, 0,         b * S0Y * K * C,       b * S0Y * (K * C + NY / f_rural * (1 - C)),   
                               0, 0,                 0,                                   0,
-                              0, 0,                 0,                                   0), 
+                              0, 0,                 0,                                   0),
                      nrow = 4, ncol = 4, byrow = TRUE)
       matV <- matrix(data = c(k, 0, 0, 0,
                               0, k, 0, 0,
-                              -k, 0, (g+m), 0,
-                              0, -k, 0, (g+m)),
+                              -k, 0, (g + m), 0,
+                              0, -k, 0, (g + m)),
                      nrow = 4, ncol = 4, byrow = TRUE)
-      
+
       R0 <- max(abs(eigen(matF %*% inv(matV))$values))
       return(R0)
     })

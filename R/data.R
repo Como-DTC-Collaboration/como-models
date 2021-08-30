@@ -63,8 +63,8 @@
 #'
 #' A tibble containing populations, birth rates and death rates for 152
 #' countries split into 5 year age groups. These age groups range from 0-4 y.o.
-#' to 100+ y.o. 
-#' 
+#' to 100+ y.o.
+#'
 #' @format A tibble with dimensions 4221x5.
 #'
 #' @source \url{https://population.un.org/wpp/Download/Standard/Population/}
@@ -92,7 +92,7 @@
 #'
 #' A list of 177 16x16 asymmetrical contact matrices, one for each country,
 #' describing which age groups have contact with which other age groups in
-#' URBAN communities. 
+#' URBAN communities.
 #' The units of entries are the average number of contacts with a person
 #' in that age group in a day. The columns are the age groups 0-5 (X1),
 #' 5-10 (X2), 10-15 (X3), and continuing with 5 year gaps up to 80 years old.
@@ -164,10 +164,10 @@
 "country_codetoname"
 
 #' percentrural_by_country
-#' 
+#'
 #' A dataframe showing the percentage of the population that lived in a rural
 #' environment for 264 countries in the years 1960-2020. The columns are
-#' 
+#'
 #' \itemize{
 #'   \item Country Name: full name of country
 #'   \item Country Code: three-letter country code
@@ -175,11 +175,10 @@
 #'   \item Indicator Code: shorthand for Indicator Name
 #'   \item 61 columns, one for each year in the range 1960-2020
 #' }
-#' 
+#'
 #' @format A dataframe with 65 variables and 264 observations.
 #' @docType data
 #' @name percentrural_by_country
 #' @usage data(percentrural_by_country)
 #' @source \url{https://data.worldbank.org/indicator/SP.RUR.TOTL.ZS?view=chart}
 "percentrural_by_country"
-
