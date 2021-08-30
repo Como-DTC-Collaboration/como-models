@@ -32,6 +32,7 @@
 #' @import glue
 #' @import reshape2
 #' @import matlib
+#' @importFrom methods new
 #' @export SEIRD_RU
 
 SEIRD_RU <- setClass("SEIRD_RU",
@@ -71,15 +72,6 @@ SEIRD_RU <- setClass("SEIRD_RU",
 )
 
 #-----------------------------------------------------------------------------
-#' Retrieves initial conditions of SEIRD_RU model.
-#'
-#' @param object An object of the class SEIRD_RU.
-#' @export
-
-setGeneric("initial_conditions",
-           function(object) standardGeneric("initial_conditions"))
-
-
 #' @describeIn SEIRD_RU Retrieves initial conditions of
 #'             SEIRD_RU model.
 #'
@@ -110,14 +102,6 @@ setMethod("initial_cases_deaths", "SEIRD_RU",
           function(object) object@initial_cases_deaths)
 
 #-----------------------------------------------------------------------------
-#' Retrieves transmission parameters of SEIR model.
-#'
-#' @param object An object of the class SEIRD_RU.
-#' @export
-
-setGeneric("transmission_parameters",
-           function(object) standardGeneric("transmission_parameters"))
-
 #' @describeIn SEIRD_RU Retrieves transmission parameters of SEIR model.
 #'
 #' @param object An object of the class SEIRD_RU.
@@ -164,26 +148,6 @@ setMethod("country_demog", "SEIRD_RU",
           function(object) object@country_demog)
 
 #-----------------------------------------------------------------------------
-#' Setter method for initial conditions (S0, E0, I0 and R0) for both communities
-#' in the SEIR model.
-#'
-#' All initial conditions must sum up to 1.
-#' If the initial conditions provided to do not sum to 1, an error is thrown.
-#'
-#' @param object an object of the class SEIRD_RU
-#' @param value (list) list of initial conditions S_U0, E_U0, I_U0, R_U0, S_Y0,
-#' E_Y0, I_Y0, R_Y0.
-#'
-#' @return object of class SEIRD_RU with initial conditions assigned.
-#'
-#' @export
-
-setGeneric(
-  "initial_conditions<-",
-  function(object, value) {
-    standardGeneric("initial_conditions<-")
-  })
-
 #' @describeIn SEIRD_RU Setter method for initial conditions
 #' (S0, E0, I0 and R0) for both communities in the SEIR model.
 #'
@@ -244,26 +208,6 @@ setMethod(
   })
 
 #-----------------------------------------------------------------------------
-#' Setter method for transmission parameters
-#' (b, k, g, m and C) of the SEIR model.
-#'
-#' If the transmission parameters provided to are not 1-dimensional an error is
-#' thrown.
-#'
-#' @param object (SEIRD_RU model)
-#' @param value (list) list of values for b, k, g, m, C, respectively.
-#'
-#' @return object of class SEIRD_RU with transmission parameter values
-#' assigned.
-#' @export
-
-setGeneric(
-  "transmission_parameters<-",
-  function(object, value) {
-    standardGeneric("transmission_parameters<-")
-  })
-
-
 #' @describeIn SEIRD_RU Setter method for transmission parameters
 #' (b, k, g, m and C) of the SEIR model.
 #'
@@ -420,53 +364,6 @@ setMethod(
   })
 
 #-----------------------------------------------------------------------------
-# SEIRD_RU class specific functions
-
-#' Solves ODEs of the SEIRD_RU specified in object
-#' for the time points specified in times and integration method specified in
-#' solve_method.
-#' For the urban community:
-#' \deqn{\frac{dS_U(t)}{dt} = - b S_U (I_U + I_Y) N_U/P_total C
-#'                            - b S_U I_U N_U/P_U (1-C)}
-#' \deqn{\frac{dE_U(t)}{dt} =  b S_U (I_U + I_Y) N_U/P_total C
-#'                            + b S_U I_U N_U/P_U (1-C) - k E_U}
-#' \deqn{\frac{dI_U(t)}{dt} = k E_U - (g + m) I_U}
-#' \deqn{\frac{dR_U(t)}{dt} = g I_U}
-#' \deqn{\frac{dC_U(t)}{dt} = b S_U (I_U + I_Y) N_U/P_total C
-#'                            + b S_U I_U N_U/P_U (1-C)}
-#' \deqn{\frac{dD_U(t)}{dt} = m I_U}
-#'
-#' For the rural community:
-#' \deqn{\frac{dS_Y(t)}{dt} = - b S_Y (I_U + I_Y) N_Y/P_total C
-#'                            - b S_Y I_Y N_Y/P_Y (1-C)}
-#' \deqn{\frac{dE_Y(t)}{dt} =   b S_Y (I_U + I_Y) N_Y/P_total C
-#'                            + b S_Y I_Y N_Y/P_Y (1-C) - k E_Y}
-#' \deqn{\frac{dI_Y(t)}{dt} = k E_Y - (g + m) I_Y}
-#' \deqn{\frac{dR_Y(t)}{dt} = g I_Y}
-#' \deqn{\frac{dC_Y(t)}{dt} =  b S_Y (I_U + I_Y) N_Y/P_total C
-#'                            + b S_Y I_Y N_Y/P_Y (1-C)}
-#' \deqn{\frac{dD_Y(t)}{dt} = m I_Y}
-#'
-#' This function relies on the package deSolve.
-#'
-#' @param object an object of the class SEIRD_RU
-#' @param times (double) a sequence of time points at which the solution to
-#' the system of ODEs should be returned. Must be of the form
-#' seq(t_start, t_end, by=t_step). Default time series is seq(0, 100, by = 1).
-#' @param solve_method (string) a string of chosen numerical integration method
-#' for solving the ode system. Default is "lsoda" which is also the default for
-#' the ode function in the deSolve package used in this function.
-#'
-#' @return a dataframe with the time steps, time series of S, E, I and R
-#' population fractions, and incidence numbers and deaths of the
-#' SEIRD_RU model.
-#' @export
-
-setGeneric(name = "run",
-           def = function(object, times = seq(0, 100, by = 1),
-                          solve_method = "lsoda") {
-             standardGeneric("run")})
-
 #' @describeIn SEIRD_RU Solves ODEs of the SEIRD_RU specified
 #' in object for the time points specified in times and integration method
 #' specified in solve_method.
@@ -630,21 +527,10 @@ setMethod(
   })
 
 #----------------------------------------------------------------------------
-#' Returns the value of R0 for the model with the specified parameter values.
-#' R0 is computed using the next generation matrix method.
-#'
-#' @param object an object of the class SEIRD_RU
-#' @return the value of R0
-#' @export
-  
-  setGeneric(name = "R0",
-             def = function(object) {
-               standardGeneric("R0")})
-  
 #' @describeIn Returns the value of R0 for the model with the specified parameter values.
 #' R0 is computed using the next generation matrix method.
 #'
-#' @param object an object of the class SEIRD_RU
+#' @param model an model of the class SEIRD_RU
 #'
 #' @return the value of R0
 #' @aliases R0,ANY,ANY-method
@@ -652,29 +538,29 @@ setMethod(
   
   setMethod(
     "R0", "SEIRD_RU",
-    function(object) {
+    function(model) {
       # initial susceptible populations
-      S0U = initial_conditions(object)$S_U0
-      S0Y = initial_conditions(object)$S_Y0
+      S0U = initial_conditions(model)$S_U0
+      S0Y = initial_conditions(model)$S_Y0
       # required parameter values
-      b = transmission_parameters(object)$b
-      k = transmission_parameters(object)$k
-      g = transmission_parameters(object)$g
-      m = transmission_parameters(object)$m
-      C = transmission_parameters(object)$C
+      b = transmission_parameters(model)$b
+      k = transmission_parameters(model)$k
+      g = transmission_parameters(model)$g
+      m = transmission_parameters(model)$m
+      C = transmission_parameters(model)$C
       # compute contacts N_U and N_Y from contact matrices
       # number of urban contacts for an urban individual, normalized over the
       # whole population through the age demographics
-      NU <- sum(rowSums(contact_matrices(object)$urban) *
-                   (country_demog(object)$urban/sum(country_demog(object)$urban))) / 2
+      NU <- sum(rowSums(contact_matrices(model)$urban) *
+                   (country_demog(model)$urban/sum(country_demog(model)$urban))) / 2
       # number of rural contacts for a rural individual, normalized over the
       # whole population through the age demographics
-      NY <- sum(rowSums(contact_matrices(object)$rural) *
-                   (country_demog(object)$rural/sum(country_demog(object)$rural))) / 2
+      NY <- sum(rowSums(contact_matrices(model)$rural) *
+                   (country_demog(model)$rural/sum(country_demog(model)$rural))) / 2
       # fraction of the population that is urban
-      f_urban <- sum(country_demog(object)$urban)
+      f_urban <- sum(country_demog(model)$urban)
       #fraction of the population that is rural
-      f_rural <- sum(country_demog(object)$rural)
+      f_rural <- sum(country_demog(model)$rural)
       # convenience parameter
       K <- ((1-f_rural)* NU + f_rural*NY)
       

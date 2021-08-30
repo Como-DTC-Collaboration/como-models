@@ -20,11 +20,9 @@ knitr::opts_chunk$set(
 library(comomodels)
 library(ggplot2)
 library(glue)
-library(readxl)
 library(deSolve)
 library(reshape2)
 library(gridExtra)
-library(readxl)
 library(viridis)
 library(matlib)
 ```
@@ -102,7 +100,7 @@ country_rural <- percentrural_by_country$`2019`[percentrural_by_country$`Country
 frac_rural <- country_rural/100 #turn percentage into fraction
 ```
 
-The last step in our data prep is to create the vector of normalized population per age group for the specific country. The contact matrices have 5-year age groups with the oldest group begin 80+. Because the age demographics go up to 100+, we need to sum the last five age groups in the demographics vector to ensure compatibility with the contact matrices.
+The last step in our data prep is to create the vector of normalized population per age group for the specific country. The contact matrices have 5-year age groups with the oldest group being 80+. Because the age demographics go up to 100+, we need to sum the last five age groups in the demographics vector to ensure compatibility with the contact matrices.
 
 ```{r}
 # get fraction of population in each 5-year age range
@@ -134,7 +132,7 @@ C = 1 # connectedness parameter
 transmission_parameters(model) <- list(b, k, g, m, C)
 ```
 
-Next we set the initial conditions of the model, where we specify separately what fraction of the population is infected in the urban community and what fraction is infected in the rural community. Note here that these are fractions of the total population across both communities! Because the populations are normalized, all initial conditions together must sum to one.
+Next we set the initial conditions of the model, where we specify separately what fraction of the population is infected in the urban community and what fraction is infected in the rural community. Note here that these are fractions of the total population across both communities! Because the populations are normalized, all initial conditions together must sum to one. In this example, we seed the epidemic in the urban community.
 ```{r}
 start_infected_urban = 0.0001
 start_infected_rural = 0
@@ -170,13 +168,13 @@ dim(output)
 ```
 
 The output from the model can then be plotted such that all populations are plotted separately for both communities
-```{r, fig.height = 4, fig.width = 7}
+```{r, fig.height = 5, fig.width = 10}
 # Communities plotted separately
 i <- sapply(output, is.factor)
 output[i] <- lapply(output[i], as.character)
 SEIR_df <- subset(output, compartment != "Incidences_U" & compartment != "Deaths_U" & compartment != "Incidences_Y" & compartment != "Deaths_Y")
 SEIR_df$compartment <- factor(SEIR_df$compartment, levels = c("S_U", "E_U", "I_U", "R_U", "S_Y", "E_Y", "I_Y", "R_Y"))
-col <- c("S_U" = "blue", "E_U" = "green", "I_U" = "yellow", "R_U" = "red", "S_Y" = "lightblue1", "E_Y" = "lightgreen", "I_Y" = "lightyellow", "R_Y" = "indianred")
+col <- c("S_U" = "blue", "E_U" = "green", "I_U" = "yellow", "R_U" = "red", "S_Y" = "lightskyblue1", "E_Y" = "lightgreen", "I_Y" = "lightyellow", "R_Y" = "indianred")
 SEIRplot <- ggplot(SEIR_df, aes(x = time, y = value)) +
   geom_line(aes(color = compartment), size = 1.5) +
   labs(x = "time (days)", y = "fraction of the population",
@@ -198,7 +196,7 @@ grid.arrange(SEIRplot,inc_plot,nrow = 1)
 ```
 or such that the populations are summed across the communities and we can observe the dynamics of the susceptible, exposed, infectious, recovered and dead individuals in the whole population.
 
-```{r , fig.height = 4, fig.width = 7}
+```{r , fig.height = 5, fig.width = 10}
 SEIR_total <- SEIR_df
 CD_total <- case_df
 
@@ -263,6 +261,6 @@ ggplot(result, aes(x = t, y = value)) +
 
 ```
 
-The above plot shows that up to approximately $C=0.1$, the value of $C$ has a significant impact on total number of infectious individuals across the communities. Varying the value of $C$ between 0.1 and one, however, barely makes a difference. As both communities are subject to the same parameter values and the average number of contacts that individuals in both communities have don't differ a lot in most countries, this is results is not surprising. Above a certain level of interaction, the few infectious people in one community will quickly interact with individuals from the other community, spreading the infection. At that point, both communities develop their own epidemic under the same parameter values and the mixing between them further helps in synchronizing the waves of the epidemic in both communities. Only for very low levels of interaction does the initial difference in the number of infectious individuals have a lasting effect on epidemic dynamics. 
+The above plot shows that up to approximately $C=0.1$, the value of $C$ has a significant impact on total number of infectious individuals across the communities. Varying the value of $C$ between 0.1 and one, however, barely makes a difference. As both communities are subject to the same parameter values and the average number of contacts that individuals in both communities have don't differ a lot in most countries, this result is not surprising. Above a certain level of interaction, the few infectious people in one community will quickly interact with individuals from the other community, spreading the infection. At that point, both communities develop their own epidemic under the same parameter values and the mixing between them further helps in synchronizing the waves of the epidemic in both communities. Only for very low levels of interaction does the initial difference in the number of infectious individuals have a lasting effect on epidemic dynamics. 
 
 ## References

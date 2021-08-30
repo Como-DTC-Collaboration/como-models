@@ -339,9 +339,6 @@ setMethod(
 #' @param model a model object from comomodels package
 #'
 #' @return an R0 value
-#' 
-#' 
-#' 
 setGeneric("R0", def = function(model) {
   standardGeneric("R0")
 })
