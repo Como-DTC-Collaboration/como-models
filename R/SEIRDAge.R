@@ -198,8 +198,8 @@ setMethod(
 #' given by
 #'
 #' \deqn{\frac{dS_i(t)}{dt} = - \beta S_i(t) \Sigma_{j}C_{ij} I_j(t)}
-#' \deqn{\frac{dE_i(t)}{dt} = \beta S_i(t) \Sigma_{j}C_{ij} I_j(t)} - \kappa E_i(t)}
-#' \deqn{\frac{dI_i(t)}{dt} = \kappa E_i(t) - \gamma I_i(t)} - \mu I_i(t)}
+#' \deqn{\frac{dE_i(t)}{dt} = \beta S_i(t) \Sigma_{j}C_{ij} I_j(t) - \kappa E_i(t)}
+#' \deqn{\frac{dI_i(t)}{dt} = \kappa E_i(t) - \gamma I_i(t) - \mu I_i(t)}
 #' \deqn{\frac{dR_i(t)}{dt} = \gamma I_i(t)}
 #' \deqn{\frac{dD_i(t)}{dt} = \mu I_i(t)}
 
@@ -226,7 +226,7 @@ setMethod(
 #' @importFrom magrittr "%>%"
 #' @importFrom rlang .data
 setMethod(
-  "run", 'SEIRDAge',
+  "run", "SEIRDAge",
   function(object, times, solve_method = 'lsoda') {
 
     # error if times is not a vector or list of doubles

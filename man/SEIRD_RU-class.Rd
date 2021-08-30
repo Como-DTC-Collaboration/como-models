@@ -24,6 +24,8 @@
 \alias{country_demog<-,ANY,ANY-method}
 \alias{run,SEIRD_RU-method}
 \alias{run,ANY,ANY-method}
+\alias{R0,SEIRD_RU-method}
+\alias{R0,ANY,ANY-method}
 \title{An S4 object representing the SEIRD_RU.}
 \usage{
 \S4method{initial_conditions}{SEIRD_RU}(object)
@@ -45,6 +47,8 @@
 \S4method{country_demog}{SEIRD_RU}(object) <- value
 
 \S4method{run}{SEIRD_RU}(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
+
+\S4method{R0}{SEIRD_RU}(model)
 }
 \arguments{
 \item{object}{an object of the class SEIRD_RU}
@@ -58,6 +62,8 @@ seq(t_start, t_end, by=t_step). Default time series is seq(0, 100, by = 1).}
 \item{solve_method}{(string) a string of chosen numerical integration method
 for solving the ode system. Default is "lsoda" which is also the default for
 the ode function in the deSolve package used in this function.}
+
+\item{model}{a model of the class SEIRD_RU}
 }
 \value{
 object of class SEIRD_RU with initial conditions assigned.
@@ -74,6 +80,8 @@ assigned.
 a dataframe with the time steps, time series of S, E, I and R
 population fractions, and incidence numbers and deaths for both communities
 in the SEIRD_RU model.
+
+the value of R0
 }
 \description{
 This class represents the SEIR model, showing how populations of susceptible,
@@ -142,6 +150,10 @@ For the rural community:
 \deqn{\frac{dD_Y(t)}{dt} = m I_Y}
 
 This function relies on the package deSolve.
+
+\item \code{R0}: Returns the value of R0 for the model with the specified
+parameter values.
+R0 is computed using the next generation matrix method.
 }}
 
 \section{Slots}{

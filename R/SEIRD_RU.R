@@ -527,7 +527,7 @@ setMethod(
   })
 
 #----------------------------------------------------------------------------
-#' @describeIn Returns the value of R0 for the model with the specified
+#' @describeIn SEIRD_RU Returns the value of R0 for the model with the specified
 #' parameter values.
 #' R0 is computed using the next generation matrix method.
 #'
@@ -536,8 +536,7 @@ setMethod(
 #' @return the value of R0
 #' @aliases R0,ANY,ANY-method
 #' @export
-  
-  setMethod(
+setMethod(
     "R0", "SEIRD_RU", function(model) {
       # initial susceptible populations
       S0U <- initial_conditions(model)$S_U0
