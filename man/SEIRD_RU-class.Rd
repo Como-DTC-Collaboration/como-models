@@ -5,27 +5,16 @@
 \alias{SEIRD_RU-class}
 \alias{SEIRD_RU}
 \alias{initial_conditions,SEIRD_RU-method}
-\alias{initial_conditions,ANY,ANY-method}
 \alias{initial_cases_deaths,SEIRD_RU-method}
-\alias{initial_cases_deaths,ANY,ANY-method}
 \alias{transmission_parameters,SEIRD_RU-method}
-\alias{transmission_parameters,ANY,ANY-method}
 \alias{contact_matrices,SEIRD_RU-method}
-\alias{contact_matrices,ANY,ANY-method}
 \alias{country_demog,SEIRD_RU-method}
-\alias{country_demog,ANY,ANY-method}
 \alias{initial_conditions<-,SEIRD_RU-method}
-\alias{initial_conditions<-,ANY,ANY-method}
 \alias{transmission_parameters<-,SEIRD_RU-method}
-\alias{transmission_parameters<-,ANY,ANY-method}
 \alias{contact_matrices<-,SEIRD_RU-method}
-\alias{contact_matrices<-,ANY,ANY-method}
 \alias{country_demog<-,SEIRD_RU-method}
-\alias{country_demog<-,ANY,ANY-method}
 \alias{run,SEIRD_RU-method}
-\alias{run,ANY,ANY-method}
 \alias{R0,SEIRD_RU-method}
-\alias{R0,ANY,ANY-method}
 \title{An S4 object representing the SEIRD_RU.}
 \usage{
 \S4method{initial_conditions}{SEIRD_RU}(object)

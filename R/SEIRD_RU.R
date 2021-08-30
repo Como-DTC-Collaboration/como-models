@@ -76,7 +76,6 @@ SEIRD_RU <- setClass("SEIRD_RU",
 #'             SEIRD_RU model.
 #'
 #' @param object An object of the class SEIRD_RU.
-#' @aliases initial_conditions,ANY,ANY-method
 #' @export
 
 setMethod("initial_conditions", "SEIRD_RU",
@@ -95,7 +94,6 @@ setGeneric("initial_cases_deaths",
 #'             SEIRD_RU model.
 #'
 #' @param object An object of the class SEIRD_RU.
-#' @aliases initial_cases_deaths,ANY,ANY-method
 #' @export
 
 setMethod("initial_cases_deaths", "SEIRD_RU",
@@ -105,7 +103,6 @@ setMethod("initial_cases_deaths", "SEIRD_RU",
 #' @describeIn SEIRD_RU Retrieves transmission parameters of SEIR model.
 #'
 #' @param object An object of the class SEIRD_RU.
-#' @aliases transmission_parameters,ANY,ANY-method
 #' @export
 
 setMethod("transmission_parameters", "SEIRD_RU",
@@ -123,7 +120,6 @@ setGeneric("contact_matrices",
 #' @describeIn SEIRD_RU Retrieves contact matrices of SEIR model.
 #'
 #' @param object An object of the class SEIRD_RU.
-#' @aliases contact_matrices,ANY,ANY-method
 #' @export
 
 setMethod("contact_matrices", "SEIRD_RU",
@@ -141,7 +137,6 @@ setGeneric("country_demog",
 #' @describeIn SEIRD_RU Retrieves demographic data of SEIR model.
 #'
 #' @param object An object of the class SEIRD_RU.
-#' @aliases country_demog,ANY,ANY-method
 #' @export
 
 setMethod("country_demog", "SEIRD_RU",
@@ -160,7 +155,6 @@ setMethod("country_demog", "SEIRD_RU",
 #'
 #' @return object of class SEIRD_RU with initial conditions assigned.
 #'
-#' @aliases initial_conditions<-,ANY,ANY-method
 #' @export
 
 setMethod(
@@ -219,7 +213,6 @@ setMethod(
 #'
 #' @return object of class SEIRD_RU with transmission parameter values
 #' assigned.
-#' @aliases transmission_parameters<-,ANY,ANY-method
 #' @export
 
 setMethod(
@@ -278,7 +271,6 @@ setGeneric(
 #'
 #' @return object of class SEIRD_RU with contact matrices
 #' assigned.
-#' @aliases contact_matrices<-,ANY,ANY-method
 #' @export
 
 setMethod(
@@ -329,7 +321,6 @@ setGeneric(
 #'
 #' @return object of class SEIRD_RU with demographic data
 #' assigned.
-#' @aliases country_demog<-,ANY,ANY-method
 #' @export
 
 setMethod(
@@ -403,7 +394,6 @@ setMethod(
 #' @return a dataframe with the time steps, time series of S, E, I and R
 #' population fractions, and incidence numbers and deaths for both communities
 #' in the SEIRD_RU model.
-#' @aliases run,ANY,ANY-method
 #' @export
 
 setMethod(
@@ -534,7 +524,6 @@ setMethod(
 #' @param model a model of the class SEIRD_RU
 #'
 #' @return the value of R0
-#' @aliases R0,ANY,ANY-method
 #' @export
 setMethod(
     "R0", "SEIRD_RU", function(model) {

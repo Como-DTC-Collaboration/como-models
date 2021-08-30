@@ -70,8 +70,6 @@ SEIRDAge <- setClass('SEIRDAge',
 #'
 #' @return Initial conditions of SEIRDAge model.
 #' @export
-#' @aliases initial_conditions,ANY,ANY-method
-#' 
 setMethod('initial_conditions', 'SEIRDAge',
           function(object) object@initial_conditions)
 
@@ -88,7 +86,6 @@ setMethod('initial_conditions', 'SEIRDAge',
 #'
 #' @return Updated version of the age-structured SEIRD model.
 #' @export
-#' @aliases initial_conditions<-,ANY,ANY-method
 #' 
 setMethod(
   'initial_conditions<-', 'SEIRDAge',
@@ -138,7 +135,6 @@ setMethod(
 #'
 #' @return Transmission parameters of SEIRDAge model.
 #' @export
-#' @aliases transmission_parameters,ANY,ANY-method
 #' 
 setMethod('transmission_parameters', 'SEIRDAge',
           function(object) object@transmission_parameters)
@@ -156,7 +152,6 @@ setMethod('transmission_parameters', 'SEIRDAge',
 #'
 #' @return Updated version of the age-structured SEIRD model.
 #' @export
-#' @aliases transmission_parameters<-,ANY,ANY-method
 #' 
 setMethod(
   'transmission_parameters<-', 'SEIRDAge',
@@ -221,8 +216,6 @@ setMethod(
 #' D population fractions for each age group outputs with incidence numbers
 #' for each age group.
 #' 
-#' 
-#' @aliases run,ANY,ANY-method
 #' @importFrom magrittr "%>%"
 #' @importFrom rlang .data
 setMethod(

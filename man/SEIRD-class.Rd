@@ -5,17 +5,11 @@
 \alias{SEIRD-class}
 \alias{SEIRD}
 \alias{initial_conditions,SEIRD-method}
-\alias{initial_conditions,ANY,ANY-method}
 \alias{transmission_parameters,SEIRD-method}
-\alias{transmission_parameters,ANY,ANY-method}
 \alias{initial_conditions<-,SEIRD-method}
-\alias{initial_conditions<-,ANY,ANY-method}
 \alias{transmission_parameters<-,SEIRD-method}
-\alias{transmission_parameters<-,ANY,ANY-method}
 \alias{run,SEIRD-method}
-\alias{run,ANY,ANY-method}
 \alias{R0,SEIRD-method}
-\alias{R0,ANY,ANY-method}
 \title{An S4 object representing the SEIRD.}
 \usage{
 \S4method{initial_conditions}{SEIRD}(object)
