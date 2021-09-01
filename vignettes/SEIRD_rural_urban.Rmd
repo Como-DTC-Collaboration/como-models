@@ -66,9 +66,9 @@ In this section, we walk through how to use the model. First, we will show how t
 First, we load the contact matrices for the urban and rural communities. Because the two sets of contact matrices don't cover the exact same countries, we also make a list of countries for which we have both contact matrices, which we can use later to check if the choice of country is valid.
 ```{r}
 # load contact matrices
-load("../Data/contact_all_urban.rda") # ROWS are age of person, COLUMNS are age of contact
+load("../data/contact_all_urban.rda") # ROWS are age of person, COLUMNS are age of contact
 names_urban <- names(contact_all_urban)
-load("../Data/contact_all_rural.rda")
+load("../data/contact_all_rural.rda")
 names_rural <- names(contact_all_rural)
 names_common <- intersect(names_urban,names_rural)
 ```
@@ -76,11 +76,11 @@ We also load in all demographic data, and load in a list showing the which three
 ```{r}
 #import all demographic data
 # data on percentage of the population that is rural
-load("../Data/percentrural_by_country.rda")
+load("../data/percentrural_by_country.rda")
 # age demographic breakdown into 5 year age categories
-load("../Data/agedemographics_by_country.rda")
+load("../data/agedemographics_by_country.rda")
 # conversion table from 3 letter country codes to full names
-load("../Data/country_codetoname.rda")
+load("../data/country_codetoname.rda")
 ```
 
 Next, we select a country, in this case Tunisia. This needs to happen with a three letter code. We check if the country is valid choice by checking if it appears in the list of countries for which we have both a rural and urban contact matrix.
