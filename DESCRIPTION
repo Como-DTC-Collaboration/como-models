@@ -19,7 +19,6 @@ Suggests:
 Config/testthat/edition: 3
 Imports: 
     deSolve,
-    matlib,
     gridExtra,
     glue,
     reshape2,

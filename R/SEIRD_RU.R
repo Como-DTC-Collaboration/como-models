@@ -31,7 +31,6 @@
 #' @import deSolve
 #' @import glue
 #' @import reshape2
-#' @import matlib
 #' @importFrom methods new
 #' @export SEIRD_RU
 

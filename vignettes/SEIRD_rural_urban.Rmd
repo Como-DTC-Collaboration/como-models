@@ -24,7 +24,6 @@ library(deSolve)
 library(reshape2)
 library(gridExtra)
 library(viridis)
-library(matlib)
 ```
 
 ## Introduction
