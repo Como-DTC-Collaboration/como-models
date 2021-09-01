@@ -1,4 +1,5 @@
-#' Defines an age-structured SEIR model and solves the set of
+#' Defines an age-structured SEIR model with non pharmaceutical interventions
+#' which influence social contact. Methods solve the set of
 #' ordinary differential equations of the model with a chosen method of
 #' numerical integration.
 #'
@@ -13,10 +14,22 @@
 #' @slot transmission_parameters named list containing the transmission
 #'     parameters of the model. Transmission parameters b, k, g represent the
 #'     rates of changes between the compartments.
-#' @slot contact_matrix A square matrix with dimension
+#' @slot contact_matrix_1 A square matrix with dimension
 #'     equal to n_age_categories x n_age_categories. This matrix represents the
 #'     contact between different age groups (rows) with age groups of
-#'     people they come in contact with (columns)
+#'     people they come in contact with (columns) in the 1st interval of the
+#'     simulation (normally with no restriction on social contact.
+#' @slot contact_matrix_2 A square matrix with dimension
+#'     equal to n_age_categories x n_age_categories. This matrix represents the
+#'     contact between different age groups (rows) with age groups of
+#'     people they come in contact with (columns) in the 2nd interval of the
+#'     simulation (normally with measures in place to limit social contact).
+#' @slot contact_matrix_3 A square matrix with dimension
+#'     equal to n_age_categories x n_age_categories. This matrix represents the
+#'     contact between different age groups (rows) with age groups of
+#'     people they come in contact with (columns) in the 3rd interval of the
+#'     simulation (normally with some relaxation of measures compared to the
+#'     2nd interval).
 #' @slot n_age_categories number of age categories.
 #' @slot age_ranges list of string characters representing the range of ages of
 #'     people in each age category. This object must have length
@@ -40,7 +53,10 @@ SEIRDAge_interventions <- setClass('SEIRDAge_interventions',
                        transmission_parameters = 'list',
                        age_ranges = 'list',
                        n_age_categories = 'numeric',
-                       contact_matrix = 'matrix'
+                       contact_matrix_1 = 'matrix',
+                       contact_matrix_2 = 'matrix',
+                       contact_matrix_3 = 'matrix'
+                       
                      ),
                      
                      # prototypes for the slots, automatically set output and param
@@ -48,14 +64,15 @@ SEIRDAge_interventions <- setClass('SEIRDAge_interventions',
                      prototype = list(
                        output_names = list('S', 'E', 'I', 'R', 'D' ,'Incidence'),
                        initial_condition_names = list('S0', 'E0', 'I0', 'R0', 'D0'),
-                       transmission_parameter_names = list('isolated_frac','beta_isolated', 'beta_not_isolated', 'kappa', 'gamma', 'mu'),
+                       transmission_parameter_names = list('beta', 'kappa', 'gamma', 'mu'),
                        initial_conditions = vector(mode = "list", length = 5),
-                       transmission_parameters = vector(mode = "list", length = 6),
+                       transmission_parameters = vector(mode = "list", length = 4),
                        age_ranges = vector(mode = 'list'),
                        n_age_categories = NA_real_,
-                       contact_matrix = matrix(NA)
-                       
-                     )
+                       contact_matrix_1 = matrix(NA),
+                       contact_matrix_2 = matrix(NA),
+                       contact_matrix_3 = matrix(NA)
+                       )
 )
 
 # Setter and getter methods for initial_conditions of an age-structured
@@ -161,15 +178,12 @@ setMethod(
   function(object, value) {
     
     # create list of parameter values
-    isolated_frac<- value$isolated_frac
-    beta_isolated <- value$beta_isolated
-    beta_not_isolated <- value$beta_not_isolated
+    beta <- value$beta
     kappa <- value$kappa
     gamma <- value$gamma
     mu <- value$mu
     
-    trans_params <- list(isolated_frac, beta_isolated, beta_not_isolated, 
-                         kappa, gamma, mu)
+    trans_params <- list(beta, kappa, gamma, mu)
     
     # add names to each value
     names(trans_params) = object@transmission_parameter_names
@@ -206,7 +220,12 @@ setMethod(
 
 #' where C is a contact matrix whose elements represents the
 #' contact between different age groups (rows) with age groups of
-#' people they come in contact with (columns). This function relies on the 
+#' people they come in contact with (columns). The model encorperates the
+#' influence of non-pharmeceutical interventions (NPIs) which act to reduce the 
+#' degree of social contact between individuals. This is is done by splitting 
+#' any simulation of the model into 3 intervals and utilising a different 
+#' contact matrix in each interval to simulate the introduction of NPIs through
+#' time. This function relies on the 
 #' package deSolve to numerically integrate the set of equations above.
 #' 
 #'
@@ -214,6 +233,12 @@ setMethod(
 #' @param times (vector) time sequence over which to solve the model.
 #'        Must be of the form seq(t_start,t_end,by=t_step). Default time series
 #'        is seq(0, 100, by = 1).
+#'@param t_intervention_1_2 time at which the first intervention takes place and
+#' the model switches to utilising contact_matrix_2 to solve the ode system
+#' 
+#' #'@param t_intervention_2_3 time at which the second intervention takes place and
+#' the model switches to utilising contact_matrix_3 to solve the ode system
+#' 
 #' @param solve_method A string indicating the chosen numerical integration
 #' method for solving the ode system. Default is `lsoda` which is also the
 #' default for the ode function in the deSolve package used in this function.
@@ -228,15 +253,18 @@ setMethod(
 #' @export
 setMethod(
   "run", 'SEIRDAge_interventions',
-  function(object, times, solve_method = 'lsoda') {
+  function(object, times, t_intervention_1_2, t_intervention_2_3, solve_method = 'lsoda') {
     
     # error if times is not a vector or list of doubles
     if(!is.double(times)){
       stop('Evaluation times of the model storage format must be a vector.')
     }
     
-    #fetch number of age catagories
+    # fetch number of age catagories
     age <- object@n_age_categories
+    
+    #calculate dt (timestep)
+    dt = times[2] - times[1]
     
     # set initial state vector
     state <- c(S = initial_conditions(object)$S0,
@@ -246,18 +274,18 @@ setMethod(
                D = initial_conditions(object)$D0)
     
     # set parameters vector
-    parameters <- c(isolated_frac = transmission_parameters(object)$isolated_frac,
-                    beta_isolated = transmission_parameters(object)$beta_isolated,
-                    beta_not_isolated = transmission_parameters(object)$beta_not_isolated,
-                    k = transmission_parameters(object)$k,
-                    g = transmission_parameters(object)$g,
+    parameters <- c(
+                    beta = transmission_parameters(object)$beta,
+                    kappa = transmission_parameters(object)$kappa,
+                    gamma = transmission_parameters(object)$gamma,
                     mu = transmission_parameters(object)$mu)
     
-    # fetch contact matrix of the instance
-    C = object@contact_matrix
+    
+    # set C as the 1st interval's contact matrix
+    C = object@contact_matrix1
     
     # function for RHS of ode system
-    right_hand_side <- function(t, state, parameters) {
+    right_hand_side <- function(t, state, parameters, C) {
       with(
         as.list(c(state, parameters)),
         {
@@ -267,15 +295,15 @@ setMethod(
           R <- state[(3 * age + 1):(4 * age)]
           D <- state[(4 * age + 1):(5 * age)]
           
-          #split infectious compartment into isolating and non-isolating
+          # split infectious compartment into isolating and non-isolating
           I_isolated = isolated_frac * I
           I_not_isolated = (1 - isolated_frac) * I
           
           # rate of change
-          dS <- - beta_isolated * S * C %*% I_isolated - beta_not_isolated * S * C %*% I_not_isolated
-          dE <- beta_isolated * S * C %*% I_isolated + beta_not_isolated * S * C %*% I_not_isolated - k * E
-          dI <- k * E - g * I
-          dR <- g * I
+          dS <- - beta* S * C %*% I
+          dE <- beta * S * C %*% I
+          dI <- kappa * E - gamma * I
+          dR <- gamma * I
           dD <- mu * I
           
           # return the rate of change
@@ -283,14 +311,47 @@ setMethod(
         })
     }
     
-    # call ode solver
-    out <- ode(
-      y = state, times = times, func = right_hand_side,
-      parms = parameters, method = solve_method)
     
-    #output as a dataframe
+    # call ode solver for the first interval
+    out <- ode(y = state, times = seq(0, t_intervention_1_2, by = dt),
+              func = right_hand_side, parms = parameters, method = solve_method)
+    
+    # output as a new dataframe 
+    output_all <- as.data.frame.array(out)
+    
+    # construct list of contact matrices for the 2 next intervals of NPIs
+    contact_matrices <- c(object@contact_matrix_2,
+                          object@contact_matrix_3
+                          )
+    
+    #extract the final state from the 1st interval
+    state = filter(output_all, time == t_intervention_1_2)
+    
+    # construct list of time lists for next 2 intervals
+    interval_times = c(seq(t_intervention_1_2, t_intervention_2_3, by = dt),
+                       seq(t_intervention_2_3, tail(times, n=1), by = dt)
+                          )
+      
+    # loop over intervals, solve ode with each contact matrix, initialise next
+    # interval with last state from current interval.
+    for (i in 1:2){
+    
+    # set C to the current interval's contact matrix  
+    C = contact_matrices[i]
+      
+    # call ode solver for the current interval
+    out <- ode(y = state, times = interval_times[i], func = right_hand_side,
+    parms = parameters, method = solve_method)
+    
+    # output as a dataframe
     output <- as.data.frame.array(out)
     
+    # append the output from the current interval to the overall output
+    output_all = rbind(output_all, output)
+    
+    }
+    
+
     # melt dataframe to wide format
     out_temp = melt(output, 'time')
     
