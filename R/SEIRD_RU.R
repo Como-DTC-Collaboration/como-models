@@ -562,6 +562,6 @@ setMethod(
                               0, -k, 0, (g + m)),
                      nrow = 4, ncol = 4, byrow = TRUE)
 
-      R0 <- max(abs(eigen(matF %*% inv(matV))$values))
+      R0 <- max(abs(eigen(matF %*% solve(matV))$values))
       return(R0)
     })
