@@ -7,11 +7,12 @@
 \alias{initial_conditions,SEIRD_RU-method}
 \alias{initial_cases_deaths,SEIRD_RU-method}
 \alias{transmission_parameters,SEIRD_RU-method}
-\alias{contact_matrices,SEIRD_RU-method}
+\alias{contact_rates,SEIRD_RU-method}
 \alias{country_demog,SEIRD_RU-method}
+\alias{fraction_rural,SEIRD_RU-method}
 \alias{initial_conditions<-,SEIRD_RU-method}
 \alias{transmission_parameters<-,SEIRD_RU-method}
-\alias{contact_matrices<-,SEIRD_RU-method}
+\alias{contact_rates<-,SEIRD_RU-method}
 \alias{country_demog<-,SEIRD_RU-method}
 \alias{run,SEIRD_RU-method}
 \alias{R0,SEIRD_RU-method}
@@ -23,15 +24,17 @@
 
 \S4method{transmission_parameters}{SEIRD_RU}(object)
 
-\S4method{contact_matrices}{SEIRD_RU}(object)
+\S4method{contact_rates}{SEIRD_RU}(object)
 
 \S4method{country_demog}{SEIRD_RU}(object)
+
+\S4method{fraction_rural}{SEIRD_RU}(object)
 
 \S4method{initial_conditions}{SEIRD_RU}(object) <- value
 
 \S4method{transmission_parameters}{SEIRD_RU}(object) <- value
 
-\S4method{contact_matrices}{SEIRD_RU}(object) <- value
+\S4method{contact_rates}{SEIRD_RU}(object) <- value
 
 \S4method{country_demog}{SEIRD_RU}(object) <- value
 
@@ -42,7 +45,8 @@
 \arguments{
 \item{object}{an object of the class SEIRD_RU}
 
-\item{value}{(list) list of 2 set of population fractions by age group}
+\item{value}{(list) list of 2 sets of population fractions by age group, or
+a single value noting the fraction of the population that is rural.}
 
 \item{times}{(double) a sequence of time points at which the solution to
 the system of ODEs should be returned. Must be of the form
@@ -89,9 +93,12 @@ SEIRD_RU model.
 
 \item \code{transmission_parameters}: Retrieves transmission parameters of SEIR model.
 
-\item \code{contact_matrices}: Retrieves contact matrices of SEIR model.
+\item \code{contact_rates}: Retrieves contact rates of SEIR model.
 
-\item \code{country_demog}: Retrieves demographic data of SEIR model.
+\item \code{country_demog}: Retrieves age demographics, if provided, of SEIR model.
+
+\item \code{fraction_rural}: Retrieves fraction of the population that lives in a
+rural environment of SEIR model.
 
 \item \code{initial_conditions<-}: Setter method for initial conditions
 (S0, E0, I0 and R0) for both communities in the SEIR model.
@@ -105,9 +112,12 @@ If the initial conditions provided to do not sum to 1, an error is thrown.
 If the transmission parameters provided to are not 1-dimensional an error is
 thrown.
 
-\item \code{contact_matrices<-}: Setter method for contact matrices for
+\item \code{contact_rates<-}: Setter method for contact matrices for
 urban and rural communities in the SEIR model.
-Matrices must be of type double
+Matrices must be of type double.
+NOTE: if inputting matrices, you MUST assign fraction_rural first, and you
+must input full age demographics, i.e. you cannot only provide the fraction
+of the population that is rural!
 
 \item \code{country_demog<-}: Setter method for demographic data for urban
 and rural communities in the SEIR model. both vectors together must sum to 1.
@@ -155,12 +165,12 @@ describing the variables in the first group,
 in this case (E_U, E_Y, I_U and I_Y).
 The differential equations for the variables in the first group are written
 in the form
-\deqn{\frac{dx_i}{dt} = \mathcal{F_i} - \mathcal{V_i}}
-where \mathcal{F_i} are the terms describing how individuals enter the
-compartment and \mathcal{V_i} the terms describing how individuals leave.
-We compute the matrices F and V as
-\deqn{F = \partial F_i(x_0)/\partial x_j}
-\deqn{V = \partial V_i(x_0)/\partial x_j}
+\deqn{\frac{dx_i}{dt} = F_i - V_i}
+where F_i are the terms describing how individuals enter the
+compartment and V_i the terms describing how individuals leave.
+We compute the matrices matF and matV as
+\deqn{matF = \partial F_i(x_0)/\partial x_j}
+\deqn{matV = \partial V_i(x_0)/\partial x_j}
 where x_j are all the variables representing infected individuals.
 Finally, R0 is the spectral radius of the matrix FV^(-1). For a more
 detailed description of this method, see van den Driessche (2017).
@@ -190,16 +200,20 @@ Both set to 0, not to be changed by user (double).}
 \item{\code{transmission_parameters}}{list of values for transmission parameters
 (double).}
 
-\item{\code{contact_matrices}}{list of two contact matrices, one for urban communties
+\item{\code{contact_rates}}{list of two contact rates, one for urban communities
 and one for rural communities, with the number of contacts as a
 fraction of the total population size (double).}
 
-\item{\code{contact_matrices_names}}{list of names for two contact matrices,
+\item{\code{contact_rates_names}}{list of names for two contact rates,
 one for urban communities and one for rural communities}
 
-\item{\code{country_demog}}{list of vectors with percentage of population in each age
-group in urban and rural community.}
+\item{\code{country_demog}}{list of two vectors, each describing the age breakdown
+of the population in the urban and rural communities.}
 
-\item{\code{country_demog_names}}{list of names for urban and rural demographic data.}
+\item{\code{country_demog_names}}{list of names for two demographic vectors,
+one for urban communities and one for rural communities}
+
+\item{\code{fraction_rural}}{fraction of the population that lives in a rural
+environment.}
 }}
 

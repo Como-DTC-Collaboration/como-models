@@ -2,7 +2,7 @@
 % Please edit documentation in R/SEIRD_RU.R
 \name{country_demog}
 \alias{country_demog}
-\title{Retrieves demographic data of SEIR model.}
+\title{Retrieves age demographics, if provided, of SEIR model.}
 \usage{
 country_demog(object)
 }
@@ -10,5 +10,5 @@ country_demog(object)
 \item{object}{An object of the class SEIRD_RU.}
 }
 \description{
-Retrieves demographic data of SEIR model.
+Retrieves age demographics, if provided, of SEIR model.
 }

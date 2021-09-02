@@ -4,7 +4,7 @@ test_that("SEIRD model is instantiated correctly", {
   expect_length(my_model@initial_conditions, 8)
   expect_length(my_model@initial_cases_deaths, 4)
   expect_length(my_model@transmission_parameters, 5)
-  expect_length(my_model@contact_matrices, 2)
+  expect_length(my_model@contact_rates, 2)
 })
 
 test_that("Initial conditions can be set and retrieved", {
@@ -47,6 +47,27 @@ test_that("Transmission parameters can be set and retrieved", {
     transmission_parameters(my_model) <- list(b=1, k=0.5, g=list(0.1, 0.1), m=0.1, C=0.5))
   expect_error(
     transmission_parameters(my_model) <- list(b=1, k=list(0.1, 0.1), g=0.5, m=0.1, C=0.5))
+})
+
+test_that("Contact rates and fraction rural can be set directly and retrieved", {
+  # check directly inputting contact rates
+  my_model <- SEIRD_RU()
+  contact_rates(my_model) <- list(urban = 2,rural = 3)
+  
+  # Test output is correct
+  expect_equal(contact_rates(my_model),
+               list(urban = 2,rural = 3))
+  
+  #check directly inputting fraction rural
+  my_model <- SEIRD_RU()
+  country_demog(my_model) <- 0.7
+  
+  # Test output is correct
+  expect_equal(fraction_rural(my_model), 0.7)
+  
+  #check for errors
+  expect_error(country_demog(my_model) <- list(0.7,0.3))
+  expect_error(country_demog(my_model) <- list(0.5,0.3,0.2))
 })
 
 test_that("SEIR model runs correctly", {
@@ -93,10 +114,10 @@ test_that("SEIR model runs correctly", {
   pop_byage_2019 <- pop_byage_2019/sum(pop_byage_2019) 
   # must sum last five entries because contact matrices have an 80+ category instead of 100+
   pop_byage_2019 <- c(pop_byage_2019[1:15], sum(pop_byage_2019[16:20]))
-  # set contact matrices
-  contact_matrices(my_model) <- list(contact_all_urban[[country]],contact_all_rural[[country]])
-  #set demographic data
+  #expect error when setting contact matrices before demographic data
+  expect_error(contact_rates(my_model) <- list(contact_all_urban[[country]],contact_all_rural[[country]]))
   country_demog(my_model) <- list(pop_byage_2019*(1-frac_rural),pop_byage_2019*frac_rural)
+  contact_rates(my_model) <- list(contact_all_urban[[country]],contact_all_rural[[country]])
   
   # Check output shape
   t <- seq(0, 10, by = 0.1)
@@ -190,10 +211,11 @@ test_that("R0 works for SEIRD model", {
   pop_byage_2019 <- pop_byage_2019/sum(pop_byage_2019) 
   # must sum last five entries because contact matrices have an 80+ category instead of 100+
   pop_byage_2019 <- c(pop_byage_2019[1:15], sum(pop_byage_2019[16:20]))
-  # set contact matrices
-  contact_matrices(my_model) <- list(contact_all_urban[[country]],contact_all_rural[[country]])
   #set demographic data
   country_demog(my_model) <- list(pop_byage_2019*(1-frac_rural),pop_byage_2019*frac_rural)
+  # set contact matrices
+  contact_rates(my_model) <- list(contact_all_urban[[country]],contact_all_rural[[country]])
+
   
   expect_equal(round(R0(my_model),digits = 5), 15.84408)
 })
