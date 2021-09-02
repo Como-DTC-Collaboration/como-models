@@ -209,7 +209,7 @@ setMethod(
     else stop(paste(errors, ", please check and rerun transmission_parameters<-.\n"))
     })
 
-#' Solves the ode system.
+#' @describeIn SEIaImIsRD Solves the ode system.
 #'
 #' \deqn{\frac{dS(t)}{dt} = -S(t)(\beta.asymptomatic I_{asymptomatic}(t) + \beta.mild I_{mild}(t) + \beta.severe I_{severe}(t)) + \omega R(t)}
 #' \deqn{\frac{dE(t)}{dt} = S(t)(\beta.asymptomatic I_{asymptomatic}(t) + \beta.mild I_{mild}(t) + \beta.severe I_{severe}(t)) - \kappa E(t)}
@@ -305,7 +305,7 @@ setMethod("run",
           })
  
 
-#' Calculate the basic reproduction number (\code{R_0}) of the system using the next generation matrix approach.
+#' @describeIn SEIaImIsRD Calculate the basic reproduction number (\code{R_0}) of the system using the next generation matrix approach.
 #' @seealso \url{https://www.ncbi.nlm.nih.gov/pmc/articles/PMC6002118/pdf/main.pdf} mathematical
 #' details of the next generation matrix approach.
 #'

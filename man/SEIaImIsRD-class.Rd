@@ -59,14 +59,6 @@ An R0 value
 \description{
 An S4 object representing the SEIaImIsRD model: SEIRD with infected population
 that are composed of different symptome compartments: asymptomatic, mild and severe (current settings).
-
-\deqn{\frac{dS(t)}{dt} = -S(t)(\beta.asymptomatic I_{asymptomatic}(t) + \beta.mild I_{mild}(t) + \beta.severe I_{severe}(t)) + \omega R(t)}
-\deqn{\frac{dE(t)}{dt} = S(t)(\beta.asymptomatic I_{asymptomatic}(t) + \beta.mild I_{mild}(t) + \beta.severe I_{severe}(t)) - \kappa E(t)}
-\deqn{\frac{dI_{asymptomatic}(t)}{dt} = p_symptom.asymptomatic \kappa E(t) - (\gamma.asymptomatic + \mu.asymptomatic) I_{asymptomatic}(t)}
-\deqn{\frac{dI_{mild}(t)}{dt} = p_symptom.mild\kappa E(t) - (\gamma.mild + \mu.mild) I_{mild}(t)}
-\deqn{\frac{dI_{severe}(t)}{dt} = p_symptom.severe\kappa E(t) - (\gamma.severe + \mu.severe) I_{severe}(t)}
-\deqn{\frac{dR(t)}{dt} = -\omega R(t) + \gamma.asymptomatic I_{asymptomatic}(t) + \gamma.mild I_{mild}(t) + \gamma.severe I_{severe}(t)}
-\deqn{\frac{dD(t)}{dt} =  \mu.asymptomatic I_{asymptomatic}(t) + \mu.mild I_{mild}(t) + \mu.severe I_{severe}(t)}
 }
 \details{
 This class represents an extension of the SEIRD model, showing how populations of susceptible,
