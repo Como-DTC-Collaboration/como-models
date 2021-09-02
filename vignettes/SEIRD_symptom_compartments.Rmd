@@ -57,7 +57,7 @@ with the following parameters (values between 0 and 1 for all):
 * $\beta_i$ - the rate at which an infected individual of symptom group $i$ infects susceptible individuals ($i\in\{a, m, s\}.$)
 * $\omega$ - the rate at which recovered individuals become susceptible again.
 * $\kappa$ - the rate at which exposed individuals become infectious. The incubation period thus lasts $1/\kappa$ days.
-* $\eta_i$ - the probability of exposed individuals that, after the incubation period, moving into each of the different infected groups $i$. $\sum_i\eta_{E->I_i}=1$, $i\in\{a, m, s\}.$
+* $\eta_i$ - the probability of exposed individuals that, after the incubation period, moving into each of the different infected groups $i$. $\sum_i\eta_i=1$, $i\in\{a, m, s\}.$
 * $\gamma_i$ - the rate at which individuals of symptom group $i$ recover from the disease ($i\in\{a, m, s\}.$)
 * $\mu_i$ - the rate at which individuals of symptom group $i$ die of the disease ($i\in\{a, m, s\}.$)
 
