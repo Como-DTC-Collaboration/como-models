@@ -13,11 +13,16 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+# install gridExtra if not available
+if(!requireNamespace("gridExtra", quietly = T)){
+  install.packages("gridExtra")
+}
 ```
 
 ```{r setup}
 library(comomodels)
 library(devtools)
+library(gridExtra)
 library(knitr) # table layout
 devtools::load_all()
 ```
@@ -144,11 +149,17 @@ transmission_parameters(model) <- list(beta = beta, kappa = kappa, omega = omega
 
 Define helper function for plotting output dataframe of simulation result
 ```{r}
-plot_dataframe <- function(dataframe, x = "time", y = "value", c = "compartment") {
-  p <- ggplot(dataframe, aes_string(x = x, y = y)) +
-    geom_line(aes_string(colour = c)) +
-    theme_classic()
-  return(p)
+plot_dataframe <- function(dataframe, x = "time", y = "value", c = "compartment", type = "line", lab.x = "time (days)", lab.y = "fraction of the population") {
+  p <- ggplot(dataframe, aes_string(x = x, y = y))
+  if(type=="line"){
+    p <- p + geom_line(aes_string(colour = c))
+  }else if(type=="bar"){
+    p <- p + geom_bar(aes_string(fill = c), stat="identity", position=position_dodge())
+  }
+  return(p + 
+           scale_color_viridis_d() +
+           theme(legend.position = "bottom", legend.title = element_blank()) +
+           labs(x = lab.x, y = lab.y))
 }
 ```
 
@@ -162,41 +173,44 @@ The system of ODEs is solved by calling the function `run(model,t)`. In the next
 
 #### 1. Including natural loss of immunity
 We first assume that immunity does not last forever, so individuals that have recovered from the disease eventually return to the susceptible population. This is called waning immunity and is included in the model when $\omega>0$, as we assigned it above.
-```{r, fig.height = 10, fig.width = 10, fig.align = "center", fig.show="hold"}
+```{r, fig.width = 15, fig.align = "center", fig.show="hold"}
 par(mfrow=c(1,2))
-model <- run(model, t)
-model <- R0(model)
+model.output <- run(model, t)
+model.R0 <- R0(model)
 
 # plot
-model.plot <- plot_dataframe(model@output$states, x = "time", y = "value", c = "compartment")
-print(model.plot)
+model.plot.states <- plot_dataframe(model.output$states)
+model.plot.changes <- plot_dataframe(model.output$changes, type="bar", lab.y="fraction of the population per day")
+grid.arrange(model.plot.states, model.plot.changes, nrow = 1)
 ```
 
 We can look at the basic reproduction number for this model:
 ```{r}
-print(paste0("model: R0=", model@R0))
+print(paste0("model: R0=", model.R0))
 ```
 We see that for this set of parameter values, $R_0>1$, and indeed we see in the plot that the epidemic initially grows. 
 
 #### 2. No natural loss of immunity 
 We now assume that recovered individuals remain immune forever, i.e. $\omega=0$.
-```{r,  fig.height = 10, fig.width = 10, fig.align = "center", fig.show="hold"}
+```{r, fig.width = 15, fig.align = "center", fig.show="hold"}
 model1 <- model
 transmission_parameters(model1) <- list(beta = beta, kappa = kappa, omega = 0.00,
                                         p_symptom = p_symptom, gamma = gamma, mu = mu)
-model1 <- run(model1, t)
-model1 <- R0(model1)
+model1.output <- run(model1, t)
+model1.R0 <- R0(model1)
 
 # plot
-model1.plot <- plot_dataframe(model1@output$states, x = "time", y = "value", c = "compartment")
-print(model1.plot)
+# plot
+model1.plot.states <- plot_dataframe(model1.output$states)
+model1.plot.changes <- plot_dataframe(model1.output$changes, type="bar", lab.y="fraction of the population per day")
+grid.arrange(model1.plot.states, model1.plot.changes, nrow=1)
 ```
 
 We can see that this affects the dynamics of the model quite a bit. The damped oscillations that we saw in the graph for the model with waning immunity have disappeared, we see less deaths, and the number of recovered individuals doesn't approach zero.
 
 However, when we look at the basic reproduction number
 ```{r}
-print(paste0("model1: R0=", model1@R0))
+print(paste0("model1: R0=", model1.R0))
 ```
 
 we see no change! This is because the basic reproduction number only indicates whether or not an epidemic can take off in a fully susceptible population. Therefor it does not matter for the value of $R_0$ whether or not individuals lose their immunity after some time cause at that point the whole population is not susceptible anymore, so $R_0$ does no apply.
@@ -204,18 +218,20 @@ we see no change! This is because the basic reproduction number only indicates w
 
 #### 3. Altering the value(s) of $\beta$ 
 Lastly, we consider what happens to the model dynamics if we change the infection rate. For example, what if asymptomatic individuals are significantly less infectious than mildly or severely symptomic ones? We investigate this by lowering $\beta_a$ from 0.8 to 0.5 so that it is now half the infection rate of infectious individuals with severe symptoms.
-```{r, fig.height = 10, fig.width = 10, fig.align = "center", fig.show="hold"}
+```{r, fig.width = 15, fig.align = "center", fig.show="hold"}
 model2 <- model
 transmission_parameters(model2) <- list(beta = list(asymptomatic = 0.50, mild =  0.90, severe = 1.00), kappa = kappa, omega = omega, p_symptom = p_symptom, gamma = gamma, mu = mu)
-model2 <- run(model2, t)
-model2 <- R0(model2)
+model2.output <- run(model2, t)
+model2.R0 <- R0(model2)
 
 # plot
-model2.plot <- plot_dataframe(model2@output$states, x = "time", y = "value", c = "compartment")
-print(model2.plot)
+# plot
+model2.plot.states <- plot_dataframe(model2.output$states)
+model2.plot.changes <- plot_dataframe(model2.output$changes, type="bar", lab.y="fraction of the population per day")
+grid.arrange(model2.plot.states, model2.plot.changes, nrow=1)
 ```
 We see that when $\beta_{I_a}$ is lowered, a far smaller fraction of the population gets infected. This is what we would expect. When we now compute $R_0$ for the model with this new parameter set, we get
 ```{r}
-print(paste0("model2: R0=", model2@R0))
+print(paste0("model2: R0=", model2.R0))
 ```
 So although $R_0>1$ still, its value is smaller than before, so the epidemic develops less quickly. This is to be expected if part of the infectious population is less infectious.

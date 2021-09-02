@@ -50,9 +50,11 @@ An object of class SEIaImIsRD with initial population and parameters
 
 An object of class SEIaImIsRD with initial population and parameters
 
-An object of class SEIaImIsRD with a dataframe of simulation output
+A list of two dataframes: one with the time steps, time series of S,
+E, I_asymptomatic, I_mild, I_severe and R population fractions, and one with the time steps,
+time series of incidences and deaths population fraction
 
-A SEIaImIsRD class object with R0 value stored
+An R0 value
 }
 \description{
 An S4 object representing the SEIaImIsRD model: SEIRD with infected population
@@ -102,13 +104,8 @@ of the SEIaImIsRD model.
 
 \item{\code{transmission_parameters}}{list of values for transmission parameters (double).}
 
-\item{\code{R0}}{basic reproduction number (double).}
-
 \item{\code{output_names}}{list of compartments name which are used by the model and
 incidence.}
-
-\item{\code{output}}{a list of two dataframes of the model simulation result (1. Cumulative population sizes of
-compartments S, E, I.., R, D; 2. Daily Incidence and deaths).}
 }}
 
 \seealso{

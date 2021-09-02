@@ -2,11 +2,14 @@
 # --------------------------------------------------------------------------
 
 # define function to plot output dataframe of simulation result
-plot_dataframe <- function(dataframe, x = "time", y = "value", c = "compartment") {
-  p <- ggplot(dataframe, aes_string(x = x, y = y)) +
-    geom_line(aes_string(colour = c)) +
-    theme_classic()
-  return(p)
+plot_dataframe <- function(dataframe, x = "time", y = "value", c = "compartment", type = "line") {
+  p <- ggplot(dataframe, aes_string(x = x, y = y))
+  if(type=="line"){
+    p <- p + geom_line(aes_string(colour = c))
+  }else if(type=="bar"){
+    p <- p + geom_bar(aes_string(fill = c), stat="identity", position=position_dodge())
+  }
+  return(p + scale_color_viridis_d())
 }
 
 # set up test data:
@@ -37,24 +40,24 @@ test_that("SEIaImIsRD validate", {
   transmission_parameters(model) <- list(beta = beta, kappa = kappa, omega = omega, p_symptom = p_symptom, gamma = gamma, mu = mu)
   initial_conditions(model) <- list(S = S, E = E, I_asymptomatic = I_asymptomatic, I_mild = I_mild, I_severe = I_severe, R = R, D = D)
   # 3. ode simulation and plot
-  model <- run(model, t)
-  p1 <- plot_dataframe(model@output$states, x = "time", y = "value", c = "compartment")
-  p2 <- plot_dataframe(model@output$changes, x = "time", y = "value", c = "compartment")
+  model.output <- run(model, t)
+  p1 <- plot_dataframe(model.output$states, x = "time", y = "value", c = "compartment", type="line")
+  p2 <- plot_dataframe(model.output$changes, x = "time", y = "value", c = "compartment", type="bar")
   # 4. calculate basic reproduction number (R0)
-  model <- R0(model)
+  model.R0 <- R0(model)
 
   # check the validity of the model class and settings
   expect_s4_class(model, "SEIaImIsRD")
   # print out R0 value
-  print(paste0("R0 = ", model@R0))
+  print(paste0("R0 = ", model.R0))
   # view plot
   print(p1)
   print(p2)
 
   # check @output
-  expect_equal(colnames(model@output$states),
+  expect_equal(colnames(model.output$states),
                c("time", "value", "compartment", "age_range"))
-  output_wide <- dcast(model@output$states, time~compartment)
+  output_wide <- dcast(model.output$states, time~compartment)
   expect_equal(dim(output_wide),
                c(length(t), length(model@initial_conditions) + 1))
   expect_equal(colnames(output_wide),

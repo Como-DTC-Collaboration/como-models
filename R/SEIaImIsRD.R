@@ -22,11 +22,8 @@
 #'       (characters). Default is list("beta", "kappa", "p_symptom", "gamma", "mu").
 #' @slot initial_conditions list of values for initial conditions (double).
 #' @slot transmission_parameters list of values for transmission parameters (double).
-#' @slot R0 basic reproduction number (double).
 #' @slot output_names list of compartments name which are used by the model and
 #'       incidence.
-#' @slot output a list of two dataframes of the model simulation result (1. Cumulative population sizes of 
-#'       compartments S, E, I.., R, D; 2. Daily Incidence and deaths).
 #'
 #' @import deSolve
 #' @import ggplot2
@@ -40,9 +37,7 @@ SEIaImIsRD <- setClass(Class = "SEIaImIsRD",
            transmission_parameter_names = "list",
            initial_conditions = "list",
            transmission_parameters = "list",
-           R0 = "numeric",
-           output_names = "list",
-           output = "list"
+           output_names = "list"
          ),
          prototype = list(
            initial_condition_names = list("S0", "E0", "I_asymptomatic0",
@@ -51,11 +46,9 @@ SEIaImIsRD <- setClass(Class = "SEIaImIsRD",
                                               "p_symptom", "gamma", "mu"),
            initial_conditions = vector(mode = "list", length = 7),
            transmission_parameters = vector(mode = "list", length = 6),
-           R0 = NA_real_,
            output_names = list("S", "E", "I_asymptomatic",
                                "I_mild", "I_severe", "R", "D",
-                               "Incidence", "Deaths"),
-           output = list("states" = data.frame(), "changes" = data.frame())
+                               "Incidence", "Deaths")
          ))
 
 
@@ -229,7 +222,9 @@ setMethod(
 #' @param object An object of class SEIaImIsRD
 #' @param times A list of time points of the simulation period
 #' @param solve_method A string indicating which ode integrator to use. Default is set to 'lsoda'
-#' @return An object of class SEIaImIsRD with a dataframe of simulation output
+#' @return A list of two dataframes: one with the time steps, time series of S,
+#' E, I_asymptomatic, I_mild, I_severe and R population fractions, and one with the time steps,
+#' time series of incidences and deaths population fraction
 #' @rdname SEIaImIsRD-class
 #' @aliases run,SEIaImIsRD-method
 #' @export
@@ -306,8 +301,7 @@ setMethod("run",
             # output <- melt(output, id.vars = "time")
             # names(output) <- c("time", "population_group", "fraction")
             # names(output) <- c("time", "compartment", "value")
-            object@output <- list("states" = states, "changes" = changes)
-            return(object)
+            list("states" = states, "changes" = changes)
           })
  
 
@@ -323,7 +317,7 @@ setMethod("run",
 #' another. \code{x_0} is the disease-free equilibrium state.
 #'
 #' @param model A model of an SEIaImIsRD class object with initial_conditions and transmission_parameters set.
-#' @return A SEIaImIsRD class object with R0 value stored
+#' @return An R0 value
 #' @rdname SEIaImIsRD-class
 #' @aliases R0,SEIaImIsRD-method
 #' @export
@@ -349,7 +343,7 @@ setMethod("R0", "SEIaImIsRD", function(model) {
   V[4, 4] <- gamma$severe + mu$severe
   # calculate R0 as the spectral radius for the matrix F x V^(-1):
   eigVals <- eigen(F %*% (solve(V)))$values
-  model@R0 <- max(abs(eigVals))
-  return(model)
+  R0 = max(abs(eigVals))
+  return(R0)
   })
 
