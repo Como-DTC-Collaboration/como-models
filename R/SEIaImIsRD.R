@@ -52,12 +52,10 @@ SEIaImIsRD <- setClass(Class = "SEIaImIsRD",
          ))
 
 
-
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Functions
 # Generics defined in SEIRD will only be reset methods here to avoid ambiguity.
 #%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 
 #' @describeIn SEIaImIsRD Retrieves initial conditions of SEIaImIsRD model.
 #'
@@ -75,7 +73,6 @@ setMethod("initial_conditions", "SEIaImIsRD",
 #' @export
 setMethod("transmission_parameters", "SEIaImIsRD",
           function(object) object@transmission_parameters)
-
 
 
 #' @describeIn SEIaImIsRD Setter method for initial population sizes (in fraction)
@@ -225,7 +222,6 @@ setMethod(
 #' @return A list of two dataframes: one with the time steps, time series of S,
 #' E, I_asymptomatic, I_mild, I_severe and R population fractions, and one with the time steps,
 #' time series of incidences and deaths population fraction
-#' @rdname SEIaImIsRD-class
 #' @aliases run,SEIaImIsRD-method
 #' @export
 #'
@@ -318,7 +314,6 @@ setMethod("run",
 #'
 #' @param model A model of an SEIaImIsRD class object with initial_conditions and transmission_parameters set.
 #' @return An R0 value
-#' @rdname SEIaImIsRD-class
 #' @aliases R0,SEIaImIsRD-method
 #' @export
 #'

@@ -13,16 +13,11 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
-# install gridExtra if not available
-if(!requireNamespace("gridExtra", quietly = T)){
-  install.packages("gridExtra")
-}
 ```
 
 ```{r setup}
 library(comomodels)
 library(devtools)
-library(gridExtra)
 library(knitr) # table layout
 devtools::load_all()
 ```
@@ -173,7 +168,7 @@ The system of ODEs is solved by calling the function `run(model,t)`. In the next
 
 #### 1. Including natural loss of immunity
 We first assume that immunity does not last forever, so individuals that have recovered from the disease eventually return to the susceptible population. This is called waning immunity and is included in the model when $\omega>0$, as we assigned it above.
-```{r, fig.width = 15, fig.align = "center", fig.show="hold"}
+```{r,  fig.align = "center", fig.show="hold"}
 par(mfrow=c(1,2))
 model.output <- run(model, t)
 model.R0 <- R0(model)
@@ -181,7 +176,8 @@ model.R0 <- R0(model)
 # plot
 model.plot.states <- plot_dataframe(model.output$states)
 model.plot.changes <- plot_dataframe(model.output$changes, type="bar", lab.y="fraction of the population per day")
-grid.arrange(model.plot.states, model.plot.changes, nrow = 1)
+model.plot.states
+model.plot.changes
 ```
 
 We can look at the basic reproduction number for this model:
@@ -192,7 +188,7 @@ We see that for this set of parameter values, $R_0>1$, and indeed we see in the 
 
 #### 2. No natural loss of immunity 
 We now assume that recovered individuals remain immune forever, i.e. $\omega=0$.
-```{r, fig.width = 15, fig.align = "center", fig.show="hold"}
+```{r, fig.align = "center", fig.show="hold"}
 model1 <- model
 transmission_parameters(model1) <- list(beta = beta, kappa = kappa, omega = 0.00,
                                         p_symptom = p_symptom, gamma = gamma, mu = mu)
@@ -203,7 +199,9 @@ model1.R0 <- R0(model1)
 # plot
 model1.plot.states <- plot_dataframe(model1.output$states)
 model1.plot.changes <- plot_dataframe(model1.output$changes, type="bar", lab.y="fraction of the population per day")
-grid.arrange(model1.plot.states, model1.plot.changes, nrow=1)
+
+model1.plot.states
+model1.plot.changes
 ```
 
 We can see that this affects the dynamics of the model quite a bit. The damped oscillations that we saw in the graph for the model with waning immunity have disappeared, we see less deaths, and the number of recovered individuals doesn't approach zero.
@@ -218,17 +216,17 @@ we see no change! This is because the basic reproduction number only indicates w
 
 #### 3. Altering the value(s) of $\beta$ 
 Lastly, we consider what happens to the model dynamics if we change the infection rate. For example, what if asymptomatic individuals are significantly less infectious than mildly or severely symptomic ones? We investigate this by lowering $\beta_a$ from 0.8 to 0.5 so that it is now half the infection rate of infectious individuals with severe symptoms.
-```{r, fig.width = 15, fig.align = "center", fig.show="hold"}
+```{r, fig.align = "center", fig.show="hold"}
 model2 <- model
 transmission_parameters(model2) <- list(beta = list(asymptomatic = 0.50, mild =  0.90, severe = 1.00), kappa = kappa, omega = omega, p_symptom = p_symptom, gamma = gamma, mu = mu)
 model2.output <- run(model2, t)
 model2.R0 <- R0(model2)
 
 # plot
-# plot
 model2.plot.states <- plot_dataframe(model2.output$states)
 model2.plot.changes <- plot_dataframe(model2.output$changes, type="bar", lab.y="fraction of the population per day")
-grid.arrange(model2.plot.states, model2.plot.changes, nrow=1)
+model2.plot.states
+model2.plot.changes
 ```
 We see that when $\beta_{I_a}$ is lowered, a far smaller fraction of the population gets infected. This is what we would expect. When we now compute $R_0$ for the model with this new parameter set, we get
 ```{r}
