@@ -293,10 +293,6 @@ setMethod("run",
             states <- droplevels(states)
             changes <- subset(output, output$compartment %in% c("Incidence", "Deaths"))
             changes <- droplevels(changes)
-            # reshape data frame into long format
-            # output <- melt(output, id.vars = "time")
-            # names(output) <- c("time", "population_group", "fraction")
-            # names(output) <- c("time", "compartment", "value")
             list("states" = states, "changes" = changes)
           })
  
