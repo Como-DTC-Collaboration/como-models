@@ -140,9 +140,30 @@ For the rural community:
 
 This function relies on the package deSolve.
 
-\item \code{R0}: Returns the value of R0 for the model with the specified
-parameter values.
-R0 is computed using the next generation matrix method.
+\item \code{R0}: Returns the value of R0, the basic reproduction number,
+for the model with the specified parameter values.
+R0 is computed using the next generation matrix method as set out in
+van den Driessche (2017):
+van  den  Driessche, P. Reproduction numbers of infectious disease models.
+Infectious Disease Modelling, 2:288–303, 8 2017.
+
+In this method, the variables are split into two groups: those that represent
+infected individuals (in our case the exposed and infectious compartments in
+both communities), and those that do not (the susceptible, recovered and dead).
+We only further consider the system of equations consisting of the ODEs
+describing the variables in the first group,
+in this case (E_U, E_Y, I_U and I_Y).
+The differential equations for the variables in the first group are written
+in the form
+\deqn{\frac{dx_i}{dt} = \mathcal{F_i} - \mathcal{V_i}}
+where \mathcal{F_i} are the terms describing how individuals enter the
+compartment and \mathcal{V_i} the terms describing how individuals leave.
+We compute the matrices F and V as
+\deqn{F = \partial F_i(x_0)/\partial x_j}
+\deqn{V = \partial V_i(x_0)/\partial x_j}
+where x_j are all the variables representing infected individuals.
+Finally, R0 is the spectral radius of the matrix FV^(-1). For a more
+detailed description of this method, see van den Driessche (2017).
 }}
 
 \section{Slots}{
@@ -170,7 +191,8 @@ Both set to 0, not to be changed by user (double).}
 (double).}
 
 \item{\code{contact_matrices}}{list of two contact matrices, one for urban communties
-and one for rural communities, normalized to population size (double).}
+and one for rural communities, with the number of contacts as a
+fraction of the total population size (double).}
 
 \item{\code{contact_matrices_names}}{list of names for two contact matrices,
 one for urban communities and one for rural communities}

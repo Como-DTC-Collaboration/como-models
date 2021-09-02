@@ -31,7 +31,7 @@ Here we consider an extension to the basic SEIRD model that considers multiple i
 
 ## The mathematical model
 ### The equations
-We base our model of connected communities on the model presented by Tun et al. [-@Tun21]. We designate the urban community $U$ and the rural community $Y$. Following the same naming pattern for variables and parameters as used for the basic SEIRD model, the ordinary differential equations describing how the populations evolve are as follows, where variable $X_Z$ designates the population of individuals with infectedness status $X$ in community $Z$,
+We base our model of connected communities on the model presented by Tun et al. [-@Tun21]. We designate the urban community $U$ and the rural community $Y$. Following the same naming pattern for variables and parameters as used for the basic SEIRD model, the ordinary differential equations describing how the populations evolve are as follows, where variable $X_Z$ (for $X \in \{S,E,I,R\}, Z \in \{U, Y\}$) designates the population of individuals with infectedness status $X$ in community $Z$,
 
 \begin{equation}
 \begin{split}
@@ -53,7 +53,7 @@ We base our model of connected communities on the model presented by Tun et al. 
 The difference between this model and the basic SEIRD model is the computation of the number of infectious contacts that a susceptible individual has. This is reflected in the equations for $S_Z$ and $E_Z$. Individuals in either community can either come into contact with people from their own community or from the other community. The extent to which the later happens is determined by the connectedness parameter $C$. If the communities are completely separate, i.e. $C=0$, the probability that a susceptible individual in community $Z$ interacts with an infectious individual is the number of contacts that someone in that community has, $N_Z$, multiplied by the probability that a contact is infectious, $I_Z/\phi_Z$. If the communities are well-mixed with each other, the probability is again the number of contacts multiplied by the probability that a contact is infectious, although now the number of contacts that an individual has is averaged over the communities, so $\phi_U N_U + \phi_Y N_Y$, and the individual can encounter people from either community so the probability of an infectious contact is $I_U+I_Y$. The extent to which the communities are connected, designated by $C$, determines to which extent the two extreme contact patterns play a role, and thus we obtain the weighted average that appears in the equations above which designates the total probability of a susceptible individual in $Z$ having an infectious contact: $(I_U+I_Y) (\phi_U N_U + \phi_Y N_Y) C + \frac{I_Z}{\phi_Z}N_Z(1-C)$.
 
 ### The contact parameters $N_Z$
-The average number of contacts for an individual in a given community $Z$, $N_Z$, is computed based on the country-specific contact matrices [@Prem20], age demographics [@UN], and urban/rural populations split [@WB]. For a detailed discussion of the contact matrices, see the age-structured model. The number of contacts in community $Z$ of a specific country is computed by first adding up all the contacts in the contact matrix for each age group so we obtain the total number of contacts that an individual in a specific age group has in a day. We obtain the vector with population by age for community $Z$ by taking the age demographic data for the whole country and multiplying it by the percentage of the population that lives in community $Z$. We then take a weighted average over the age groups, using the age demographic data as weights. Lastly, we normalize the number of contacts by dividing through by the total population of the country. We thus get
+The average number of contacts for an individual in a given community $Z$, $N_Z$, is computed based on the country-specific contact matrices [@Prem20], age demographics [@UN], and urban/rural populations split [@WB]. For a detailed discussion of the contact matrices, see the age-structured model. The number of contacts in community $Z$ of a specific country is computed by first adding up all the contacts in the contact matrix for each age group so we obtain the total number of contacts that an individual in a specific age group has in a day. We obtain the vector with population by age for community $Z$ by taking the age demographic data for the whole country and multiplying it by the percentage of the population that lives in community $Z$. We then take a weighted average over the age groups, using the age demographic data as weights. Lastly, we divide the number of contacts by the total population size. We thus get
 \begin{equation}
     N_{Z} = \frac{ \sum_{m = 1}^K c_Z(n,m)\cdot y_Z}{\text{total population}}, 
 \end{equation}
@@ -72,7 +72,7 @@ load("../data/contact_all_rural.rda")
 names_rural <- names(contact_all_rural)
 names_common <- intersect(names_urban,names_rural)
 ```
-We also load in all demographic data, and load in a list showing the which three-letter code for each country.
+We also load in all demographic data, and load in a list showing the three-letter code for each country.
 ```{r}
 #import all demographic data
 # data on percentage of the population that is rural
