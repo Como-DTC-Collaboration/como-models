@@ -177,9 +177,8 @@ SEIR_df$compartment <- factor(SEIR_df$compartment, levels = c("S_U", "E_U", "I_U
 col <- c("S_U" = "blue", "E_U" = "green", "I_U" = "yellow", "R_U" = "red", "S_Y" = "lightskyblue1", "E_Y" = "lightgreen", "I_Y" = "lightyellow", "R_Y" = "indianred")
 SEIRplot <- ggplot(SEIR_df, aes(x = time, y = value)) +
   geom_line(aes(color = compartment), size = 1.5) +
-  labs(x = "time (days)", y = "fraction of the population",
-       title = glue("Urban and rural populations")) +
-  theme(legend.position = "bottom", legend.title = element_blank()) +
+  labs(x = "time (days)", y = "fraction of the population") +
+  theme(legend.position = "bottom", legend.title = element_blank(), text = element_text(size = 20)) +
   scale_color_manual(values = col)
 
 case_df <- subset(output, compartment == "Incidences_U" | compartment == "Deaths_U" | compartment == "Incidences_Y" | compartment == "Deaths_Y")
@@ -187,9 +186,8 @@ case_df$compartment <- factor(case_df$compartment, levels = c("Incidences_U", "D
 col <- c("Cases_U" = "grey28", "Deaths_U" = "black", "Cases_Y" = "lightgray", "Deaths_Y" = "darkgray")
 inc_plot <- ggplot(case_df, aes(x = time, y = value, fill = compartment)) +
   geom_bar(stat="identity", position = position_dodge()) +
-  labs(x = "time (days)", y = "fraction of the population",
-       title = glue("Cases and deaths")) +
-  theme(legend.position = "bottom", legend.title = element_blank()) +
+  labs(x = "time (days)", y = "fraction of the population") +
+  theme(legend.position = "bottom", legend.title = element_blank(), text = element_text(size = 20)) +
   scale_fill_discrete(labels = c("Cases_U","Deaths_U","Cases_Y","Deaths_Y"))
 
 grid.arrange(SEIRplot,inc_plot,nrow = 1)
@@ -212,18 +210,14 @@ CD_total <- CD_total[CD_total$compartment != "Incidences_Y" & CD_total$compartme
 
 SEIRplot_total <- ggplot(NULL, aes(x = time, y = value)) +
   geom_line(data = SEIR_total, aes(color = compartment), size = 1.5) +
-  labs(x = "time (days)", y = "fraction of the population",
-       title = glue("Summed populations"),
-       subtitle = country_fullname) +
+  labs(x = "time (days)", y = "fraction of the population") +
   scale_colour_discrete(labels = c("Total S", " Total E","Total I","Total R")) +
-  theme(legend.position = "bottom", legend.title = element_blank())
+  theme(legend.position = "bottom", legend.title = element_blank(), text = element_text(size = 20))
 
 incplot_total <- ggplot(CD_total, aes(x = time, y = value, fill = compartment)) +
   geom_bar(stat="identity", position = position_dodge()) +
-  labs(x = "time (days)", y = "fraction of the population",
-       title = glue("Cases and deaths"),
-       subtitle = country_fullname) +
-  theme(legend.position = "bottom", legend.title = element_blank()) +
+  labs(x = "time (days)", y = "fraction of the population") +
+  theme(legend.position = "bottom", legend.title = element_blank(), text = element_text(size = 20)) +
   scale_fill_discrete(labels = c("Cases","Deaths"))
 
 grid.arrange(SEIRplot_total,incplot_total,nrow = 1)
@@ -254,10 +248,10 @@ The connectedness parameter $C$ indicates how connected the two communities are,
 
 ggplot(result, aes(x = t, y = value)) +
   geom_line(aes(color = as.factor(C)), size = 1) +
-  labs(x = "time", y = "fraction of the population",
-       title = glue("Urban vs rural model for different levels of connectedness")) +
+  labs(x = "time (days)", y = "fraction of the population") +
   scale_color_viridis(discrete = TRUE)+ 
-  labs(color = "C")
+  labs(color = "C") + 
+  theme(text = element_text(size = 20))
 
 ```
 
