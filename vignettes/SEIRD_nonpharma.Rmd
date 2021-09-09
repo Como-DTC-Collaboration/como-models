@@ -73,7 +73,7 @@ We next illustrate how this model works using functionality available in `comomo
 
 We first create an `SEIRD` object that we will use to run simulations.
 ```{r}
-my_model <- SEIRD()
+my_model <- SEIRD_nonpharma()
 ```
 
 Next, we set the parameter values for $\beta$, $\kappa$, $\gamma$, $\mu$ and $\eta$:

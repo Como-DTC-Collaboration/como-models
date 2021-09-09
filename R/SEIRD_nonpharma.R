@@ -1,7 +1,7 @@
-#' An S4 object representing the SEIRD with isolating and not isolating infected compartments.
+#' An S4 object representing the SEIRD_nonpharma with isolating and not isolating infected compartments.
 #'
-#' This class represents the SEIRD model taking into account isolation of infected population.
-#' In addition to evolving based on the SEIRD model, transmission is reduced by the self-isolation
+#' This class represents the SEIRD_nonpharma model taking into account isolation of infected population.
+#' In addition to evolving based on the SEIRD_nonpharma model, transmission is reduced by the self-isolation
 #' of the infected population.
 #'
 #' @slot output_names list of compartments name which are used by the model and
@@ -18,8 +18,8 @@
 #' @import glue
 #' @import reshape2
 #'
-#' @export SEIRD
-SEIRD <- setClass("SEIRD",
+#' @export SEIRD_nonpharma
+SEIRD_nonpharma <- setClass("SEIRD_nonpharma",
          # slots
          slots = c(
            output_names = "list",
@@ -40,33 +40,26 @@ SEIRD <- setClass("SEIRD",
 )
 #' Retrieves initial conditions of SEIR model.
 #'
-#' @param object An object of the class SEIRD.
+#' @param object An object of the class SEIRD_nonpharma.
 #' @export
 setGeneric("initial_conditions",
            function(object) standardGeneric("initial_conditions"))
 
 
-#' @describeIn SEIRD Retrieves initial conditions of SEIR model.
+#' @describeIn SEIRD_nonpharma Retrieves initial conditions of SEIR model.
 #'
-#' @param object An object of the class SEIRD.
+#' @param object An object of the class SEIRD_nonpharma.
 #' @aliases initial_conditions,ANY,ANY-method
 #' @export
-setMethod("initial_conditions", "SEIRD",
+setMethod("initial_conditions", "SEIRD_nonpharma",
           function(object) object@initial_conditions)
 
-#' Retrieves transmission parameters of SEIR model.
-#'
-#' @param object An object of the class SEIRD.
-#' @export
-setGeneric("transmission_parameters",
-           function(object) standardGeneric("transmission_parameters"))
 
-#' @describeIn SEIRD Retrieves transmission parameters of SEIR model.
-#'
-#' @param object An object of the class SEIRD.
+#' @describeIn SEIRD_nonpharma Retrieves transmission parameters of SEIR model.
+#' @param object An object of the class SEIRD_nonpharma.
 #' @aliases transmission_parameters,ANY,ANY-method
 #' @export
-setMethod("transmission_parameters", "SEIRD",
+setMethod("transmission_parameters", "SEIRD_nonpharma",
           function(object) object@transmission_parameters)
 
 #' Set initial conditions (S0, E0, I0 and R0) of the SEIR model.
@@ -74,10 +67,10 @@ setMethod("transmission_parameters", "SEIRD",
 #' All initial conditions must sum up to 1.
 #' If the initial conditions provided to do not sum to 1, an error is thrown.
 #'
-#' @param object an object of the class SEIRD
+#' @param object an object of the class SEIRD_nonpharma
 #' @param value (list) list of initial conditions S0, E0, I0, R0.
 #'
-#' @return object of class SEIRD with initial conditions assigned.
+#' @return object of class SEIRD_nonpharma with initial conditions assigned.
 #'
 #' @export
 setGeneric(
@@ -86,21 +79,21 @@ setGeneric(
     standardGeneric("initial_conditions<-")
   })
 
-#' @describeIn SEIRD Setter method for initial conditions (S0, E0, I0 and R0)
+#' @describeIn SEIRD_nonpharma Setter method for initial conditions (S0, E0, I0 and R0)
 #' of the SEIR model.
 #'
 #' All initial conditions must sum up to 1.
 #' If the initial conditions provided to do not sum to 1, an error is thrown.
 #'
-#' @param object an object of the class SEIRD
+#' @param object an object of the class SEIRD_nonpharma
 #' @param value (list) list of initial conditions S0, E0, I0, R0.
 #'
-#' @return object of class SEIRD with initial conditions assigned.
+#' @return object of class SEIRD_nonpharma with initial conditions assigned.
 #'
 #' @aliases initial_conditions<-,ANY,ANY-method
 #' @export
 setMethod(
-  "initial_conditions<-", "SEIRD",
+  "initial_conditions<-", "SEIRD_nonpharma",
   function(object, value) {
 
     if (mean(names(value) %in% object@initial_condition_names) != 1)
@@ -126,39 +119,22 @@ setMethod(
     object
   })
 
-#' Set transmission parameters for SEIRD model
-#'
-#' If the transmission parameters provided to are not 1-dimensional an error is
-#' thrown.
-#'
-#' @param object (SEIRD model)
-#' @param value (list) list of values for beta, beta_isolated, kappa, gamma, mu, respectively.
-#'
-#' @return object of class SEIRD with transmission parameter values
-#' assigned.
-#' @export
-setGeneric(
-  "transmission_parameters<-",
-  function(object, value) {
-    standardGeneric("transmission_parameters<-")
-  })
 
-
-#' @describeIn SEIRD Set transmission parameters (beta, beta_isolated, kappa, gamma and mu, heta)
+#' @describeIn SEIRD_nonpharma Set transmission parameters (beta, beta_isolated, kappa, gamma and mu, heta)
 #' of the SEIR model.
 #'
 #' If the transmission parameters provided to are not 1-dimensional an error is
 #' thrown.
 #'
-#' @param object (SEIRD model)
+#' @param object (SEIRD_nonpharma model)
 #' @param value (list) list of values for beta, beta_isolated, kappa, gamma, mu, heta, respectively.
 #'
-#' @return object of class SEIRD with transmission parameter values
+#' @return object of class SEIRD_nonpharma with transmission parameter values
 #' assigned.
 #' @aliases transmission_parameters<-,ANY,ANY-method
 #' @export
 setMethod(
-  "transmission_parameters<-", "SEIRD",
+  "transmission_parameters<-", "SEIRD_nonpharma",
   function(object, value) {
 
     # create list of parameter values
@@ -183,9 +159,9 @@ setMethod(
     object
   })
 
-# SEIRD class specific functions
+# SEIRD_nonpharma class specific functions
 
-#' Solves ODEs of the SEIRD specified in object
+#' Solves ODEs of the SEIRD_nonpharma specified in object
 #' for the time points specified in times and integration method specified in
 #' solve_method.
 #'
@@ -199,7 +175,7 @@ setMethod(
 #'
 #' This function relies on the package deSolve.
 #'
-#' @param object an object of the class SEIRD
+#' @param object an object of the class SEIRD_nonpharma
 #' @param times (double) a sequence of time points at which the solution to
 #' the system of ODEs should be returned. Must be of the form
 #' seq(t_start, t_end, by=t_step). Default time series is seq(0, 100, by = 1).
@@ -216,7 +192,7 @@ setGeneric(name = "run",
                           solve_method = "lsoda") {
              standardGeneric("run")})
 
-#' @describeIn SEIRD Solves ODEs of the SEIRD specified in object
+#' @describeIn SEIRD_nonpharma Solves ODEs of the SEIRD_nonpharma specified in object
 #' for the time points specified in times and integration method specified in
 #' solve_method.
 #'
@@ -230,7 +206,7 @@ setGeneric(name = "run",
 #'
 #' This function relies on the package deSolve.
 #'
-#' @param object an object of the class SEIRD
+#' @param object an object of the class SEIRD_nonpharma
 #' @param times (double) a sequence of time points at which the solution to
 #' the system of ODEs should be returned. Must be of the form
 #' seq(t_start, t_end, by=t_step). Default time series is seq(0, 100, by = 1).
@@ -244,7 +220,7 @@ setGeneric(name = "run",
 #' @aliases run,ANY,ANY-method
 #' @export
 setMethod(
-  "run", "SEIRD",
+  "run", "SEIRD_nonpharma",
   function(object, times, solve_method = "lsoda") {
     if (!is.double(times)) {
       stop("Evaluation times of the model storage format must be a vector.")
@@ -337,17 +313,17 @@ setGeneric("R0", def = function(model) {
   standardGeneric("R0")
 })
 
-#' @describeIn SEIRD Calculates basic reproduction number for SEIRD model
+#' @describeIn SEIRD_nonpharma Calculates basic reproduction number for SEIRD_nonpharma model
 #'
 #' The general R0 parameter is given by:
 #' \deqn{R_0 = \beta/(\gamma + \mu)}
 #'
-#' @param model an SEIRD model
+#' @param model an SEIRD_nonpharma model
 #'
 #' @return an R0 value
 #' @export
 #' @aliases R0,ANY,ANY-method
-setMethod("R0", "SEIRD", function(model) {
+setMethod("R0", "SEIRD_nonpharma", function(model) {
   beta <- model@transmission_parameters$beta
   beta_isolated <- model@transmission_parameters$beta_isolated
   gamma <- model@transmission_parameters$gamma
