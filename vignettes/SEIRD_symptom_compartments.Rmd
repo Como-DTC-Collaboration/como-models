@@ -17,9 +17,8 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(comomodels)
-library(devtools)
-library(knitr) # table layout
-devtools::load_all()
+library(ggplot2)
+library(knitr)
 ```
 
 ## Introduction
@@ -147,22 +146,22 @@ Define helper function for plotting output dataframe of simulation result
 plot_dataframe <- function(dataframe, x = "time", y = "value", c = "compartment", type = "line", lab.x = "time (days)", lab.y = "fraction of the population") {
   p <- ggplot(dataframe, aes_string(x = x, y = y))
   if(type=="line"){
-    p <- p + geom_line(aes_string(colour = c))
+    p <- p + geom_line(aes_string(colour = c)) +
+      scale_color_brewer(palette = "Dark2")
   }else if(type=="bar"){
-    p <- p + geom_bar(aes_string(fill = c), stat="identity", position=position_dodge())
+    p <- p + geom_bar(aes_string(fill = c), stat="identity", position=position_dodge()) +
+      scale_fill_brewer(palette = "Dark2")
   }
-  return(p + 
-           scale_color_viridis_d() +
-           theme(legend.position = "bottom", legend.title = element_blank()) +
-           labs(x = lab.x, y = lab.y))
+  p + 
+    theme(legend.position = "bottom", legend.title = element_blank()) +
+    labs(x = lab.x, y = lab.y)
 }
 ```
 
-Lastly, we set time span and time step for the simulation:
+Lastly, we set time span and time step for the simulation outputs. Here we choose to output results at a daily resolution. Note, the numerical solvers used to integrate the ODEs (by default, the LSODA method) typically discretise the ODE at a finer resolution.
 ```{r}
 t <- seq(0, 1000, by = 1)
 ```
-Here, it makes sense to go with a time step of one as data for an epidemic, such as number of cases and deaths, is often reported per day, so time resolution of hours or minutes is not useful.
 
 The system of ODEs is solved by calling the function `run(model,t)`. In the next few sections, we run the model under different assumption and plot the results. The function `R0(model)` can be used to compute the basic reproduction number for the model with a given set of parameters. 
 
