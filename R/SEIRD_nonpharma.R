@@ -333,6 +333,15 @@ setMethod(
       
   #  }
     
+    
+    # set transmission parameters vector
+    parameters <- c(b = (transmission_parameters(object)$beta)*200,
+                    b_isolated = (transmission_parameters(object)$beta_isolated)*200,
+                    k = transmission_parameters(object)$kappa,
+                    g = transmission_parameters(object)$gamma,
+                    m = transmission_parameters(object)$mu,
+                    h = transmission_parameters(object)$heta)   
+    
     # call ode solver second time
     out <- ode(
       y = column, times = seq(5, 10, by = 1), func = right_hand_side,
