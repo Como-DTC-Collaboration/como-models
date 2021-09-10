@@ -188,7 +188,7 @@ setMethod(
 #' time series of incidences and deaths population fraction.
 #' @export
 setGeneric(name = "run",
-           def = function(object, times = seq(0, 100, by = 1),
+           def = function(object, times = seq(0, 100, by = 1), t_intervention_1_2 = 5, t_intervention_2_3 = 10,
                           solve_method = "lsoda") {
              standardGeneric("run")})
 
@@ -210,6 +210,13 @@ setGeneric(name = "run",
 #' @param times (double) a sequence of time points at which the solution to
 #' the system of ODEs should be returned. Must be of the form
 #' seq(t_start, t_end, by=t_step). Default time series is seq(0, 100, by = 1).
+#' 
+#' @param t_intervention_1_2 time at which the first intervention takes place and
+#' the model switches to parameters2 to solve the ode system
+#' 
+#' @param t_intervention_2_3 time at which the second intervention takes place and
+#' the model switches to parameters3 to solve the ode system
+#' 
 #' @param solve_method (string) a string of chosen numerical integration method
 #' for solving the ode system. Default is "lsoda" which is also the default for
 #' the ode function in the deSolve package used in this function.
@@ -221,7 +228,7 @@ setGeneric(name = "run",
 #' @export
 setMethod(
   "run", "SEIRD_nonpharma",
-  function(object, times, solve_method = "lsoda") {
+  function(object, times, t_intervention_1_2, t_intervention_2_3, solve_method = "lsoda") {
     if (!is.double(times)) {
       stop("Evaluation times of the model storage format must be a vector.")
     }
@@ -274,10 +281,68 @@ setMethod(
 
     # call ode solver
     out <- ode(
-      y = state, times = times, func = right_hand_side,
+      y = state, times = seq(0, t_intervention_1_2, by = 1), func = right_hand_side,
       parms = parameters, method = solve_method)
 
     output <- as.data.frame.array(out)
+    
+    
+    
+    #extract the final state from the 1st interval
+    state = filter(output, time == t_intervention_1_2)
+    print("state")
+    print(state)
+    
+    state_numeric = c(state)
+    print("state numeric")
+    print(state_numeric)
+    
+    state_numeric_without_t <- state_numeric[-c(1)]
+    print("state numeric without t")
+    print(state_numeric_without_t)
+    
+    column = c("S"=state_numeric_without_t$S, "E"=state_numeric_without_t$E, "I"=state_numeric_without_t$I, "I_isolated"=state_numeric_without_t$I_isolated, "R"=state_numeric_without_t$R, "C"=state_numeric_without_t$C, "D"=state_numeric_without_t$D)
+    print(column)
+    
+    # construct list of time lists for next 2 intervals
+    interval_times = c(seq(t_intervention_1_2, t_intervention_2_3, by = 1),
+                       seq(t_intervention_2_3, tail(times, n=1), by = 1)
+    )
+    print("int times")
+    print(interval_times)
+    
+    # loop over intervals, solve ode with each contact matrix, initialise next
+    # interval with last state from current interval.
+   # for (i in 1:2){
+      
+      
+      # call ode solver for the current interval
+   #   out <- ode(y = column, times = interval_times[i], func = right_hand_side,
+  #               parms = parameters, method = solve_method)
+      
+      # output as a dataframe
+  #    output_period <- as.data.frame.array(out)
+  #    output_period_to_stitch = output_period[-c(1),]
+      #myData[-c(2, 4, 6), ]
+      
+      # append the output from the current interval to the overall output
+   #   output = rbind(output, output_period_to_stitch)
+      
+   #   print(i)
+   #   print(output)
+      
+  #  }
+    
+    # call ode solver second time
+    out <- ode(
+      y = column, times = seq(5, 10, by = 1), func = right_hand_side,
+      parms = parameters, method = solve_method)
+    
+    output2 <- as.data.frame.array(out)
+    
+    # append the output from the current interval to the overall output
+       output = rbind(output, output2)
+    
 
     # Compute incidences and deaths
     cases <- c(0, diff(output$C))
