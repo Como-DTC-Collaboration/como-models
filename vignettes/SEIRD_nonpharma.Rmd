@@ -78,7 +78,7 @@ my_model <- SEIRD_nonpharma()
 
 Next, we set the parameter values for $\beta$, $\kappa$, $\gamma$, $\mu$ and $\eta$:
 ```{r}
-params <- list(beta=0.5, beta_isolated=0.1, kappa=0.2, gamma=0.1, mu=0.048, heta=1)
+params <- list(beta=0.5, beta_isolated=0.1, kappa=0.2, gamma=0.1, mu=0.048, heta1=0, heta2=1)
 transmission_parameters(my_model) <- params
 ```
 
@@ -135,7 +135,7 @@ In this section, we investigate the sensitivity of the number of deaths to the i
 # function to setup and run model for different beta values
 run_seird <- function(heta_val) {
   inits <- list(S0=0.99, E0=0, I0=0.01, I0_isolated=0, R0=0)
-  params <- list(beta=0.5, beta_isolated=0.1, kappa=0.9, gamma=0.5, mu=0.1, heta=heta_val)
+  params <- list(beta=0.5, beta_isolated=0.1, kappa=0.9, gamma=0.5, mu=0.1, heta1=0, heta2=heta_val)
   model <- SEIRD_nonpharma(initial_conditions = inits,
                 transmission_parameters=params)
   #times <- seq(31800, 31900, by = 1)
@@ -144,13 +144,13 @@ run_seird <- function(heta_val) {
   out_df$changes
 }
 
-# run model across different heta values
+# run model across different heta2 values
 heta_vals <- c(0, 0.25, 0.5, 0.75, 1)
 for(i in seq_along(heta_vals)) {
   heta_temp <- heta_vals[i]
-  temp <- run_seird(heta_temp) %>% mutate(heta=heta_temp)
+  temp <- run_seird(heta_temp) %>% mutate(heta2=heta_temp)
   if(i == 1)
-    result <- temp %>% mutate(heta=heta_temp)
+    result <- temp %>% mutate(heta2=heta_temp)
   else
     result <- result %>% bind_rows(temp)
 }
@@ -158,7 +158,7 @@ for(i in seq_along(heta_vals)) {
 # plot results
 result %>% 
   filter(compartment=="Deaths") %>% 
-  ggplot(aes(x=time, y=value, fill = as.factor(heta))) +
+  ggplot(aes(x=time, y=value, fill = as.factor(heta2))) +
   geom_bar(stat = "identity", position = position_dodge()) +
   labs(x = "time (days)", y = "Fraction of the population that died per day",
        title = glue("Number of deaths for differing values of eta")) + 

@@ -9,7 +9,7 @@
 #' @slot initial_condition_names list of names of initial conditions
 #'       (characters). Default is list("S0", "E0", "I0", "I0_isolated", R0").
 #' @slot transmission_parameter_names list of names of transmission parameters
-#'       (characters). Default is list("beta", "beta_isolated", "kappa", "gamma", "mu", "heta").
+#'       (characters). Default is list("beta", "beta_isolated", "kappa", "gamma", "mu", "heta1", "heta2").
 #' @slot initial_conditions list of values for initial conditions (double).
 #' @slot transmission_parameters list of values for transmission parameters
 #'       (double).
@@ -33,9 +33,9 @@ SEIRD_nonpharma <- setClass("SEIRD_nonpharma",
          prototype = list(
            output_names = list("S", "E", "I", "I_isolated", "R", "D", "Incidence", "Deaths"),
            initial_condition_names = list("S0", "E0", "I0", "I0_isolated", "R0"),
-           transmission_parameter_names = list("beta", "beta_isolated", "kappa", "gamma", "mu", "heta"),
+           transmission_parameter_names = list("beta", "beta_isolated", "kappa", "gamma", "mu", "heta1", "heta2"),
            initial_conditions = vector(mode = "list", length = 7),
-           transmission_parameters = vector(mode = "list", length = 7)
+           transmission_parameters = vector(mode = "list", length = 8)
          )
 )
 #' Retrieves initial conditions of SEIR model.
@@ -252,7 +252,7 @@ setMethod(
                     k = transmission_parameters(object)$kappa,
                     g = transmission_parameters(object)$gamma,
                     m = transmission_parameters(object)$mu,
-                    h = transmission_parameters(object)$heta)
+                    h = transmission_parameters(object)$heta1)
 
     
     # function for RHS of ode system
@@ -335,12 +335,12 @@ setMethod(
     
     
     # set transmission parameters vector
-    parameters <- c(b = (transmission_parameters(object)$beta)*200,
-                    b_isolated = (transmission_parameters(object)$beta_isolated)*200,
+    parameters <- c(b = (transmission_parameters(object)$beta),
+                    b_isolated = (transmission_parameters(object)$beta_isolated),
                     k = transmission_parameters(object)$kappa,
                     g = transmission_parameters(object)$gamma,
                     m = transmission_parameters(object)$mu,
-                    h = transmission_parameters(object)$heta)   
+                    h = transmission_parameters(object)$heta2)   
     
     # call ode solver second time
     out <- ode(
@@ -402,6 +402,6 @@ setMethod("R0", "SEIRD_nonpharma", function(model) {
   beta_isolated <- model@transmission_parameters$beta_isolated
   gamma <- model@transmission_parameters$gamma
   mu <- model@transmission_parameters$mu
-  heta <- model@transmission_parameters$heta
-  (1-heta)*(beta / (gamma + mu)) + (heta * (beta_isolated / (gamma + mu)))
+  heta2 <- model@transmission_parameters$heta
+  (1-heta2)*(beta / (gamma + mu)) + (heta2 * (beta_isolated / (gamma + mu)))
 })
