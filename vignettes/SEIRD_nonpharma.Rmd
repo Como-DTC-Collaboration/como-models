@@ -96,7 +96,9 @@ The initial conditions must sum to one. If they do not, an error is thrown.
 Now we simulate the system from $t=0$ days to $t=90$ days.
 ```{r}
 times <- seq(0, 90, by = 1)
-out_df <- run(my_model, times)
+t_intervention_1_2 <- 5
+t_intervention_2_3 <- 45
+out_df <- run(my_model, times, t_intervention_1_2, t_intervention_2_3)
 ```
 
 The simulation returns two objects: one is a data frame comprising the states over time.
