@@ -382,7 +382,7 @@ setMethod(
        
        # call ode solver third time
        out <- ode(
-         y = column3, times = seq(t_intervention_2_3, 90, by = 1), func = right_hand_side,
+         y = column3, times = seq(t_intervention_2_3, 180, by = 1), func = right_hand_side,
          parms = parameters, method = solve_method)
        
        output3 <- as.data.frame.array(out)
@@ -408,14 +408,22 @@ setMethod(
     # Added for consistency of output format across models
     output$age_range <- rep("0-150", length(output$time))
 
-    # Split output into 2 dataframes: one with S,E,I, and R and one with C and D
+    # Split output into 3 dataframes: one with S,E,I, R, D and one with C and D, and one with E, I, R, D
     states <- subset(output, !output$compartment %in% c("Incidence", "Deaths"))
     states <- droplevels(states)
     changes <- subset(output, output$compartment %in% c("Incidence", "Deaths"))
     changes <- droplevels(changes)
-
-    list("states" = states, "changes" = changes)
+    
+    EIRD <- subset(output, !output$compartment %in% c("S", "Incidence", "Deaths"))
+    EIRD <-droplevels(EIRD)
+    
+    I_compartments <-subset(output, output$compartment %in% c("I", "I_isolated"))
+    print("I_compartments")
+    print(I_compartments)
+    
+    list("states" = states, "changes" = changes, "EIRD" = EIRD, "I_compartments" = I_compartments)
   })
+
 
 #' Calculates basic reproduction number
 #'

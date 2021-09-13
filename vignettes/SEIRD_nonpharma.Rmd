@@ -96,16 +96,30 @@ The initial conditions must sum to one. If they do not, an error is thrown.
 Now we simulate the system from $t=0$ days to $t=90$ days.
 ```{r}
 times <- seq(0, 90, by = 1)
-t_intervention_1_2 <- 20
-t_intervention_2_3 <- 60
+t_intervention_1_2 <- 10
+t_intervention_2_3 <- 70
 out_df <- run(my_model, times, t_intervention_1_2, t_intervention_2_3)
 ```
 
+Optional graph of I and I_isolated over time:
+```{r, fig.height = 2, fig.width = 6}
+I_compartments <- out_df$I_compartments
+
+ggplot(I_compartments, aes(x = time, y = value)) +
+  geom_line(aes(color = compartment)) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(x = "time (days)", y = "fraction of the population",
+       title = glue("Evolution of various compartments over time"))
+```
+
+
+
+
 The simulation returns two objects: one is a data frame comprising the states over time.
 ```{r, fig.height = 5, fig.width = 7}
-states <- out_df$states
+EIRD <- out_df$EIRD
 
-ggplot(states, aes(x = time, y = value)) +
+ggplot(EIRD, aes(x = time, y = value)) +
   geom_line(aes(color = compartment)) +
   scale_color_brewer(palette = "Dark2") +
   labs(x = "time (days)", y = "fraction of the population",
