@@ -588,8 +588,8 @@ setMethod(
 #' The differential equations for the variables in the first group are written
 #' in the form
 #' \deqn{\frac{dx_i}{dt} = F_i - V_i}
-#' where F_i are the terms describing how individuals enter the
-#' compartment and V_i the terms describing how individuals leave.
+#' where F_i are the terms describing new cases of infection and V_i the terms
+#' describing how individuals move between infected and other compartments.
 #' We compute the matrices matF and matV as
 #' \deqn{matF = \partial F_i(x_0)/\partial x_j}
 #' \deqn{matV = \partial V_i(x_0)/\partial x_j}
@@ -603,9 +603,12 @@ setMethod(
 #' @export
 setMethod(
     "R0", "SEIRD_RU", function(model) {
-      # initial susceptible populations
-      S0U <- initial_conditions(model)$S_U0
-      S0Y <- initial_conditions(model)$S_Y0
+      # initial susceptible populations: This method applies to the disease-free 
+      # equilibrium. At the disease-free equilibrium that we are concerned about
+      # everyone is susceptible, but it still matters which fraction of the
+      # population lives in which community
+      S0U <- 1 - fraction_rural(model)
+      S0Y <- fraction_rural(model)
       # required parameter values
       b <- transmission_parameters(model)$b
       k <- transmission_parameters(model)$k

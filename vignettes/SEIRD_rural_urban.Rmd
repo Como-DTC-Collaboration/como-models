@@ -48,12 +48,12 @@ We base our model of connected communities on the model presented by Tun et al. 
 \end{split}
 \end{equation}
 
-\noindent In the above equations, $\phi_U$ is the fraction of the population that lives in an urban environment, $\phi_Y$ is the fraction of the population that lives in a rural environment, $N_U$ is the average number of contacts that an urban individual has in a day (normalized over the whole population), and $N_Y$ is the average number of contacts that a rural individual has in a day (normalized over the whole population), so $(\phi_U N_U + \phi_Y N_Y)$ is the normalized average number of contacts for any individual. $C$ is the connectedness parameter, where $C=1$ means the communities are well-mixed with each other, and $C=0$ means the two communities do not interact at all.
+\noindent In the above equations, $\phi_U$ is the fraction of the population that lives in an urban environment, $\phi_Y$ is the fraction of the population that lives in a rural environment, $N_U$ is the average number of contacts that an urban individual has in a day, and $N_Y$ is the average number of contacts that a rural individual has in a day, so $(\phi_U N_U + \phi_Y N_Y)$ is the average number of contacts for any individual. $C$ is the connectedness parameter, where $C=1$ means the communities are well-mixed with each other, and $C=0$ means the two communities do not interact at all.
 
 The difference between this model and the basic SEIRD model is the computation of the number of infectious contacts that a susceptible individual has. This is reflected in the equations for $S_Z$ and $E_Z$. Individuals in either community can either come into contact with people from their own community or from the other community. The extent to which the latter happens is determined by the connectedness parameter $C$. If the communities are completely separate, i.e. $C=0$, the probability that a susceptible individual in community $Z$ interacts with an infectious individual is the number of contacts that someone in that community has, $N_Z$, multiplied by the probability that a contact is infectious, $I_Z/\phi_Z$. If the communities are well-mixed with each other, the probability is again the number of contacts multiplied by the probability that a contact is infectious, although now the number of contacts that an individual has is averaged over the communities, so $\phi_U N_U + \phi_Y N_Y$, and the individual can encounter people from either community so the probability of an infectious contact is $I_U+I_Y$. The extent to which the communities are connected, designated by $C$, determines to which extent the two extreme contact patterns play a role, and thus we obtain the weighted average that appears in the equations above which designates the total probability of a susceptible individual in $Z$ having an infectious contact: $(I_U+I_Y) (\phi_U N_U + \phi_Y N_Y) C + \frac{I_Z}{\phi_Z}N_Z(1-C)$.
 
 ### The contact parameters $N_Z$
-The average number of contacts for an individual in a given community $Z$, $N_Z$, is computed based on the country-specific contact matrices [@Prem20], age demographics [@UN], and urban/rural populations split [@WB]. For a detailed discussion of the contact matrices, see the age-structured model. The number of contacts in community $Z$ of a specific country is computed by first adding up all the contacts in the contact matrix for each age group so we obtain the total number of contacts that an individual in a specific age group has in a day. We obtain the vector with population by age for community $Z$ by taking the age demographic data for the whole country and multiplying it by the percentage of the population that lives in community $Z$. We then take a weighted average over the age groups, using the age demographic data as weights. Lastly, we divide the number of contacts by the total population size. We thus get
+The average number of contacts for an individual in a given community $Z$, $N_Z$, is computed based on the country-specific contact matrices [@Prem20], age demographics [@UN], and urban/rural populations split [@WB]. For a detailed discussion of the contact matrices, see the age-structured model. The number of contacts in community $Z$ of a specific country is computed by first adding up all the contacts in the contact matrix for each age group so we obtain the total number of contacts that an individual in a specific age group has in a day. We obtain the vector with population by age for community $Z$ by taking the age demographic data for the whole country and multiplying it by the fraction of the population that lives in community $Z$. We then take a weighted average over the age groups, using the age demographic data as weights. Lastly, we divide the number of contacts by the total population size to normalize the number of contacts (all populations in the model are normalized). We thus get
 \begin{equation}
     N_{Z} = \frac{ \sum_{m = 1}^K c_Z(n,m)\cdot y_Z}{\text{total population}}, 
 \end{equation}
@@ -168,7 +168,7 @@ dim(output)
 ```
 
 The output from the model can then be plotted such that all populations are plotted separately for both communities
-```{r, fig.height = 5, fig.width = 10}
+```{r, fig.height = 10, fig.width = 7}
 # Communities plotted separately
 i <- sapply(output, is.factor)
 output[i] <- lapply(output[i], as.character)
@@ -190,11 +190,11 @@ inc_plot <- ggplot(case_df, aes(x = time, y = value, fill = compartment)) +
   theme(legend.position = "bottom", legend.title = element_blank(), text = element_text(size = 20)) +
   scale_fill_discrete(labels = c("Cases_U","Deaths_U","Cases_Y","Deaths_Y"))
 
-grid.arrange(SEIRplot,inc_plot,nrow = 1)
+grid.arrange(SEIRplot,inc_plot,nrow = 2)
 ```
 or such that the populations are summed across the communities and we can observe the dynamics of the susceptible, exposed, infectious, recovered and dead individuals in the whole population.
 
-```{r , fig.height = 5, fig.width = 10}
+```{r , fig.height = 10, fig.width = 7}
 SEIR_total <- SEIR_df
 CD_total <- case_df
 
@@ -220,7 +220,7 @@ incplot_total <- ggplot(CD_total, aes(x = time, y = value, fill = compartment)) 
   theme(legend.position = "bottom", legend.title = element_blank(), text = element_text(size = 20)) +
   scale_fill_discrete(labels = c("Cases","Deaths"))
 
-grid.arrange(SEIRplot_total,incplot_total,nrow = 1)
+grid.arrange(SEIRplot_total,incplot_total,nrow = 2)
 ```
 
 ### The basic reproduction number: R0
@@ -230,7 +230,7 @@ print(R0(model))
 ```
 
 ## The effect of varying $C$
-The connectedness parameter $C$ indicates how connected the two communities are, i.e. how much the individuals in each are expected to interact with each other. At the extreme ends we have the communities completely connected and acting as one big community for $C=1$, and completely disconnected and acting as separate communities for $C=0$. We explore what happens for intermediate values by simulating the model for a range of values of $C$ and plotting the summed the infectious population for each simulation.
+The connectedness parameter $C$ indicates how connected the two communities are, i.e. how much the individuals in each are expected to interact with each other. At the extreme ends we have the communities completely connected and acting as one big community for $C=1$, and completely disconnected and acting as separate communities for $C=0$. We explore what happens for intermediate values by simulating the model for a range of values of $C$ and plotting the total infectious population over both communities for each simulation.
 
 ```{r , fig.height = 4, fig.width = 7}
   for (i in c(0,0.001,0.005,0.01,0.05,0.1,0.5,1)) {
