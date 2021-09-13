@@ -217,5 +217,5 @@ test_that("R0 works for SEIRD model", {
   contact_rates(my_model) <- list(contact_all_urban[[country]],contact_all_rural[[country]])
 
   
-  expect_equal(round(R0(my_model),digits = 5), 15.84408)
+  expect_equal(round(R0(my_model),digits = 5), 15.84567)
 })
