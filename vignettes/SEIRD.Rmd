@@ -4,7 +4,7 @@ author: "Hui Jia Farm and Solveig A. van der Vegt"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{The basic SEIR model}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{knitr::knitr}
   %\VignetteEncoding{UTF-8}
 ---
 
