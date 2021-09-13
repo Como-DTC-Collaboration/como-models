@@ -78,7 +78,7 @@ my_model <- SEIRD_nonpharma()
 
 Next, we set the parameter values for $\beta$, $\kappa$, $\gamma$, $\mu$ and $\eta$:
 ```{r}
-params <- list(beta=0.5, beta_isolated=0.1, kappa=0.2, gamma=0.1, mu=0.048, heta1=0, heta2=1)
+params <- list(beta=0.5, beta_isolated=0.1, kappa=0.2, gamma=0.1, mu=0.048, heta1=0.9, heta2=0.05)
 transmission_parameters(my_model) <- params
 ```
 
@@ -96,8 +96,8 @@ The initial conditions must sum to one. If they do not, an error is thrown.
 Now we simulate the system from $t=0$ days to $t=90$ days.
 ```{r}
 times <- seq(0, 90, by = 1)
-t_intervention_1_2 <- 5
-t_intervention_2_3 <- 45
+t_intervention_1_2 <- 20
+t_intervention_2_3 <- 60
 out_df <- run(my_model, times, t_intervention_1_2, t_intervention_2_3)
 ```
 

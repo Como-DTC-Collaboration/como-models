@@ -191,7 +191,6 @@ setGeneric(name = "run",
            def = function(object, times = seq(0, 100, by = 1), t_intervention_1_2 = 5, t_intervention_2_3 = 30,
                           solve_method = "lsoda") {
              standardGeneric("run")})
-
 #' @describeIn SEIRD_nonpharma Solves ODEs of the SEIRD_nonpharma specified in object
 #' for the time points specified in times and integration method specified in
 #' solve_method.
@@ -252,7 +251,7 @@ setMethod(
                     k = transmission_parameters(object)$kappa,
                     g = transmission_parameters(object)$gamma,
                     m = transmission_parameters(object)$mu,
-                    h = transmission_parameters(object)$heta1)
+                    h = 0)
 
     
     # function for RHS of ode system
@@ -334,23 +333,64 @@ setMethod(
   #  }
     
     
-    # set transmission parameters vector
+    # set transmission parameters vector for second time period
     parameters <- c(b = (transmission_parameters(object)$beta),
                     b_isolated = (transmission_parameters(object)$beta_isolated),
                     k = transmission_parameters(object)$kappa,
                     g = transmission_parameters(object)$gamma,
                     m = transmission_parameters(object)$mu,
-                    h = transmission_parameters(object)$heta2)   
+                    h = transmission_parameters(object)$heta1)   
     
     # call ode solver second time
     out <- ode(
-      y = column, times = seq(t_intervention_1_2, t_intervention_2_3, by = 1), func = right_hand_side,
+      y = column, times = seq(t_intervention_1_2, t_intervention_2_3, by = 0.1), func = right_hand_side,
       parms = parameters, method = solve_method)
     
     output2 <- as.data.frame.array(out)
     
     # append the output from the current interval to the overall output
        output = rbind(output, output2)
+       
+       
+       #extract the final state from the 2nd interval
+       state3 = filter(output2, time == t_intervention_2_3)
+       print("state3")
+       print(state3)
+       
+       state3_numeric = c(state3)
+       print("state 3 numeric")
+       print(state3_numeric)
+       
+       state3_numeric_without_t <- state3_numeric[-c(1)]
+       print("state3 numeric without t")
+       print(state3_numeric_without_t)
+       
+       column3 = c("S"=state3_numeric_without_t$S, "E"=state3_numeric_without_t$E, "I"=state3_numeric_without_t$I, "I_isolated"=state3_numeric_without_t$I_isolated, "R"=state3_numeric_without_t$R, "C"=state3_numeric_without_t$C, "D"=state3_numeric_without_t$D)
+       print(column3)
+       
+       
+       
+       
+       
+       # set transmission parameters vector for third time period
+       parameters <- c(b = (transmission_parameters(object)$beta),
+                       b_isolated = (transmission_parameters(object)$beta_isolated),
+                       k = transmission_parameters(object)$kappa,
+                       g = transmission_parameters(object)$gamma,
+                       m = transmission_parameters(object)$mu,
+                       h = transmission_parameters(object)$heta2)   
+       
+       # call ode solver third time
+       out <- ode(
+         y = column3, times = seq(t_intervention_2_3, 90, by = 1), func = right_hand_side,
+         parms = parameters, method = solve_method)
+       
+       output3 <- as.data.frame.array(out)
+       
+       # append the output from the current interval to the overall output
+       output = rbind(output, output3)
+       print("final output")
+       print(output)
     
 
     # Compute incidences and deaths
