@@ -174,8 +174,13 @@ setMethod(
     names(trans_params) = object@transmission_parameter_names
 
     # check format of parameters b, k, g an mu
-    if(length(b) != 1 | length(k) != 1 | length(g) != 1| length(mu) != 1){
+    if(length(b) != 1 | length(k) != 1 | length(g) != 1){
       stop('The parameter values should be 1-dimensional.')
+    }
+    
+    if(length(mu) != 1 & length(mu) != object@n_age_categories){
+      stop('The mortality parameter values should be of length 1 or
+           number of age classes.')
     }
     
     # Set the row and column names of the instance's contact matrix

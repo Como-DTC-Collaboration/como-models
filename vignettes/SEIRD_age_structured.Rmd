@@ -155,7 +155,8 @@ changes = res$changes
 states %>%
   ggplot(aes(x=time, y=value, colour=age_range)) +
   geom_line() +
-  facet_wrap(~compartment)
+  facet_wrap(~compartment) +
+  scale_color_viridis_d()
 ```
 
 Zooming in on the infected population, we see that the younger age groups have the highest peak infected population levels.
@@ -164,7 +165,8 @@ states %>%
   filter(compartment=="I") %>% 
   ggplot(aes(x=time, y=value, colour=age_range)) +
   geom_line() +
-  facet_wrap(~compartment)
+  facet_wrap(~compartment) +
+  scale_color_viridis_d()
 ```
 
 Which is reflected in the incidences.
@@ -173,7 +175,8 @@ changes %>%
   filter(compartment=="Incidence") %>% 
   ggplot(aes(x=time, y=value, colour=age_range)) +
   geom_line() +
-  facet_wrap(~compartment, scales="free")
+  facet_wrap(~compartment, scales="free") +
+  scale_color_viridis_d()
 ```
 
 ## Sensitivity to initial conditions
@@ -235,7 +238,8 @@ res %>%
   xlab("Time") + ylab("I Fraction") +
   theme(plot.title = element_text(size=20)) +
   geom_line() +
-  facet_wrap(~compartment)
+  facet_wrap(~compartment) +
+  scale_color_viridis_d()
 ```
 
 

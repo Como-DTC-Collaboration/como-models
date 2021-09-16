@@ -117,14 +117,16 @@ ggplot(sv, aes(x = time, y = value)) +
   geom_line(aes(color = compartment)) +
   scale_color_brewer(palette = "Dark2") +
   labs(x = "time (days)", y = "fraction of the population",
-       title = glue("Evolution of different compartments over time (S, V)"))
+       title = glue("Evolution of different compartments over time (S, V)")) +
+  theme(text = element_text(size = 20))    
 
 eird <- subset(states, !states$compartment %in% c("S", "V"))
 ggplot(eird, aes(x = time, y = value)) +
   geom_line(aes(color = compartment)) +
   scale_color_brewer(palette = "Dark2") +
   labs(x = "time (days)", y = "fraction of the population",
-       title = glue("Evolution of different compartments over time (E, I, R, D)"))
+       title = glue("Evolution of different compartments over time (E, I, R, D)")) +
+  theme(text = element_text(size = 20))    
 ```
 
 The simulation also outputs incidence and deaths. These are derived from the state variables. Incidence is just the difference between the cumulative number of cases between two time points,
@@ -142,7 +144,8 @@ ggplot(changes, aes(x = time, y = value, fill = compartment)) +
   geom_bar(stat="identity", position = position_dodge()) +
   labs(x = "time (days)", y = "fraction of the population per day",
        title = glue("Incidences and deaths")) +
-  theme(legend.position = "bottom", legend.title = element_blank())
+  theme(legend.position = "bottom", legend.title = element_blank(),
+        text = element_text(size = 20))
 
 ```
 
@@ -178,9 +181,10 @@ result %>%
   filter(compartment=="Deaths") %>% 
   ggplot(aes(x=time, y=value, fill = as.factor(delta_V))) +
   geom_bar(stat = "identity", position = position_dodge()) +
-  labs(x = "time (days)", y = "Fraction of the population that died per day",
+  labs(x = "time (days)", y = "fraction of the population that died per day",
        title = glue("Number of deaths for differing values of δ_V")) +
-  theme(legend.position = "bottom", legend.title = element_blank())
+  theme(legend.position = "bottom", legend.title = element_blank(),
+        text = element_text(size = 20))
 
 ```
 We now investigate the sensitivity of the number of deaths to the vaccination rate, $\nu$. We run the model for varying values of $\nu$ and plot the
@@ -214,8 +218,9 @@ result %>%
   filter(compartment=="Deaths") %>% 
   ggplot(aes(x=time, y=value, fill = as.factor(nu))) +
   geom_bar(stat = "identity", position = position_dodge()) +
-  labs(x = "time (days)", y = "Fraction of the population that died per day",
+  labs(x = "time (days)", y = "fraction of the population that died per day",
        title = glue("Number of deaths for differing values of ν")) +
-  theme(legend.position = "bottom", legend.title = element_blank())
+  theme(legend.position = "bottom", legend.title = element_blank(),
+        text = element_text(size = 20))
 
 ```
