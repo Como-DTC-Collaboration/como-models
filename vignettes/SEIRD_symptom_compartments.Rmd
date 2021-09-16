@@ -4,7 +4,7 @@ author: "Liangti Dai, David Seiferth and Solveig van der Vegt"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{SEIaImIsRD model}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{knitr::knitr}
   %\VignetteEncoding{UTF-8}
 ---
 
@@ -76,7 +76,7 @@ The basic reproduction number, $R_0$, is widely used metric in epidemiological m
 
 We calculate the basic reproduction number ($R_0$) using the next generation matrix approach. First, we select those populations in the model that contain exposed or infectious individuals, so $E$, $I_a$, $I_m$ and $I_s$. We define $x = [E, I_a, I_m, I_s]$ and rewrite the ODEs of the variables in $x$ to be of the form 
 $$\frac{\text{d}x_i}{\text{d}t} = \mathscr{F_i}(x) - \mathscr{V_i}(x),$$ 
-where $\mathscr{F_i}(x)$ is the rate of appearance of new infections in compartment $i$, and $\mathscr{V_i}(x)$ is the rate of other transitions between compartment $i$ and other infected compartments. For example, if we take $x_i = E$, then $\mathscr{F_i}(x) = S (\beta_aI_a + \beta_mI_m + \beta_sI_s)$ and $\mathscr{V_i}(x) = \kappa E$. Similarly, for $x_i = I_a$ $\mathscr{F_i}(x) = \eta_a \kappa E$ and $\mathscr{V_i}(x) = (\gamma_a + \mu_a)I_a$.
+where $\mathscr{F_i}(x)$ is the rate of appearance of new infections in compartment $i$, and $\mathscr{V_i}(x)$ is the rate of other transitions between compartment $i$ and other infected compartments. For example, if we take $x_i = E$, then $\mathscr{F_i}(x) = S (\beta_aI_a + \beta_mI_m + \beta_sI_s)$ and $\mathscr{V_i}(x) = \kappa E$. Similarly, for $x_i = I_a$, $\mathscr{F_i}(x) = \eta_a \kappa E$ and $\mathscr{V_i}(x) = (\gamma_a + \mu_a)I_a$.
 
 where the first three terms indicate recovery of infectious individuals with different levels of symptoms and the last term indicates loss of immunity.
 
