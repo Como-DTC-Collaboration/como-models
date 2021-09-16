@@ -270,7 +270,7 @@ setMethod(
 
 #-----------------------------------------------------------------------------
 #' Setter method for contact matrices, or contact rates directly, for urban and
-#' rural communities in the SEIRR_RU model. Matrices must be of type double.
+#' rural communities in the SEIRD_RU model. Matrices must be of type double.
 #' NOTE: if inputting matrices, you MUST assign fraction_rural first, and you 
 #' must input full age demographics, i.e. you cannot only provide the fraction
 #' of the population that is rural!
@@ -326,12 +326,12 @@ setMethod(
              BEFORE assigning the contact matrices.")
       }
     # compute contacts N_U and N_Y from contact matrices
-    # number of urban contacts for an urban individual, normalized over the
-    # whole population through the age demographics
+    # number of urban contacts for an urban individual. The number of contacts
+    # has been divided through by the size of the population.
     N_U <- sum(rowSums(contact_mat$urban) *
                  (country_demog(object)$urban / sum(country_demog(object)$urban))) / 2
-    # number of rural contacts for a rural individual, normalized over the
-    # whole population through the age demographics
+    # number of rural contacts for a rural individual, where the number of
+    # contacts has been divided by the size of the population.
     N_Y <- sum(rowSums(contact_mat$rural) *
                  (country_demog(object)$rural / sum(country_demog(object)$rural))) / 2
     contact_mat <- list(N_U, N_Y)
@@ -390,7 +390,7 @@ setMethod(
         stop("Contact matrices must be of type double.")
       }
 
-      # check that vectors are normalized: losing some precision in division
+      # check that vectors sum to 1: losing some precision in division
       # so want to make sure it is accurate to 0.1% of the population
       if (1 - sum(demo_data$urban) - sum(demo_data$rural) > 0.001) {
         stop("Sum over all age groups and both communities must be 1. The
@@ -616,11 +616,11 @@ setMethod(
       m <- transmission_parameters(model)$m
       C <- transmission_parameters(model)$C
       # compute contacts N_U and N_Y from contact matrices
-      # number of urban contacts for an urban individual, normalized over the
-      # whole population through the age demographics
+      # number of urban contacts for an urban individual, as a fraction of the
+      # total population
       NU <- contact_rates(model)$urban
-      # number of rural contacts for a rural individual, normalized over the
-      # whole population through the age demographics
+      # number of rural contacts for a rural individual,  as a fraction of the
+      # total population
       NY <- contact_rates(model)$rural
       # fraction of the population that is urban
       f_urban <- 1 - fraction_rural(model)
