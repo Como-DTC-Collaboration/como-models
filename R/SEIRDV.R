@@ -11,8 +11,12 @@
 #' @slot transmission_parameter_names list of names of transmission parameters
 #'       (characters). Default is list("beta", "kappa", "gamma", "mu",  "nu",
 #'       "delta_V", "delta_R").
+#' @slot intervention_parameter_names list of names of intervention parameters
+#'       (characters). Default is list ("starts", "stops", "coverages")
 #' @slot initial_conditions list of values for initial conditions (double).
 #' @slot transmission_parameters list of values for transmission parameters
+#'       (double).
+#' @slot intervention_parameters list of values for intervention parameters
 #'       (double).
 #'
 #' @import deSolve
@@ -26,8 +30,10 @@ SEIRDV <- setClass("SEIRDV",
                     output_names = "list",
                     initial_condition_names = "list",
                     transmission_parameter_names = "list",
+                    intervention_parameter_names = "list",
                     initial_conditions = "list",
-                    transmission_parameters = "list"
+                    transmission_parameters = "list",
+                    intervention_parameters = "list"
                   ),
                   # prototypes for the slots, automatically set parameter names and
                   # its data type
@@ -37,16 +43,16 @@ SEIRDV <- setClass("SEIRDV",
                     transmission_parameter_names = list("beta", "kappa", "gamma",
                                                         "mu", "nu", "delta_V",
                                                         "delta_R"),
+                    intervention_parameter_names = list("starts", "stops", "coverages"),
                     initial_conditions = vector(mode = "list", length = 5),
-                    transmission_parameters = vector(mode = "list", length = 7)
+                    transmission_parameters = vector(mode = "list", length = 7),
+                    intervention_parameters = vector(mode = "list", length = 3)
                   )
 )
 
 #' @describeIn SEIRDV Retrieves initial conditions of SEIRV model.
 #'
 #' @param object An object of the class SEIRDV.
-#' 
-#' @aliases initial_conditions,ANY,ANY-method
 #' 
 #' @export
 setMethod("initial_conditions", "SEIRDV",
@@ -55,8 +61,6 @@ setMethod("initial_conditions", "SEIRDV",
 #' @describeIn SEIRDV Retrieves transmission parameters of SEIRV model.
 #'
 #' @param object An object of the class SEIRDV.
-#' 
-#' @aliases transmission_parameters,ANY,ANY-method
 #' 
 #' @export
 setMethod("transmission_parameters", "SEIRDV",
@@ -72,8 +76,6 @@ setMethod("transmission_parameters", "SEIRDV",
 #' @param value (list) list of initial conditions S0, E0, I0, R0, V0.
 #'
 #' @return object of class SEIRDV with initial conditions assigned.
-#' 
-#' @aliases initial_conditions<-,ANY,ANY-method
 #' 
 #' @export
 setMethod(
@@ -117,8 +119,6 @@ setMethod(
 #' @return object of class SEIRDV with transmission parameter values
 #' assigned.
 #' 
-#' @aliases transmission_parameters<-,ANY,ANY-method
-#' 
 #' @export
 setMethod(
   "transmission_parameters<-", "SEIRDV",
@@ -150,15 +150,88 @@ setMethod(
 
 # SEIRDV class specific functions
 
+#' Retrieves intervention parameters of SEIRDV model.
+#'
+#' @param object An object of the class SEIRDV.
+#' 
+#' @export
+setGeneric("intervention_parameters",
+           function(object) standardGeneric("intervention_parameters"))
+
+
+#' @describeIn SEIRDV Retrieves intervention parameters of SEIRDV model.
+#'
+#' @param object An object of the class SEIRDV.
+#' 
+#' @export
+setMethod("intervention_parameters", "SEIRDV",
+          function(object) object@intervention_parameters)
+
+#' Set intervention parameters of the SEIRV model.
+#'
+#' Intervention parameters have same size.
+#'
+#' @param object an object of the class SEIRDV
+#' @param value (list) list of intervention parameters: starts, stops and
+#'              coverages.
+#'
+#' @return object of class SEIRDV with intervention parameters assigned.
+#' 
+#' @export
+setGeneric(
+  "intervention_parameters<-",
+  function(object, value) {
+    standardGeneric("intervention_parameters<-")
+  })
+
+#' @describeIn SEIRDV Setter method for intervention parameters of the SEIRV model.
+#'
+#' Intervention parameters have same size.
+#'
+#' @param object an object of the class SEIRDV
+#' @param value (list) list of intervention parameters: starts, stops and
+#'              coverages.
+#'
+#' @return object of class SEIRDV with intervention parameters assigned.
+#' 
+#' @export
+setMethod(
+  "intervention_parameters<-", "SEIRDV",
+  function(object, value) {
+    
+    if (mean(names(value) %in% object@intervention_parameter_names) != 1)
+      stop(paste0("Intervention parameters must contain: ",
+                  object@intervention_parameter_names))
+    interv_par <- value
+    
+    # raise errors if intervention parameters are not doubles
+    for (p in list("starts", "stops", "coverages")) {
+      if (!is.numeric(interv_par[[p]])) {
+        stop(glue("{p} format must be numeric"))
+      }
+    }
+    
+    # check that the intervention parameters are all of the same size
+    if (length(interv_par$starts) != length(interv_par$stops)|
+        length(interv_par$starts) != length(interv_par$coverages)|
+        length(interv_par$coverages) != length(interv_par$stops)) {
+      stop("Invalid intervention parameters. Must have same size.")
+    }
+    
+    object@intervention_parameters <- interv_par
+    
+    object
+  })
+
 #' @describeIn SEIRDV Solves ODEs of the SEIRDV specified in object
 #' for the time points specified in times and integration method specified in
 #' solve_method.
 #'
-#' \deqn{\frac{dS(t)}{dt} = - beta S(t) I(t) - nu S(t) + delta_V V(t) + delta_R R(t)}
+#' \deqn{\frac{dS(t)}{dt} = - beta S(t) I(t) - nu Inter(t) S(t) + delta_V V(t) + delta_R R(t)}
 #' \deqn{\frac{dE(t)}{dt} =  beta S(t) I(t) - kappa E(t)}
 #' \deqn{\frac{dI(t)}{dt} = kappa E(t) - (gamma + mu) I(t)}
 #' \deqn{\frac{dR(t)}{dt} = gamma I(t) - delta_R R(t)}
-#' \deqn{\frac{dV(t)}{dt} = nu S(t) - delta_V V(t)}
+#' \deqn{\frac{dV(t)}{dt} = nu Inter(t) S(t) - delta_V V(t)}
 #' \deqn{\frac{dC(t)}{dt} = beta S(t) I(t)}
 #' \deqn{\frac{dD(t)}{dt} = mu I(t)}
 #'
@@ -176,20 +249,20 @@ setMethod(
 #' E, I, R and V population fractions, and one with the time steps, age range,
 #' time series of incidences and deaths population fraction.
 #' 
-#' @aliases run,ANY,ANY-method
-#' 
 #' @export
+#' 
 setMethod(
   "run", "SEIRDV",
   function(object, times, solve_method = "lsoda") {
     if (!is.double(times)) {
       stop("Evaluation times of the model storage format must be a vector.")
     }
-    
     if (is.null(unlist(object@transmission_parameters)))
       stop("Transmission parameters must be set before running.")
     if (is.null(unlist(object@initial_conditions)))
       stop("Initial conditions must be set before running.")
+    if (is.null(unlist(object@intervention_parameters)))
+      stop("Intervention parameters must be set before running.")
     
     # set initial state vector
     state <- c(S = initial_conditions(object)$S0,
@@ -207,10 +280,28 @@ setMethod(
                     n = transmission_parameters(object)$nu,
                     d_v = transmission_parameters(object)$delta_V,
                     d_r = transmission_parameters(object)$delta_R)
+    
+    # set intervention parameters vector
+    int_parms <- 
+      InterventionParameters(
+        start=intervention_parameters(object)$starts,
+        stop=intervention_parameters(object)$stops,
+        coverage= intervention_parameters(object)$coverages)
+    
+    sim_parms <- SimulationParameters(start =0, stop = tail(times, n=1),
+                                      tstep = 0.1)
+    
+    inter_prot <- intervention_protocol(int_parms, sim_parms, 1) %>%
+      filter(time %in% times) %>%
+      .$coverage
+    
+    intervention <- approxfun(times, inter_prot, rule=2)
+    
     # function for RHS of ode system
-    right_hand_side <- function(t, state, parameters) {
+    right_hand_side <- function(t, state, parameters, input) {
       with(
         as.list(c(state, parameters)), {
+          inter <- input(t)
           s <- state[1]
           e <- state[2]
           i <- state[3]
@@ -219,11 +310,11 @@ setMethod(
           c <- state[6]
           d <- state[7]
           # rate of change
-          ds <- -b * s * i - n * s + d_v * v + d_r * r
+          ds <- -b * s * i - n * inter * s + d_v * v + d_r * r
           de <- b * s * i - k * e
-          di <- k * e - (g + m) * i
+          di <- k * e - (g + m ) * i
           dr <- g * i - d_r * r
-          dv <- n * s - d_v * v
+          dv <- n * inter * s - d_v * v
           dc <- b * s * i
           d_death <- m * i
           # return the rate of change
@@ -234,7 +325,7 @@ setMethod(
     # call ode solver
     out <- ode(
       y = state, times = times, func = right_hand_side,
-      parms = parameters, method = solve_method)
+      parms = parameters, method = solve_method, input = intervention)
     
     output <- as.data.frame.array(out)
     

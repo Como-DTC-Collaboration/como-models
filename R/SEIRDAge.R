@@ -70,7 +70,6 @@ SEIRDAge <- setClass('SEIRDAge',
 #'
 #' @return Initial conditions of SEIRDAge model.
 #' @export
-#' @aliases initial_conditions,ANY,ANY-method
 #' 
 setMethod('initial_conditions', 'SEIRDAge',
           function(object) object@initial_conditions)
@@ -88,7 +87,6 @@ setMethod('initial_conditions', 'SEIRDAge',
 #'
 #' @return Updated version of the age-structured SEIRD model.
 #' @export
-#' @aliases initial_conditions<-,ANY,ANY-method
 #' 
 setMethod(
   'initial_conditions<-', 'SEIRDAge',
@@ -138,7 +136,6 @@ setMethod(
 #'
 #' @return Transmission parameters of SEIRDAge model.
 #' @export
-#' @aliases transmission_parameters,ANY,ANY-method
 #' 
 setMethod('transmission_parameters', 'SEIRDAge',
           function(object) object@transmission_parameters)
@@ -156,7 +153,6 @@ setMethod('transmission_parameters', 'SEIRDAge',
 #'
 #' @return Updated version of the age-structured SEIRD model.
 #' @export
-#' @aliases transmission_parameters<-,ANY,ANY-method
 #' 
 setMethod(
   'transmission_parameters<-', 'SEIRDAge',
@@ -179,7 +175,7 @@ setMethod(
     }
     
     if(length(mu) != 1 & length(mu) != object@n_age_categories){
-      stop('The mortality parameter values should be of length 1 or
+      stop('The mortality parameter values should be of length 1 or 
            number of age classes.')
     }
     
@@ -194,26 +190,24 @@ setMethod(
     return(object)
   })
 
-#' @describeIn SEIRDAge Method to simulate output using from model.
+#' @describeIn SEIRDAge
 #' 
-#' Solves a system of ODEs which form an
-#' age-structured SEIRD model. The system of equations for the time
-#' evolution of population fractions in Susceptible (S), Exposed (E), Infected
-#' (I), Recovered (R) and Dead (D) groups in a given age group indexed by i is 
-#' given by
+#' Solves ODEs of the age-structured SEIRD model. The system
+#' of equations for the time evolution of population fractions in Susceptible
+#' (S), Exposed (E), Infected (I), Recovered (R) and Dead (D) groups in a given
+#' age group indexed by i is given by
 #'
 #' \deqn{\frac{dS_i(t)}{dt} = - \beta S_i(t) \Sigma_{j}C_{ij} I_j(t)}
 #' \deqn{\frac{dE_i(t)}{dt} = \beta S_i(t) \Sigma_{j}C_{ij} I_j(t)} - \kappa E_i(t)}
 #' \deqn{\frac{dI_i(t)}{dt} = \kappa E_i(t) - \gamma I_i(t)} - \mu I_i(t)}
 #' \deqn{\frac{dR_i(t)}{dt} = \gamma I_i(t)}
 #' \deqn{\frac{dD_i(t)}{dt} = \mu I_i(t)}
-
+#' 
 #' where C is a contact matrix whose elements represents the
 #' contact between different age groups (rows) with age groups of
 #' people they come in contact with (columns). This function relies on the 
 #' package deSolve to numerically integrate the set of equations above.
 #' 
-#'
 #' @param object An object of the class SEIRDAge.
 #' @param times (vector) time sequence over which to solve the model.
 #'        Must be of the form seq(t_start,t_end,by=t_step). Default time series
@@ -226,14 +220,12 @@ setMethod(
 #' D population fractions for each age group outputs with incidence numbers
 #' for each age group.
 #' 
-#' 
-#' @aliases run,ANY,ANY-method
 #' @importFrom magrittr "%>%"
 #' @importFrom rlang .data
-#' 
 #' @export
+#' 
 setMethod(
-  "run", 'SEIRDAge',
+  'run', 'SEIRDAge',
   function(object, times, solve_method = 'lsoda') {
 
     # error if times is not a vector or list of doubles

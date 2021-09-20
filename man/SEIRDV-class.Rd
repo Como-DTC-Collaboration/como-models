@@ -5,15 +5,12 @@
 \alias{SEIRDV-class}
 \alias{SEIRDV}
 \alias{initial_conditions,SEIRDV-method}
-\alias{initial_conditions,ANY,ANY-method}
 \alias{transmission_parameters,SEIRDV-method}
-\alias{transmission_parameters,ANY,ANY-method}
 \alias{initial_conditions<-,SEIRDV-method}
-\alias{initial_conditions<-,ANY,ANY-method}
 \alias{transmission_parameters<-,SEIRDV-method}
-\alias{transmission_parameters<-,ANY,ANY-method}
+\alias{intervention_parameters,SEIRDV-method}
+\alias{intervention_parameters<-,SEIRDV-method}
 \alias{run,SEIRDV-method}
-\alias{run,ANY,ANY-method}
 \title{An S4 object representing the SEIRDV.}
 \usage{
 \S4method{initial_conditions}{SEIRDV}(object)
@@ -24,13 +21,17 @@
 
 \S4method{transmission_parameters}{SEIRDV}(object) <- value
 
+\S4method{intervention_parameters}{SEIRDV}(object)
+
+\S4method{intervention_parameters}{SEIRDV}(object) <- value
+
 \S4method{run}{SEIRDV}(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
 }
 \arguments{
 \item{object}{an object of the class SEIRDV}
 
-\item{value}{(list) list of values for beta, kappa, gamma, mu, nu, delta_V and
-delta_R respectively.}
+\item{value}{(list) list of intervention parameters: starts, stops and
+coverages.}
 
 \item{times}{(double) a sequence of time points at which the solution to
 the system of ODEs should be returned. Must be of the form
@@ -45,6 +46,8 @@ object of class SEIRDV with initial conditions assigned.
 
 object of class SEIRDV with transmission parameter values
 assigned.
+
+object of class SEIRDV with intervention parameters assigned.
 
 two dataframes: one with the time steps, age range, time series of S,
 E, I, R and V population fractions, and one with the time steps, age range,
@@ -73,15 +76,21 @@ delta_V, delta_R) of the SEIRV model.
 If the transmission parameters provided to are not 1-dimensional an error is
 thrown.
 
+\item \code{intervention_parameters}: Retrieves intervention parameters of SEIRDV model.
+
+\item \code{intervention_parameters<-}: Setter method for intervention parameters of the SEIRV model.
+
+Intervention parameters have same size.
+
 \item \code{run}: Solves ODEs of the SEIRDV specified in object
 for the time points specified in times and integration method specified in
 solve_method.
 
-\deqn{\frac{dS(t)}{dt} = - beta S(t) I(t) - nu S(t) + delta_V V(t) + delta_R R(t)}
+\deqn{\frac{dS(t)}{dt} = - beta S(t) I(t) - nu Inter(t) S(t) + delta_V V(t) + delta_R R(t)}
 \deqn{\frac{dE(t)}{dt} =  beta S(t) I(t) - kappa E(t)}
 \deqn{\frac{dI(t)}{dt} = kappa E(t) - (gamma + mu) I(t)}
 \deqn{\frac{dR(t)}{dt} = gamma I(t) - delta_R R(t)}
-\deqn{\frac{dV(t)}{dt} = nu S(t) - delta_V V(t)}
+\deqn{\frac{dV(t)}{dt} = nu Inter(t) S(t) - delta_V V(t)}
 \deqn{\frac{dC(t)}{dt} = beta S(t) I(t)}
 \deqn{\frac{dD(t)}{dt} = mu I(t)}
 
@@ -101,9 +110,15 @@ incidence.}
 (characters). Default is list("beta", "kappa", "gamma", "mu",  "nu",
 "delta_V", "delta_R").}
 
+\item{\code{intervention_parameter_names}}{list of names of intervention parameters
+(characters). Default is list ("starts", "stops", "coverages")}
+
 \item{\code{initial_conditions}}{list of values for initial conditions (double).}
 
 \item{\code{transmission_parameters}}{list of values for transmission parameters
+(double).}
+
+\item{\code{intervention_parameters}}{list of values for intervention parameters
 (double).}
 }}
 

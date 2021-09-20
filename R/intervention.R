@@ -1,5 +1,8 @@
 library(tidyverse)
 check <-function(object) {
+  #' Checks that the format of the InterventionParameters is correct:
+  #' only whole intervals are allowed; intervals do not overlap; no backwards
+  #' intervals.
   start <- object@start
   stop <- object@stop
   coverage <- object@coverage
@@ -27,6 +30,21 @@ check <-function(object) {
       return("Intervention coverage must not be outside [0, 1].")
 }
 
+#' An S4 object representing the InterventionParameters,
+#'
+#' This class hosts the intervention parameters used to create intevention protocols
+#' for a SEIRD-class type of model.
+#'
+#' @slot start list of values for start points of intervention intervals
+#'       (double).
+#' @slot stop list of values for stop points of intervention intervals
+#'       (double).
+#' @slot coverage list of values for effect levels of intervention intervals
+#'       (double).
+#'
+#' @import tidyverse
+#'
+#' @export Intervention
 InterventionParameters <-
   setClass("InterventionParameters",
            slots = c(start="numeric",
@@ -34,6 +52,20 @@ InterventionParameters <-
                      coverage="numeric"),
            validity = check)
 
+#' An S4 object representing the SimulationParameters.
+#'
+#' This class represents the simulator of a SEIRD-class type of model.
+#'
+#' @slot start value for start point of simulation run
+#'       (numeric).
+#' @slot stop value for end point of simulation run
+#'       (numeric).
+#' @slot coverage value for time step of simulation run
+#'       (numeric).
+#'
+#' @import tidyverse
+#'
+#' @export
 SimulationParameters <-
   setClass("SimulationParameters",
            slots = c(start="numeric",
@@ -41,6 +73,8 @@ SimulationParameters <-
                      tstep="numeric"))
 
 tanh_coverage_smoother <- function(t, start, stop, coverage, tanh_slope) {
+  #' Smoother function for the curve of the interventions. Used to avoid breaks
+  #' in the ode solver of compartamental models with non-smooth interventions.
   0.5 * coverage * (tanh(tanh_slope * (t - start)) - tanh(tanh_slope * (t - stop)))
 }
 
@@ -63,17 +97,9 @@ stack_intervention_coverages <- function(times, int_parms, tanh_slope) {
 intervention_protocol <- function(int_parms,
                                   sim_parms,
                                   tanh_slope) {
+  #' Creates protocols for the interventions using parameters of the model; used
+  #' in the 'run' method of compartamental model with interventions.
   times <- seq(sim_parms@start, sim_parms@stop, sim_parms@tstep)
   coverage <- stack_intervention_coverages(times, int_parms, tanh_slope)
   tibble(time=times, coverage=coverage)
 }
-
-# example: remove when going in
-int_parms <- InterventionParameters(start=c(75, 130, 170),
-                                    stop=c(120, 150, 180),
-                                    coverage=c(0.3, 0.8, 0.1))
-sim_parms <- SimulationParameters(start=0, stop=200, tstep = 0.1)
-
-intervention_protocol(int_parms, sim_parms, 1) %>%
-  ggplot(aes(x=time, y=coverage)) +
-  geom_line()
