@@ -78,6 +78,8 @@ c_all <- c_home %>%
 # plot all
 c_all %>%
   ggplot(aes(x=age_infector, y=age_infectee, fill=value)) +
+  xlab("age group of infector") + ylab("age group of infectee") +
+  theme(text = element_text(size=20)) +
   geom_tile() +
   scale_fill_viridis_c() +
   facet_wrap(~type)
@@ -92,6 +94,8 @@ c_combined <- c_all %>%
   summarise(value=sum(value))
 c_combined %>% 
   ggplot(aes(x=age_infector, y=age_infectee, fill=value)) +
+  xlab("age group of infector") + ylab("age group of infectee") +
+  theme(text = element_text(size=20)) +
   geom_tile() +
   scale_fill_viridis_c()
 ```
@@ -155,7 +159,10 @@ changes = res$changes
 states %>%
   ggplot(aes(x=time, y=value, colour=age_range)) +
   geom_line() +
-  facet_wrap(~compartment)
+  facet_wrap(~compartment) +
+  scale_colour_viridis_d() +
+  labs(x = "time (days)", y = "fraction of the population") +
+  theme(text = element_text(size = 20)) 
 ```
 
 Zooming in on the infected population, we see that the younger age groups have the highest peak infected population levels.
@@ -164,7 +171,10 @@ states %>%
   filter(compartment=="I") %>% 
   ggplot(aes(x=time, y=value, colour=age_range)) +
   geom_line() +
-  facet_wrap(~compartment)
+  facet_wrap(~compartment) +
+  scale_colour_viridis_d() +
+  labs(x = "time (days)", y = "fraction of the population") +
+  theme(text = element_text(size = 20)) 
 ```
 
 Which is reflected in the incidences.
@@ -173,7 +183,10 @@ changes %>%
   filter(compartment=="Incidence") %>% 
   ggplot(aes(x=time, y=value, colour=age_range)) +
   geom_line() +
-  facet_wrap(~compartment, scales="free")
+  facet_wrap(~compartment, scales="free") +
+  scale_colour_viridis_d() +
+  labs(x = "time (days)", y = "fraction of the population") +
+  theme(text = element_text(size = 20)) 
 ```
 
 ## Sensitivity to initial conditions
@@ -219,10 +232,10 @@ Now we simulate both models and plot the infections over time. We can see that f
 res <- run(model_1530, time=seq(0, 50, by = 0.1))$states
 res %>%
   filter(compartment=="I") %>% 
-  ggplot(aes(x=time, y=value, colour=age_range)) +
-  ggtitle("Infections (15-30 years Initialised)") +
-  xlab("Time") + ylab("I Fraction") +
-  theme(plot.title = element_text(size=20)) +
+  ggplot(aes(x=time, y=value, colour=age_range))  +
+  xlab("time (days)") + ylab("fraction of the population") +
+  theme(text = element_text(size=20)) +
+  scale_colour_viridis_d() +
   geom_line() +
   facet_wrap(~compartment)
 
@@ -231,9 +244,9 @@ res <- run(model_5570, time=seq(0, 50, by = 0.1))$states
 res %>%
   filter(compartment=="I") %>% 
   ggplot(aes(x=time, y=value, colour=age_range)) +
-  ggtitle("Infections (55-70 years Initialised)") +
-  xlab("Time") + ylab("I Fraction") +
-  theme(plot.title = element_text(size=20)) +
+  xlab("time (days)") + ylab("fraction of the population") +
+  theme(text = element_text(size=20)) +
+  scale_colour_viridis_d() +
   geom_line() +
   facet_wrap(~compartment)
 ```
