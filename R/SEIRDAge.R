@@ -30,6 +30,7 @@
 #' @import tidyverse
 #' @import reshape2
 #' @importFrom methods new
+#' 
 #' @export SEIRDAge
 #' 
 SEIRDAge <- setClass('SEIRDAge',
@@ -216,6 +217,7 @@ setMethod(
 #' D population fractions for each age group outputs with incidence numbers
 #' for each age group.
 #' 
+#' @export
 #' @importFrom magrittr "%>%"
 #' @importFrom rlang .data
 setMethod(

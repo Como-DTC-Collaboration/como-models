@@ -341,7 +341,7 @@ setGeneric("R0", def = function(model) {
 #' @param model an SEIRD model
 #'
 #' @return an R0 value
-#'
+#' 
 #' @export
 setMethod("R0", "SEIRD", function(model) {
   beta <- model@transmission_parameters$beta
