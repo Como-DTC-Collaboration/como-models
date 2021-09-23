@@ -1,3 +1,5 @@
+library(tidyverse)
+
 test_that("SEIRDV model is instantiated correctly", {
   my_model <- SEIRDV()
   

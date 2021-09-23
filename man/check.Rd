@@ -2,14 +2,20 @@
 % Please edit documentation in R/intervention.R
 \name{check}
 \alias{check}
-\title{Checks that the format of the InterventionParameters is correct:
-only whole intervals are allowed; intervals do not overlap; no backwards
-intervals.}
+\title{Checks that the format of the
+InterventionParameters is correct: only whole intervals are allowed; intervals
+do not overlap; no backwards intervals.}
 \usage{
 check(object)
 }
+\arguments{
+\item{object}{InterventionParameters object whose shape we check.}
+}
+\value{
+error messages.
+}
 \description{
-Checks that the format of the InterventionParameters is correct:
-only whole intervals are allowed; intervals do not overlap; no backwards
-intervals.
+Checks that the format of the
+InterventionParameters is correct: only whole intervals are allowed; intervals
+do not overlap; no backwards intervals.
 }

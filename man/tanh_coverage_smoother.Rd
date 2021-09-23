@@ -7,6 +7,21 @@ in the ode solver of compartamental models with non-smooth interventions.}
 \usage{
 tanh_coverage_smoother(t, start, stop, coverage, tanh_slope)
 }
+\arguments{
+\item{t}{time at which the intervention effect is computed.}
+
+\item{start}{time at which the intervention started.}
+
+\item{stop}{time at which the intervention ended.}
+
+\item{coverage}{height of intervention effect.}
+
+\item{tanh_slope}{sharpness of the intervention wave used for function
+continuity purposes.}
+}
+\value{
+value of intervention effect.
+}
 \description{
 Smoother function for the curve of the interventions. Used to avoid breaks
 in the ode solver of compartamental models with non-smooth interventions.

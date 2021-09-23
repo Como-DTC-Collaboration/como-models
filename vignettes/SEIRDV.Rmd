@@ -3,7 +3,7 @@ title: "The SEIRDV model"
 author: "Ioana Bouros"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{The SEIRV model}
+  %\VignetteIndexEntry{The SEIRDV model}
   %\VignetteEngine{knitr::knitr}
   %\VignetteEncoding{UTF-8}
 ---
@@ -17,6 +17,7 @@ knitr::opts_chunk$set(
 
 ```{r setup}
 library(comomodels)
+library(tidyverse)
 library(ggplot2)
 library(glue)
 library(dplyr)
@@ -39,9 +40,11 @@ others.  Recovered individuals ($R$) are no longer
 infectious, but they can return to the susceptible population when they lose their
 immunity. Vaccinated individuals ($V$) cannot become infected and are not ill at
 the time, but as it was the case with the recovered population, their immunity
-is temporary and they can become susceptible again with a certain rate. Births and
-deaths unrelated to the infection are not considered in this model. The ODEs describing
-how the five populations evolve over time are
+is temporary and they can become susceptible again with a certain rate. 
+We can vaccinate not only the susceptibles, but also $E$, $I$ and $R$s. However,
+they have already been exposed to the illness so they do not change compartment
+assignment. Births and deaths unrelated to the infection are not considered in
+this model. The ODEs describing how the five populations evolve over time are
 $$\frac{\text{d}S}{\text{d}t} = -\beta S I - \nu S + \delta_V V + \delta_R R,$$
 $$\frac{\text{d}E}{\text{d}t} = \beta S I -\kappa E,$$
 $$\frac{\text{d}I}{\text{d}t} = \kappa E - (\gamma + \mu) I,$$
@@ -127,8 +130,7 @@ eird <- subset(states, !states$compartment %in% c("S", "V"))
 ggplot(eird, aes(x = time, y = value)) +
   geom_line(aes(color = compartment)) +
   scale_color_brewer(palette = "Dark2") +
-  labs(x = "time (days)", y = "fraction of the population",
-       title = glue("Evolution of different compartments over time (E, I, R, D)")) +
+  labs(x = "time (days)", y = "fraction of the population") +
   theme(text = element_text(size = 20))    
 ```
 
@@ -145,8 +147,8 @@ changes <- out_df$changes
 
 ggplot(changes, aes(x = time, y = value, fill = compartment)) +
   geom_bar(stat="identity", position = position_dodge()) +
-  labs(x = "time (days)", y = "fraction of the population per day",
-       title = glue("Incidences and deaths")) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(x = "time (days)", y = "fraction of the population per day") +
   theme(legend.position = "bottom", legend.title = element_blank(),
         text = element_text(size = 20))
 
@@ -188,10 +190,10 @@ result %>%
   filter(compartment=="Deaths") %>% 
   ggplot(aes(x=time, y=value, fill = as.factor(delta_V))) +
   geom_bar(stat = "identity", position = position_dodge()) +
-  labs(x = "time (days)", y = "fraction of the population that died per day",
-       title = glue("Number of deaths for differing values of δ_V")) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(x = "time (days)", y = "fraction of the population that died per day") +
   theme(legend.position = "bottom", legend.title = element_blank(),
-        text = element_text(size = 20))
+        text=element_text(size=20))
 
 ```
 We now investigate the sensitivity of the number of deaths to the vaccination rate, $\nu$. We run the model for varying values of $\nu$ and plot the
@@ -229,9 +231,50 @@ result %>%
   filter(compartment=="Deaths") %>% 
   ggplot(aes(x=time, y=value, fill = as.factor(nu))) +
   geom_bar(stat = "identity", position = position_dodge()) +
-  labs(x = "time (days)", y = "fraction of the population that died per day",
-       title = glue("Number of deaths for differing values of ν")) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(x = "time (days)", y = "fraction of the population that died per day") +
   theme(legend.position = "bottom", legend.title = element_blank(),
-        text = element_text(size = 20))
+        text=element_text(size=20))
+
+```
+We now investigate the sensitivity of the number of deaths to the vaccination rate, $\nu$. We run the model for varying values of $\nu$ and plot the
+number of deaths per day over time.
+```{r, fig.height = 5, fig.width = 7}
+# function to setup and run model for different nu values
+run_seirdv <- function(start_val) {
+  inits <- list(S0=0.99, E0=0, I0=0.01, R0=0, V0=0)
+  params <- list(beta=1, kappa=0.9, gamma=0.5, mu=0.1, nu=0.4, delta_V=0.1,
+                 delta_R=0.05)
+  interv<- list(starts=start_val,
+                stops=100,
+                coverages=1)
+  model <- SEIRDV(initial_conditions = inits,
+                transmission_parameters=params,
+                intervention_parameters = interv)
+  times <- seq(0, 50, by = 1)
+  out_df <- run(model, times)
+  out_df$changes
+}
+
+# run model across different nu values
+start_val <- c(0, 5, 10, 15, 20, 30, 45, 55)
+for(i in seq_along(start_val)) {
+  start_temp <- start_val[i]
+  temp <- run_seirdv(start_temp) %>% mutate(starts=start_temp)
+  if(i == 1)
+    result <- temp %>% mutate(starts=start_temp)
+  else
+    result <- result %>% bind_rows(temp)
+}
+
+# plot results
+result %>% 
+  filter(compartment=="Deaths") %>% 
+  ggplot(aes(x=time, y=value, fill = as.factor(starts))) +
+  geom_bar(stat = "identity", position = position_dodge()) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(x = "time (days)", y = "fraction of the population that died per day") +
+  theme(legend.position = "bottom", legend.title = element_blank(),
+        text=element_text(size=20))
 
 ```

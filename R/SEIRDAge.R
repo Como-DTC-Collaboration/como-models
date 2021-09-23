@@ -174,6 +174,11 @@ setMethod(
       stop('The parameter values should be 1-dimensional.')
     }
     
+    if(length(mu) != 1 & length(mu) != object@n_age_categories){
+      stop('The mortality parameter values should be of length 1 or
+            number of age classes.')
+    }
+    
     # Set the row and column names of the instance's contact matrix
     rownames(object@contact_matrix) <- object@age_ranges
     colnames(object@contact_matrix) <- object@age_ranges

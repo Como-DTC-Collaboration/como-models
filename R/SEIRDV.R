@@ -20,6 +20,7 @@
 #'       (double).
 #'
 #' @import deSolve
+#' @import tidyverse
 #' @import glue
 #' @import reshape2
 #'
