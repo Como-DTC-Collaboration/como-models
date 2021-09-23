@@ -3,7 +3,7 @@ title: "The age-structured SEIRD model"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{SEIR_age_structured}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{knitr::knitr}
   %\VignetteEncoding{UTF-8}
 ---
 
