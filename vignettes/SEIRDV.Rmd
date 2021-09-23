@@ -4,7 +4,7 @@ author: "Ioana Bouros"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{The SEIRV model}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{knitr::knitr}
   %\VignetteEncoding{UTF-8}
 ---
 

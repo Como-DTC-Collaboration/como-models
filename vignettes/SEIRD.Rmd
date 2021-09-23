@@ -4,7 +4,7 @@ author: "Hui Jia Farm and Solveig A. van der Vegt"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{The basic SEIR model}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{knitr::knitr}
   %\VignetteEncoding{UTF-8}
 ---
 
@@ -38,14 +38,14 @@ others. Recovered individuals ($R$) are no longer
 infectious, and, in this model, have acquired immunity as they do not return
 to the susceptible population. Births and deaths unrelated to the infection are not considered in this model.
 The ODEs describing how the four populations evolve over time are
-$$\frac{\text{d}S}{\text{d}t} = -\beta S I ,$$
+$$\frac{\text{d}S}{\text{d}t} = -\beta S I,$$
 $$\frac{\text{d}E}{\text{d}t} = \beta S I -\kappa E,$$
 $$\frac{\text{d}I}{\text{d}t} = \kappa E - (\gamma + \mu) I,$$
 $$\frac{\text{d}R}{\text{d}t} = \gamma I,$$
 where $\beta$, $\kappa$, $\gamma$ and $\mu$ are positive parameters.
 The rate at which susceptible individuals are infected depends on the fraction
 of the population that is susceptible, the fraction of the population that is
-infectious, and the odds of an infectious individual infecting a 
+infectious, and the probability of an infectious individual infecting a 
 susceptible individual, $\beta$. This is represented in the
 first terms on the right-hand side of $\text{d}S/ \text{d}t$ and $\text{d}E/ \text{d}t$.
 Exposed individuals become infectious at rate $\kappa$. $1/ \kappa$ is
@@ -109,12 +109,11 @@ out_df <- run(my_model, times)
 The simulation returns two objects: one is a data frame comprising the states over time. Here, there's a peak in the infectious proportion between $t=15$ and $t=20$.
 ```{r, fig.height = 5, fig.width = 7}
 states <- out_df$states
-
 ggplot(states, aes(x = time, y = value)) +
   geom_line(aes(color = compartment)) +
   scale_color_brewer(palette = "Dark2") +
-  labs(x = "time (days)", y = "fraction of the population",
-       title = glue("Evolution of different compartments over time"))
+  labs(x = "time (days)", y = "fraction of the population") +
+  theme(text = element_text(size = 20))    
 ```
 
 The simulation also outputs incidence and deaths. These are derived from the state variables. Incidence is just the difference between the cumulative number of cases between two time points,
@@ -127,13 +126,11 @@ $$ \text{deaths(t)} = D(t) - D(t - 1).$$
 
 ```{r fig2, fig.height = 5, fig.width = 7}
 changes <- out_df$changes
-
 ggplot(changes, aes(x = time, y = value, fill = compartment)) +
   geom_bar(stat="identity", position = position_dodge()) +
-  labs(x = "time (days)", y = "fraction of the population per day",
-       title = glue("Incidences and deaths")) +
-  theme(legend.position = "bottom", legend.title = element_blank())
-
+  labs(x = "time (days)", y = "fraction of the population per day") +
+  theme(legend.position = "bottom", legend.title = element_blank(),
+        text = element_text(size = 20))
 ```
 
 ## Sensitivity analysis
@@ -150,7 +147,6 @@ run_seird <- function(beta_val) {
   out_df <- run(model, times)
   out_df$changes
 }
-
 # run model across different beta values
 beta_vals <- c(0.1, 0.5, 0.75, 1, 2)
 for(i in seq_along(beta_vals)) {
@@ -161,16 +157,15 @@ for(i in seq_along(beta_vals)) {
   else
     result <- result %>% bind_rows(temp)
 }
-
 # plot results
 result %>% 
   filter(compartment=="Deaths") %>% 
   ggplot(aes(x=time, y=value, fill = as.factor(beta))) +
   geom_bar(stat = "identity", position = position_dodge()) +
-  labs(x = "time (days)", y = "Fraction of the population that died per day",
-       title = glue("Number of deaths for differing values of beta")) +
-  theme(legend.position = "bottom", legend.title = element_blank())
-
+  scale_color_brewer(palette = "Dark2") +
+  labs(x = "time (days)", y = "fraction of the population that died per day") +
+  theme(legend.position = "bottom", legend.title = element_blank(),
+        text=element_text(size=20))
 ```
 
 Why do some epidemics die out quickly but others don't? This is can be explored through the basic reproductive number, $R_0$, which is the expected number of people infected by a
@@ -180,12 +175,10 @@ $$R_0 = \beta S_0/(\gamma + \mu).$$
 We now calculate $R_0$ for $\beta=0.1$ and $\beta=0.75$.
 ```{r, fig.height = 5, fig.width = 7}
 inits <- list(S0=0.99, E0=0, I0=0.01, R0=0)
-
 beta_val <- 0.1
 params <- list(beta=beta_val, kappa=0.9, gamma=0.5, mu=0.1)
 model1 <- SEIRD(initial_conditions = inits,
               transmission_parameters=params)
-
 beta_val <- 0.75
 params <- list(beta=beta_val, kappa=0.9, gamma=0.5, mu=0.1)
 model2 <- SEIRD(initial_conditions = inits,
