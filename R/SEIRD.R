@@ -51,8 +51,6 @@ setGeneric("initial_conditions",
 #'
 #' @param object An object of the class SEIRD.
 #' 
-#' @aliases initial_conditions,ANY,ANY-method
-#' 
 #' @export
 setMethod("initial_conditions", "SEIRD",
           function(object) object@initial_conditions)
@@ -69,8 +67,6 @@ setGeneric("transmission_parameters",
 #' @describeIn SEIRD Retrieves transmission parameters of SEIR model.
 #'
 #' @param object An object of the class SEIRD.
-#' 
-#' @aliases transmission_parameters,ANY,ANY-method
 #' 
 #' @export
 setMethod("transmission_parameters", "SEIRD",
@@ -104,8 +100,6 @@ setGeneric(
 #' @param value (list) list of initial conditions S0, E0, I0, R0.
 #'
 #' @return object of class SEIRD with initial conditions assigned.
-#' 
-#' @aliases initial_conditions<-,ANY,ANY-method
 #' 
 #' @export
 setMethod(
@@ -166,8 +160,6 @@ setGeneric(
 #'
 #' @return object of class SEIRD with transmission parameter values
 #' assigned.
-#' 
-#' @aliases transmission_parameters<-,ANY,ANY-method
 #' 
 #' @export
 setMethod(
@@ -254,8 +246,6 @@ setGeneric(name = "run",
 #' E, I and R population fractions, and one with the time steps, age range,
 #' time series of incidences and deaths population fraction.
 #' 
-#' @aliases run,ANY,ANY-method
-#' 
 #' @export
 setMethod(
   "run", "SEIRD",
@@ -339,9 +329,6 @@ setMethod(
 #' @param model a model object from comomodels package
 #'
 #' @return an R0 value
-#' 
-#' 
-#' 
 setGeneric("R0", def = function(model) {
   standardGeneric("R0")
 })
@@ -354,9 +341,7 @@ setGeneric("R0", def = function(model) {
 #' @param model an SEIRD model
 #'
 #' @return an R0 value
-#' 
-#' @aliases R0,ANY,ANY-method
-#' 
+#'
 #' @export
 setMethod("R0", "SEIRD", function(model) {
   beta <- model@transmission_parameters$beta
