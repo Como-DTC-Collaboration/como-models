@@ -71,7 +71,6 @@ SEIRDAge <- setClass('SEIRDAge',
 #'
 #' @return Initial conditions of SEIRDAge model.
 #' @export
-#' 
 setMethod('initial_conditions', 'SEIRDAge',
           function(object) object@initial_conditions)
 
@@ -222,7 +221,7 @@ setMethod(
 #' @importFrom magrittr "%>%"
 #' @importFrom rlang .data
 setMethod(
-  "run", 'SEIRDAge',
+  "run", "SEIRDAge",
   function(object, times, solve_method = 'lsoda') {
 
     # error if times is not a vector or list of doubles
