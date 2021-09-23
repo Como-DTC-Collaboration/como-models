@@ -5,9 +5,13 @@
 \alias{SEIRDAge-class}
 \alias{SEIRDAge}
 \alias{initial_conditions,SEIRDAge-method}
+\alias{initial_conditions,ANY,ANY-method}
 \alias{initial_conditions<-,SEIRDAge-method}
+\alias{initial_conditions<-,ANY,ANY-method}
 \alias{transmission_parameters,SEIRDAge-method}
+\alias{transmission_parameters,ANY,ANY-method}
 \alias{transmission_parameters<-,SEIRDAge-method}
+\alias{transmission_parameters<-,ANY,ANY-method}
 \title{An S4 object representing the SEIRDAge.}
 \usage{
 \S4method{initial_conditions}{SEIRDAge}(object)

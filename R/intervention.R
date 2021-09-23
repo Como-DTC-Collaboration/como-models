@@ -44,7 +44,7 @@ check <-function(object) {
 #'
 #' @import tidyverse
 #'
-#' @export Intervention
+#' @export InterventionParameters
 InterventionParameters <-
   setClass("InterventionParameters",
            slots = c(start="numeric",
@@ -65,7 +65,7 @@ InterventionParameters <-
 #'
 #' @import tidyverse
 #'
-#' @export
+#' @export SimulationParameters
 SimulationParameters <-
   setClass("SimulationParameters",
            slots = c(start="numeric",
@@ -98,7 +98,7 @@ intervention_protocol <- function(int_parms,
                                   sim_parms,
                                   tanh_slope) {
   #' Creates protocols for the interventions using parameters of the model; used
-  #' in the 'run' method of compartamental model with interventions.
+  #' in the 'run' method of compartmental model with interventions.
   times <- seq(sim_parms@start, sim_parms@stop, sim_parms@tstep)
   coverage <- stack_intervention_coverages(times, int_parms, tanh_slope)
   tibble(time=times, coverage=coverage)

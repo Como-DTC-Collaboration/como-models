@@ -242,7 +242,7 @@ setMethod(
 #' the system of ODEs should be returned. Must be of the form
 #' seq(t_start, t_end, by=t_step). Default time series is seq(0, 100, by = 1).
 #' @param solve_method (string) a string of chosen numerical integration method
-#' for solving the ode system. Default is "lsoda" which is also the default for
+#' for solving the ode system. Default is lsoda which is also the default for
 #' the ode function in the deSolve package used in this function.
 #'
 #' @return two dataframes: one with the time steps, age range, time series of S,
