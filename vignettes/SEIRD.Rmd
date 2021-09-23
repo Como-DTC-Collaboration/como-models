@@ -130,7 +130,8 @@ ggplot(changes, aes(x = time, y = value, fill = compartment)) +
   geom_bar(stat="identity", position = position_dodge()) +
   labs(x = "time (days)", y = "fraction of the population per day") +
   theme(legend.position = "bottom", legend.title = element_blank(),
-        text = element_text(size = 20))
+        text = element_text(size = 20)) +
+  scale_fill_brewer(palette = "Dark2")
 ```
 
 ## Sensitivity analysis
@@ -162,7 +163,7 @@ result %>%
   filter(compartment=="Deaths") %>% 
   ggplot(aes(x=time, y=value, fill = as.factor(beta))) +
   geom_bar(stat = "identity", position = position_dodge()) +
-  scale_color_brewer(palette = "Dark2") +
+  scale_fill_brewer(palette = "Dark2") +
   labs(x = "time (days)", y = "fraction of the population that died per day") +
   theme(legend.position = "bottom", legend.title = element_blank(),
         text=element_text(size=20))

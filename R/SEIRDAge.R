@@ -30,6 +30,7 @@
 #' @import tidyverse
 #' @import reshape2
 #' @importFrom methods new
+#' 
 #' @export SEIRDAge
 #' 
 SEIRDAge <- setClass('SEIRDAge',
