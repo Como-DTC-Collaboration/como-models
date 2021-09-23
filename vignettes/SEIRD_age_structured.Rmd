@@ -79,7 +79,8 @@ c_all <- c_home %>%
 c_all %>%
   ggplot(aes(x=age_infector, y=age_infectee, fill=value)) +
   xlab("age group of infector") + ylab("age group of infectee") +
-  theme(text = element_text(size=20)) +
+  theme(text = element_text(size=20),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   geom_tile() +
   scale_fill_viridis_c() +
   facet_wrap(~type)
@@ -95,7 +96,8 @@ c_combined <- c_all %>%
 c_combined %>% 
   ggplot(aes(x=age_infector, y=age_infectee, fill=value)) +
   xlab("age group of infector") + ylab("age group of infectee") +
-  theme(text = element_text(size=20)) +
+  theme(text = element_text(size=20),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   geom_tile() +
   scale_fill_viridis_c()
 ```
