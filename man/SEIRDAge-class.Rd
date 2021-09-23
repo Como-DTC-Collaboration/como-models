@@ -12,6 +12,7 @@
 \alias{transmission_parameters,ANY,ANY-method}
 \alias{transmission_parameters<-,SEIRDAge-method}
 \alias{transmission_parameters<-,ANY,ANY-method}
+\alias{run,SEIRDAge-method}
 \title{An S4 object representing the SEIRDAge.}
 \usage{
 \S4method{initial_conditions}{SEIRDAge}(object)
@@ -21,6 +22,8 @@
 \S4method{transmission_parameters}{SEIRDAge}(object)
 
 \S4method{transmission_parameters}{SEIRDAge}(object) <- value
+
+\S4method{run}{SEIRDAge}(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
 }
 \arguments{
 \item{object}{An object of the class SEIRDAge.}
@@ -29,6 +32,14 @@
 
 All rates of change between compartments are equal regardless of
 age group.}
+
+\item{times}{(vector) time sequence over which to solve the model.
+Must be of the form seq(t_start,t_end,by=t_step). Default time series
+is seq(0, 100, by = 1).}
+
+\item{solve_method}{A string indicating the chosen numerical integration
+method for solving the ode system. Default is \code{lsoda} which is also the
+default for the ode function in the deSolve package used in this function.}
 }
 \value{
 Initial conditions of SEIRDAge model.
@@ -38,6 +49,10 @@ Updated version of the age-structured SEIRD model.
 Transmission parameters of SEIRDAge model.
 
 Updated version of the age-structured SEIRD model.
+
+data frame containing the time vector and time series of S, R, I and
+D population fractions for each age group outputs with incidence numbers
+for each age group.
 }
 \description{
 Defines an age-structured SEIRD model and solves the set of
@@ -63,6 +78,24 @@ age-structured SEIRD model.
 
 If the transmission parameters provided to are not 1-dimensional an error is
 thrown.
+
+\item \code{run}: Method to simulate output using from model.
+
+Solves a system of ODEs which form an
+age-structured SEIRD model. The system of equations for the time
+evolution of population fractions in Susceptible (S), Exposed (E), Infected
+(I), Recovered (R) and Dead (D) groups in a given age group indexed by i is
+given by
+
+\deqn{\frac{dS_i(t)}{dt} = - \beta S_i(t) \Sigma_{j}C_{ij} I_j(t)}
+\deqn{\frac{dE_i(t)}{dt} = \beta S_i(t) \Sigma_{j}C_{ij} I_j(t) - \kappa E_i(t)}
+\deqn{\frac{dI_i(t)}{dt} = \kappa E_i(t) - \gamma I_i(t) - \mu I_i(t)}
+\deqn{\frac{dR_i(t)}{dt} = \gamma I_i(t)}
+\deqn{\frac{dD_i(t)}{dt} = \mu I_i(t)}
+where C is a contact matrix whose elements represents the
+contact between different age groups (rows) with age groups of
+people they come in contact with (columns). This function relies on the
+package deSolve to numerically integrate the set of equations above.
 }}
 
 \section{Slots}{
