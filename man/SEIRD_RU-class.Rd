@@ -166,8 +166,8 @@ in this case (E_U, E_Y, I_U and I_Y).
 The differential equations for the variables in the first group are written
 in the form
 \deqn{\frac{dx_i}{dt} = F_i - V_i}
-where F_i are the terms describing how individuals enter the
-compartment and V_i the terms describing how individuals leave.
+where F_i are the terms describing new cases of infection and V_i the terms
+describing how individuals move between infected and other compartments.
 We compute the matrices matF and matV as
 \deqn{matF = \partial F_i(x_0)/\partial x_j}
 \deqn{matV = \partial V_i(x_0)/\partial x_j}

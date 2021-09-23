@@ -3,7 +3,7 @@
 \name{contact_rates<-}
 \alias{contact_rates<-}
 \title{Setter method for contact matrices, or contact rates directly, for urban and
-rural communities in the SEIRR_RU model. Matrices must be of type double.
+rural communities in the SEIRD_RU model. Matrices must be of type double.
 NOTE: if inputting matrices, you MUST assign fraction_rural first, and you
 must input full age demographics, i.e. you cannot only provide the fraction
 of the population that is rural!}
@@ -20,7 +20,7 @@ object of class SEIRD_RU with contact rates assigned.
 }
 \description{
 Setter method for contact matrices, or contact rates directly, for urban and
-rural communities in the SEIRR_RU model. Matrices must be of type double.
+rural communities in the SEIRD_RU model. Matrices must be of type double.
 NOTE: if inputting matrices, you MUST assign fraction_rural first, and you
 must input full age demographics, i.e. you cannot only provide the fraction
 of the population that is rural!

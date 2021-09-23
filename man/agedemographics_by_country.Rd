@@ -4,9 +4,7 @@
 \name{agedemographics_by_country}
 \alias{agedemographics_by_country}
 \title{agedemographics_by_country}
-\format{
-A dataframe with 29 variables and 18105 observations.
-}
+\format{A dataframe with 29 variables and 18105 observations.}
 \source{
 UN Department of Economic and Social Affairs: Populations dynamics. World Population Prospects 2019
 }

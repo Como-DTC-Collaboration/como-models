@@ -4,9 +4,7 @@
 \name{percentrural_by_country}
 \alias{percentrural_by_country}
 \title{percentrural_by_country}
-\format{
-A dataframe with 65 variables and 264 observations.
-}
+\format{A dataframe with 65 variables and 264 observations.}
 \source{
 \url{https://data.worldbank.org/indicator/SP.RUR.TOTL.ZS?view=chart}
 }
