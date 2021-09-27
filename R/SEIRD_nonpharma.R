@@ -144,13 +144,17 @@ setMethod(
     trans_params <- value
 
     # check format of parameters
-   # if (length(trans_params$b) != 1
-     #   | length(trans_params$b_isolated) != 1
-   #     | length(trans_params$k) != 1
-     #   | length(trans_params$g) != 1
-    #    | length(trans_params$m) != 1) {
-   #   stop("The parameter values should be 1-dimensional.")
-  #  }
+    if (length(trans_params$beta) != 1
+        | length(trans_params$beta_isolated) != 1
+        | length(trans_params$kappa) != 1
+        | length(trans_params$gamma) != 1
+        | length(trans_params$mu) != 1
+        | length(trans_params$heta1) != 1
+       | length(trans_params$heta2) != 1
+   ) 
+   {
+      stop("The parameter values should be 1-dimensional.")
+    }
 
     # if all above tests are passed, assign the trans_params namelist to the
     # object
