@@ -113,6 +113,18 @@ setMethod(
     if (init_cond$S0 + init_cond$E0 + init_cond$I0 +  init_cond$I0_isolated + init_cond$R0 != 1) {
       stop("Invalid initial conditions. Must add up to 1.")
     }
+    
+    
+    # check that each initial condition is 1-dimensional
+    if (length(init_cond$S0) != 1
+        | length(init_cond$E0) != 1
+        | length(init_cond$I0) != 1
+        | length(init_cond$I0_isolated) != 1
+        | length(init_cond$R0) != 1
+    ) 
+    {
+      stop("Each initial condition should be 1-dimensional.")
+    }
 
     object@initial_conditions <- init_cond
 
