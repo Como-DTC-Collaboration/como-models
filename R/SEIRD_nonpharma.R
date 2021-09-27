@@ -343,7 +343,7 @@ setMethod(
     
     # call ode solver second time
     out <- ode(
-      y = column, times = seq(t_intervention_1_2, t_intervention_2_3, by = 0.1), func = right_hand_side,
+      y = column, times = seq(t_intervention_1_2, t_intervention_2_3, by = 1), func = right_hand_side,
       parms = parameters, method = solve_method)
     
     output2 <- as.data.frame.array(out)
