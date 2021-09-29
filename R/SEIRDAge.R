@@ -1,3 +1,7 @@
+#' @include generics.R
+#'
+NULL
+
 #' An S4 object representing the SEIRDAge.
 #' 
 #' Defines an age-structured SEIRD model and solves the set of

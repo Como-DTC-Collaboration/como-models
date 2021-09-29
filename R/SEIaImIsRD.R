@@ -1,20 +1,17 @@
-#' SEIaImIsRD: an SEIRD model for compartments of different symptoms (asymptomatic, mild and severe) with different transmission rates (beta).
+#' @include generics.R
 #'
+NULL
 
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-# Class definitions
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
-#' An S4 object representing the SEIaImIsRD model: SEIRD with infected population 
-#' that are composed of different symptome compartments: asymptomatic, mild and severe (current settings).
-#'
-#' This class represents an extension of the SEIRD model, showing how populations of susceptible,
-#' exposed, infectious and recovered individuals evolve over time, in which the infectious individuals
+#' An S4 object representing the SEIaImIsRD.
+#' 
+#' This class defines the SEIaImIsRD model, an extension of the SEIRD model.
+#' The model shows how populations of susceptible, exposed, infectious and 
+#' recovered individuals evolve over time, in which the infectious individuals
 #' are subgrouped into compartments according to different severity of symptoms, i.e. asymptomatic, mild and severe.
 #'
+#' Notes:
 #' 1. Total initial population size is normalised to 1.
 #' 2. The current model does not include natural death or birth.
-#' 3. The current model defines different infection.
 #'
 #' @slot initial_condition_names list of names of initial conditions
 #'       (characters). Default is list("S0", "E0", "I_asymptomatic0", "I_mild0", "I_severe0", "R0", "D0").
@@ -28,8 +25,7 @@
 #' @import deSolve
 #' @import ggplot2
 #' @import reshape2
-#'
-#' @concept objects
+#' @importFrom methods new
 #' @export SEIaImIsRD
 SEIaImIsRD <- setClass(Class = "SEIaImIsRD",
          slots = c(
@@ -52,15 +48,9 @@ SEIaImIsRD <- setClass(Class = "SEIaImIsRD",
          ))
 
 
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-# Functions
-# Generics defined in SEIRD will only be reset methods here to avoid ambiguity.
-#%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
 #' @describeIn SEIaImIsRD Retrieves initial conditions of SEIaImIsRD model.
 #'
 #' @param object An object of the class SEIaImIsRD.
-#' @aliases initial_conditions,SEIaImIsRD-method
 #' @export
 setMethod("initial_conditions", "SEIaImIsRD",
           function(object) object@initial_conditions)
@@ -69,7 +59,6 @@ setMethod("initial_conditions", "SEIaImIsRD",
 #' @describeIn SEIaImIsRD Retrieves transmission parameters of SEIaImIsRD model.
 #'
 #' @param object An object of the class SEIaImIsRD.
-#' @aliases initial_conditions,SEIaImIsRD-method
 #' @export
 setMethod("transmission_parameters", "SEIaImIsRD",
           function(object) object@transmission_parameters)
@@ -89,7 +78,6 @@ setMethod("transmission_parameters", "SEIaImIsRD",
 #' R - recovered.
 #'
 #' @return An object of class SEIaImIsRD with initial population and parameters
-#' @aliases initial_conditions<-,SEIaImIsRD
 #' @export
 #'
 setMethod(
@@ -133,17 +121,16 @@ setMethod(
 #'
 #' @param object An object of class SEIaImIsRD
 #' @param value A numeric named list of values for transmission parameters:
-#' beta - a named list of the effective contact rate from each infected group (i.e. rate at which an infected individual exposes susceptible), each element with value in [0,1]
+#' beta - a named list of the effective contact rate from each infected group (i.e. rate at which an infected individual exposes susceptible), each element with value in \code{[0,1]}
 #' kappa - rate of progression from exposed to infectious (the reciprocal is the incubation period),
 #' omega - rate at which recovered individuals become susceptible,
 #' p_symptom - a named list of the probability of exposed individuals moving into each of the different infected groups, 
 #' Here, only probabilities for the mild (p_symptom.mild) and severe (p_symptom.severe) groups need be specified and 
 #' the asymptomatic probability is the remainder (1 - p_symptom.mild - p_symptom.severe). Thus we require 
 #' p_symptom.mild + p_symptom.severe <= 1.
-#' gamma - a list of the rate of removal of each infected group (i.e. recovery rate of an infected individual), each element with value in [0,1]
-#' mu - a list of the rate of disease-caused mortality of each infected group, each element with value in [0,1]
+#' gamma - a list of the rate of removal of each infected group (i.e. recovery rate of an infected individual), each element with value in \code{[0,1]}
+#' mu - a list of the rate of disease-caused mortality of each infected group, each element with value in \code{[0,1]}
 #' @return An object of class SEIaImIsRD with initial population and parameters
-#' @aliases transmission_parameters<-,SEIaImIsRD-method
 #' @export
 #'
 setMethod(
@@ -222,7 +209,6 @@ setMethod(
 #' @return A list of two dataframes: one with the time steps, time series of S,
 #' E, I_asymptomatic, I_mild, I_severe and R population fractions, and one with the time steps,
 #' time series of incidences and deaths population fraction
-#' @aliases run,SEIaImIsRD-method
 #' @export
 #'
 setMethod("run",
@@ -310,7 +296,6 @@ setMethod("run",
 #'
 #' @param model A model of an SEIaImIsRD class object with initial_conditions and transmission_parameters set.
 #' @return An R0 value
-#' @aliases R0,SEIaImIsRD-method
 #' @export
 #'
 setMethod("R0", "SEIaImIsRD", function(model) {

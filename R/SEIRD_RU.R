@@ -1,3 +1,7 @@
+#' @include generics.R
+#'
+NULL
+
 #' An S4 object representing the SEIRD_RU.
 #'
 #' This class represents the SEIR model, showing how populations of susceptible,

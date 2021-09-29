@@ -33,3 +33,10 @@ Imports:
 VignetteBuilder: knitr
 Depends: 
     R (>= 2.10)
+Collate: 
+    'generics.R'
+    'SEIRD.R'
+    'SEIRDAge.R'
+    'SEIRD_RU.R'
+    'SEIaImIsRD.R'
+    'data.R'
