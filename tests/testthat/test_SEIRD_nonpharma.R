@@ -115,9 +115,11 @@ test_that("can run simulation for the SEIRD_nonpharma", {
   expect_error(run(my_model, "a"))
   
   
-  times <- seq(0, 180, by = 1)
-  t_intervention_1_2 <- 10
-  t_intervention_2_3 <- 70
+  #times <- seq(0, 180, by = 1)
+  t_intervention_1_2 <- 15
+  t_intervention_2_3 <- 40
+  t_end <- 102
+  times = seq(0, t_end, by = 1)
   
   output <- run(my_model, times, t_intervention_1_2, t_intervention_2_3)
   
@@ -139,7 +141,7 @@ test_that("can run simulation for the SEIRD_nonpharma", {
   
   #Test whether output times are as expected
   times <- unique(states$time)
-  expected_times <- seq(0, 180, by = 1)
+  expected_times <- seq(0, t_end, by = 1)
   #compartments above is given as a factor, so convert to strings
   expect_true(all.equal(times, expected_times))
   

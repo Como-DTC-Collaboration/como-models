@@ -204,7 +204,7 @@ setMethod(
 #' time series of incidences and deaths population fraction.
 #' @export
 setGeneric(name = "run",
-           def = function(object, times = seq(0, 100, by = 1), t_intervention_1_2 = 5, t_intervention_2_3 = 30,
+           def = function(object, times = seq(0, 100, by = 1), t_intervention_1_2 = 5, t_intervention_2_3 = 30, t_end=100,
                           solve_method = "lsoda") {
              standardGeneric("run")})
 #' @describeIn SEIRD_nonpharma Solves ODEs of the SEIRD_nonpharma specified in object
@@ -231,6 +231,10 @@ setGeneric(name = "run",
 #' 
 #' @param t_intervention_2_3 time at which the second intervention takes place and
 #' the model switches to parameters3 to solve the ode system
+#' 
+#'  @param t_end time at which the second intervention takes place and
+#' the model switches to parameters3 to solve the ode system
+#' 
 #' 
 #' @param solve_method (string) a string of chosen numerical integration method
 #' for solving the ode system. Default is "lsoda" which is also the default for
@@ -398,7 +402,7 @@ setMethod(
        
        # call ode solver third time
        out <- ode(
-         y = column3, times = seq(t_intervention_2_3, 180, by = 1), func = right_hand_side,
+         y = column3, times = seq(t_intervention_2_3, t_end, by = 1), func = right_hand_side,
          parms = parameters, method = solve_method)
        
        output3 <- as.data.frame.array(out)
