@@ -113,5 +113,35 @@ test_that("can run simulation for the SEIRD_nonpharma", {
  
   # Test input errors
   expect_error(run(my_model, "a"))
-
+  
+  
+  times <- seq(0, 180, by = 1)
+  t_intervention_1_2 <- 10
+  t_intervention_2_3 <- 70
+  
+  output <- run(my_model, times, t_intervention_1_2, t_intervention_2_3)
+  
+  
+  #Test whether names of outputs are as expected
+  list_names <- names(output)
+  expected_names <- c("states", "changes")
+  expect_true(all.equal(list_names[1:2], expected_names))
+  
+  
+  #Test whether names of states are as expected
+  states <- output$states
+  compartments <- unique(states$compartment)
+  #compartments above is given as a factor, so convert to strings
+  compartments_char <-as.character(compartments)
+  
+  expected_compartments <- c("S", "E", "I", "I_isolated", "R", "D")
+  expect_true(all.equal(compartments_char, expected_compartments))
+  
+  #Test whether output times are as expected
+  times <- unique(states$time)
+  expected_times <- seq(0, 180, by = 1)
+  #compartments above is given as a factor, so convert to strings
+  expect_true(all.equal(times, expected_times))
+  
 })
+
