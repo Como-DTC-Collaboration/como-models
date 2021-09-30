@@ -204,7 +204,7 @@ setMethod(
 #' time series of incidences and deaths population fraction.
 #' @export
 setGeneric(name = "run",
-           def = function(object, times = seq(0, 100, by = 1), t_intervention_1_2 = 5, t_intervention_2_3 = 30, t_end=100,
+           def = function(object, times = seq(0, t_end, by = 1), t_intervention_1_2 = 5, t_intervention_2_3 = 30,
                           solve_method = "lsoda") {
              standardGeneric("run")})
 #' @describeIn SEIRD_nonpharma Solves ODEs of the SEIRD_nonpharma specified in object
@@ -308,7 +308,7 @@ setMethod(
     
     
     #extract the final state from the 1st interval
-    state = filter(output, time == t_intervention_1_2)
+    state = dplyr::filter(output, time == t_intervention_1_2)
     print("state")
     print(state)
     
@@ -373,7 +373,7 @@ setMethod(
        
        
        #extract the final state from the 2nd interval
-       state3 = filter(output2, time == t_intervention_2_3)
+       state3 = dplyr::filter(output2, time == t_intervention_2_3)
        print("state3")
        print(state3)
        

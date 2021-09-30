@@ -113,13 +113,11 @@ test_that("can run simulation for the SEIRD_nonpharma", {
  
   # Test input errors
   expect_error(run(my_model, "a"))
-  
-  
-  #times <- seq(0, 180, by = 1)
-  t_intervention_1_2 <- 15
-  t_intervention_2_3 <- 40
-  t_end <- 102
-  times = seq(0, t_end, by = 1)
+
+  t_intervention_1_2 <- 5
+  t_intervention_2_3 <- 29
+  t_end <- 31
+  times <- seq(0, t_end, by = 1)
   
   output <- run(my_model, times, t_intervention_1_2, t_intervention_2_3)
   
