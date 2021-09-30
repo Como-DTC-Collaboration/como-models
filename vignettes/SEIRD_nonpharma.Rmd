@@ -96,7 +96,7 @@ The initial conditions must sum to one. If they do not, an error is thrown.
 Now we simulate the system from $t=0$ days to $t=90$ days.
 ```{r}
 
-t_end <- 30
+t_end <- 31
 
 t_intervention_1_2 <- 5
 t_intervention_2_3 <- 20
