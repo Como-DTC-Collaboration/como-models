@@ -2,28 +2,27 @@
 % Please edit documentation in R/generics.R
 \name{run}
 \alias{run}
-\title{Solves ODEs of a class within comomodels package specified in object
-for the time points specified in times and integration method specified in
-solve_method.}
+\title{Solves ODEs for a given model}
 \usage{
 run(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
 }
 \arguments{
 \item{object}{an object of a class within the comomodels}
 
-\item{times}{(double) a sequence of time points at which the solution to
-the system of ODEs should be returned. Must be of the form
-seq(t_start, t_end, by=t_step). Default time series is seq(0, 100, by = 1).}
+\item{times}{(double) a vector of time points at which the solution to
+the system of ODEs should be returned. Default time series is seq(0, 100, by = 1)}
 
-\item{solve_method}{(string) a string of chosen numerical integration method
+\item{solve_method}{(string) a string specifying the chosen numerical integration method
 for solving the ode system. Default is "lsoda" which is also the default for
 the ode function in the deSolve package used in this function}
 }
 \value{
-two dataframes: one with the time steps, age range, time series of each
-group of population fractions, and one with the time steps, age range,
-time series of incidences and deaths population fraction.
+a named list of two dataframes: 'states' which describes the time evolution of
+compartment proportions; and 'changes' which describes the time evolution of daily quantities
+like cases and deaths
 }
 \description{
-This function relies on the package deSolve.
+Solves ODEs of a model class within comomodels package and returns solutions
+at the time points specified using a specified integration method.
+Numerical solution of the ODEs is carried out by the deSolve package.
 }

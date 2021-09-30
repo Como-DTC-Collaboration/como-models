@@ -2,7 +2,7 @@
 % Please edit documentation in R/generics.R
 \name{transmission_parameters}
 \alias{transmission_parameters}
-\title{Retrieves transmission parameters of a class within comomodels package.}
+\title{Retrieves transmission parameters of a class within comomodels package}
 \usage{
 transmission_parameters(object)
 }
@@ -10,5 +10,5 @@ transmission_parameters(object)
 \item{object}{An object of one of the classes of the como model}
 }
 \description{
-Retrieves transmission parameters of a class within comomodels package.
+Retrieves transmission parameters of a class within comomodels package
 }

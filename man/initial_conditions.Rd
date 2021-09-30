@@ -2,17 +2,13 @@
 % Please edit documentation in R/generics.R
 \name{initial_conditions}
 \alias{initial_conditions}
-\title{Defines generics which are shared between classes within comomodels packages.
-Class-specific Generics are defined in each class separately.
-Retrieves initial conditions of a class within comomodels package(one of SEIRD, SEIRDAge, SEIaImIsRD, SEIRD_RU).}
+\title{Retrieves initial conditions of a class within comomodels package}
 \usage{
 initial_conditions(object)
 }
 \arguments{
-\item{object}{An object of the an S4 class within comomodels package(one of SEIRD, SEIRDAge, SEIaImIsRD, SEIRD_RU)}
+\item{object}{An object of the an S4 class within comomodels package}
 }
 \description{
-Defines generics which are shared between classes within comomodels packages.
-Class-specific Generics are defined in each class separately.
-Retrieves initial conditions of a class within comomodels package(one of SEIRD, SEIRDAge, SEIaImIsRD, SEIRD_RU).
+Retrieves initial conditions of a class within comomodels package
 }

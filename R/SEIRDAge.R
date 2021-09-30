@@ -309,24 +309,24 @@ setMethod(
     # drop the old variable column
     out_temp = out_temp %>% 
       dplyr::select(-.data$variable) %>% 
-      dplyr::mutate(compartment=as.factor(compartment)) %>% 
-      dplyr::mutate(compartment=forcats::fct_relevel(compartment, "S", "E", "I", "R", "D", "cc")) %>% 
-      dplyr::mutate(age_range=as.factor(age_range)) %>% 
-      dplyr::mutate(age_range=forcats::fct_relevel(age_range, object@age_ranges))
+      dplyr::mutate(compartment=as.factor(.data$compartment)) %>% 
+      dplyr::mutate(compartment=forcats::fct_relevel(.data$compartment, "S", "E", "I", "R", "D", "cc")) %>% 
+      dplyr::mutate(age_range=as.factor(.data$age_range)) %>% 
+      dplyr::mutate(age_range=forcats::fct_relevel(.data$age_range, object@age_ranges))
 
     # compute incidence and deaths
     changes <- out_temp %>% 
-      dplyr::filter(compartment %in% c("cc", "D")) %>% 
-      dplyr::group_by(compartment, age_range) %>% 
-      dplyr::mutate(value = c(0, diff(value))) %>% 
-      dplyr::mutate(compartment = dplyr::if_else(compartment == "cc", "Incidence",
+      dplyr::filter(.data$compartment %in% c("cc", "D")) %>% 
+      dplyr::group_by(.data$compartment, .data$age_range) %>% 
+      dplyr::mutate(value = c(0, diff(.data$value))) %>% 
+      dplyr::mutate(compartment = dplyr::if_else(.data$compartment == "cc", "Incidence",
                                                  "Deaths")) %>% 
       dplyr::ungroup() %>% 
       as.data.frame()
     
     # remove cumulative cases column from state vector
     states = out_temp %>% 
-      dplyr::filter(compartment != "cc") %>% 
+      dplyr::filter(.data$compartment != "cc") %>% 
       droplevels() %>% 
       dplyr::ungroup()
 

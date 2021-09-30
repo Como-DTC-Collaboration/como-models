@@ -2,7 +2,7 @@
 % Please edit documentation in R/generics.R
 \name{transmission_parameters<-}
 \alias{transmission_parameters<-}
-\title{Set transmission parameters for a class within comomodels package.}
+\title{Set transmission parameters for a class within comomodels package}
 \usage{
 transmission_parameters(object) <- value
 }
