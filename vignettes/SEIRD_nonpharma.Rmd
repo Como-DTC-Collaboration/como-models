@@ -117,9 +117,9 @@ ggplot(I_compartments, aes(x = time, y = value)) +
 
 The simulation returns two objects: one is a data frame comprising the states over time.
 ```{r, fig.height = 5, fig.width = 7}
-EIRD <- out_df$EIRD
+states <- out_df$states
 
-ggplot(EIRD, aes(x = time, y = value)) +
+ggplot(states, aes(x = time, y = value)) +
   geom_line(aes(color = compartment)) +
   scale_color_brewer(palette = "Dark2") +
   labs(x = "time (days)", y = "fraction of the population",

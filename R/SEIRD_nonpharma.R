@@ -430,14 +430,14 @@ setMethod(
     changes <- subset(output, output$compartment %in% c("Incidence", "Deaths"))
     changes <- droplevels(changes)
     
-    EIRD <- subset(output, !output$compartment %in% c("S", "Incidence", "Deaths"))
-    EIRD <-droplevels(EIRD)
+    #EIRD <- subset(output, !output$compartment %in% c("S", "Incidence", "Deaths"))
+    #EIRD <-droplevels(EIRD)
     
     I_compartments <-subset(output, output$compartment %in% c("I", "I_isolated"))
     print("I_compartments")
     print(I_compartments)
     
-    list("states" = states, "changes" = changes, "EIRD" = EIRD, "I_compartments" = I_compartments)
+    list("states" = states, "changes" = changes, "I_compartments" = I_compartments)
   })
 
 
