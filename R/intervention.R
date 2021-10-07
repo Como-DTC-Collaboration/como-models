@@ -91,6 +91,8 @@ SimulationParameters <-
 #' @return value of intervention effect.
 #' 
 #' @import tidyverse
+#' 
+#' @export tanh_coverage_smoother
 tanh_coverage_smoother <- function(t, start, stop, coverage, tanh_slope) {
   # check that the tangent of the slope is always positive
   if (tanh_slope <= 0) {
@@ -137,6 +139,8 @@ stack_intervention_coverages <- function(times, int_parms, tanh_slope) {
 #'                   continuity purposes.
 #'                   
 #' @import tidyverse
+#' 
+#' @export intervention_protocol
 intervention_protocol <- function(int_parms,
                                   sim_parms,
                                   tanh_slope) {
