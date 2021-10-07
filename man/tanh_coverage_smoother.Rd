@@ -3,7 +3,7 @@
 \name{tanh_coverage_smoother}
 \alias{tanh_coverage_smoother}
 \title{Smoother function for the curve of the interventions. Used to avoid breaks
-in the ode solver of compartamental models with non-smooth interventions.}
+in the ode solver of compartmental models with non-smooth interventions.}
 \usage{
 tanh_coverage_smoother(t, start, stop, coverage, tanh_slope)
 }
@@ -17,12 +17,13 @@ tanh_coverage_smoother(t, start, stop, coverage, tanh_slope)
 \item{coverage}{height of intervention effect.}
 
 \item{tanh_slope}{sharpness of the intervention wave used for function
-continuity purposes.}
+continuity purposes;larger values of this parameter cause
+the curve to more closely approach the step function.}
 }
 \value{
 value of intervention effect.
 }
 \description{
 Smoother function for the curve of the interventions. Used to avoid breaks
-in the ode solver of compartamental models with non-smooth interventions.
+in the ode solver of compartmental models with non-smooth interventions.
 }

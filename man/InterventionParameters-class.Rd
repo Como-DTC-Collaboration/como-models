@@ -6,7 +6,7 @@
 \alias{InterventionParameters}
 \title{An S4 object representing the InterventionParameters,}
 \description{
-This class hosts the intervention parameters used to create intevention protocols
+This class hosts the intervention parameters used to create intervention protocols
 for a SEIRD-class type of model.
 }
 \section{Slots}{

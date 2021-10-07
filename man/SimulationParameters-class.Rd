@@ -17,7 +17,7 @@ This class represents the simulator of a SEIRD-class type of model.
 \item{\code{stop}}{value for end point of simulation run
 (numeric).}
 
-\item{\code{coverage}}{value for time step of simulation run
-(numeric).}
+\item{\code{tstep}}{value for the time step of the grid on which the smoothed
+intervention protocol is discretized (numeric).}
 }}
 

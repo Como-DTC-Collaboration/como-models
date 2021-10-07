@@ -37,7 +37,7 @@ check <-function(object) {
 
 #' An S4 object representing the InterventionParameters,
 #'
-#' This class hosts the intervention parameters used to create intevention protocols
+#' This class hosts the intervention parameters used to create intervention protocols
 #' for a SEIRD-class type of model.
 #'
 #' @slot start list of values for start points of intervention intervals
@@ -65,8 +65,8 @@ InterventionParameters <-
 #'       (numeric).
 #' @slot stop value for end point of simulation run
 #'       (numeric).
-#' @slot coverage value for time step of simulation run
-#'       (numeric).
+#' @slot tstep value for the time step of the grid on which the smoothed
+#'       intervention protocol is discretized (numeric).
 #'
 #' @import tidyverse
 #'
@@ -78,19 +78,25 @@ SimulationParameters <-
                      tstep="numeric"))
 
 #' Smoother function for the curve of the interventions. Used to avoid breaks
-#' in the ode solver of compartamental models with non-smooth interventions.
+#' in the ode solver of compartmental models with non-smooth interventions.
 #' 
 #' @param t time at which the intervention effect is computed.
 #' @param start time at which the intervention started.
 #' @param stop time at which the intervention ended.
 #' @param coverage height of intervention effect.
 #' @param tanh_slope sharpness of the intervention wave used for function
-#'                   continuity purposes.
+#'                   continuity purposes;larger values of this parameter cause
+#'                   the curve to more closely approach the step function.
 #'                   
 #' @return value of intervention effect.
 #' 
 #' @import tidyverse
 tanh_coverage_smoother <- function(t, start, stop, coverage, tanh_slope) {
+  # check that the tangent of the slope is always positive
+  if (tanh_slope <= 0) {
+    stop("Tangent of the slope must always be positive.")
+  }
+  
   0.5 * coverage * (tanh(tanh_slope * (t - start)) - tanh(tanh_slope * (t - stop)))
 }
 

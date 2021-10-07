@@ -4,7 +4,9 @@
 \name{country_codetoname}
 \alias{country_codetoname}
 \title{country_codetoname}
-\format{A data frame with 2 variables and 263 observations.}
+\format{
+A data frame with 2 variables and 263 observations.
+}
 \source{
 UN Department of Economic and Social Affairs: Populations dynamics. World Population Prospects 2019
 }

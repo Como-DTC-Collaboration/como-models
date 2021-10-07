@@ -94,7 +94,8 @@ solve_method.
 \deqn{\frac{dC(t)}{dt} = beta S(t) I(t)}
 \deqn{\frac{dD(t)}{dt} = mu I(t)}
 
-This function relies on the package deSolve.
+where Inter(t) is the value at time t of the intervention protocol defined by
+the intervention parameters. This function relies on the package deSolve.
 }}
 
 \section{Slots}{

@@ -1,3 +1,7 @@
+#' @include generics.R
+#'
+NULL
+
 #' An S4 object representing the SEIRDV.
 #'
 #' This class represents the SEIRV model, showing how populations of susceptible,
@@ -236,7 +240,8 @@ setMethod(
 #' \deqn{\frac{dC(t)}{dt} = beta S(t) I(t)}
 #' \deqn{\frac{dD(t)}{dt} = mu I(t)}
 #'
-#' This function relies on the package deSolve.
+#' where Inter(t) is the value at time t of the intervention protocol defined by
+#' the intervention parameters. This function relies on the package deSolve.
 #'
 #' @param object an object of the class SEIRDV
 #' @param times (double) a sequence of time points at which the solution to
@@ -289,6 +294,8 @@ setMethod(
         stop=intervention_parameters(object)$stops,
         coverage= intervention_parameters(object)$coverages)
     
+    # use tstep=0.1 and tanh_slope=1 for good nice step-function-like shape of
+    # the intervention wave
     sim_parms <- SimulationParameters(start =0, stop = tail(times, n=1),
                                       tstep = 0.1)
     

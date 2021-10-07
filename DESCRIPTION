@@ -37,6 +37,8 @@ Collate:
     'generics.R'
     'SEIRD.R'
     'SEIRDAge.R'
+    'SEIRDV.R'
     'SEIRD_RU.R'
     'SEIaImIsRD.R'
     'data.R'
+    'intervention.R'
