@@ -7,11 +7,10 @@
 \alias{initial_conditions,SEIaImIsRD-method}
 \alias{transmission_parameters,SEIaImIsRD-method}
 \alias{initial_conditions<-,SEIaImIsRD-method}
-\alias{initial_conditions<-,SEIaImIsRD}
 \alias{transmission_parameters<-,SEIaImIsRD-method}
 \alias{run,SEIaImIsRD-method}
 \alias{R0,SEIaImIsRD-method}
-\title{SEIaImIsRD: an SEIRD model for compartments of different symptoms (asymptomatic, mild and severe) with different transmission rates (beta).}
+\title{An S4 object representing the SEIaImIsRD.}
 \usage{
 \S4method{initial_conditions}{SEIaImIsRD}(object)
 
@@ -29,15 +28,15 @@
 \item{object}{An object of class SEIaImIsRD}
 
 \item{value}{A numeric named list of values for transmission parameters:
-beta - a named list of the effective contact rate from each infected group (i.e. rate at which an infected individual exposes susceptible), each element with value in \link{0,1}
+beta - a named list of the effective contact rate from each infected group (i.e. rate at which an infected individual exposes susceptible), each element with value in \code{[0,1]}
 kappa - rate of progression from exposed to infectious (the reciprocal is the incubation period),
 omega - rate at which recovered individuals become susceptible,
 p_symptom - a named list of the probability of exposed individuals moving into each of the different infected groups,
 Here, only probabilities for the mild (p_symptom.mild) and severe (p_symptom.severe) groups need be specified and
 the asymptomatic probability is the remainder (1 - p_symptom.mild - p_symptom.severe). Thus we require
 p_symptom.mild + p_symptom.severe <= 1.
-gamma - a list of the rate of removal of each infected group (i.e. recovery rate of an infected individual), each element with value in \link{0,1}
-mu - a list of the rate of disease-caused mortality of each infected group, each element with value in \link{0,1}}
+gamma - a list of the rate of removal of each infected group (i.e. recovery rate of an infected individual), each element with value in \code{[0,1]}
+mu - a list of the rate of disease-caused mortality of each infected group, each element with value in \code{[0,1]}}
 
 \item{times}{A list of time points of the simulation period}
 
@@ -57,17 +56,16 @@ time series of incidences and deaths population fraction
 An R0 value
 }
 \description{
-An S4 object representing the SEIaImIsRD model: SEIRD with infected population
-that are composed of different symptome compartments: asymptomatic, mild and severe (current settings).
+This class defines the SEIaImIsRD model, an extension of the SEIRD model.
+The model shows how populations of susceptible, exposed, infectious and
+recovered individuals evolve over time, in which the infectious individuals
+are subgrouped into compartments according to different severity of symptoms, i.e. asymptomatic, mild and severe.
 }
 \details{
-This class represents an extension of the SEIRD model, showing how populations of susceptible,
-exposed, infectious and recovered individuals evolve over time, in which the infectious individuals
-are subgrouped into compartments according to different severity of symptoms, i.e. asymptomatic, mild and severe.
+Notes:
 \enumerate{
 \item Total initial population size is normalised to 1.
 \item The current model does not include natural death or birth.
-\item The current model defines different infection.
 }
 }
 \section{Methods (by generic)}{
@@ -123,4 +121,3 @@ and \code{rho} represents the spectral radius of a matrix (i.e. the largest abso
 The \code{F_i} are the new infections, while the \code{V_i} transfers of infections from one compartment to
 another. \code{x_0} is the disease-free equilibrium state.
 }
-\concept{objects}
