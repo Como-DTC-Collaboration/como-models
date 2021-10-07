@@ -80,7 +80,8 @@ thrown.
 
 \item \code{intervention_parameters<-}: Setter method for intervention parameters of the SEIRV model.
 
-Intervention parameters have same size.
+Intervention parameters have same size. This class is designed for interventions
+which last several days at least and have several days between them.
 
 \item \code{run}: Solves ODEs of the SEIRDV specified in object
 for the time points specified in times and integration method specified in

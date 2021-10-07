@@ -16,5 +16,6 @@ coverages.}
 object of class SEIRDV with intervention parameters assigned.
 }
 \description{
-Intervention parameters have same size.
+Intervention parameters have same size. This class is designed for interventions
+which last several days at least and have several days between them.
 }

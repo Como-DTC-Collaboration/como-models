@@ -174,7 +174,8 @@ setMethod("intervention_parameters", "SEIRDV",
 
 #' Set intervention parameters of the SEIRV model.
 #'
-#' Intervention parameters have same size.
+#' Intervention parameters have same size. This class is designed for interventions
+#' which last several days at least and have several days between them.
 #'
 #' @param object an object of the class SEIRDV
 #' @param value (list) list of intervention parameters: starts, stops and
@@ -191,7 +192,8 @@ setGeneric(
 
 #' @describeIn SEIRDV Setter method for intervention parameters of the SEIRV model.
 #'
-#' Intervention parameters have same size.
+#' Intervention parameters have same size. This class is designed for interventions
+#' which last several days at least and have several days between them.
 #'
 #' @param object an object of the class SEIRDV
 #' @param value (list) list of intervention parameters: starts, stops and

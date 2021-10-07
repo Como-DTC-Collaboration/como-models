@@ -135,6 +135,7 @@ intervention_protocol(int_parms, sim_parms, 1) %>%
   labs(x = "time (days)", y = "level of intervention") +
   theme(text = element_text(size = 20))
 ```
+Interventions for this model last several days at least and have several days between them.
 
 The simulation returns two objects: one is a data frame comprising the states over time. Here, the infectious proportion is steadily declining, plummeting to 0 after $t=20$.
 ```{r, fig.height = 5, fig.width = 7}
@@ -169,7 +170,7 @@ changes <- out_df$changes
 ggplot(changes, aes(x = time, y = value, fill = compartment)) +
   geom_bar(stat="identity", position = position_dodge()) +
   scale_color_brewer(palette = "Dark2") +
-  labs(x = "time (days)", y = "fraction of the population per day") +
+  labs(x = "time (days)", y = "fraction of the population \n per day") +
   theme(legend.position = "bottom", legend.title = element_blank(),
         text = element_text(size = 20))
 
@@ -180,7 +181,7 @@ In this section, we investigate the sensitivity of the number of deaths to the l
 in vaccinated individuals, $\delta_V$. We run the model for varying values of $\delta_V$ and plot the
 number of deaths per day over time.
 ```{r, fig.height = 5, fig.width = 7}
-# function to setup and run model for different beta values
+# function to setup and run model for different delta_V values
 run_seirdv <- function(delta_V_val) {
   inits <- list(S0=0.99, E0=0, I0=0.01, R0=0, V0=0)
   params <- list(beta=1, kappa=0.9, gamma=0.5, mu=0.1, nu=0.4, delta_V=delta_V_val,
@@ -196,7 +197,7 @@ run_seirdv <- function(delta_V_val) {
   out_df$changes
 }
 
-# run model across different beta values
+# run model across different delta_V values
 delta_V_vals <- c(0.1, 0.05, 0.01, 0.2, 0.5)
 for(i in seq_along(delta_V_vals)) {
   delta_V_temp <- delta_V_vals[i]
@@ -210,10 +211,10 @@ for(i in seq_along(delta_V_vals)) {
 # plot results
 result %>% 
   filter(compartment=="Deaths") %>% 
-  ggplot(aes(x=time, y=value, fill = as.factor(delta_V))) +
-  geom_bar(stat = "identity", position = position_dodge()) +
+  ggplot(aes(x=time, y=value, color = as.factor(delta_V))) +
+  geom_line(stat = "identity", position = position_dodge()) +
   scale_color_brewer(palette = "Dark2") +
-  labs(x = "time (days)", y = "fraction of the population \nthat died per day") +
+  labs(x = "time (days)", y = "fraction of the population \n that died per day") +
   theme(legend.position = "bottom", legend.title = element_blank(),
         text=element_text(size=20))
 
@@ -255,18 +256,19 @@ for(i in seq_along(nu_vals)) {
 # plot results
 result %>% 
   filter(compartment=="Deaths") %>% 
-  ggplot(aes(x=time, y=value, fill = as.factor(nu))) +
-  geom_bar(stat = "identity", position = position_dodge()) +
+  ggplot(aes(x=time, y=value, color = as.factor(nu))) +
+  geom_line(stat = "identity", position = position_dodge()) +
   scale_color_brewer(palette = "Dark2") +
-  labs(x = "time (days)", y = "fraction of the population that died per day") +
+  labs(x = "time (days)", y = "fraction of the population \n that died per day") +
   theme(legend.position = "bottom", legend.title = element_blank(),
         text=element_text(size=20))
 
 ```
 As we can see from the plot above, larger rates of maximum vaccination $\nu$ make the second wave of the number of deaths in the epidemic occur much further to the first peak. For larger $\nu$, we see no deaths for larger stretches of time, even though the second peak is larger.
 
-We now investigate the sensitivity of the start time of intervention values, `start_val`. We run the model for varying values of `start_val` and plot the
-number of deaths per day over time.
+We now investigate the sensitivity of the start time of intervention values, `start_val`. We run the model for varying values of `start_val` and plot the number of deaths per day over time.
+
+For this investigation, we are switching to a new intervention that starts at start_val and continues to 100, rather than the one you've been using previously
 ```{r, fig.height = 5, fig.width = 7}
 # function to setup and run model for different start intervention values
 run_seirdv <- function(start_val) {
@@ -284,7 +286,7 @@ run_seirdv <- function(start_val) {
   out_df$changes
 }
 
-# run model across different nu values
+# run model across different start_val values
 start_val <- c(0, 5, 10, 15, 20, 30, 45, 55)
 for(i in seq_along(start_val)) {
   start_temp <- start_val[i]
@@ -298,12 +300,12 @@ for(i in seq_along(start_val)) {
 # plot results
 result %>% 
   filter(compartment=="Deaths") %>% 
-  ggplot(aes(x=time, y=value, fill = as.factor(starts))) +
-  geom_bar(stat = "identity", position = position_dodge()) +
+  ggplot(aes(x=time, y=value, color = as.factor(starts))) +
+  geom_line(stat = "identity", position = position_dodge()) +
   scale_color_brewer(palette = "Dark2") +
-  labs(x = "time (days)", y = "fraction of the population that died per day") +
+  labs(x = "time (days)", y = "fraction of the population \n that died per day") +
   theme(legend.position = "bottom", legend.title = element_blank(),
         text=element_text(size=20))
 
 ```
-As we can see from the plot above, larger start time of intervention values, `start_val` produces deaths for much longer and the peak of their number is higher than in thr case of smaller `start_val`.
+As we can see from the plot above, larger start time of intervention values, `start_val` produces deaths for much longer and the peak of their number is higher than in the case of smaller `start_val`.
