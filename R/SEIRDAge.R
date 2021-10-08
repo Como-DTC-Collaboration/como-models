@@ -38,31 +38,31 @@ NULL
 #' @export SEIRDAge
 #' 
 SEIRDAge <- setClass('SEIRDAge',
-         # slots
-         slots = c(
-           output_names = 'list',
-           initial_condition_names = 'list',
-           transmission_parameter_names = 'list',
-           initial_conditions = 'list',
-           transmission_parameters = 'list',
-           age_ranges = 'list',
-           n_age_categories = 'numeric',
-           contact_matrix = 'matrix'
-         ),
-
-         # prototypes for the slots, automatically set output and param
-         # names
-         prototype = list(
-           output_names = list('S', 'E', 'I', 'R', 'D' ,'Incidence'),
-           initial_condition_names = list('S0', 'E0', 'I0', 'R0', 'D0'),
-           transmission_parameter_names = list('b', 'k', 'g', 'mu'),
-           initial_conditions = vector(mode = "list", length = 5),
-           transmission_parameters = vector(mode = "list", length = 4),
-           age_ranges = vector(mode = 'list'),
-           n_age_categories = NA_real_,
-           contact_matrix = matrix(NA)
-
-         )
+                     # slots
+                     slots = c(
+                       output_names = 'list',
+                       initial_condition_names = 'list',
+                       transmission_parameter_names = 'list',
+                       initial_conditions = 'list',
+                       transmission_parameters = 'list',
+                       age_ranges = 'list',
+                       n_age_categories = 'numeric',
+                       contact_matrix = 'matrix'
+                     ),
+                     
+                     # prototypes for the slots, automatically set output and param
+                     # names
+                     prototype = list(
+                       output_names = list('S', 'E', 'I', 'R', 'D' ,'Incidence'),
+                       initial_condition_names = list('S0', 'E0', 'I0', 'R0', 'D0'),
+                       transmission_parameter_names = list('b', 'k', 'g', 'mu'),
+                       initial_conditions = vector(mode = "list", length = 5),
+                       transmission_parameters = vector(mode = "list", length = 4),
+                       age_ranges = vector(mode = 'list'),
+                       n_age_categories = NA_real_,
+                       contact_matrix = matrix(NA)
+                       
+                     )
 )
 
 # Setter and getter methods for initial_conditions of an age-structured
@@ -75,6 +75,7 @@ SEIRDAge <- setClass('SEIRDAge',
 #'
 #' @return Initial conditions of SEIRDAge model.
 #' @export
+#' 
 setMethod('initial_conditions', 'SEIRDAge',
           function(object) object@initial_conditions)
 
@@ -104,13 +105,13 @@ setMethod(
     if (abs(sum(S0, E0, I0, R0, D0)-1)>=10^(-3)) {
       stop('Invalid initial conditions. Must sum to 1.')
     }
-
+    
     # create list of parameter values
     ic <- list(S0, E0, I0, R0, D0)
-
+    
     # add names to each value
     names(ic) = object@initial_condition_names
-
+    
     # raise errors if age category dimensions do not match initial state vectors
     # also raise errors if initial state and parameter values are not doubles
     for (p in list('S0', 'E0', 'I0', 'R0', 'D0')){
@@ -123,10 +124,10 @@ setMethod(
     if(abs(sum(S0, E0, I0, R0, D0)-1)>=10^(-3)){
       stop('All compartments need to sum up to 1.')
     }
-
+    
     # if all above tests are passed, assign the ic namelist to the object
     object@initial_conditions <- ic
-
+    
     return(object)
   })
 
@@ -161,7 +162,7 @@ setMethod('transmission_parameters', 'SEIRDAge',
 setMethod(
   'transmission_parameters<-', 'SEIRDAge',
   function(object, value) {
-
+    
     # create list of parameter values
     b <- value$b
     k <- value$k
@@ -169,23 +170,28 @@ setMethod(
     mu <- value$mu
     
     trans_params <- list(b, k, g, mu)
-
+    
     # add names to each value
     names(trans_params) = object@transmission_parameter_names
-
+    
     # check format of parameters b, k and g
     if(length(b) != 1 | length(k) != 1 | length(g) != 1){
       stop('The parameter values should be 1-dimensional.')
     }
     
+    if(length(mu) != 1 & length(mu) != object@n_age_categories){
+      stop('The mortality parameter values should be of length 1 or
+            number of age classes.')
+    }
+    
     # Set the row and column names of the instance's contact matrix
     rownames(object@contact_matrix) <- object@age_ranges
     colnames(object@contact_matrix) <- object@age_ranges
-
+    
     # if all above tests are passed, assign the trans_params namelist to the
     # object
     object@transmission_parameters <- trans_params
-
+    
     return(object)
   })
 
@@ -225,9 +231,9 @@ setMethod(
 #' @importFrom magrittr "%>%"
 #' @importFrom rlang .data
 setMethod(
-  "run", "SEIRDAge",
+  "run", 'SEIRDAge',
   function(object, times, solve_method = 'lsoda') {
-
+    
     # error if times is not a vector or list of doubles
     if(!is.double(times)){
       stop('Evaluation times of the model storage format must be a vector.')
@@ -241,7 +247,7 @@ setMethod(
     
     #fetch number of age catagories
     n_age <- object@n_age_categories
-
+    
     # set initial state vector
     state <- c(S = initial_conditions(object)$S0,
                E = initial_conditions(object)$E0,
@@ -249,7 +255,7 @@ setMethod(
                R = initial_conditions(object)$R0,
                D = initial_conditions(object)$D0,
                cc = rep(0, n_age))
-
+    
     # set parameters vector
     parameters <- c(b = transmission_parameters(object)$b,
                     k = transmission_parameters(object)$k,
@@ -258,7 +264,7 @@ setMethod(
     
     # fetch contact matrix of the instance
     C = object@contact_matrix
-
+    
     # function for RHS of ode system
     right_hand_side <- function(t, state, parameters) {
       with(
@@ -283,18 +289,18 @@ setMethod(
           list(c(dS, dE, dI, dR, dD, dcc))
         })
     }
-
+    
     # call ode solver
     out <- ode(
       y = state, times = times, func = right_hand_side,
       parms = parameters, method = solve_method)
-
+    
     #output as a dataframe
     output <- as.data.frame.array(out)
-
+    
     # melt dataframe to wide format
     out_temp = melt(output, 'time')
-
+    
     # add compartment and age range columns
     n_compartment_measurements <- length(times) * n_age
     out_temp$compartment = c(replicate(n_compartment_measurements, "S"),
@@ -303,9 +309,9 @@ setMethod(
                              replicate(n_compartment_measurements, "R"),
                              replicate(n_compartment_measurements, "D"),
                              replicate(n_compartment_measurements, "cc"))
-
+    
     out_temp$age_range = unlist(rep(object@age_ranges, each=length(times)))
-
+    
     # drop the old variable column
     out_temp = out_temp %>% 
       dplyr::select(-.data$variable) %>% 
@@ -329,7 +335,6 @@ setMethod(
       dplyr::filter(.data$compartment != "cc") %>% 
       droplevels() %>% 
       dplyr::ungroup()
-
+    
     return(list("states" = states, "changes" = changes))
   })
-

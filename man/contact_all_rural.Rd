@@ -4,7 +4,9 @@
 \name{contact_all_rural}
 \alias{contact_all_rural}
 \title{contact_all_rural}
-\format{A Large list of 177 tibbles, each a 16x16 list of doubles.}
+\format{
+A Large list of 177 tibbles, each a 16x16 list of doubles.
+}
 \source{
 \url{https://github.com/kieshaprem/synthetic-contact-matrices}
 }

@@ -4,7 +4,9 @@
 \name{contact_home}
 \alias{contact_home}
 \title{contact_home}
-\format{A Large list of 152 tibbles, each a 16x16 list of doubles.}
+\format{
+A Large list of 152 tibbles, each a 16x16 list of doubles.
+}
 \source{
 \url{https://journals.plos.org/ploscompbiol/article?id=10.1371/journal.pcbi.1005697#sec020}
 }
