@@ -45,7 +45,7 @@ We can vaccinate not only the susceptibles, but also $E$, $I$ and $R$s. However,
 they have already been exposed to the illness so they do not change compartment
 assignment. Births and deaths unrelated to the infection are not considered in
 this model. The ODEs describing how the five populations evolve over time are
-$$\frac{\text{d}S}{\text{d}t} = -\beta S I - \nu Inter(t) S + \delta_V V + \delta_R R,$$
+$$\frac{\text{d}S}{\text{d}t} = -\beta S I - \nu \text{Inter}(t) S + \delta_V V + \delta_R R,$$
 $$\frac{\text{d}E}{\text{d}t} = \beta S I -\kappa E,$$
 $$\frac{\text{d}I}{\text{d}t} = \kappa E - (\gamma + \mu) I,$$
 $$\frac{\text{d}R}{\text{d}t} = \gamma I - \delta_R R,$$
