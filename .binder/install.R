@@ -1,21 +1,19 @@
-install.packages(
-  "comomodels",
-  "covr",
-  "deSolve",
-  "dplyr",
-  "forcats",
-  "ggplot2",
-  "glue",
-  "gridExtra",
-  "knitr",
-  "magrittr",
-  "markdown",
-  "methods",
-  "R",
-  "reshape2",
-  "rlang",
-  "rmarkdown",
-  "testthat",
-  "tidyverse",
-  "viridis"
-)
+install.packages("comomodels")
+install.packages("covr")
+install.packages("deSolve")
+install.packages("dplyr")
+install.packages("forcats")
+install.packages("ggplot2")
+install.packages("glue")
+install.packages("gridExtra")
+install.packages("knitr")
+install.packages("magrittr")
+install.packages("markdown")
+install.packages("methods")
+install.packages("R")
+install.packages("reshape2")
+install.packages("rlang")
+install.packages("rmarkdown")
+install.packages("testthat")
+install.packages("tidyverse")
+install.packages("viridis")
