@@ -1,0 +1,21 @@
+install.packages(
+  "comomodels",
+  "covr",
+  "deSolve",
+  "dplyr",
+  "forcats",
+  "ggplot2",
+  "glue",
+  "gridExtra",
+  "knitr",
+  "magrittr",
+  "markdown",
+  "methods",
+  "R",
+  "reshape2",
+  "rlang",
+  "rmarkdown",
+  "testthat",
+  "tidyverse",
+  "viridis"
+)
