@@ -1,0 +1,2 @@
+R --quiet -e "devtools::install()"
+
