@@ -20,7 +20,7 @@
 
 \S4method{transmission_parameters}{SEIaImIsRD}(object) <- value
 
-\S4method{run}{SEIaImIsRD}(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
+\S4method{run}{SEIaImIsRD}(object, times, solve_method = "lsoda")
 
 \S4method{R0}{SEIaImIsRD}(model)
 }

@@ -25,7 +25,7 @@
 
 \S4method{intervention_parameters}{SEIRDV}(object) <- value
 
-\S4method{run}{SEIRDV}(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
+\S4method{run}{SEIRDV}(object, times, solve_method = "lsoda")
 }
 \arguments{
 \item{object}{an object of the class SEIRDV}
@@ -80,8 +80,8 @@ thrown.
 
 \item \code{intervention_parameters<-}: Setter method for intervention parameters of the SEIRV model.
 
-Intervention parameters have same size. This class is designed for interventions
-which last several days at least and have several days between them.
+Intervention parameters have same size. A tanh function is used to smooth interventions during simulation. This class is designed for interventions
+which last several days at least and have several days between them; interventions involving rapid fluctuations may be distorted.
 
 \item \code{run}: Solves ODEs of the SEIRDV specified in object
 for the time points specified in times and integration method specified in

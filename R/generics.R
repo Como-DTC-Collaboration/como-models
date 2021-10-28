@@ -70,6 +70,7 @@ setGeneric(
 #' @param solve_method (string) a string specifying the chosen numerical integration method
 #' for solving the ode system. Default is "lsoda" which is also the default for
 #' the ode function in the deSolve package used in this function
+#' @param ... other parameters
 #'
 #' @return a named list of two dataframes: 'states' which describes the time evolution of
 #' compartment proportions; and 'changes' which describes the time evolution of daily quantities
@@ -79,7 +80,7 @@ setGeneric(
 #' @export
 setGeneric(name = "run",
            def = function(object, times = seq(0, 100, by = 1),
-                          solve_method = "lsoda") {
+                          solve_method = "lsoda", ...) {
              standardGeneric("run")})
 
 #' Calculates basic reproduction number

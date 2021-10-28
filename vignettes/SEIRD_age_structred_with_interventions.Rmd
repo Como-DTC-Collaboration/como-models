@@ -1,10 +1,10 @@
 ---
-title: "SEIRDAge_interventions"
-author: "Oscar Dimdore-Miles and Idil Cazimoglu"
-date: "15/07/2021"
+title: "SEIRD_age_structred_with_interventions"
+author: "Oscar Dimdore-Miles, Idil Cazimoglu and Liangti Dai"
+date: "28/10/2021"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{SEIR_age_structured}
+  %\VignetteIndexEntry{The age-structured SEIRD with inverventions}
   %\VignetteEngine{knitr::rmarkdown}
   %\VignetteEncoding{UTF-8}
 ---
@@ -102,13 +102,15 @@ c_combined_wider <- c_combined %>%
   ungroup() %>% 
   select(-age_infectee) %>% 
   as.matrix()
-model <- comomodels::SEIRDAge_interventions(n_age_categories = n_ages,
-                 contact_matrix_1 = c_combined_wider, 
-                 contact_matrix_2 = c_combined_wider, 
-                 contact_matrix_3 = c_combined_wider, age_ranges = as.list(age_names))
+model <- SEIRDAge_interventions(n_age_categories = n_ages,
+                                contact_matrix_1 = c_combined_wider,
+                                contact_matrix_2 = c_combined_wider, 
+                                contact_matrix_3 = c_combined_wider,
+                                age_ranges = as.list(age_names))
 
-transmission_parameters(model) <- list(beta = 1, kappa=0.5, gamma=0.5, 
-                                 mu = 0.01)
+transmission_parameters(model) <- list(isolated_frac = 0.4,
+                                       beta_isolated = 1, beta_not_isolated = 1,
+                                       kappa = 0.5, gamma = 0.5, mu = 0.01)
 
 initial_conditions(model) <- list(S0=pop_fraction*0.99,
                                   E0=rep(0, n_ages),
