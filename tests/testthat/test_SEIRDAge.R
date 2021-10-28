@@ -58,73 +58,95 @@ test_that("can set new initial conditions for the SEIRDAge", {
                expected_ics)
 
   # Test input errors
-  expect_error(
-    initial_conditions(my_model) <- list(S0=c(0.4, 0, 0.4),
-                                         E0=c(0, 0),
-                                         I0=c(0.5, 0.15),
-                                         R0=c(0, 0),                                   
-                                         D0 = c(0, 0))
-    )
-  expect_error(
+  expect_error({
     initial_conditions(my_model) <- list(S0=c(0.4, 0, 0.4),
                                          E0=c(0, 0),
                                          I0=c(0.05, 0.15),
-                                         R0=c(0, 0),
+                                         R0=c(0, 0),                                   
                                          D0 = c(0, 0))
-  )
-  expect_error(
     initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
                                          E0=c(0, 0, 0),
                                          I0=c(0.05, 0.15),
                                          R0=c(0, 0),
                                          D0 = c(0, 0))
-    
-  )
-   expect_error( 
     initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
                                          E0=c(0, 0),
                                          I0=c(0.05, 0, 0.15),
                                          R0=c(0, 0),
                                          D0 = c(0, 0))
-    
-   )
-   expect_error(
     initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
                                          E0=c(0, 0),
                                          I0=c(0.05, 0.15),
                                          R0=c(0, 0, 0),
                                          D0 = c(0, 0))
-   
-   )
-    expect_error( 
+    initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
+                                         E0=c(0, 0),
+                                         I0=c(0.05, 0.15),
+                                         R0=c(0, 0),
+                                         D0 = c(0, 0, 0))
+  })
+
+    expect_error({
     initial_conditions(my_model) <- list(S0=0,
                                          E0=c(0, 0),
                                          I0=c(0.05, 0.15),
                                          R0=c(0, 0),
                                          D0 = c(0, 0))
-    
-    )
-    expect_error( 
     initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
                                          E0=0,
                                          I0=c(0.05, 0.15),
                                          R0=c(0, 0),
                                          D0 = c(0, 0))
-    
-    )
-    expect_error( 
     initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
                                          E0=c(0, 0),
                                          I0=0,
                                          R0=c(0, 0),
                                          D0 = c(0, 0))
-    
-    )
-    expect_error( 
     initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
                                          E0=c(0, 0),
                                          I0=c(0.05, 0.15),
                                          R0=0,
+                                         D0 = c(0, 0))
+    initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
+                                         E0=c(0, 0),
+                                         I0=c(0.05, 0.15),
+                                         R0=c(0, 0),
+                                         D0 = 0)
+    })
+
+    expect_error({
+    initial_conditions(my_model) <- list(S0=c('0.4', 0.4),
+                                         E0=c(0, 0),
+                                         I0=c(0.05, 0.15),
+                                         R0=c(0, 0),
+                                         D0 = c(0, 0))
+    initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
+                                         E0=c(0, '0'),
+                                         I0=c(0.05, 0.15),
+                                         R0=c(0, 0),
+                                         D0 = c(0, 0))
+    initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
+                                         E0=c(0, 0),
+                                         I0=c(0.05, '0.15'),
+                                         R0=c(0, 0),
+                                         D0 = c(0, 0))
+    initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
+                                         E0=c(0, 0),
+                                         I0=c(0.05, 0.15),
+                                         R0=c('0', 0),
+                                         D0 = c(0, 0))
+    initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
+                                         E0=c(0, 0),
+                                         I0=c(0.05, 0.15),
+                                         R0=c(0, 0),
+                                         D0 = c(0, '0'))
+    })
+
+    expect_error(
+    initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
+                                         E0=c(0, 0),
+                                         I0=c(0.5, 0.15),
+                                         R0=c(0, 0),
                                          D0 = c(0, 0))
     
     )
@@ -153,6 +175,10 @@ test_that("can set new transmission parameters for the SEIRDAge", {
   expect_error(
     transmission_parameters(my_model) <- list(b=1, k=0.5, g=c(1, 0),  mu = 0.01)
   )
+  expect_error(
+    transmission_parameters(my_model) <- list(b=1, k=0.5, g=0.5,
+                                              mu = c(0.01, 0.01, 0.1))
+  )
 })
 
 test_that("can run simulation for the SEIRDAge", {
@@ -168,34 +194,46 @@ test_that("can run simulation for the SEIRDAge", {
 
   transmission_parameters(my_model) <- list(b=1, k=0.5, g=0.5, mu = 0.01)
 
-  expected_output <- data.frame('time'=rep(0:2, 12),
-                                'value'=c(rep(0.6, 3), rep(0.4, 3), rep(0, 30)))
+  expected_output_states <- data.frame('time'=rep(0:2, 10),
+                                'value'=c(rep(0.6, 3), rep(0.4, 3), rep(0, 24)))
+  
+  expected_output_changes <- data.frame('time'=rep(0:2, 4),
+                                'value'=rep(0, 12))
                                 
   times = seq(0, 2, by = 1)
-  expected_output$compartment = c(replicate(length(times)*2, "S"),
+  expected_output_states$compartment = c(replicate(length(times)*2, "S"),
                            replicate(length(times)*2, "E"),
                            replicate(length(times)*2, "I"),
                            replicate(length(times)*2, "R"),
-                           replicate(length(times)*2, "D"),
-                           replicate(length(times)*2, "Incidence"))
-  expected_output$age_range = unlist(rep(my_model@age_ranges, each=3))
-  expected_output <- expected_output %>% 
+                           replicate(length(times)*2, "D"))
+  expected_output_states$age_range = unlist(rep(my_model@age_ranges, each=3))
+  expected_output_states <- expected_output_states %>% 
     dplyr::mutate(compartment=as.factor(compartment)) %>% 
     dplyr::mutate(compartment=forcats::fct_relevel(compartment, "S", "E", "I",
                                                    "R", "D")) %>% 
     dplyr::mutate(age_range=as.factor(age_range)) %>% 
     dplyr::mutate(age_range=forcats::fct_relevel(age_range, my_model@age_ranges))
-  
-  
+  expected_output_changes$age_range <- unlist(rep(my_model@age_ranges, each=3))
+  expected_output_changes <- expected_output_changes %>% 
+    dplyr::mutate(age_range=as.factor(age_range)) %>% 
+    dplyr::mutate(age_range=forcats::fct_relevel(age_range, my_model@age_ranges)) %>% 
+    dplyr::mutate(compartment = c(replicate(length(times)*2, "Deaths"),
+                            replicate(length(times)*2, "Incidence"))) %>% 
+    dplyr::select("time", "value", "compartment", "age_range")
+    
+  expected_output = list("states" = expected_output_states,
+                         "changes" = expected_output_changes)
   # Test output is correct
-  expect_equal(run(my_model, seq(0, 2, by = 1)),
-               expected_output)
+  actual_output <- run(my_model, seq(0, 2, by = 1))
+  expect_equal(actual_output, expected_output)
 
   # Test input errors
   expect_error({
     run(my_model, '0')
+    run(my_model, c('0', 1, 2, 3))
+    run(my_model, c(0, 1, 2, 3, 3, 4.5))
     run(my_model, seq(0, 2, by = 1))})
-
+  
   # Snapshot testing to check that outputs to the command line as expected
   # expect_snapshot_output(run(my_model, seq(0, 2, by = 1)))
 

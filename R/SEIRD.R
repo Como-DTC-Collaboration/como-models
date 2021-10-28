@@ -1,3 +1,7 @@
+#' @include generics.R
+#'
+NULL
+
 #' An S4 object representing the SEIRD.
 #'
 #' This class represents the SEIR model, showing how populations of susceptible,
@@ -37,59 +41,28 @@ SEIRD <- setClass("SEIRD",
            transmission_parameters = vector(mode = "list", length = 4)
          )
 )
-#' Retrieves initial conditions of SEIRD model.
-#'
-#' @param object An object of the class SEIRD.
-#' @rdname SEIRD-class
-#' @export
-setGeneric("initial_conditions",
-           function(object) standardGeneric("initial_conditions"))
 
 
-#' Retrieves initial conditions of SEIRD model.
+#' @describeIn SEIRD Retrieves initial conditions of SEIRD model.
 #'
 #' @param object An object of the class SEIRD.
-#' @aliases initial_conditions,ANY,ANY-method
-#' @rdname SEIRD-class
+#' 
 #' @export
 setMethod("initial_conditions", "SEIRD",
           function(object) object@initial_conditions)
 
-#' Retrieves transmission parameters of SEIR model.
-#'
-#' @param object An object of the class SEIRD.
-#' @rdname SEIRD-class
-#' @export
-setGeneric("transmission_parameters",
-           function(object) standardGeneric("transmission_parameters"))
 
-#' Retrieves transmission parameters of SEIR model.
+#' @describeIn SEIRD Retrieves transmission parameters of SEIR model.
 #'
 #' @param object An object of the class SEIRD.
-#' @aliases transmission_parameters,ANY,ANY-method
-#' @rdname SEIRD-class
+#' 
 #' @export
 setMethod("transmission_parameters", "SEIRD",
           function(object) object@transmission_parameters)
 
-#' Set initial conditions (S0, E0, I0 and R0) of the SEIR model.
-#'
-#' All initial conditions must sum up to 1.
-#' If the initial conditions provided to do not sum to 1, an error is thrown.
-#'
-#' @param object an object of the class SEIRD
-#' @param value (list) list of initial conditions S0, E0, I0, R0.
-#'
-#' @return object of class SEIRD with initial conditions assigned.
-#' @rdname SEIRD-class
-#' @export
-setGeneric(
-  "initial_conditions<-",
-  function(object, value) {
-    standardGeneric("initial_conditions<-")
-  })
+# SEIRD class specific functions
 
-#' Setter method for initial conditions (S0, E0, I0 and R0)
+#' @describeIn SEIRD Setter method for initial conditions (S0, E0, I0 and R0)
 #' of the SEIR model.
 #'
 #' All initial conditions must sum up to 1.
@@ -99,9 +72,7 @@ setGeneric(
 #' @param value (list) list of initial conditions S0, E0, I0, R0.
 #'
 #' @return object of class SEIRD with initial conditions assigned.
-#'
-#' @aliases initial_conditions<-,ANY,ANY-method
-#' @rdname SEIRD-class
+#' 
 #' @export
 setMethod(
   "initial_conditions<-", "SEIRD",
@@ -130,26 +101,8 @@ setMethod(
     object
   })
 
-#' Set transmission parameters for SEIRD model
-#'
-#' If the transmission parameters provided to are not 1-dimensional an error is
-#' thrown.
-#'
-#' @param object (SEIRD model)
-#' @param value (list) list of values for beta, kappa, gamma, mu, respectively.
-#'
-#' @return object of class SEIRD with transmission parameter values
-#' assigned.
-#' @rdname SEIRD-class
-#' @export
-setGeneric(
-  "transmission_parameters<-",
-  function(object, value) {
-    standardGeneric("transmission_parameters<-")
-  })
 
-
-#' Set transmission parameters (beta, kappa, gamma and mu)
+#' @describeIn SEIRD Set transmission parameters (beta, kappa, gamma and mu)
 #' of the SEIR model.
 #'
 #' If the transmission parameters provided to are not 1-dimensional an error is
@@ -160,8 +113,7 @@ setGeneric(
 #'
 #' @return object of class SEIRD with transmission parameter values
 #' assigned.
-#' @aliases transmission_parameters<-,ANY,ANY-method
-#' @rdname SEIRD-class
+#' 
 #' @export
 setMethod(
   "transmission_parameters<-", "SEIRD",
@@ -188,9 +140,8 @@ setMethod(
     object
   })
 
-# SEIRD class specific functions
 
-#' Solves ODEs of the SEIRD specified in object
+#' @describeIn SEIRD Solves ODEs of the SEIRD specified in object
 #' for the time points specified in times and integration method specified in
 #' solve_method.
 #'
@@ -208,45 +159,13 @@ setMethod(
 #' the system of ODEs should be returned. Must be of the form
 #' seq(t_start, t_end, by=t_step). Default time series is seq(0, 100, by = 1).
 #' @param solve_method (string) a string of chosen numerical integration method
-#' for solving the ode system. Default is "lsoda" which is also the default for
+#' for solving the ode system. Default is lsoda which is also the default for
 #' the ode function in the deSolve package used in this function.
 #'
 #' @return two dataframes: one with the time steps, age range, time series of S,
 #' E, I and R population fractions, and one with the time steps, age range,
 #' time series of incidences and deaths population fraction.
-#' @rdname SEIRD-class
-#' @export
-setGeneric(name = "run",
-           def = function(object, times = seq(0, 100, by = 1),
-                          solve_method = "lsoda") {
-             standardGeneric("run")})
-
-#' Solves ODEs of the SEIRD specified in object
-#' for the time points specified in times and integration method specified in
-#' solve_method.
-#'
-#' \deqn{\frac{dS(t)}{dt} = - beta S(t) I(t)}
-#' \deqn{\frac{dE(t)}{dt} =  beta S(t) I(t) - kappa E(t)}
-#' \deqn{\frac{dI(t)}{dt} = kappa E(t) - (gamma + mu) I(t)}
-#' \deqn{\frac{dR(t)}{dt} = gamma I(t)}
-#' \deqn{\frac{dC(t)}{dt} = beta S(t) I(t)}
-#' \deqn{\frac{dD(t)}{dt} = mu I(t)}
-#'
-#' This function relies on the package deSolve.
-#'
-#' @param object an object of the class SEIRD
-#' @param times (double) a sequence of time points at which the solution to
-#' the system of ODEs should be returned. Must be of the form
-#' seq(t_start, t_end, by=t_step). Default time series is seq(0, 100, by = 1).
-#' @param solve_method (string) a string of chosen numerical integration method
-#' for solving the ode system. Default is "lsoda" which is also the default for
-#' the ode function in the deSolve package used in this function.
-#'
-#' @return two dataframes: one with the time steps, age range, time series of S,
-#' E, I and R population fractions, and one with the time steps, age range,
-#' time series of incidences and deaths population fraction.
-#' @aliases run,ANY,ANY-method
-#' @rdname SEIRD-class
+#' 
 #' @export
 setMethod(
   "run", "SEIRD",
@@ -325,17 +244,7 @@ setMethod(
     list("states" = states, "changes" = changes)
   })
 
-#' Calculates basic reproduction number
-#'
-#' @param model a model object from comomodels package
-#'
-#' @return an R0 value
-#' @export
-setGeneric("R0", def = function(model) {
-  standardGeneric("R0")
-})
-
-#' Calculates basic reproduction number for SEIRD model
+#' @describeIn SEIRD Calculates basic reproduction number for SEIRD model
 #'
 #' The R0 parameter is given by:
 #' \deqn{R_0 = \beta/(\gamma + \mu)}
@@ -343,8 +252,8 @@ setGeneric("R0", def = function(model) {
 #' @param model an SEIRD model
 #'
 #' @return an R0 value
+#' 
 #' @export
-#' @aliases R0,ANY,ANY-method
 setMethod("R0", "SEIRD", function(model) {
   beta <- model@transmission_parameters$beta
   gamma <- model@transmission_parameters$gamma
