@@ -6,7 +6,7 @@ NULL
 #'
 #' This class represents the SEIRV model, showing how populations of susceptible,
 #' exposed, infectious and recovered individuals evolve over time. Vaccinated
-#' individuals are considered in their own compartment
+#' individuals are considered in their own compartment.
 #'
 #' @slot output_names list of compartments name which are used by the model and
 #'       incidence.
