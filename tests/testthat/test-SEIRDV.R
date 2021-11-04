@@ -48,6 +48,18 @@ test_that("Transmission parameters can be set and retrieved", {
     transmission_parameters(my_model) <- list(
       beta=1, kappa=list(0.1, 0.1), gamma=0.5, mu=0.1,
       nu = 0.1, delta_V = 0.1, delta_R = 0.1))
+  expect_error(
+    transmission_parameters(my_model) <- list(
+      beta=1, kappa=0.5, gamma=0.5, mu=0.1,
+      nu = c(0.1, 0.2), delta_V = 0.1, delta_R = 0.1))
+  expect_error(
+    transmission_parameters(my_model) <- list(
+      beta=1, kappa=0.5, gamma=0.5, mu=0.1,
+      nu = 0.1, delta_V = c(0.1, 0), delta_R = 0.1))
+  expect_error(
+    transmission_parameters(my_model) <- list(
+      beta=1, kappa=0.5, gamma=0.5, mu=0.1,
+      nu = 0.1, delta_V = 0.1, delta_R = c(0.1, 0.2)))
 })
 
 test_that("Intervention parameters can be set and retrieved", {

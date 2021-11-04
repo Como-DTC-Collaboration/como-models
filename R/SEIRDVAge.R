@@ -179,7 +179,7 @@ setMethod(
     kappa <- value$kappa
     gamma <- value$gamma
     mu <- value$mu
-    nu <- value$mu
+    nu <- value$nu
     delta_V <- value$delta_V
     delta_R <- value$delta_R
     
