@@ -256,29 +256,30 @@ setMethod(
     # raise errors if intervention parameters are not doubles
     for (p in list("starts", "stops")) {
       if (!is.numeric(interv_par[[p]])) {
-        stop(glue("{p} format must be numeric"))
+        stop(glue("{p} format must be numeric."))
       }
     }
-    if(!is.numeric(interv_par$coverages) |
-       !is.list(interv_par$coverages) |
-       !is.numeric(unlist(interv_par$coverages))) {
-      stop("coverages format must be numeric or list of numerics")
+    if(!is.numeric(interv_par$coverages) &
+       !(is.list(interv_par$coverages) & is.numeric(unlist(interv_par$coverages)))) {
+      stop("coverages format must be numeric or list of numerics.")
     }
     
     # check that the intervention parameters are all of the same size
     if (length(interv_par$starts) != length(interv_par$stops)) {
       stop("Invalid intervention parameters. Must have same size.")
     }
+    
     if(is.numeric(interv_par$coverages)){
       if(length(interv_par$starts) != length(interv_par$coverages)){
         stop("Invalid intervention parameters. Must have same size.")
       }
     }
     else{
-      if(length(lenghts(interv_par$coverages)) != object@n_age_categories){
+      if(length(interv_par$coverages) != object@n_age_categories){
         stop("Wrong number of age groups for coverages for intervention parameters.")
       }
-      if(lenghts(interv_par$coverages) != rep(length(interv_par$starts), object@n_age_categories)){
+      if(all(lengths(interv_par$coverages) != rep(length(interv_par$starts),
+                                                 object@n_age_categories))){
         stop("Invalid intervention parameters. Must have same size for each coverage.")
       }
     }
@@ -389,6 +390,7 @@ setMethod(
     }
     else{
       i = 1
+      inter_prot <- vector(mode = "list", length = n_age)
       for(age_cov in intervention_parameters(object)$coverages){
         int_parms <- 
           InterventionParameters(
@@ -405,19 +407,19 @@ setMethod(
     intervention <- function(t){
       if(is.numeric(inter_prot)){
         interv_func <- approxfun(times, inter_prot, rule=2)(t)
-        return(interv_func)
       }
       else{
-        interv_func <- numeric(object@n_age_categories)
-        for(i in 1:object@n_age_categories){
+        interv_func <- numeric(n_age)
+        for(i in 1:n_age){
           interv_func[i] <- approxfun(times, inter_prot[[i]], rule=2)(t)
         }
-        return(interv_func)
       }
+      
+      interv_func
     }
     
     # function for RHS of ode system
-    right_hand_side <- function(t, state, parameters) {
+    right_hand_side <- function(t, state, parameters, input) {
       with(
         as.list(c(state, parameters)),
         {
@@ -434,10 +436,10 @@ setMethod(
           # rate of change
           dS <- -b * S * C %*% I - n * inter * S + d_v * V + d_r * R
           dE <- b * S * C %*% I - k * E
-          dI <- k * E - g * I  - mu * I
+          dI <- k * E - g * I  - m * I
           dR <- g * I - d_r * R
           dV <- n * inter * S - d_v * V
-          dD <- mu * I
+          dD <- m * I
           dcc <- b * S * C %*% I
           # return the rate of change
           list(c(dS, dE, dI, dR, dV, dD, dcc))
@@ -461,6 +463,7 @@ setMethod(
                              replicate(n_compartment_measurements, "E"),
                              replicate(n_compartment_measurements, "I"),
                              replicate(n_compartment_measurements, "R"),
+                             replicate(n_compartment_measurements, "V"),
                              replicate(n_compartment_measurements, "D"),
                              replicate(n_compartment_measurements, "cc"))
     
@@ -470,7 +473,7 @@ setMethod(
     out_temp = out_temp %>% 
       dplyr::select(-.data$variable) %>% 
       dplyr::mutate(compartment=as.factor(.data$compartment)) %>% 
-      dplyr::mutate(compartment=forcats::fct_relevel(.data$compartment, "S", "E", "I", "R", "D", "cc")) %>% 
+      dplyr::mutate(compartment=forcats::fct_relevel(.data$compartment, "S", "E", "I", "R", "V", "D", "cc")) %>% 
       dplyr::mutate(age_range=as.factor(.data$age_range)) %>% 
       dplyr::mutate(age_range=forcats::fct_relevel(.data$age_range, object@age_ranges))
     

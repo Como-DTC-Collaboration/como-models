@@ -148,3 +148,5 @@ intervention_protocol <- function(int_parms,
   coverage <- stack_intervention_coverages(times, int_parms, tanh_slope)
   tibble(time=times, coverage=coverage)
 }
+
+InterventionParameters(start=c(17, 35, 42),stop=c(25, 39, 49),coverage=c(1, 1, 1))
