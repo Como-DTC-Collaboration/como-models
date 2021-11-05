@@ -10,16 +10,17 @@ test_that("SEIRDVAge model is instantiated correctly", {
                list('0-50', '50-100'))
   
   expect_equal(my_model@output_names,
-               list('S', 'E', 'I', 'R', 'V', 'D', 'Incidence'))
+               list('S', 'E', 'I', 'R', 'V', 'VR', 'D', 'Incidence'))
   
   expect_equal(my_model@initial_condition_names,
-               list('S0', 'E0', 'I0', 'R0', 'V0', 'D0'))
+               list('S0', 'E0', 'I0', 'R0', 'V0', 'VR0', 'D0'))
   
   expect_equal(my_model@transmission_parameter_names,
-               list('beta', 'kappa', 'gamma','mu', 'nu', 'delta_V', 'delta_R'))
+               list('beta', 'kappa', 'gamma','mu', 'nu', 'delta_V', 'delta_R',
+                    'delta_VR'))
   
-  expect_length(my_model@initial_conditions, 6)
-  expect_length(my_model@transmission_parameters, 7)
+  expect_length(my_model@initial_conditions, 7)
+  expect_length(my_model@transmission_parameters, 8)
   expect_length(my_model@intervention_parameters, 3)
   
   expect_length(my_model@age_ranges, my_model@n_age_categories)
@@ -34,6 +35,7 @@ test_that("Initial conditions can be set and retrieved", {
                                      I0=c(0.05, 0.15),
                                      R0=c(0, 0),
                                      V0=c(0, 0),
+                                     VR0=c(0, 0),
                                      D0 = c(0, 0))
   
   # Test output is correct
@@ -42,6 +44,7 @@ test_that("Initial conditions can be set and retrieved", {
                        'I0'=c(0.05, 0.15),
                        'R0'=c(0, 0),
                        'V0'=c(0, 0),
+                       'VR0'=c(0, 0),
                        'D0' = c(0, 0))
   
   expect_equal(initial_conditions(my_model),
@@ -54,36 +57,49 @@ test_that("Initial conditions can be set and retrieved", {
                                          I0=c(0.05, 0.15),
                                          R0=c(0, 0),
                                          V0=c(0, 0),
+                                         VR0=c(0, 0),
                                          D0 = c(0, 0))
     initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
                                          E0=c(0, 0, 0),
                                          I0=c(0.05, 0.15),
                                          R0=c(0, 0),
                                          V0=c(0, 0),
+                                         VR0=c(0, 0),
                                          D0 = c(0, 0))
     initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
                                          E0=c(0, 0),
                                          I0=c(0.05, 0, 0.15),
                                          R0=c(0, 0),
                                          V0=c(0, 0),
+                                         VR0=c(0, 0),
                                          D0 = c(0, 0))
     initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
                                          E0=c(0, 0),
                                          I0=c(0.05, 0.15),
                                          R0=c(0, 0, 0),
                                          V0=c(0, 0),
+                                         VR0=c(0, 0),
                                          D0 = c(0, 0))
     initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
                                          E0=c(0, 0),
                                          I0=c(0.05, 0.15),
                                          R0=c(0, 0),
                                          V0=c(0, 0, 0),
+                                         VR0=c(0, 0),
                                          D0 = c(0, 0))
     initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
                                          E0=c(0, 0),
                                          I0=c(0.05, 0.15),
                                          R0=c(0, 0),
                                          V0=c(0, 0),
+                                         VR0=c(0, 0, 0),
+                                         D0 = c(0, 0))
+    initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
+                                         E0=c(0, 0),
+                                         I0=c(0.05, 0.15),
+                                         R0=c(0, 0),
+                                         V0=c(0, 0),
+                                         VR0=c(0, 0),
                                          D0 = c(0, 0, 0))
   })
   
@@ -93,36 +109,49 @@ test_that("Initial conditions can be set and retrieved", {
                                          I0=c(0.05, 0.15),
                                          R0=c(0, 0),
                                          V0=c(0, 0),
+                                         VR0=c(0, 0),
                                          D0 = c(0, 0))
     initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
                                          E0=0,
                                          I0=c(0.05, 0.15),
                                          R0=c(0, 0),
                                          V0=c(0, 0),
+                                         VR0=c(0, 0),
                                          D0 = c(0, 0))
     initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
                                          E0=c(0, 0),
                                          I0=0,
                                          R0=c(0, 0),
                                          V0=c(0, 0),
+                                         VR0=c(0, 0),
                                          D0 = c(0, 0))
     initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
                                          E0=c(0, 0),
                                          I0=c(0.05, 0.15),
                                          R0=0,
                                          V0=c(0, 0),
+                                         VR0=c(0, 0),
                                          D0 = c(0, 0))
     initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
                                          E0=c(0, 0),
                                          I0=c(0.05, 0.15),
                                          R0=c(0, 0),
                                          V0=0,
+                                         VR0=c(0, 0),
                                          D0 = c(0, 0))
     initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
                                          E0=c(0, 0),
                                          I0=c(0.05, 0.15),
                                          R0=c(0, 0),
                                          V0=c(0, 0),
+                                         VR0=0,
+                                         D0 =c(0, 0))
+    initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
+                                         E0=c(0, 0),
+                                         I0=c(0.05, 0.15),
+                                         R0=c(0, 0),
+                                         V0=c(0, 0),
+                                         VR0=c(0, 0),
                                          D0 = 0)
   })
   
@@ -132,36 +161,49 @@ test_that("Initial conditions can be set and retrieved", {
                                          I0=c(0.05, 0.15),
                                          R0=c(0, 0),
                                          V0=c(0, 0),
+                                         VR0=c(0, 0),
                                          D0 = c(0, 0))
     initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
                                          E0=c(0, '0'),
                                          I0=c(0.05, 0.15),
                                          R0=c(0, 0),
                                          V0=c(0, 0),
+                                         VR0=c(0, 0),
                                          D0 = c(0, 0))
     initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
                                          E0=c(0, 0),
                                          I0=c(0.05, '0.15'),
                                          R0=c(0, 0),
                                          V0=c(0, 0),
+                                         VR0=c(0, 0),
                                          D0 = c(0, 0))
     initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
                                          E0=c(0, 0),
                                          I0=c(0.05, 0.15),
                                          R0=c('0', 0),
                                          V0=c(0, 0),
+                                         VR0=c(0, 0),
                                          D0 = c(0, 0))
     initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
                                          E0=c(0, 0),
                                          I0=c(0.05, 0.15),
                                          R0=c(0, 0),
                                          V0=c('0', 0),
+                                         VR0=c(0, 0),
                                          D0 = c(0, 0))
     initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
                                          E0=c(0, 0),
                                          I0=c(0.05, 0.15),
                                          R0=c(0, 0),
                                          V0=c(0, 0),
+                                         VR0=c('0', 0),
+                                         D0 = c(0, 0))
+    initial_conditions(my_model) <- list(S0=c(0.4, 0.4),
+                                         E0=c(0, 0),
+                                         I0=c(0.05, 0.15),
+                                         R0=c(0, 0),
+                                         V0=c(0, 0),
+                                         VR0=c(0, 0),
                                          D0 = c(0, '0'))
   })
   
@@ -171,6 +213,7 @@ test_that("Initial conditions can be set and retrieved", {
                                          I0=c(0.5, 0.15),
                                          R0=c(0, 0),
                                          V0=c(0, 0),
+                                         VR0=c(0, 0),
                                          D0 = c(0, 0))
     
   )
@@ -179,40 +222,43 @@ test_that("Initial conditions can be set and retrieved", {
 test_that("Transmission parameters can be set and retrieved", {
   my_model <- SEIRDVAge(n_age_categories = 2)
   transmission_parameters(my_model) <- list(
-    beta=1, kappa=0.5, gamma=0.5, mu=0.1, nu = 0.1, delta_V = 0.1, delta_R = 0.1)
+    beta=1, kappa=0.5, gamma=0.5, mu=0.1, nu = 0.1, delta_V = 0.1, delta_R = 0.1,
+    delta_VR = 0.1)
   
   # Test output is correct
   expect_equal(transmission_parameters(my_model),
                list(beta = 1, kappa = 0.5, gamma = 0.5, mu = 0.1, nu = 0.1,
-                    delta_V = 0.1, delta_R = 0.1))
+                    delta_V = 0.1, delta_R = 0.1, delta_VR = 0.1))
   
   # For multidimensional mu
   transmission_parameters(my_model) <- list(
-    beta=1, kappa=0.5, gamma=0.5, mu=c(0.1, 0.2), nu=0.1, delta_V = 0.1, delta_R = 0.1)
+    beta=1, kappa=0.5, gamma=0.5, mu=c(0.1, 0.2), nu=0.1, delta_V = 0.1, delta_R = 0.1,
+    delta_VR = 0.1)
   
   # Test output is correct
   expect_equal(transmission_parameters(my_model),
                list(beta = 1, kappa = 0.5, gamma = 0.5, mu = c(0.1, 0.2), nu = 0.1,
-                    delta_V = 0.1, delta_R = 0.1))
+                    delta_V = 0.1, delta_R = 0.1, delta_VR = 0.1))
   
   # For multidimensional nu
   transmission_parameters(my_model) <- list(
-    beta=1, kappa=0.5, gamma=0.5, mu=0.1, nu = c(0.1, 0.2), delta_V = 0.1, delta_R = 0.1)
+    beta=1, kappa=0.5, gamma=0.5, mu=0.1, nu = c(0.1, 0.2), delta_V = 0.1, delta_R = 0.1,
+    delta_VR = 0.1)
   
   # Test output is correct
   expect_equal(transmission_parameters(my_model),
                list(beta = 1, kappa = 0.5, gamma = 0.5, mu = 0.1, nu = c(0.1, 0.2),
-                    delta_V = 0.1, delta_R = 0.1))
+                    delta_V = 0.1, delta_R = 0.1, delta_VR = 0.1))
   
   # Check error is raised when transmission parameters are not 1-dimensional
   expect_error(
     transmission_parameters(my_model) <- list(
       beta=1, kappa=0.5, gamma=list(0.1, 0.1), mu=0.1,
-      nu = 0.1, delta_V = 0.1, delta_R = 0.1))
+      nu = 0.1, delta_V = 0.1, delta_R = 0.1, delta_VR = 0.1))
   expect_error(
     transmission_parameters(my_model) <- list(
       beta=1, kappa=list(0.1, 0.1), gamma=0.5, mu=0.1,
-      nu = 0.1, delta_V = 0.1, delta_R = 0.1))
+      nu = 0.1, delta_V = 0.1, delta_R = 0.1, delta_VR = 0.1))
 })
 
 test_that("Intervention parameters can be set and retrieved", {
@@ -257,13 +303,15 @@ test_that("SEIRDVAge model runs correctly", {
                                        I0=c(0, 0),
                                        R0=c(0, 0),
                                        V0=c(0, 0),
+                                       VR0=c(0, 0),
                                        D0=c(0,0))
   transmission_parameters(my_model) <- list(beta=0, kappa=0, gamma=0, mu=0,
-                                            nu = 0, delta_V = 0, delta_R = 0)
-  intervention_parameters(my_model) <- list(starts=0, stops=10, coverages=0.5)
+                                            nu = 0, delta_V = 0, delta_R = 0,
+                                            delta_VR = 0)
+  intervention_parameters(my_model) <- list(starts=c(0, 19), stops=c(10, 20), coverages=list(c(0.5, 0), c(0, 0.4)))
   
-  expected_output_states <- data.frame('time'=rep(0:2, 12),
-                                       'value'=c(rep(0.6, 3), rep(0.4, 3), rep(0, 30)))
+  expected_output_states <- data.frame('time'=rep(0:2, 14),
+                                       'value'=c(rep(0.6, 3), rep(0.4, 3), rep(0, 36)))
   
   expected_output_changes <- data.frame('time'=rep(0:2, 4),
                                         'value'=rep(0, 12))
@@ -274,12 +322,13 @@ test_that("SEIRDVAge model runs correctly", {
                                          replicate(length(times)*2, "I"),
                                          replicate(length(times)*2, "R"),
                                          replicate(length(times)*2, "V"),
+                                         replicate(length(times)*2, "VR"),
                                          replicate(length(times)*2, "D"))
   expected_output_states$age_range = unlist(rep(my_model@age_ranges, each=3))
   expected_output_states <- expected_output_states %>% 
     dplyr::mutate(compartment=as.factor(compartment)) %>% 
     dplyr::mutate(compartment=forcats::fct_relevel(compartment, "S", "E", "I",
-                                                   "R", "V", "D")) %>% 
+                                                   "R", "V", "VR", "D")) %>% 
     dplyr::mutate(age_range=as.factor(age_range)) %>% 
     dplyr::mutate(age_range=forcats::fct_relevel(age_range, my_model@age_ranges))
   expected_output_changes$age_range <- unlist(rep(my_model@age_ranges, each=3))
@@ -312,13 +361,15 @@ test_that("Running model before setting parameters fails", {
                                        I0=c(0.05, 0.15),
                                        R0=c(0, 0),
                                        V0=c(0, 0),
+                                       VR0=c(0, 0),
                                        D0 = c(0, 0))
   intervention_parameters(my_model) <- list(starts=0, stops=10, coverages=0.5)
   expect_error(run(my_model, t), "Transmission parameters must be set before running.")
   
   my_model <- SEIRDVAge(n_age_categories = 2)
   transmission_parameters(my_model) <- list(beta=0.9, kappa=0.2, gamma=0.01, mu=0.1,
-                                            nu = 0.1, delta_V = 0.1, delta_R = 0.1)
+                                            nu = 0.1, delta_V = 0.1, delta_R = 0.1,
+                                            delta_VR = 0.1)
   intervention_parameters(my_model) <- list(starts=0, stops=10, coverages=0.5)
   expect_error(run(my_model, t), "Initial conditions must be set before running.")
   
@@ -328,8 +379,10 @@ test_that("Running model before setting parameters fails", {
                                        I0=c(0.05, 0.15),
                                        R0=c(0, 0),
                                        V0=c(0, 0),
+                                       VR0=c(0, 0),
                                        D0 = c(0, 0))
   transmission_parameters(my_model) <- list(beta=0.9, kappa=0.2, gamma=0.01, mu=0.1,
-                                            nu = 0.1, delta_V = 0.1, delta_R = 0.1)
+                                            nu = 0.1, delta_V = 0.1, delta_R = 0.1,
+                                            delta_VR = 0.1)
   expect_error(run(my_model, t), "Intervention parameters must be set before running.")
 })

@@ -12,10 +12,10 @@ NULL
 #' @slot output_names list of compartments name which are used by the model and
 #'       incidence.
 #' @slot initial_condition_names list of names of initial conditions
-#'       (characters). Default is list("S0", "E0", "I0", "V0", "R0", "D0").
+#'       (characters). Default is list("S0", "E0", "I0", "V0", "R0", "VR0", "D0").
 #' @slot transmission_parameter_names list of names of transmission parameters
 #'       (characters). Default is list("beta", "kappa", "gamma", "mu",  "nu",
-#'       "delta_V", "delta_R").
+#'       "delta_V", "delta_R", "delta_VR").
 #' @slot intervention_parameter_names list of names of intervention parameters
 #'       (characters). Default is list ("starts", "stops", "coverages")
 #' @slot initial_conditions list of values for initial conditions (double).
@@ -59,14 +59,14 @@ SEIRDVAge <- setClass('SEIRDVAge',
                      # prototypes for the slots, automatically set output and param
                      # names
                      prototype = list(
-                       output_names = list('S', 'E', 'I', 'R', 'V', 'D' ,'Incidence'),
-                       initial_condition_names = list('S0', 'E0', 'I0', 'R0', 'V0', 'D0'),
+                       output_names = list('S', 'E', 'I', 'R', 'V', 'VR', 'D' ,'Incidence'),
+                       initial_condition_names = list('S0', 'E0', 'I0', 'R0', 'V0', 'VR0', 'D0'),
                        transmission_parameter_names = list('beta', 'kappa', 'gamma',
                                                            'mu', 'nu', 'delta_V',
-                                                           'delta_R'),
+                                                           'delta_R', 'delta_VR'),
                        intervention_parameter_names = list('starts', 'stops', 'coverages'),
-                       initial_conditions = vector(mode = 'list', length = 6),
-                       transmission_parameters = vector(mode = 'list', length = 7),
+                       initial_conditions = vector(mode = 'list', length = 7),
+                       transmission_parameters = vector(mode = 'list', length = 8),
                        intervention_parameters = vector(mode = 'list', length = 3),
                        age_ranges = vector(mode = 'list'),
                        n_age_categories = NA_real_,
@@ -95,7 +95,7 @@ setMethod('initial_conditions', 'SEIRDVAge',
 #' sizes compared to the number of age groups, an error is thrown.
 #'
 #' @param object An object of the class SEIRDVAGE.
-#' @param value a named list of (S0, E0, I0, R0, V0) where each element can be a list
+#' @param value a named list of (S0, E0, I0, R0, V0, VR) where each element can be a list
 #' of vector of doubles, with each element corresponding to the fraction for a
 #' single age group.
 #'
@@ -110,28 +110,29 @@ setMethod(
     I0 = value$I0
     R0 = value$R0
     V0 = value$V0
+    VR0 = value$VR0
     D0 = value$D0
     # check that ICs are valid
-    if (abs(sum(S0, E0, I0, R0, V0, D0)-1)>=10^(-3)) {
+    if (abs(sum(S0, E0, I0, R0, V0, VR0, D0)-1)>=10^(-3)) {
       stop('Invalid initial conditions. Must sum to 1.')
     }
     
     # create list of parameter values
-    ic <- list(S0, E0, I0, R0, V0, D0)
+    ic <- list(S0, E0, I0, R0, V0, VR0, D0)
     
     # add names to each value
     names(ic) = object@initial_condition_names
     
     # raise errors if age category dimensions do not match initial state vectors
     # also raise errors if initial state and parameter values are not doubles
-    for (p in list('S0', 'E0', 'I0', 'R0', 'V0', 'D0')){
+    for (p in list('S0', 'E0', 'I0', 'R0', 'V0', 'VR0', 'D0')){
       if(length(ic[[p]]) != object@n_age_categories){
         stop(glue('Wrong number of age groups for {p}
               compartments.'))}
       if(!is.numeric(ic[[p]])){
         stop(glue('{p} format must be numeric'))}
     }
-    if(abs(sum(S0, E0, I0, R0, V0, D0)-1)>=10^(-3)){
+    if(abs(sum(S0, E0, I0, R0, V0, VR0, D0)-1)>=10^(-3)){
       stop('All compartments need to sum up to 1.')
     }
     
@@ -162,7 +163,7 @@ setMethod('transmission_parameters', 'SEIRDVAge',
 #' thrown.
 #'
 #' @param value a named list of form list(beta=, kappa=, gamma=, mu=, nu=,
-#' delta_V=, delta_R=)
+#' delta_V=, delta_R=, delta_VR=)
 #'
 #' All rates of change between compartments are equal regardless of
 #' age group.
@@ -182,8 +183,9 @@ setMethod(
     nu <- value$nu
     delta_V <- value$delta_V
     delta_R <- value$delta_R
+    delta_VR <- value$delta_VR
     
-    trans_params <- list(beta, kappa, gamma, mu, nu, delta_V, delta_R)
+    trans_params <- list(beta, kappa, gamma, mu, nu, delta_V, delta_R, delta_VR)
     
     # add names to each value
     names(trans_params) = object@transmission_parameter_names
@@ -193,7 +195,8 @@ setMethod(
        length(kappa) != 1 |
        length(gamma) != 1 |
        length(delta_V) != 1 |
-       length(delta_V) != 1){
+       length(delta_R) != 1 |
+       length(delta_VR) != 1){
       stop('The parameter values should be 1-dimensional.')
     }
     
@@ -297,11 +300,12 @@ setMethod(
 #' (I), Recovered (R), Vaccinated (V) and Dead (D) groups in a given age group indexed by i is 
 #' given by
 #'
-#' \deqn{\frac{dS_i(t)}{dt} = - \beta S_i(t) \Sigma_{j}C_{ij} I_j(t) - \nu Inter(t) S_i(t) + \delta_V V_i(t) + \delta_R R_i(t)}
+#' \deqn{\frac{dS_i(t)}{dt} = - \beta S_i(t) \Sigma_{j}C_{ij} I_j(t) - \nu Inter(t) S_i(t) + \delta_V V_i(t) + \delta_R R_i(t) + \delta_VR VR_i(t)}
 #' \deqn{\frac{dE_i(t)}{dt} = \beta S_i(t) \Sigma_{j}C_{ij} I_j(t) - \kappa E_i(t)}
 #' \deqn{\frac{dI_i(t)}{dt} = \kappa E_i(t) - \gamma I_i(t) - \mu I_i(t)}
-#' \deqn{\frac{dR_i(t)}{dt} = \gamma I_i(t) -  \delta_R R_i(t)}
+#' \deqn{\frac{dR_i(t)}{dt} = \gamma I_i(t) -  \delta_R R_i(t) - \nu Inter(t) R_i(t)}
 #' \deqn{\frac{dV(t)}{dt} = \nu Inter(t) S_i(t) - \delta_V V_i(t)}
+#' \deqn{\frac{dVR(t)}{dt} = \nu Inter(t) R_i(t) - \delta_VR VR_i(t)}
 #' \deqn{\frac{dC(t)}{dt} = \ beta S_i(t) \Sigma_{j}C_{ij} I_j(t)}
 #' \deqn{\frac{dD_i(t)}{dt} = \mu I_i(t)}
 #' 
@@ -319,7 +323,7 @@ setMethod(
 #' method for solving the ode system. Default is `lsoda` which is also the
 #' default for the ode function in the deSolve package used in this function.
 #'
-#' @return data frame containing the time vector and time series of S, E, I, R, V and
+#' @return data frame containing the time vector and time series of S, E, I, R, V, VR and
 #' D population fractions for each age group outputs with incidence numbers
 #' for each age group.
 #' 
@@ -356,6 +360,7 @@ setMethod(
                I = initial_conditions(object)$I0,
                R = initial_conditions(object)$R0,
                V = initial_conditions(object)$V0,
+               VR = initial_conditions(object)$VR0,
                D = initial_conditions(object)$D0,
                cc = rep(0, n_age))
     
@@ -366,7 +371,8 @@ setMethod(
                     m = transmission_parameters(object)$mu,
                     n = transmission_parameters(object)$nu,
                     d_v = transmission_parameters(object)$delta_V,
-                    d_r = transmission_parameters(object)$delta_R)
+                    d_r = transmission_parameters(object)$delta_R,
+                    d_vr = transmission_parameters(object)$delta_VR)
     
     # fetch contact matrix of the instance
     C = object@contact_matrix
@@ -429,20 +435,22 @@ setMethod(
           I <- state[(2 * n_age + 1):(3 * n_age)]
           R <- state[(3 * n_age + 1):(4 * n_age)]
           V <- state[(4 * n_age + 1):(5 * n_age)]
-          D <- state[(5 * n_age + 1):(6 * n_age)]
-          cc <- state[(6 * n_age + 1):(7 * n_age)]
+          VR <- state[(5 * n_age + 1):(6 * n_age)]
+          D <- state[(6 * n_age + 1):(7 * n_age)]
+          cc <- state[(7 * n_age + 1):(8 * n_age)]
           
           
           # rate of change
-          dS <- -b * S * C %*% I - n * inter * S + d_v * V + d_r * R
+          dS <- -b * S * C %*% I - n * inter * S + d_v * V + d_r * R + d_vr * VR
           dE <- b * S * C %*% I - k * E
           dI <- k * E - g * I  - m * I
-          dR <- g * I - d_r * R
+          dR <- g * I - d_r * R - n * inter * R
           dV <- n * inter * S - d_v * V
+          dVR <- n * inter * R - d_vr * VR
           dD <- m * I
           dcc <- b * S * C %*% I
           # return the rate of change
-          list(c(dS, dE, dI, dR, dV, dD, dcc))
+          list(c(dS, dE, dI, dR, dV, dVR, dD, dcc))
         })
     }
     
@@ -464,6 +472,7 @@ setMethod(
                              replicate(n_compartment_measurements, "I"),
                              replicate(n_compartment_measurements, "R"),
                              replicate(n_compartment_measurements, "V"),
+                             replicate(n_compartment_measurements, "VR"),
                              replicate(n_compartment_measurements, "D"),
                              replicate(n_compartment_measurements, "cc"))
     
@@ -473,7 +482,7 @@ setMethod(
     out_temp = out_temp %>% 
       dplyr::select(-.data$variable) %>% 
       dplyr::mutate(compartment=as.factor(.data$compartment)) %>% 
-      dplyr::mutate(compartment=forcats::fct_relevel(.data$compartment, "S", "E", "I", "R", "V", "D", "cc")) %>% 
+      dplyr::mutate(compartment=forcats::fct_relevel(.data$compartment, "S", "E", "I", "R", "V", "VR", "D", "cc")) %>% 
       dplyr::mutate(age_range=as.factor(.data$age_range)) %>% 
       dplyr::mutate(age_range=forcats::fct_relevel(.data$age_range, object@age_ranges))
     
