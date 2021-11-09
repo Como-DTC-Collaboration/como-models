@@ -192,7 +192,7 @@ result %>%
   geom_bar(stat = "identity", position = position_dodge()) +
   labs(x = "time (days)", y = "deaths per 1000 of the \n population per day",
        fill = "values of beta") +
-  theme(axis.title.y = element_text(margin = margin(0.1,0,0.1,0)), legend.position = "bottom", legend.title = element_text(size = 15),
+  theme(legend.position = "bottom", legend.title = element_text(size = 15),
         text = element_text(size = 20))
 
 ```
