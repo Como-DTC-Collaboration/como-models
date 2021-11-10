@@ -1,9 +1,9 @@
 ---
-title: "The SEIRDV model"
+title: "The SEIRDVAge model"
 author: "Ioana Bouros"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{The SEIRDV model}
+  %\VignetteIndexEntry{The SEIRDVAge model}
   %\VignetteEngine{knitr::knitr}
   %\VignetteEncoding{UTF-8}
 ---
@@ -24,14 +24,87 @@ library(dplyr)
 ```
 
 ## Introduction
-This document explains the basics of the SEIRV model. The model describes
+This document explains the basics of the SEIRV model with age structure. The model describes
 how populations of susceptible, exposed, infectious, recovered and vaccinated
 individuals evolve over time. Waning immunity is also considered in this model,
 so there is a constant supply of susceptibles in the population which makes the model
-more realistic.
+more realistic. Contact data and age structure are also considered in the model.
 
-## The SEIRDV Model
-The SEIRDV model consists of five ODEs describing five populations of susceptible,
+However, in reality, a susceptible individual from a given age class
+can become infected from any age class: to capture this aspect of the model, infected individuals of any
+age are supposed to inter-mix, with the mixing rate dictated by a so-called "contact matrix", $C$.
+
+The elements of contact matrices, $C_{i,j}$ indicate the expected number of contacts an individual of age class $i$ experiences with age class $j$ per day. In this package, we include country-level estimates of contact matrices (Prem et al., 2017; for full details see data documentation). There are actually four types of contact matrix corresponding to daily numbers of contacts at home, work, school and all other settings. Here, we visualise these for India.
+```{r}
+load(file = "../data/contact_home.rda")
+load(file = "../data/contact_work.rda")
+load(file = "../data/contact_school.rda")
+load(file = "../data/contact_other.rda")
+```
+
+```{r, fig.width=10, fig.height=8}
+# reformat matrices for plotting
+ages <- seq(0, 80, 5)
+age_names <- vector(length = 16)
+for(i in seq_along(age_names)) {
+  age_names[i] <- paste0(ages[i], "-", ages[i + 1])
+}
+format_matrix <- function(contact_matrix, age_names) {
+  colnames(contact_matrix) <- age_names
+  contact_matrix$age_infectee <- age_names
+  contact_matrix %>%
+    pivot_longer(all_of(age_names)) %>% 
+    rename(age_infector=name) %>% 
+    mutate(age_infector=fct_relevel(age_infector, age_names)) %>% 
+    mutate(age_infectee=fct_relevel(age_infectee, age_names))
+}
+c_home <- format_matrix(contact_home$India, age_names) %>% mutate(type="home")
+c_work <- format_matrix(contact_work$India, age_names) %>% mutate(type="work")
+c_school <- format_matrix(contact_school$India, age_names) %>% mutate(type="school")
+c_other <- format_matrix(contact_other$India, age_names) %>% mutate(type="other")
+c_all <- c_home %>%
+  bind_rows(c_work) %>% 
+  bind_rows(c_school) %>% 
+  bind_rows(c_other)
+# plot all
+c_all %>%
+  ggplot(aes(x=age_infector, y=age_infectee, fill=value)) +
+  xlab("age group of infector") + ylab("age group of infectee") +
+  theme(text = element_text(size=20),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  facet_wrap(~type)
+```
+
+We can see that the majority of contacts fall between younger individuals, occurring at home or "other" locations. At home, however, there is more substantial intergenerational mixing than in other settings.
+
+The model we introduce here does not compartmentalise individuals according to location, so we make an overall contact matrix by summming these together.
+```{r, fig.width=8, fig.height=5}
+c_combined <- c_all %>% 
+  group_by(age_infectee, age_infector) %>% 
+  summarise(value=sum(value))
+c_combined %>% 
+  ggplot(aes(x=age_infector, y=age_infectee, fill=value)) +
+  xlab("age group of infector") + ylab("age group of infectee") +
+  theme(text = element_text(size=20),
+        axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
+  geom_tile() +
+  scale_fill_viridis_c()
+```
+
+We now use this contact matrix to allow infections to pass between age groups. To do so, we amend the governing equations for the susceptibles and exposed individuals within age class $i$:
+
+\begin{align}
+\frac{\text{d}S_i}{\text{d}t} &= -\beta S_i \Sigma_{j}C_{ij} I_j\\
+\frac{\text{d}E_i}{\text{d}t} &= \beta S_i \Sigma_{j}C_{ij} I_j -\kappa E_i\\
+\end{align}
+
+Specifically, the term $S_i \Sigma_{j}C_{ij} I_j$ effectively indicates the expected number of contacts between susceptible individuals of age class $i$ with infected individuals across all classes.
+
+
+## The SEIRDVAge Model
+The SEIRDVAge model consists of five ODEs describing five populations of susceptible,
 recovered, infectious, recovered and vaccinated individuals. Susceptible
 individuals ($S$) have not been exposed to the virus. Exposed individuals ($E$) have been
 exposed to the virus and have been infected but are not yet infectious to others; they are 
@@ -45,12 +118,12 @@ We can vaccinate not only the susceptibles, but also $E$, $I$ and $R$s. However,
 they have already been exposed to the illness so they do not change compartment
 assignment. Births and deaths unrelated to the infection are not considered in
 this model. The ODEs describing how the five populations evolve over time are
-$$\frac{\text{d}S}{\text{d}t} = -\beta S I - \nu \text{Inter}(t) S + \delta_V V + \delta_R R + \delta_{VR} VR,$$
-$$\frac{\text{d}E}{\text{d}t} = \beta S I -\kappa E,$$
-$$\frac{\text{d}I}{\text{d}t} = \kappa E - (\gamma + \mu) I,$$
-$$\frac{\text{d}R}{\text{d}t} = \gamma I - \delta_R R - \nu Inter(t) R,$$
-$$\frac{\text{d}V}{\text{d}t} = \nu Inter(t) S - \delta_V V$$
-$$\frac{\text{d}VR}{\text{d}t} = \nu Inter(t) R - \delta_{VR} VR$$
+$$\frac{\text{d}S_i}{\text{d}t} = -\beta S_i \Sigma_{j}C_{ij} I_j - \nu \text{Inter}(t) S_i + \delta_{V} V_i + \delta_{R} R_i + \delta_{VR} VR_i,$$
+$$\frac{\text{d}E_i}{\text{d}t} = \beta S_i \Sigma_{j}C_{ij} I_j -\kappa E_i,$$
+$$\frac{\text{d}I_i}{\text{d}t} = \kappa E_i - (\gamma + \mu) I_i,$$
+$$\frac{\text{d}R_i}{\text{d}t} = \gamma I_i - \delta_R R_i - \nu Inter(t) R_i,$$
+$$\frac{\text{d}V_i}{\text{d}t} = \nu Inter(t) S_i - \delta_V V_i$$
+$$\frac{\text{d}VR_i}{\text{d}t} = \nu Inter(t) R_i - \delta_{VR} VR_i$$
 
 where $\beta$, $\kappa$, $\gamma$, $\mu$, $\nu$, $\delta_V$, $\delta_R$ and $\delta_{VR}$ are
 positive parameters. The rate at which susceptible individuals are infected
@@ -73,8 +146,8 @@ at time t of the intervention protocol defined by the intervention parameters.
 
 In addition to these five main ODEs, the model also keeps track of the cumulative number 
 of cases ($C$) and the cumulative number of disease-related deaths ($D$) over time
-$$\frac{\text{d}C}{\text{d}t} = \beta S I,$$
-$$\frac{\text{d}D}{\text{d}t} = \mu I.$$
+$$\frac{\text{d}C_i}{\text{d}t} = \beta S_i \Sigma_{j}C_{ij} I_j,$$
+$$\frac{\text{d}D_i}{\text{d}t} = \mu I_i.$$
 
 The system is closed by specifying the initial conditions
 $$S(0) = S_0,\ E(0) = E_0,\ I(0) = I_0,\ R(0) = R_0,\ V(0) = V_0, VR(0) = VR_0,\ C(0) = 0,\ D(0) = 0.$$
@@ -83,11 +156,33 @@ $S(t) + E(t) + I(t) + R(t) + V(t) + VR(t) + D(t) \equiv 1$ for any given $t$. Th
 
 We next illustrate how this model works using functionality available in `comomodels`.
 
-## The `SEIRDV` class
+## The `SEIRDVAge` class
 
-We first create an `SEIRDV` object that we will use to run simulations.
+## Simulation examples 
+
+Now we create a model that includes this age-structured mixing. Since the contact matrices have 16 age classes, we instantiate a model with this number of classes. We also give it transmission parameters, populate the age classes with initial conditions and use our overall contact matrix.
+
+We use country-level demographics from the UN and, for this example, initialise the model with a uniform initial infected population of 1% across all age groups. The remaining 99% of the population starts
+as susceptible.
 ```{r}
-my_model <- SEIRDV()
+load(file = "../data/population.rda")
+# use demographic data to create normalised population fractions
+pops = population[population$country == 'India', ]$pop
+pop_fraction = pops/sum(pops)
+## the contact matrix has an upper group of 80+, so we sum the remaining fractions beyond this point
+pop_fraction[16] = sum(pop_fraction[16:21])
+pop_fraction = pop_fraction[1:16]
+# reshape contact matrix into 16x16 form
+n_ages <- 16
+c_combined_wider <- c_combined %>% 
+  pivot_wider(id_cols = age_infectee, names_from = age_infector,
+              values_from=value) %>% 
+  ungroup() %>% 
+  select(-age_infectee) %>% 
+  as.matrix()
+
+# create model
+my_model <- SEIRDVAge()
 ```
 
 Next, we set the parameter values for $\beta$, $\kappa$, $\gamma$, $\mu$, $\nu$,
@@ -185,14 +280,14 @@ in vaccinated individuals, $\delta_V$. We run the model for varying values of $\
 number of deaths per day over time.
 ```{r, fig.height = 5, fig.width = 7}
 # function to setup and run model for different delta_V values
-run_seirdv <- function(delta_V_val) {
+run_SEIRDVAge <- function(delta_V_val) {
   inits <- list(S0=0.99, E0=0, I0=0.01, R0=0, V0=0, VR0=0)
   params <- list(beta=1, kappa=0.9, gamma=0.5, mu=0.1, nu=0.4, delta_V=delta_V_val,
                  delta_R=0.05, delta_VR = 0.02)
   interv<- list(starts=c(17, 35, 42),
                 stops=c(25, 39, 49),
                 coverages=c(1, 1, 1))
-  model <- SEIRDV(initial_conditions = inits,
+  model <- SEIRDVAge(initial_conditions = inits,
                 transmission_parameters=params,
                 intervention_parameters = interv)
   times <- seq(0, 200, by = 1)
@@ -204,7 +299,7 @@ run_seirdv <- function(delta_V_val) {
 delta_V_vals <- c(0.1, 0.05, 0.01, 0.2, 0.5)
 for(i in seq_along(delta_V_vals)) {
   delta_V_temp <- delta_V_vals[i]
-  temp <- run_seirdv(delta_V_temp) %>% mutate(delta_V=delta_V_temp)
+  temp <- run_SEIRDVAge(delta_V_temp) %>% mutate(delta_V=delta_V_temp)
   if(i == 1)
     result <- temp %>% mutate(delta_V=delta_V_temp)
   else
@@ -230,14 +325,14 @@ We now investigate the sensitivity of the number of deaths to the maximum vaccin
 number of deaths per day over time.
 ```{r, fig.height = 5, fig.width = 7}
 # function to setup and run model for different nu values
-run_seirdv <- function(nu_val) {
+run_SEIRDVAge <- function(nu_val) {
   inits <- list(S0=0.99, E0=0, I0=0.01, R0=0, V0=0, VR0=0)
   params <- list(beta=1, kappa=0.9, gamma=0.5, mu=0.1, nu=nu_val, delta_V=0.1,
                  delta_R=0.05, delta_VR = 0.02)
   interv<- list(starts=c(17, 35, 42),
                 stops=c(25, 39, 49),
                 coverages=c(1, 1, 1))
-  model <- SEIRDV(initial_conditions = inits,
+  model <- SEIRDVAge(initial_conditions = inits,
                 transmission_parameters=params,
                 intervention_parameters = interv)
   times <- seq(0, 200, by = 1)
@@ -249,7 +344,7 @@ run_seirdv <- function(nu_val) {
 nu_vals <- c(0.1, 0.25, 0.5, 0.75, 1)
 for(i in seq_along(nu_vals)) {
   nu_temp <- nu_vals[i]
-  temp <- run_seirdv(nu_temp) %>% mutate(nu=nu_temp)
+  temp <- run_SEIRDVAge(nu_temp) %>% mutate(nu=nu_temp)
   if(i == 1)
     result <- temp %>% mutate(nu=nu_temp)
   else
@@ -274,14 +369,14 @@ We now investigate the sensitivity of the start time of intervention values, `st
 For this investigation, we are switching to a new intervention that starts at start_val and continues to 100, rather than the one you've been using previously
 ```{r, fig.height = 5, fig.width = 7}
 # function to setup and run model for different start intervention values
-run_seirdv <- function(start_val) {
+run_SEIRDVAge <- function(start_val) {
   inits <- list(S0=0.99, E0=0, I0=0.01, R0=0, V0=0, VR0=0)
   params <- list(beta=1, kappa=0.9, gamma=0.5, mu=0.1, nu=0.4, delta_V=0.1,
                  delta_R=0.05, delta_VR = 0.02)
   interv<- list(starts=start_val,
                 stops=100,
                 coverages=1)
-  model <- SEIRDV(initial_conditions = inits,
+  model <- SEIRDVAge(initial_conditions = inits,
                 transmission_parameters=params,
                 intervention_parameters = interv)
   times <- seq(0, 200, by = 1)
@@ -293,7 +388,7 @@ run_seirdv <- function(start_val) {
 start_val <- c(0, 5, 10, 15, 20, 30, 45, 55)
 for(i in seq_along(start_val)) {
   start_temp <- start_val[i]
-  temp <- run_seirdv(start_temp) %>% mutate(starts=start_temp)
+  temp <- run_SEIRDVAge(start_temp) %>% mutate(starts=start_temp)
   if(i == 1)
     result <- temp %>% mutate(starts=start_temp)
   else
