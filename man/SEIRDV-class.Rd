@@ -80,8 +80,8 @@ thrown.
 
 \item \code{intervention_parameters<-}: Setter method for intervention parameters of the SEIRV model.
 
-Intervention parameters have same size. This class is designed for interventions
-which last several days at least and have several days between them.
+Intervention parameters have same size. A tanh function is used to smooth interventions during simulation. This class is designed for interventions
+which last several days at least and have several days between them; interventions involving rapid fluctuations may be distorted.
 
 \item \code{run}: Solves ODEs of the SEIRDV specified in object
 for the time points specified in times and integration method specified in
@@ -113,7 +113,7 @@ incidence.}
 "delta_V", "delta_R").}
 
 \item{\code{intervention_parameter_names}}{list of names of intervention parameters
-(characters). Default is list ("starts", "stops", "coverages")}
+(characters). Default is list ("starts", "stops", "coverages", "tanh_slopes")}
 
 \item{\code{initial_conditions}}{list of values for initial conditions (double).}
 

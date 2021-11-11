@@ -5,16 +5,13 @@
 \title{Creates stacks of interventions using parameters of the model; used
 in the 'run' method of compartmental model with interventions.}
 \usage{
-stack_intervention_coverages(times, int_parms, tanh_slope)
+stack_intervention_coverages(times, int_parms)
 }
 \arguments{
 \item{times}{times between which we simulate.}
 
 \item{int_parms}{parameters of the interventions as according to a InterventionParameters
 object.}
-
-\item{tanh_slope}{sharpness of the intervention waves used for function
-continuity purposes.}
 }
 \description{
 Creates stacks of interventions using parameters of the model; used

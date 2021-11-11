@@ -16,7 +16,7 @@ NULL
 #'       (characters). Default is list("beta", "kappa", "gamma", "mu",  "nu",
 #'       "delta_V", "delta_R").
 #' @slot intervention_parameter_names list of names of intervention parameters
-#'       (characters). Default is list ("starts", "stops", "coverages")
+#'       (characters). Default is list ("starts", "stops", "coverages", "tanh_slopes")
 #' @slot initial_conditions list of values for initial conditions (double).
 #' @slot transmission_parameters list of values for transmission parameters
 #'       (double).
@@ -48,10 +48,10 @@ SEIRDV <- setClass("SEIRDV",
                     transmission_parameter_names = list("beta", "kappa", "gamma",
                                                         "mu", "nu", "delta_V",
                                                         "delta_R"),
-                    intervention_parameter_names = list("starts", "stops", "coverages"),
+                    intervention_parameter_names = list("starts", "stops", "coverages", "tanh_slopes"),
                     initial_conditions = vector(mode = "list", length = 5),
                     transmission_parameters = vector(mode = "list", length = 7),
-                    intervention_parameters = vector(mode = "list", length = 3)
+                    intervention_parameters = vector(mode = "list", length = 4)
                   )
 )
 
@@ -197,7 +197,9 @@ setGeneric(
 #'
 #' @param object an object of the class SEIRDV
 #' @param value (list) list of intervention parameters: starts, stops and
-#'              coverages.
+#'              coverages. tanh_slopes can also be provided (either one value or
+#'              one for each intervention). If no tanh_slopes are provided,
+#'              the default value of 1 will be used.
 #'
 #' @return object of class SEIRDV with intervention parameters assigned.
 #' 
@@ -205,6 +207,11 @@ setGeneric(
 setMethod(
   "intervention_parameters<-", "SEIRDV",
   function(object, value) {
+    
+    # Add default tanh slope of 1 if it is not provided
+    if (!("tanh_slopes" %in% names(value))) {
+      value = append(value, list(tanh_slopes=c(1)))
+    }
     
     if (mean(names(value) %in% object@intervention_parameter_names) != 1)
       stop(paste0("Intervention parameters must contain: ",
@@ -223,6 +230,17 @@ setMethod(
         length(interv_par$starts) != length(interv_par$coverages)|
         length(interv_par$coverages) != length(interv_par$stops)) {
       stop("Invalid intervention parameters. Must have same size.")
+    }
+    
+    num_interventions = length(interv_par$starts)
+    if (length(interv_par$tanh_slopes) == 1) {
+      # extend it to number of interventions
+      interv_par$tanh_slopes <- rep(interv_par$tanh_slopes, num_interventions)
+    }
+    
+    if (length(interv_par$tanh_slopes) != num_interventions) {
+      stop("Invalid intervention parameters. tanh_slope must have 1 entry, or
+           have the same size as intervention parameters.")
     }
     
     object@intervention_parameters <- interv_par
@@ -294,18 +312,16 @@ setMethod(
       InterventionParameters(
         start=intervention_parameters(object)$starts,
         stop=intervention_parameters(object)$stops,
-        coverage= intervention_parameters(object)$coverages)
+        coverage=intervention_parameters(object)$coverages,
+        tanh_slope=intervention_parameters(object)$tanh_slopes)
     
     # use tstep=0.1 and tanh_slope=1 for good nice step-function-like shape of
     # the intervention wave
     sim_parms <- SimulationParameters(start =0, stop = tail(times, n=1),
                                       tstep = 0.1)
     
-    inter_prot <- intervention_protocol(int_parms, sim_parms, 1) %>%
-      filter(time %in% times) %>%
-      .$coverage
-    
-    intervention <- approxfun(times, inter_prot, rule=2)
+    inter_prot <- intervention_protocol(int_parms, sim_parms)
+    intervention <- approxfun(inter_prot$time, inter_prot$coverage, rule=2)
     
     # function for RHS of ode system
     right_hand_side <- function(t, state, parameters, input) {

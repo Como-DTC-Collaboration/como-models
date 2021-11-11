@@ -5,7 +5,7 @@ test_that("SEIRDV model is instantiated correctly", {
   
   expect_length(my_model@initial_conditions, 5)
   expect_length(my_model@transmission_parameters, 7)
-  expect_length(my_model@intervention_parameters, 3)
+  expect_length(my_model@intervention_parameters, 4)
 })
 
 test_that("Initial conditions can be set and retrieved", {
@@ -53,11 +53,11 @@ test_that("Transmission parameters can be set and retrieved", {
 test_that("Intervention parameters can be set and retrieved", {
   my_model <- SEIRDV()
   intervention_parameters(my_model) <- list(
-    starts=10, stops=20, coverages=0.5)
+    starts=10, stops=20, coverages=0.5, tanh_slopes=1.5)
   
   # Test output is correct
   expect_equal(intervention_parameters(my_model),
-               list(starts=10, stops=20, coverages=0.5))
+               list(starts=10, stops=20, coverages=0.5, tanh_slopes=1.5))
   
   # Check error is raised when transmission parameters are not 1-dimensional
   expect_error(
