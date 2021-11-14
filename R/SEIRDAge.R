@@ -257,7 +257,7 @@ setMethod(
                cc = rep(0, n_age))
     
     # set parameters vector
-    parameters <- c(b = transmission_parameters(object)$b,
+    parameters <- list(b = transmission_parameters(object)$b,
                     k = transmission_parameters(object)$k,
                     g = transmission_parameters(object)$g,
                     mu = transmission_parameters(object)$mu)

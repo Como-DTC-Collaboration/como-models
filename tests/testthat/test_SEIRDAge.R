@@ -204,7 +204,7 @@ test_that("can run simulation for the SEIRDAge", {
                                        R0=c(0, 0),
                                        D0 = c(0,0))
 
-  transmission_parameters(my_model) <- list(b=1, k=0.5, g=0.5, mu = 0.01)
+  transmission_parameters(my_model) <- list(b=1, k=0.5, g=0.5, mu = c(0.01, 0.01))
 
   expected_output_states <- data.frame('time'=rep(0:2, 10),
                                 'value'=c(rep(0.6, 3), rep(0.4, 3), rep(0, 24)))

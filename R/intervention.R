@@ -25,7 +25,7 @@ check <-function(object) {
   if(len_start > 1) {
     last_starts <- start[2:len_start]
     first_stops <- stop[1:(len_start - 1)]
-    start_before_end <- (last_starts - first_stops) <= 0
+    start_before_end <- (last_starts - first_stops) < 0
     if(sum(start_before_end) > 0)
       return("Each subsequent intervention must start after the last ends.")
   }

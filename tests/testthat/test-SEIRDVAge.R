@@ -306,7 +306,7 @@ test_that("SEIRDVAge model runs correctly", {
                                        VR0=c(0, 0),
                                        D0=c(0,0))
   transmission_parameters(my_model) <- list(beta=0, kappa=0, gamma=0, mu=0,
-                                            nu = 0, delta_V = 0, delta_R = 0,
+                                            nu = c(0, 0), delta_V = 0, delta_R = 0,
                                             delta_VR = 0)
   intervention_parameters(my_model) <- list(starts=c(0, 19), stops=c(10, 20), coverages=list(c(0.5, 0), c(0, 0.4)))
   
