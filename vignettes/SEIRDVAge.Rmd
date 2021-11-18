@@ -79,7 +79,7 @@ c_all %>%
 
 We can see that the majority of contacts fall between younger individuals, occurring at home or "other" locations. At home, however, there is more substantial intergenerational mixing than in other settings.
 
-The model we introduce here does not compartmentalise individuals according to location, so we make an overall contact matrix by summming these together.
+The model we introduce here does not compartmentalise individuals according to location, so we make an overall contact matrix by summing these together.
 ```{r, fig.width=8, fig.height=5}
 c_combined <- c_all %>% 
   group_by(age_infectee, age_infector) %>% 
@@ -236,7 +236,7 @@ be taken into account in our modeling. Vaccination levels and start times may di
 different age groups. In this instantiation of the model, vaccination of the each age group occurs
 at a different stage
 
-Below we can see a plot of the a claassical level of interventions that occur at each time step.
+Below we can see a plot of the a classical level of interventions that occur at each time step.
 ```{r, fig.height = 5, fig.width = 7}
 int_parms <- InterventionParameters(start=c(17, 35, 42),
                                     stop=c(25, 39, 49),
@@ -360,7 +360,7 @@ result %>%
 ```
 As we can see from the plot above, larger rates of immunity decay $\delta_VR$ in vaccinated recovered
 individuals make the second wave of the number of deaths in the epidemic occur much closer to the first
-peak. Also, the earlier the second wave occurs, the higher its applitude will be.
+peak. Also, the earlier the second wave occurs, the higher its amplitude will be.
 
 We now investigate the sensitivity of the number of deaths to the maximum vaccination rate, $\nu$. We run the model for varying values of $\nu$ for the 25-30 age group and plot the
 number of deaths per day over time.
@@ -411,7 +411,7 @@ result %>%
   theme(text = element_text(size = 20))
 
 ```
-As we can see from the plot above, larger rates of maximum vaccination $\nu_{25-35}$ make the second wave of the number of deaths in the epidemic occur later compared to the first peak. For larger $\nu_{25-35}$, we that the hight of the second peak is larger.
+As we can see from the plot above, larger rates of maximum vaccination $\nu_{25-35}$ make the second wave of the number of deaths in the epidemic occur later compared to the first peak. For larger $\nu_{25-35}$, we see that the height of the second peak is larger.
 
 We now investigate the sensitivity of the start time of intervention values, `start_val`. We run the model for varying values of `start_val` and plot the number of deaths per day over time. The intervention profile is the same in each of the cases, only shifted by this quantity `start_val`.
 
