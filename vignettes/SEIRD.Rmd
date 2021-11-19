@@ -23,42 +23,39 @@ library(dplyr)
 ```
 
 ## Introduction
-This document explains the basics of the SEIR model. The model describes
+This document explains the basics of the SEIRD model. The model describes
 how populations of susceptible, exposed, infectious and recovered
 individuals evolve over time. A simple
 ordinary differential equation (ODE) is defined for each of the populations. 
-In `comomodels`, we provide users with a premade SEIR model and here use it to 
+In `comomodels`, we provide users with a premade SEIRD model and here use it to 
 illustrate how this type of model works.
 
 ## The SEIRD Model
-The SEIRD model consists of four ODEs describing four populations of susceptible,
+The SEIRD model consists of four ODEs describing populations of susceptible,
 recovered, infectious and recovered individuals. Susceptible
 individuals ($S$) have not been exposed to the virus. Exposed individuals ($E$) 
 have been exposed to the virus and have been infected but are not yet infectious 
-to others; they are in the incubation period. Infectious individuals ($I$) can 
+to others -- they are in the incubation period. Infectious individuals ($I$) can 
 spread the virus to others. Recovered individuals ($R$) are no longer 
 infectious, and, in this model, have acquired immunity as they do not return
-to the susceptible population. Births and deaths unrelated to the infection are 
+to the susceptible population. Natural births and deaths -- in other words, those unrelated to infection -- are 
 not considered in this model. Therefore, the SEIRD model is suitable only to 
-diseases that span a short period of time, when the natural births and deaths 
-can be assumed to be close to 0.
+diseases that span a short period of time, when natural births and deaths 
+do not significantly affect dynamics.
 The ODEs describing how the four populations 
 evolve over time are $$\frac{\text{d}S}{\text{d}t} = -\beta S I,$$
 $$\frac{\text{d}E}{\text{d}t} = \beta S I -\kappa E,$$
 $$\frac{\text{d}I}{\text{d}t} = \kappa E - (\gamma + \mu) I,$$
 $$\frac{\text{d}R}{\text{d}t} = \gamma I,$$
-where $\beta$, $\kappa$, $\gamma$ and $\mu$ are positive parameters.
+where $\beta>0$, $\kappa>0$, $\gamma>0$ and $\mu>0$.
 The rate at which susceptible individuals are infected depends on the fraction
-of the population that is susceptible, the fraction of the population that is
-infectious, and the probability of an infectious individual infecting a 
-susceptible individual, $\beta$. This is represented in the
-first terms on the right-hand side of $\text{d}S/ \text{d}t$ and $\text{d}E/ \text{d}t$.
+of the population that are susceptible and infectious and the rate at which interactions between infectious and susceptible individuals lead to infections, $\beta$.
 Exposed individuals become infectious at rate $\kappa$. $1/ \kappa$ is
-the incubation time of the virus, i.e. how many days after exposure the individual
+the mean incubation time of the virus, i.e. how many days after exposure the individual
 becomes infectious to others. Infectious individuals can either recover or die
-because of the disease. Infectious individuals recover in $1/ \gamma$
-days, thus individuals recover at rate $\gamma$. Similarly, infectious
-individuals die due to the infection after $1/ \mu$ days, making the death rate $\mu$.
+because of the disease. Infectious individuals recover at a mean of $1/ \gamma$
+days. Similarly, infectious
+individuals die due to the infection after a mean of $1/ \mu$ days.
 
 In addition to these four main ODEs, the model also keeps track of the 
 cumulative number of cases ($C$) and the cumulative number of disease-related 
