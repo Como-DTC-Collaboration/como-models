@@ -16,17 +16,17 @@ NULL
 #' @slot transmission_parameter_names list of names of transmission parameters
 #'       (characters). Default is list("beta", "kappa", "gamma", "mu",  "nu",
 #'       "delta_V", "delta_R", "delta_VR").
-#' @slot intervention_parameter_names list of names of intervention parameters
-#'       (characters). Default is list ("starts", "stops", "coverages")
+#' @slot intervention_parameter_names list of names of parameters for each
+#'       intervention (characters). Default is list ("starts", "stops", "coverages").
 #' @slot initial_conditions list of values for initial conditions (double).
 #' @slot transmission_parameters list of values for transmission parameters
 #'       (double).
-#' @slot intervention_parameters list of values for intervention parameters
-#'       (double).
+#' @slot interventions list interventions. Each intervention has the parameters
+#'       in the same format (list of double).
 #' @slot contact_matrix A square matrix with dimension
 #'     equal to n_age_categories x n_age_categories. This matrix represents the
 #'     contact between different age groups (rows) with age groups of
-#'     people they come in contact with (columns)
+#'     people they come in contact with (columns).
 #' @slot n_age_categories number of age categories.
 #' @slot age_ranges list of string characters representing the range of ages of
 #'     people in each age category. This object must have length
@@ -50,7 +50,7 @@ SEIRDVAge <- setClass('SEIRDVAge',
                        intervention_parameter_names = 'list',
                        initial_conditions = 'list',
                        transmission_parameters = 'list',
-                       intervention_parameters = 'list',
+                       interventions = 'list',
                        age_ranges = 'list',
                        n_age_categories = 'numeric',
                        contact_matrix = 'matrix'
@@ -64,10 +64,10 @@ SEIRDVAge <- setClass('SEIRDVAge',
                        transmission_parameter_names = list('beta', 'kappa', 'gamma',
                                                            'mu', 'nu', 'delta_V',
                                                            'delta_R', 'delta_VR'),
-                       intervention_parameter_names = list('starts', 'stops', 'coverages'),
+                       intervention_parameter_names = list("starts", "stops", "coverages"),
                        initial_conditions = vector(mode = 'list', length = 7),
                        transmission_parameters = vector(mode = 'list', length = 8),
-                       intervention_parameters = vector(mode = 'list', length = 3),
+                       interventions = vector(mode = 'list'),
                        age_ranges = vector(mode = 'list'),
                        n_age_categories = NA_real_,
                        contact_matrix = matrix(NA)
@@ -94,7 +94,7 @@ setMethod('initial_conditions', 'SEIRDVAge',
 #' If the initial conditions provided to do not sum to 1 or of different
 #' sizes compared to the number of age groups, an error is thrown.
 #'
-#' @param object An object of the class SEIRDVAGE.
+#' @param object An object of the class SEIRDVAge.
 #' @param value a named list of (S0, E0, I0, R0, V0, VR) where each element can be a list
 #' of vector of doubles, with each element corresponding to the fraction for a
 #' single age group.
@@ -223,71 +223,82 @@ setMethod(
 
 # SEIRDV class specific functions
 
-#' @describeIn SEIRDVAge Retrieves intervention parameters of age-structured SEIRDV model.
+#' Retrieves interventions of age-structured SEIRDV model.
+#'
+#' @param object An object of the class SEIRDV.
+#' 
+#' @export
+setGeneric("interventions",
+           function(object) standardGeneric("interventions"))
+
+#' @describeIn SEIRDVAge Retrieves interventions of age-structured SEIRDV model.
 #'
 #' @param object An object of the class SEIRDVAge.
 #' 
 #' @export
-setMethod("intervention_parameters", "SEIRDVAge",
-          function(object) object@intervention_parameters)
+setMethod("interventions", "SEIRDVAge",
+          function(object) object@interventions)
 
-#' @describeIn SEIRDVAge Setter method for intervention parameters of the 
+#' Setter method for intervention of the age-structured SEIRV model.
+#'
+#' Intervention parameters have same size. A tanh function is used to smooth interventions during simulation. This class is designed for interventions
+#' which last several days at least and have several days between them; interventions involving rapid fluctuations may be distorted.
+#'
+#' @param object an object of the class SEIRDVAge
+#' @param value (list) list of interventions. Each intervention has the following
+#'              parameters: starts, stops and coverages.
+#'
+#' @return object of class SEIRDVAge with intervention parameters assigned.
+#' 
+#' @export
+setGeneric(
+  "interventions<-",
+  function(object, value) {
+    standardGeneric("interventions<-")
+  })
+
+#' @describeIn SEIRDVAge Setter method for intervention of the 
 #' age-structured SEIRV model.
 #'
 #' Intervention parameters have same size. A tanh function is used to smooth interventions during simulation. This class is designed for interventions
 #' which last several days at least and have several days between them; interventions involving rapid fluctuations may be distorted.
 #'
 #' @param object an object of the class SEIRDVAge
-#' @param value (list) list of intervention parameters: starts, stops and
-#'              coverages. Coverages can be either a vector, each value representing
-#'              the level of intervention for the corresponding pair of start-stop
-#'              time points, or a list of vectors, each element of the list representing
-#'              the same timeline corresponding to each age-group
+#' @param value (list) list of interventions. Each intervention has the following
+#'              parameters: starts, stops and coverages.
 #'
 #' @return object of class SEIRDVAge with intervention parameters assigned.
 #' 
 #' @export
 setMethod(
-  "intervention_parameters<-", "SEIRDVAge",
+  "interventions<-", "SEIRDVAge",
   function(object, value) {
+    if (length(value) != 1 &
+       length(value) != object@n_age_categories){
+      stop("Need one intervention must be for all age groups or one per age group.")
+    }
     
-    if (mean(names(value) %in% object@intervention_parameter_names) != 1)
-      stop(paste0("Intervention parameters must contain: ",
-                  object@intervention_parameter_names))
-    interv_par <- value
-    
-    # raise errors if intervention parameters are not doubles
-    for (p in list("starts", "stops")) {
-      if (!is.numeric(interv_par[[p]])) {
-        stop(glue("{p} format must be numeric."))
+    for (i in seq_along(value)){
+      if (mean(names(value[[i]]) %in% object@intervention_parameter_names) != 1)
+        stop(paste0("Intervention parameters must contain: ",
+                    object@intervention_parameter_names))
+      
+      # raise errors if intervention parameters are not doubles
+      for (p in list("starts", "stops", "coverages")) {
+        if (!is.numeric(value[[i]][[p]])) {
+          stop(glue("{p} format must be numeric"))
+        }
       }
-    }
-    if(!is.numeric(interv_par$coverages) &
-       !(is.list(interv_par$coverages) & is.numeric(unlist(interv_par$coverages)))) {
-      stop("coverages format must be numeric or list of numerics.")
-    }
-    
-    # check that the intervention parameters are all of the same size
-    if (length(interv_par$starts) != length(interv_par$stops)) {
-      stop("Invalid intervention parameters. Must have same size.")
-    }
-    
-    if(is.numeric(interv_par$coverages)){
-      if(length(interv_par$starts) != length(interv_par$coverages)){
+      
+      # check that the intervention parameters are all of the same size
+      if (length(value[[i]]$starts) != length(value[[i]]$stops)|
+          length(value[[i]]$starts) != length(value[[i]]$coverages)|
+          length(value[[i]]$coverages) != length(value[[i]]$stops)) {
         stop("Invalid intervention parameters. Must have same size.")
       }
     }
-    else{
-      if(length(interv_par$coverages) != object@n_age_categories){
-        stop("Wrong number of age groups for coverages for intervention parameters.")
-      }
-      if(all(lengths(interv_par$coverages) != rep(length(interv_par$starts),
-                                                 object@n_age_categories))){
-        stop("Invalid intervention parameters. Must have same size for each coverage.")
-      }
-    }
     
-    object@intervention_parameters <- interv_par
+    object@interventions <- value
     
     object
   })
@@ -348,8 +359,8 @@ setMethod(
       stop("Transmission parameters must be set before running.")
     if (is.null(unlist(object@initial_conditions)))
       stop("Initial conditions must be set before running.")
-    if (is.null(unlist(object@intervention_parameters)))
-      stop("Intervention parameters must be set before running.")
+    if (is.null(unlist(object@interventions)))
+      stop("Interventions must be set before running.")
     
     #fetch number of age categories
     n_age <- object@n_age_categories
@@ -381,37 +392,23 @@ setMethod(
     
     # use tstep=0.1 and tanh_slope=1 for good nice step-function-like shape of
     # the intervention wave
-    sim_parms <- SimulationParameters(start =0, stop = tail(times, n=1),
+    sim_parms <- SimulationParameters(start = 0, stop = tail(times, n=1),
                                       tstep = 0.1)
-    
-    intervention <- function(object, t){
-      if(is.numeric(intervention_parameters(object)$coverages)){
+    inter <- function(object, t){
+      interven <- numeric(length = length(interventions(object)))
+      for(i in seq_along(interventions(object))){
+        
         int_parms <- 
           InterventionParameters(
-            start=intervention_parameters(object)$starts,
-            stop=intervention_parameters(object)$stops,
-            coverage= intervention_parameters(object)$coverages)
+            start=interventions(object)[[i]]$starts,
+            stop=interventions(object)[[i]]$stops,
+            coverage= interventions(object)[[i]]$coverages)
         inter_prot <- intervention_protocol(int_parms, sim_parms)
-        intervention <- approxfun(inter_prot$time,
+        interven[i] <- approxfun(inter_prot$time,
                                   inter_prot$coverage, rule=2)(t)
       }
-      else{
-        i = 1
-        inter_prot <- vector(mode = "list", length = n_age)
-        intervention <- numeric(n_age)
-        for(age_cov in intervention_parameters(object)$coverages){
-          int_parms <- 
-            InterventionParameters(
-              start=intervention_parameters(object)$starts,
-              stop=intervention_parameters(object)$stops,
-              coverage= age_cov)
-          inter_prot[[i]] <- intervention_protocol(int_parms, sim_parms, 1)
-          intervention[i] <- approxfun(inter_prot[[i]]$time,
-                                       inter_prot[[i]]$coverage, rule=2)(t)
-          i <- i+1
-        }
-      }
-      return(intervention)
+      
+      return(interven)
     }
     
     # function for RHS of ode system
@@ -447,7 +444,7 @@ setMethod(
     # call ode solver
     out <- ode(
       y = state, times = times, func = right_hand_side,
-      parms = parameters, method = solve_method, input = intervention)
+      parms = parameters, method = solve_method, input = inter)
     
     #output as a dataframe
     output <- as.data.frame.array(out)

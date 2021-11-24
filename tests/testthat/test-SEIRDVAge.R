@@ -21,7 +21,6 @@ test_that("SEIRDVAge model is instantiated correctly", {
   
   expect_length(my_model@initial_conditions, 7)
   expect_length(my_model@transmission_parameters, 8)
-  expect_length(my_model@intervention_parameters, 3)
   
   expect_length(my_model@age_ranges, my_model@n_age_categories)
   
@@ -261,36 +260,42 @@ test_that("Transmission parameters can be set and retrieved", {
       nu = 0.1, delta_V = 0.1, delta_R = 0.1, delta_VR = 0.1))
 })
 
-test_that("Intervention parameters can be set and retrieved", {
+test_that("Interventions can be set and retrieved", {
   my_model <- SEIRDVAge(n_age_categories = 2)
-  intervention_parameters(my_model) <- list(
-    starts=10, stops=20, coverages=0.2)
+  interventions(my_model) <- list(list(
+    starts=10, stops=20, coverages=0.2))
   
   # Test output is correct
-  expect_equal(intervention_parameters(my_model),
-               list(starts=10, stops=20, coverages=0.2))
+  expect_equal(interventions(my_model),
+               list(list(starts=10, stops=20, coverages=0.2)))
   
   # Multiple age-groups coverages
-  intervention_parameters(my_model) <- list(
-    starts=10, stops=20, coverages=list(0.2, 0.5))
+  interventions(my_model) <- list(
+    list(starts=10, stops=20, coverages=0.2),
+    list(starts=10, stops=20, coverages=0.5))
   
   # Test output is correct
-  expect_equal(intervention_parameters(my_model),
-               list(starts=10, stops=20, coverages=list(0.2, 0.5)))
+  expect_equal(interventions(my_model),
+               list(
+                 list(starts=10, stops=20, coverages=0.2),
+                 list(starts=10, stops=20, coverages=0.5)))
   
-  # Check error is raised when transmission parameters are not 1-dimensional
+  # Check error is raised when intervention parameters are not 1-dimensional
   expect_error(
-    intervention_parameters(my_model) <- list(
-      starts=c(10, 15), stops=c(20), coverages=c(0.5)))
+    interventions(my_model) <- list(list(
+      starts=c(10, 15), stops=c(20), coverages=c(0.5))))
   expect_error(
-    intervention_parameters(my_model) <- list(
-      starts=c(5), stops=c(10, 20), coverages=c(0.5)))
+    interventions(my_model) <- list(list(
+      starts=c(5), stops=c(10, 20), coverages=c(0.5))))
   expect_error(
-    intervention_parameters(my_model) <- list(
-      starts=c(10), stops=c(20), coverages=c(0.5, 1)))
+    interventions(my_model) <- list(list(
+      starts=c(10), stops=c(20), coverages=c(0.5, 1))))
   expect_error(
-    intervention_parameters(my_model) <- list(
-      starts=c(10), stops=c(20), coverages=list(0.5)))
+    interventions(my_model) <- list(
+      list(starts=c(10), stops=c(20), coverages=0.2),
+      list(starts=c(10), stops=c(20), coverages=0.5),
+      list(starts=c(10), stops=c(20), coverages=0.3)
+    ))
 })
 
 test_that("SEIRDVAge model runs correctly", {
@@ -308,7 +313,9 @@ test_that("SEIRDVAge model runs correctly", {
   transmission_parameters(my_model) <- list(beta=0, kappa=0, gamma=0, mu=0,
                                             nu = c(0, 0), delta_V = 0, delta_R = 0,
                                             delta_VR = 0)
-  intervention_parameters(my_model) <- list(starts=c(0, 19), stops=c(10, 20), coverages=list(c(0.5, 0), c(0, 0.4)))
+  interventions(my_model) <- list(
+    list(starts=c(0, 19), stops=c(10, 20), coverages=c(0.5, 0)),
+    list(starts=c(0, 19), stops=c(10, 20),coverages=c(0, 0.4)))
   
   expected_output_states <- data.frame('time'=rep(0:2, 14),
                                        'value'=c(rep(0.6, 3), rep(0.4, 3), rep(0, 36)))
@@ -363,14 +370,14 @@ test_that("Running model before setting parameters fails", {
                                        V0=c(0, 0),
                                        VR0=c(0, 0),
                                        D0 = c(0, 0))
-  intervention_parameters(my_model) <- list(starts=0, stops=10, coverages=0.5)
+  interventions(my_model) <- list(list(starts=0, stops=10, coverages=0.5))
   expect_error(run(my_model, t), "Transmission parameters must be set before running.")
   
   my_model <- SEIRDVAge(n_age_categories = 2)
   transmission_parameters(my_model) <- list(beta=0.9, kappa=0.2, gamma=0.01, mu=0.1,
                                             nu = 0.1, delta_V = 0.1, delta_R = 0.1,
                                             delta_VR = 0.1)
-  intervention_parameters(my_model) <- list(starts=0, stops=10, coverages=0.5)
+  interventions(my_model) <- list(list(starts=0, stops=10, coverages=0.5))
   expect_error(run(my_model, t), "Initial conditions must be set before running.")
   
   my_model <- SEIRDVAge(n_age_categories = 2)
@@ -384,5 +391,5 @@ test_that("Running model before setting parameters fails", {
   transmission_parameters(my_model) <- list(beta=0.9, kappa=0.2, gamma=0.01, mu=0.1,
                                             nu = 0.1, delta_V = 0.1, delta_R = 0.1,
                                             delta_VR = 0.1)
-  expect_error(run(my_model, t), "Intervention parameters must be set before running.")
+  expect_error(run(my_model, t), "Interventions must be set before running.")
 })
