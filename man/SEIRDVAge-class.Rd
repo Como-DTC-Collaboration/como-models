@@ -107,7 +107,7 @@ given by
 \deqn{\frac{dR_i(t)}{dt} = \gamma I_i(t) -  \delta_R R_i(t) - \nu Inter(t) R_i(t)}
 \deqn{\frac{dV(t)}{dt} = \nu Inter(t) S_i(t) - \delta_V V_i(t)}
 \deqn{\frac{dVR(t)}{dt} = \nu Inter(t) R_i(t) - \delta_VR VR_i(t)}
-\deqn{\frac{dC(t)}{dt} = \ beta S_i(t) \Sigma_{j}C_{ij} I_j(t)}
+\deqn{\frac{dC(t)}{dt} = \beta S_i(t) \Sigma_{j}C_{ij} I_j(t)}
 \deqn{\frac{dD_i(t)}{dt} = \mu I_i(t)}
 
 where C is a contact matrix whose elements represents the

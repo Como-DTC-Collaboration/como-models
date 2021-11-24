@@ -384,44 +384,34 @@ setMethod(
     sim_parms <- SimulationParameters(start =0, stop = tail(times, n=1),
                                       tstep = 0.1)
     
-    if(is.numeric(intervention_parameters(object)$coverages)){
-      int_parms <- 
-        InterventionParameters(
-          start=intervention_parameters(object)$starts,
-          stop=intervention_parameters(object)$stops,
-          coverage= intervention_parameters(object)$coverages)
-      inter_prot <- intervention_protocol(int_parms, sim_parms, 1) %>%
-        filter(time %in% times) %>%
-        .$coverage
-    }
-    else{
-      i = 1
-      inter_prot <- vector(mode = "list", length = n_age)
-      for(age_cov in intervention_parameters(object)$coverages){
+    intervention <- function(object, t){
+      if(is.numeric(intervention_parameters(object)$coverages)){
         int_parms <- 
           InterventionParameters(
             start=intervention_parameters(object)$starts,
             stop=intervention_parameters(object)$stops,
-            coverage= age_cov)
-        inter_prot[[i]] <- intervention_protocol(int_parms, sim_parms, 1) %>%
-          filter(time %in% times) %>%
-          .$coverage
-        i <- i+1
-      }
-    }
-    
-    intervention <- function(t){
-      if(is.numeric(inter_prot)){
-        interv_func <- approxfun(times, inter_prot, rule=2)(t)
+            coverage= intervention_parameters(object)$coverages)
+        inter_prot <- intervention_protocol(int_parms, sim_parms)
+        intervention <- approxfun(inter_prot$time,
+                                  inter_prot$coverage, rule=2)(t)
       }
       else{
-        interv_func <- numeric(n_age)
-        for(i in 1:n_age){
-          interv_func[i] <- approxfun(times, inter_prot[[i]], rule=2)(t)
+        i = 1
+        inter_prot <- vector(mode = "list", length = n_age)
+        intervention <- numeric(n_age)
+        for(age_cov in intervention_parameters(object)$coverages){
+          int_parms <- 
+            InterventionParameters(
+              start=intervention_parameters(object)$starts,
+              stop=intervention_parameters(object)$stops,
+              coverage= age_cov)
+          inter_prot[[i]] <- intervention_protocol(int_parms, sim_parms, 1)
+          intervention[i] <- approxfun(inter_prot[[i]]$time,
+                                       inter_prot[[i]]$coverage, rule=2)(t)
+          i <- i+1
         }
       }
-      
-      interv_func
+      return(intervention)
     }
     
     # function for RHS of ode system

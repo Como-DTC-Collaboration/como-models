@@ -226,6 +226,7 @@ intervention_parameters(my_model) <- list(starts=c(17+seq(1, n_ages), 50+seq(1, 
                                                   c(90+seq(1, n_ages-1), 110)),
                                           coverages=coverages)
 times <- seq(0, 200, by = 1)
+intervention_parameters(my_model)
 out_df <- run(my_model, times)
 ```
 The added intervention feature allows for variable levels of vaccination in a population.
@@ -238,18 +239,29 @@ at a different stage
 
 Below we can see a plot of the a classical level of interventions that occur at each time step.
 ```{r, fig.height = 5, fig.width = 7}
-int_parms <- InterventionParameters(start=c(17, 35, 42),
-                                    stop=c(25, 39, 49),
-                                    coverage=c(1, 1, 1))
+
+parameters <- list(starts=c(17+seq(1, n_ages), 50+seq(1, n_ages), 89+seq(1, n_ages)),
+                   stops=c(c(18+seq(1, n_ages-1), 35), c(51+seq(1, n_ages-1), 69),
+                        c(90+seq(1, n_ages-1), 110)),
+                   coverages=coverages)
 
 sim_parms <- SimulationParameters(start=0, stop=200, tstep = 0.1)
 
-intervention_protocol(int_parms, sim_parms, 1) %>%
-  ggplot(aes(x=time, y=coverage)) +
-  geom_line() +
-  scale_color_brewer(palette = "Dark2") +
-  labs(x = "time (days)", y = "level of intervention") +
-  theme(text = element_text(size = 20))
+interventions <- vector(mode = "list", length = n_ages)
+
+for(i in 1:n_ages){
+  int_parms <- InterventionParameters(start=parameters$starts,
+                                    stop=parameters$stops,
+                                    coverage=parameters$coverages[[i]])
+
+  print(intervention_protocol(int_parms, sim_parms, 1) %>%
+    ggplot(aes(x=time, y=coverage)) +
+    geom_line() +
+    scale_color_brewer(palette = "Dark2") +
+    labs(x = "time (days)", y = "level of intervention") +
+    theme(legend.position = "bottom", legend.title = element_blank(),
+          text = element_text(size = 20)))
+}
 ```
 Interventions for this model last several days at least and have several days between them.
 
