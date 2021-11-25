@@ -8,8 +8,8 @@
 \alias{initial_conditions<-,SEIRDVAge-method}
 \alias{transmission_parameters,SEIRDVAge-method}
 \alias{transmission_parameters<-,SEIRDVAge-method}
-\alias{intervention_parameters,SEIRDVAge-method}
-\alias{intervention_parameters<-,SEIRDVAge-method}
+\alias{interventions,SEIRDVAge-method}
+\alias{interventions<-,SEIRDVAge-method}
 \alias{run,SEIRDVAge-method}
 \title{An S4 object representing the SEIRDVAge.}
 \usage{
@@ -21,20 +21,17 @@
 
 \S4method{transmission_parameters}{SEIRDVAge}(object) <- value
 
-\S4method{intervention_parameters}{SEIRDVAge}(object)
+\S4method{interventions}{SEIRDVAge}(object)
 
-\S4method{intervention_parameters}{SEIRDVAge}(object) <- value
+\S4method{interventions}{SEIRDVAge}(object) <- value
 
 \S4method{run}{SEIRDVAge}(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
 }
 \arguments{
 \item{object}{An object of the class SEIRDVAge.}
 
-\item{value}{(list) list of intervention parameters: starts, stops and
-coverages. Coverages can be either a vector, each value representing
-the level of intervention for the corresponding pair of start-stop
-time points, or a list of vectors, each element of the list representing
-the same timeline corresponding to each age-group}
+\item{value}{(list) list of interventions. Each intervention has the following
+parameters: starts, stops and coverages.}
 
 \item{times}{(vector) time sequence over which to solve the model.
 Must be of the form seq(t_start,t_end,by=t_step). Default time series
@@ -85,9 +82,9 @@ age-structured SEIRDV model.
 If the transmission parameters provided to are not 1-dimensional an error is
 thrown.
 
-\item \code{intervention_parameters}: Retrieves intervention parameters of age-structured SEIRDV model.
+\item \code{interventions}: Retrieves interventions of age-structured SEIRDV model.
 
-\item \code{intervention_parameters<-}: Setter method for intervention parameters of the
+\item \code{interventions<-}: Setter method for intervention of the
 age-structured SEIRV model.
 
 Intervention parameters have same size. A tanh function is used to smooth interventions during simulation. This class is designed for interventions
@@ -129,21 +126,21 @@ incidence.}
 (characters). Default is list("beta", "kappa", "gamma", "mu",  "nu",
 "delta_V", "delta_R", "delta_VR").}
 
-\item{\code{intervention_parameter_names}}{list of names of intervention parameters
-(characters). Default is list ("starts", "stops", "coverages")}
+\item{\code{intervention_parameter_names}}{list of names of parameters for each
+intervention (characters). Default is list ("starts", "stops", "coverages").}
 
 \item{\code{initial_conditions}}{list of values for initial conditions (double).}
 
 \item{\code{transmission_parameters}}{list of values for transmission parameters
 (double).}
 
-\item{\code{intervention_parameters}}{list of values for intervention parameters
-(double).}
+\item{\code{interventions}}{list interventions. Each intervention has the parameters
+in the same format (list of double).}
 
 \item{\code{contact_matrix}}{A square matrix with dimension
 equal to n_age_categories x n_age_categories. This matrix represents the
 contact between different age groups (rows) with age groups of
-people they come in contact with (columns)}
+people they come in contact with (columns).}
 
 \item{\code{n_age_categories}}{number of age categories.}
 

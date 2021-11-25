@@ -305,11 +305,9 @@ setMethod(
     sim_parms <- SimulationParameters(start =0, stop = tail(times, n=1),
                                       tstep = 0.1)
     
-    inter_prot <- intervention_protocol(int_parms, sim_parms, 1) %>%
-      filter(time %in% times) %>%
-      .$coverage
+    inter_prot <- intervention_protocol(int_parms, sim_parms, 1)
     
-    intervention <- approxfun(times, inter_prot, rule=2)
+    intervention <- approxfun(inter_prot$time, inter_prot$coverage, rule=2)
     
     # function for RHS of ode system
     right_hand_side <- function(t, state, parameters, input) {

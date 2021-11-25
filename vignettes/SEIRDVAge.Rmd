@@ -214,19 +214,16 @@ The initial conditions must sum to one. If they do not, an error is thrown.
 
 Now we simulate the system from $t=0$ days to $t=200$ days.
 ```{r}
-coverages <- vector(mode = "list", length = n_ages)
+interven <- vector(mode = "list", length = n_ages)
 
 for(i in 1:n_ages){
-  coverages[[i]] <- rep(0, 3*n_ages)
-  coverages[[i]][c(i:n_ages, (n_ages+i):(2*n_ages), (2*n_ages+i):(3*n_ages))] <- 1
+  interven[[i]]$starts <- c(17+i, 50+i, 89+i)
+  interven[[i]]$stops <-  c(35, 69, 110)
+  interven[[i]]$coverages <- c(1,1,1)
 }
 
-intervention_parameters(my_model) <- list(starts=c(17+seq(1, n_ages), 50+seq(1, n_ages), 89+seq(1, n_ages)),
-                                          stops=c(c(18+seq(1, n_ages-1), 35), c(51+seq(1, n_ages-1), 69),
-                                                  c(90+seq(1, n_ages-1), 110)),
-                                          coverages=coverages)
+interventions(my_model) <- interven
 times <- seq(0, 200, by = 1)
-intervention_parameters(my_model)
 out_df <- run(my_model, times)
 ```
 The added intervention feature allows for variable levels of vaccination in a population.
@@ -240,19 +237,16 @@ at a different stage
 Below we can see a plot of the a classical level of interventions that occur at each time step.
 ```{r, fig.height = 5, fig.width = 7}
 
-parameters <- list(starts=c(17+seq(1, n_ages), 50+seq(1, n_ages), 89+seq(1, n_ages)),
-                   stops=c(c(18+seq(1, n_ages-1), 35), c(51+seq(1, n_ages-1), 69),
-                        c(90+seq(1, n_ages-1), 110)),
-                   coverages=coverages)
+parameters <- interven
 
 sim_parms <- SimulationParameters(start=0, stop=200, tstep = 0.1)
 
 interventions <- vector(mode = "list", length = n_ages)
 
 for(i in 1:n_ages){
-  int_parms <- InterventionParameters(start=parameters$starts,
-                                    stop=parameters$stops,
-                                    coverage=parameters$coverages[[i]])
+  int_parms <- InterventionParameters(start=parameters[[i]]$starts,
+                                      stop=parameters[[i]]$stops,
+                                      coverage=parameters[[i]]$coverages)
 
   print(intervention_protocol(int_parms, sim_parms, 1) %>%
     ggplot(aes(x=time, y=coverage)) +
@@ -332,16 +326,13 @@ run_SEIRDVAge <- function(delta_VR_val) {
                 D0=rep(0, n_ages))
   params <- list(beta=1, kappa=0.9, gamma=0.5, mu=0.1, nu=0.4, delta_V=0.1,
                  delta_R=0.05, delta_VR = delta_VR_val)
-  interv<- list(starts=c(17+seq(1, n_ages), 50+seq(1, n_ages), 89+seq(1, n_ages)),
-                stops=c(c(18+seq(1, n_ages-1), 35), c(51+seq(1, n_ages-1), 69),
-                        c(90+seq(1, n_ages-1), 110)),
-                coverages=coverages)
+  interv<- interven
   model <- SEIRDVAge(n_age_categories = n_ages,
                 contact_matrix = c_combined_wider,
                 age_ranges = as.list(age_names),
                 initial_conditions = inits,
                 transmission_parameters=params,
-                intervention_parameters = interv)
+                interventions = interv)
   times <- seq(0, 200, by = 1)
   out_df <- run(model, times)
   out_df$changes
@@ -357,7 +348,6 @@ for(i in seq_along(delta_VR_vals)) {
   else
     result <- result %>% bind_rows(temp)
 }
-
 
 # plot results
 result %>% 
@@ -386,16 +376,13 @@ run_SEIRDVAge <- function(nu_2530_val) {
   params <- list(beta=1, kappa=0.9, gamma=0.5, mu=0.1,
                  nu= c(rep(0.4, 5), nu_2530, rep(0.4, n_ages-6)), 
                  delta_V=0.1, delta_R=0.05, delta_VR = 0.02)
-  interv<- list(starts=c(17+seq(1, n_ages), 50+seq(1, n_ages), 89+seq(1, n_ages)),
-                stops=c(c(18+seq(1, n_ages-1), 35), c(51+seq(1, n_ages-1), 69),
-                        c(90+seq(1, n_ages-1), 110)),
-                coverages=coverages)
+  interv<- interven
   model <- SEIRDVAge(n_age_categories = n_ages,
                 contact_matrix = c_combined_wider,
                 age_ranges = as.list(age_names),
                 initial_conditions = inits,
                 transmission_parameters=params,
-                intervention_parameters = interv)
+                interventions = interv)
   times <- seq(0, 200, by = 1)
   out_df <- run(model, times)
   out_df$changes
@@ -426,9 +413,20 @@ result %>%
 As we can see from the plot above, larger rates of maximum vaccination $\nu_{25-35}$ make the second wave of the number of deaths in the epidemic occur later compared to the first peak. For larger $\nu_{25-35}$, we see that the height of the second peak is larger.
 
 We now investigate the sensitivity of the start time of intervention values, `start_val`. We run the model for varying values of `start_val` and plot the number of deaths per day over time. The intervention profile is the same in each of the cases, only shifted by this quantity `start_val`.
-
 ```{r, fig.height = 5, fig.width = 7}
 # function to setup and run model for different start values
+var_interven <- function(start){
+  interven <- vector(mode = "list", length = n_ages)
+  
+  for(i in 1:n_ages){
+    interven[[i]]$starts <- c(17+i, 50+i, 89+i)+start
+    interven[[i]]$stops <-  c(35, 69, 110)+start
+    interven[[i]]$coverages <- c(1,1,1)
+  }
+  
+  return(interven)
+}
+
 run_SEIRDVAge <- function(start_val) {
   start <- start_val
   inits <- list(S0=pop_fraction*0.99, E0=rep(0, n_ages), I0=pop_fraction*0.01,
@@ -436,16 +434,13 @@ run_SEIRDVAge <- function(start_val) {
                 D0=rep(0, n_ages))
   params <- list(beta=1, kappa=0.9, gamma=0.5, mu=0.1,
                  nu= 0.4, delta_V=0.1, delta_R=0.05, delta_VR = 0.02)
-  interv<- list(starts=c(0+seq(1, n_ages), 35+seq(1, n_ages), 80+seq(1, n_ages))+start,
-                stops=c(c(1+seq(1, n_ages-1), 19), c(36+seq(1, n_ages-1), 69),
-                        c(81+seq(1, n_ages-1), 110))+start,
-                coverages=coverages)
+  interv<- var_interven(start = start_val)
   model <- SEIRDVAge(n_age_categories = n_ages,
                 contact_matrix = c_combined_wider,
                 age_ranges = as.list(age_names),
                 initial_conditions = inits,
                 transmission_parameters=params,
-                intervention_parameters = interv)
+                interventions = interv)
   times <- seq(0, 200, by = 1)
   out_df <- run(model, times)
   out_df$changes
@@ -474,3 +469,4 @@ result %>%
 
 ```
 As we can see from the plot above, larger start time of intervention values, `start_val` will produce longer secondary waves connected to the first peak. In the case of vaccination early on `start_val`=10, we observe a disjoint secondary wave around 180, smaller in amplitude than the first one.
+

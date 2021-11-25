@@ -394,16 +394,16 @@ setMethod(
     # the intervention wave
     sim_parms <- SimulationParameters(start = 0, stop = tail(times, n=1),
                                       tstep = 0.1)
-    inter <- function(object, t){
-      interven <- numeric(length = length(interventions(object)))
+    
+    inter <- function(t){
+      interven <- vector("numeric", length = length(interventions(object)))
       for(i in seq_along(interventions(object))){
-        
         int_parms <- 
           InterventionParameters(
             start=interventions(object)[[i]]$starts,
             stop=interventions(object)[[i]]$stops,
             coverage= interventions(object)[[i]]$coverages)
-        inter_prot <- intervention_protocol(int_parms, sim_parms)
+        inter_prot <- intervention_protocol(int_parms, sim_parms, 1)
         interven[i] <- approxfun(inter_prot$time,
                                   inter_prot$coverage, rule=2)(t)
       }
