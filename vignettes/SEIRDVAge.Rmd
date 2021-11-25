@@ -190,7 +190,10 @@ my_model <- SEIRDVAge(n_age_categories = n_ages,
 Next, we set the parameter values for $\beta$, $\kappa$, $\gamma$, $\mu$, $\nu$,
 $\delta_V$, $\delta_R$ and $\delta_{VR}$:
 ```{r}
-params <- list(beta=1, kappa=0.9, gamma=0.5, mu=0.1, nu=0.4, delta_V=0.1,
+mu <- c(0.000016, 0.000016, 0.00007, 0.00007, 0.00031, 0.00031, 0.0026, 0.0026,
+     0.0048, 0.0048, 0.006, 0.006, 0.019, 0.019, 0.043, 0.043)
+
+params <- list(beta=1, kappa=0.9, gamma=0.5, mu=mu, nu=0.4, delta_V=0.1,
                delta_R=0.05, delta_VR = 0.02)
 transmission_parameters(my_model) <- params
 ```
@@ -217,9 +220,23 @@ Now we simulate the system from $t=0$ days to $t=200$ days.
 interven <- vector(mode = "list", length = n_ages)
 
 for(i in 1:n_ages){
-  interven[[i]]$starts <- c(35-i, 80-i, 135-i)
-  interven[[i]]$stops <-  c(60, 95, 180)
-  interven[[i]]$coverages <- c(1,1,1)
+  if(is.element(i, 1:2)){
+    interven[[i]]$starts <- 150
+    interven[[i]]$stops <-  190
+  }
+  else if(is.element(i, 3:5)){
+    interven[[i]]$starts <- 120
+    interven[[i]]$stops <-  180
+  }
+  else if(is.element(i, 14:16)){
+    interven[[i]]$starts <- 30
+    interven[[i]]$stops <-  110
+  }
+  else{
+    interven[[i]]$starts <- 100-7*i
+    interven[[i]]$stops <-  190-7*i
+  }
+  interven[[i]]$coverages <- 1
 }
 
 interventions(my_model) <- interven
@@ -324,7 +341,7 @@ run_SEIRDVAge <- function(delta_VR_val) {
   inits <- list(S0=pop_fraction*0.99, E0=rep(0, n_ages), I0=pop_fraction*0.01,
                 R0=rep(0, n_ages), V0=rep(0, n_ages), VR0=rep(0, n_ages),
                 D0=rep(0, n_ages))
-  params <- list(beta=1, kappa=0.9, gamma=0.5, mu=0.1, nu=0.4, delta_V=0.1,
+  params <- list(beta=1, kappa=0.9, gamma=0.5, mu=mu, nu=0.4, delta_V=0.1,
                  delta_R=0.05, delta_VR = delta_VR_val)
   interv<- interven
   model <- SEIRDVAge(n_age_categories = n_ages,
@@ -373,7 +390,7 @@ run_SEIRDVAge <- function(nu_2530_val) {
   inits <- list(S0=pop_fraction*0.99, E0=rep(0, n_ages), I0=pop_fraction*0.01,
                 R0=rep(0, n_ages), V0=rep(0, n_ages), VR0=rep(0, n_ages),
                 D0=rep(0, n_ages))
-  params <- list(beta=1, kappa=0.9, gamma=0.5, mu=0.1,
+  params <- list(beta=1, kappa=0.9, gamma=0.5, mu=mu,
                  nu= c(rep(0.4, 5), nu_2530, rep(0.4, n_ages-6)), 
                  delta_V=0.1, delta_R=0.05, delta_VR = 0.02)
   interv<- interven
@@ -389,7 +406,7 @@ run_SEIRDVAge <- function(nu_2530_val) {
 }
 
 # run model across different nu values
-nu_2530_vals <- c(0, 0.2, 0.4, 0.6, 0.9)
+nu_2530_vals <- c(0, 0.2, 0.4, 0.6, 10)
 for(i in seq_along(nu_2530_vals)) {
   nu_temp <- nu_2530_vals[i]
   temp <- run_SEIRDVAge(nu_temp) %>% mutate(nu_2530=nu_temp)
@@ -417,13 +434,29 @@ We now investigate the sensitivity of the start time of intervention values, `st
 # function to setup and run model for different start values
 var_interven <- function(start){
   interven <- vector(mode = "list", length = n_ages)
-  
+
   for(i in 1:n_ages){
-    interven[[i]]$starts <- c(35-i, 80-i, 135-i)+start
-    interven[[i]]$stops <-  c(60, 95, 180)+start
-    interven[[i]]$coverages <- c(1,1,1)
+    if(is.element(i, 1:2)){
+      interven[[i]]$starts <- 150
+      interven[[i]]$stops <-  190
+    }
+    else if(is.element(i, 3:5)){
+      interven[[i]]$starts <- 120
+      interven[[i]]$stops <-  180
+    }
+    else if(is.element(i, 14:16)){
+      interven[[i]]$starts <- 30
+      interven[[i]]$stops <-  110
+    }
+    else{
+      interven[[i]]$starts <- 100-7*i
+      interven[[i]]$stops <-  190-7*i
+    }
+    interven[[i]]$coverages <- 1
   }
-  
+  interven[[i]]$starts <- interven[[i]]$starts + start
+  interven[[i]]$stops <- interven[[i]]$stops + start
+
   return(interven)
 }
 
@@ -432,7 +465,7 @@ run_SEIRDVAge <- function(start_val) {
   inits <- list(S0=pop_fraction*0.99, E0=rep(0, n_ages), I0=pop_fraction*0.01,
                 R0=rep(0, n_ages), V0=rep(0, n_ages), VR0=rep(0, n_ages),
                 D0=rep(0, n_ages))
-  params <- list(beta=1, kappa=0.9, gamma=0.5, mu=0.1,
+  params <- list(beta=1, kappa=0.9, gamma=0.5, mu=mu,
                  nu= 0.4, delta_V=0.1, delta_R=0.05, delta_VR = 0.02)
   interv<- var_interven(start = start_val)
   model <- SEIRDVAge(n_age_categories = n_ages,
