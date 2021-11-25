@@ -395,19 +395,23 @@ setMethod(
     sim_parms <- SimulationParameters(start = 0, stop = tail(times, n=1),
                                       tstep = 0.1)
     
+
+    inter_prot <- vector("list", length = length(interventions(object)))
+    for(i in 1:length(interventions(object))){
+      int_parms <- 
+        InterventionParameters(
+          start=interventions(object)[[i]]$starts,
+          stop=interventions(object)[[i]]$stops,
+          coverage= interventions(object)[[i]]$coverages)
+      inter_prot[[i]] <- intervention_protocol(int_parms, sim_parms, 1)
+    }
+    
     inter <- function(t){
       interven <- vector("numeric", length = length(interventions(object)))
-      for(i in seq_along(interventions(object))){
-        int_parms <- 
-          InterventionParameters(
-            start=interventions(object)[[i]]$starts,
-            stop=interventions(object)[[i]]$stops,
-            coverage= interventions(object)[[i]]$coverages)
-        inter_prot <- intervention_protocol(int_parms, sim_parms, 1)
-        interven[i] <- approxfun(inter_prot$time,
-                                  inter_prot$coverage, rule=2)(t)
+      for(i in 1:length(interventions(object))){
+        interven[i] <- approxfun(inter_prot[[i]]$time,
+                                 inter_prot[[i]]$coverage, rule=2)(t)
       }
-      
       return(interven)
     }
     

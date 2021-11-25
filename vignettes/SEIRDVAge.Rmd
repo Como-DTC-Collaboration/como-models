@@ -217,8 +217,8 @@ Now we simulate the system from $t=0$ days to $t=200$ days.
 interven <- vector(mode = "list", length = n_ages)
 
 for(i in 1:n_ages){
-  interven[[i]]$starts <- c(17+i, 50+i, 89+i)
-  interven[[i]]$stops <-  c(35, 69, 110)
+  interven[[i]]$starts <- c(35-i, 80-i, 135-i)
+  interven[[i]]$stops <-  c(60, 95, 180)
   interven[[i]]$coverages <- c(1,1,1)
 }
 
@@ -419,8 +419,8 @@ var_interven <- function(start){
   interven <- vector(mode = "list", length = n_ages)
   
   for(i in 1:n_ages){
-    interven[[i]]$starts <- c(17+i, 50+i, 89+i)+start
-    interven[[i]]$stops <-  c(35, 69, 110)+start
+    interven[[i]]$starts <- c(35-i, 80-i, 135-i)+start
+    interven[[i]]$stops <-  c(60, 95, 180)+start
     interven[[i]]$coverages <- c(1,1,1)
   }
   
