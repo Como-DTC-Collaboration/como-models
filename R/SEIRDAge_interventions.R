@@ -13,27 +13,20 @@ NULL
 #'     model.
 #' @slot transmission_parameter_names names of the transmission parameters used
 #'     by the model.
+#' @slot intervention_parameter_names list of names of intervention parameters
+#'       (characters). Default is list ("starts", "stops").
 #' @slot initial_conditions named list containing the initial conditions of the
 #'     model. Initial values for each compartment, S0, E0, I0, R0.
 #' @slot transmission_parameters named list containing the transmission
 #'     parameters of the model. Transmission parameters b, k, g represent the
 #'     rates of changes between the compartments.
-#' @slot contact_matrix_1 A square matrix with dimension
+#' @slot intervention_parameters list of values for intervention parameters
+#'       (double).
+#' @slot contact_matrix A list of square matrices, each with dimension
 #'     equal to n_age_categories x n_age_categories. This matrix represents the
 #'     contact between different age groups (rows) with age groups of
-#'     people they come in contact with (columns) in the 1st interval of the
+#'     people they come in contact with (columns) in the ist interval of the
 #'     simulation (normally with no restriction on social contact.
-#' @slot contact_matrix_2 A square matrix with dimension
-#'     equal to n_age_categories x n_age_categories. This matrix represents the
-#'     contact between different age groups (rows) with age groups of
-#'     people they come in contact with (columns) in the 2nd interval of the
-#'     simulation (normally with measures in place to limit social contact).
-#' @slot contact_matrix_3 A square matrix with dimension
-#'     equal to n_age_categories x n_age_categories. This matrix represents the
-#'     contact between different age groups (rows) with age groups of
-#'     people they come in contact with (columns) in the 3rd interval of the
-#'     simulation (normally with some relaxation of measures compared to the
-#'     2nd interval).
 #' @slot n_age_categories number of age categories.
 #' @slot age_ranges list of string characters representing the range of ages of
 #'     people in each age category. This object must have length
@@ -54,13 +47,15 @@ SEIRDAge_interventions <- setClass('SEIRDAge_interventions',
                        output_names = 'list',
                        initial_condition_names = 'list',
                        transmission_parameter_names = 'list',
+                       intervention_parameter_names = 'list',
                        initial_conditions = 'list',
                        transmission_parameters = 'list',
+                       intervention_parameters = 'list',
                        age_ranges = 'list',
                        n_age_categories = 'numeric',
-                       contact_matrix_1 = 'matrix',
-                       contact_matrix_2 = 'matrix',
-                       contact_matrix_3 = 'matrix'
+                       contact_matrix= 'list'#,
+                       #contact_matrix_2 = 'matrix',
+                       #contact_matrix_3 = 'matrix'
                        
                      ),                 
                      # prototypes for the slots, automatically set output and param
@@ -70,13 +65,15 @@ SEIRDAge_interventions <- setClass('SEIRDAge_interventions',
                        initial_condition_names = list('S0', 'E0', 'I0', 'R0', 'D0'),
                        transmission_parameter_names = list('isolated_frac', 'beta_isolated', 'beta_not_isolated', 
                                                            'kappa', 'gamma', 'mu'),
+                       intervention_parameter_names = list("starts", "stops"), 
                        initial_conditions = vector(mode = "list", length = 5),
                        transmission_parameters = vector(mode = "list", length = 6),
+                       intervention_parameters = vector(mode = "list", length = 2),
                        age_ranges = vector(mode = 'list'),
                        n_age_categories = NA_real_,
-                       contact_matrix_1 = matrix(NA),
-                       contact_matrix_2 = matrix(NA),
-                       contact_matrix_3 = matrix(NA)
+                       contact_matrix= vector(mode = 'list')
+                       #contact_matrix_2 = matrix(NA),
+                       #contact_matrix_3 = matrix(NA)
                        )
 )
 
@@ -178,7 +175,7 @@ setMethod('transmission_parameters', 'SEIRDAge_interventions',
 #' All rates of change between compartments are equal regardless of
 #' age group.
 #'
-#' @return Updated version of the age-structured SEIR model.
+#' @return Updated version of the age-structured SEIR model with interventions.
 #'
 #' @export
 #'
@@ -205,14 +202,19 @@ setMethod(
     }
     
     # Set the row and column names of the instance's contact matrix
-    rownames(object@contact_matrix_1) <- object@age_ranges
-    colnames(object@contact_matrix_1) <- object@age_ranges
-    
-    rownames(object@contact_matrix_2) <- object@age_ranges
-    colnames(object@contact_matrix_2) <- object@age_ranges
-    
-    rownames(object@contact_matrix_3) <- object@age_ranges
-    colnames(object@contact_matrix_3) <- object@age_ranges
+    for(i in seq(length(object@contact_matrix))){
+      rownames(object@contact_matrix[[i]]) <- object@age_ranges
+      colnames(object@contact_matrix[[i]]) <- object@age_ranges
+      
+    }
+    # rownames(object@contact_matrix_1) <- object@age_ranges
+    # colnames(object@contact_matrix_1) <- object@age_ranges
+    # 
+    # rownames(object@contact_matrix_2) <- object@age_ranges
+    # colnames(object@contact_matrix_2) <- object@age_ranges
+    # 
+    # rownames(object@contact_matrix_3) <- object@age_ranges
+    # colnames(object@contact_matrix_3) <- object@age_ranges
     
     # if all above tests are passed, assign the trans_params namelist to the
     # object
@@ -222,34 +224,79 @@ setMethod(
   })
 
 
+#' @describeIn SEIRDAge_interventions Retrieves intervention parameters of SEIRDAge_interventions model.
+#'
+#' @param object An object of the class SEIRDAge_interventions.
+#'
+#' @export
+setMethod("intervention_parameters", "SEIRDAge_interventions",
+          function(object) object@intervention_parameters)
+
+
+#' @describeIn SEIRDAge_interventions Setter method for intervention parameters of the SEIRDAge_interventions model.
+#'
+#' Intervention parameters have same size. A tanh function is used to smooth interventions during simulation. This class is designed for interventions
+#' which last several days at least and have several days between them; interventions involving rapid fluctuations may be distorted.
+#'
+#' @param object an object of the class SEIRDAge_interventions
+#' @param value (list) list of intervention parameters: starts & stops
+#'
+#' @return object of class SEIRDAge_interventions with intervention parameters assigned.
+#'
+#' @export
+setMethod(
+  "intervention_parameters<-", "SEIRDAge_interventions",
+  function(object, value) {
+
+    if (mean(names(value) %in% object@intervention_parameter_names) != 1)
+      stop(paste0("Intervention parameters must contain: ",
+                  object@intervention_parameter_names))
+    interv_par <- value
+
+    # raise errors if intervention parameters are not doubles
+    for (p in list("starts", "stops")) {
+      if (!is.numeric(interv_par[[p]])) {
+        stop(glue("{p} format must be numeric"))
+      }
+    }
+
+    # check that the intervention parameters are all of the same size
+    if (length(interv_par$starts) != length(interv_par$stops)) {
+      stop("Invalid intervention parameters. Must have same size.")
+    }
+
+    object@intervention_parameters <- interv_par
+
+    object
+  })
+
+
+
 #' @describeIn SEIRDAge_interventions Method to simulate output using from model.
-#' 
+#'
 #' Solves a system to ODEs which form an
 #' age-structured simple SEIR model. The system of equations for the time
 #' evolution of population fractions in Susceptible (S), Exposed (E), Infected
-#' (I), Recovered (R) and Dead (D) groups in a given age group indexed by i is 
+#' (I), Recovered (R) and Dead (D) groups in a given age group indexed by i is
 #' given by
 
 #' where C is a contact matrix whose elements represents the
 #' contact between different age groups (rows) with age groups of
-#' people they come in contact with (columns). The model encorperates the
-#' influence of non-pharmeceutical interventions (NPIs) which act to reduce the 
-#' degree of social contact between individuals. This is is done by splitting 
-#' any simulation of the model into 3 intervals and utilising a different 
+#' people they come in contact with (columns). Inter(t) is the value at time t
+#' of the intervention protocol defined by
+#' the intervention parameters. This function relies on the package deSolve.
+#' The model encorperates the influence of non-pharmeceutical interventions (NPIs)
+#' which act to reduce the degree of social contact between individuals. This is is
+#' done by splitting any simulation of the model into 3 intervals and utilising a different
 #' contact matrix in each interval to simulate the introduction of NPIs through
-#' time. This function relies on the 
+#' time. This function relies on the
 #' package deSolve to numerically integrate the set of equations above.
-#' 
+#'
 #' @param object An object of the class SEIRDAge_interventions.
 #' @param times (vector) time sequence over which to solve the model.
 #'        Must be of the form seq(t_start,t_end,by=t_step). Default time series
 #'        is seq(0, 100, by = 1).
-#' @param t_intervention_1_2 time at which the first intervention takes place and
-#' the model switches to utilising contact_matrix_2 to solve the ode system
-#' 
-#' @param t_intervention_2_3 time at which the second intervention takes place and
-#' the model switches to utilising contact_matrix_3 to solve the ode system
-#' 
+#'
 #' @param solve_method A string indicating the chosen numerical integration
 #' method for solving the ode system. Default is `lsoda` which is also the
 #' default for the ode function in the deSolve package used in this function.
@@ -263,19 +310,22 @@ setMethod(
 #' @importFrom rlang .data
 setMethod(
   "run", 'SEIRDAge_interventions',
-  function(object, times, t_intervention_1_2, t_intervention_2_3, solve_method = 'lsoda') {
-    
+  function(object, times, solve_method = 'lsoda') {
+
     # error if times is not a vector or list of doubles
     if(!is.double(times)){
       stop('Evaluation times of the model storage format must be a vector.')
     }
-    
+    if (is.null(unlist(object@transmission_parameters)))
+      stop("Transmission parameters must be set before running.")
+    if (is.null(unlist(object@initial_conditions)))
+      stop("Initial conditions must be set before running.")
+    if (is.null(unlist(object@intervention_parameters)))
+      stop("Intervention parameters must be set before running.")
+
     # fetch number of age catagories
     age <- object@n_age_categories
-    
-    #calculate dt (timestep)
-    dt = times[2] - times[1]
-    
+
     # set initial state vector
     state <- c(S = object@initial_conditions$S0,
                E = object@initial_conditions$E0,
@@ -283,7 +333,8 @@ setMethod(
                R = object@initial_conditions$R0,
                D = object@initial_conditions$D0,
                cc = rep(0, age))
-    
+
+    dt = times[2]-times[1]
     # set parameters vector
     parameters <- c(isolated_frac = object@transmission_parameters$isolated_frac,
                     beta_isolated = object@transmission_parameters$beta_isolated,
@@ -292,93 +343,58 @@ setMethod(
                     gamma = object@transmission_parameters$gamma,
                     mu = object@transmission_parameters$mu)
 
-    # set C as the 1st interval's contact matrix
-    C = object@contact_matrix_1
-
     # function for RHS of ode system
+    Intervention = GetIdxIntervention(object, times)
+
     right_hand_side <- function(t, state, parameters) {
       with(
         as.list(c(state, parameters)),
         {
+
+          intv <- Intervention[which(as.integer(t)==times)]
+          # print(t)
+          isIntervention <- 1 * (intv>0)
+          C <- object@contact_matrix[[intv+1]]
+
           S <- state[1:age]
           E <- state[(age + 1):(2 * age)]
           I <- state[(2 * age + 1):(3 * age)]
           R <- state[(3 * age + 1):(4 * age)]
           D <- state[(4 * age + 1):(5 * age)]
           cc <- state[(5 * age + 1):(6 * age)]
-          
-          # split infectious compartment into isolating and non-isolating
-          I_isolated = isolated_frac * I
-          I_not_isolated = (1 - isolated_frac) * I
-          
+
+
           # rate of change
-          dS <- - S*(beta_isolated * C %*% I * isolated_frac + beta_not_isolated * C %*% I * (1 - isolated_frac))
-          # dS <- - beta_isolated * S * C %*% I 
-          dE <- S*(beta_isolated * C %*% I * isolated_frac + beta_not_isolated * C %*% I * (1 - isolated_frac)) - kappa*E
+          dS <- - S*(beta_isolated * C %*% I * isolated_frac * isIntervention + beta_not_isolated * C %*% (I * (1-isolated_frac) * (1-isIntervention)))
+          # dS <- - beta_isolated * S * C %*% I
+          dE <- S*(beta_isolated * C %*% I * isolated_frac * isIntervention + beta_not_isolated * C %*% (I * (1-isolated_frac) * (1-isIntervention))) - kappa*E
           # dE <- beta_isolated * S * C %*% I - kappa * E
           dI <- kappa * E - gamma * I - mu * I
           dR <- gamma * I
           dD <- mu * I
-          # dcc <- beta_isolated * S * C %*% I 
-          dcc <- S*(beta_isolated * C %*% I * isolated_frac + beta_not_isolated * C %*% I * (1 - isolated_frac))
+          # dcc <- beta_isolated * S * C %*% I
+          dcc <- S*(beta_isolated * C %*% I * isolated_frac * isIntervention + beta_not_isolated * C %*% (I * (1-isolated_frac) * (1-isIntervention)))
 
           # return the rate of change
           list(c(dS, dE, dI, dR, dD, dcc))
         })
     }
-    
-    
-    # call ode solver for the first interval
-    out <- ode(y = state, times = seq(times[1], t_intervention_1_2, by = dt),
-              func = right_hand_side, parms = parameters, method = solve_method)
-    
-    # output as a new dataframe 
-    output_all <- as.data.frame.array(out)
 
-    # construct list of contact matrices for the 2 next intervals of NPIs
-    contact_matrices <- list(object@contact_matrix_2,
-                          object@contact_matrix_3
-                          )
     
-    #extract the final state from the 1st interval
-    #state = filter(output_all, time == t_intervention_1_2)
-    state = output_all[output_all$time == t_intervention_1_2,!(names(output_all) %in% c("time"))] %>% unlist
 
-    # construct list of time lists for next 2 intervals
-    interval_times = list(seq(t_intervention_1_2+dt, t_intervention_2_3, by = dt),
-                       seq(t_intervention_2_3+dt, utils::tail(times, n=1), by = dt)
-                       )
-      
-    # loop over intervals, solve ode with each contact matrix, initialise next
-    # interval with last state from current interval.
-    for (i in 1:2){
-      
-      # set C to the current interval's contact matrix  
-      C = contact_matrices[[i]]
-        
-      # call ode solver for the current interval
-      out <- ode(y = state, times = interval_times[[i]], func = right_hand_side,
+
+    # call ode solver
+    out <- ode(
+      y = state, times = times, func = right_hand_side,
       parms = parameters, method = solve_method)
-      
-      # output as a dataframe
-      output <- as.data.frame.array(out)
-      
-      
-      # append the output from the current interval to the overall output
-      output_all = rbind(output_all, output)
-      state = output_all[output_all$time == utils::tail(interval_times[[i]], n=1),!(names(output_all) %in% c("time"))] %>% unlist
-    
-    }
 
     # melt dataframe to wide format
-    out_temp = melt(output_all, 'time')
-    
-    # add compartment and age range columns
-    # out_temp$compartment = lapply(out_temp$variable,function(x) substr(x,1,1)) %>% unlist
+    output_all <- as.data.frame.array(out)
 
-    
-    # out_temp$age_range = rep((rep(unlist(object@age_ranges), each=length(times))),length(object@initial_conditions))
-    
+    out_temp = melt(output_all, 'time')
+
+
+
     # add compartment and age range columns
     n_compartment_measurements <- length(times) * age
     out_temp$compartment = c(replicate(n_compartment_measurements, "S"),
@@ -387,33 +403,50 @@ setMethod(
                              replicate(n_compartment_measurements, "R"),
                              replicate(n_compartment_measurements, "D"),
                              replicate(n_compartment_measurements, "cc"))
-    
+
     out_temp$age_range = unlist(rep(object@age_ranges, each=length(times)))
-    
+
     # drop the old variable column
-    out_temp = out_temp %>% 
-      dplyr::select(-.data$variable) %>% 
-      dplyr::mutate(compartment=as.factor(.data$compartment)) %>% 
-      dplyr::mutate(compartment=forcats::fct_relevel(.data$compartment, "S", "E", "I", "R", "D", "cc")) %>% 
-      dplyr::mutate(age_range=as.factor(.data$age_range)) %>% 
+    out_temp = out_temp %>%
+      dplyr::select(-.data$variable) %>%
+      dplyr::mutate(compartment=as.factor(.data$compartment)) %>%
+      dplyr::mutate(compartment=forcats::fct_relevel(.data$compartment, "S", "E", "I", "R", "D", "cc")) %>%
+      dplyr::mutate(age_range=as.factor(.data$age_range)) %>%
       dplyr::mutate(age_range=forcats::fct_relevel(.data$age_range, object@age_ranges))
-    
+
     # compute incidence and deaths
-    changes <- out_temp %>% 
-      dplyr::filter(.data$compartment %in% c("cc", "D")) %>% 
-      dplyr::group_by(.data$compartment, .data$age_range) %>% 
-      dplyr::mutate(value = c(0, diff(.data$value))) %>% 
+    changes <- out_temp %>%
+      dplyr::filter(.data$compartment %in% c("cc", "D")) %>%
+      dplyr::group_by(.data$compartment, .data$age_range) %>%
+      dplyr::mutate(value = c(0, diff(.data$value))) %>%
       dplyr::mutate(compartment = dplyr::if_else(.data$compartment == "cc", "Incidence",
-                                                 "Deaths")) %>% 
-      dplyr::ungroup() %>% 
+                                                 "Deaths")) %>%
+      dplyr::ungroup() %>%
       as.data.frame()
-    
+
     # remove cumulative cases column from state vector
-    states = out_temp %>% 
-      dplyr::filter(.data$compartment != "cc") %>% 
-      droplevels() %>% 
+    states = out_temp %>%
+      dplyr::filter(.data$compartment != "cc") %>%
+      droplevels() %>%
       dplyr::ungroup()
 
     return(list("states" = states, "changes" = changes))
   })
+
+
+GetIdxIntervention <- function(object, times){
+  #calculate dt (timestep)
+  dt = times[2] - times[1]
+  Intervention <- rep(0, length(times))
+  n_interventions <- length(object@intervention_parameters[["starts"]])
+
+  for(intv in seq(n_interventions)){
+    Intervention[seq(object@intervention_parameters[["starts"]][intv],
+                       object@intervention_parameters[["stops"]][intv],
+                       dt)] = intv
+  }
+  return(Intervention)
+
+
+}
 

@@ -103,13 +103,11 @@ c_combined_wider <- c_combined %>%
   select(-age_infectee) %>% 
   as.matrix()
 model <- SEIRDAge_interventions(n_age_categories = n_ages,
-                                contact_matrix_1 = c_combined_wider,
-                                contact_matrix_2 = c_combined_wider, 
-                                contact_matrix_3 = c_combined_wider,
+                                contact_matrix = list(c_combined_wider,c_combined_wider,c_combined_wider,c_combined_wider),
                                 age_ranges = as.list(age_names))
 
 transmission_parameters(model) <- list(isolated_frac = 0.4,
-                                       beta_isolated = 1, beta_not_isolated = 1,
+                                       beta_isolated = 0.5, beta_not_isolated = 1,
                                        kappa = 0.5, gamma = 0.5, mu = 0.01)
 
 initial_conditions(model) <- list(S0=pop_fraction*0.99,
@@ -117,15 +115,22 @@ initial_conditions(model) <- list(S0=pop_fraction*0.99,
                                   I0=pop_fraction*0.01,
                                   R0=rep(0, n_ages),
                                   D0=rep(0, n_ages))
+
+intervention_parameters(model) <- list(starts=c(10, 25, 40),
+                                      stops=c(15, 30, 50))
+
+
+
 ```
 
 We next simulate the model and visualise all the dynamics of each compartment.
 ```{r, fig.width=10, fig.height=5}
-res <- run(model, time=seq(0, 50, by = 0.1), t_intervention_1_2 = 20,
-           t_intervention_2_3 = 40)$states
+res <- run(model, time=seq(0, 100, by = 1))$states
+
 res %>%
-  filter(compartment!="Incidence") %>% 
+  filter(compartment!="Incidence") %>%
   ggplot(aes(x=time, y=value, colour=age_range)) +
   geom_line() +
   facet_wrap(~compartment)
 ```
+We can observe oscillations in the exposed and infectious population, corresponding to the time intervals where isolation is applied.

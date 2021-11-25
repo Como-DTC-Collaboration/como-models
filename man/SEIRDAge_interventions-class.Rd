@@ -8,6 +8,8 @@
 \alias{initial_conditions<-,SEIRDAge_interventions-method}
 \alias{transmission_parameters,SEIRDAge_interventions-method}
 \alias{transmission_parameters<-,SEIRDAge_interventions-method}
+\alias{intervention_parameters,SEIRDAge_interventions-method}
+\alias{intervention_parameters<-,SEIRDAge_interventions-method}
 \alias{run,SEIRDAge_interventions-method}
 \title{Defines an age-structured SEIR model with non pharmaceutical interventions
 which influence social contact. Methods solve the set of
@@ -22,31 +24,20 @@ numerical integration.}
 
 \S4method{transmission_parameters}{SEIRDAge_interventions}(object) <- value
 
-\S4method{run}{SEIRDAge_interventions}(
-  object,
-  times,
-  t_intervention_1_2,
-  t_intervention_2_3,
-  solve_method = "lsoda"
-)
+\S4method{intervention_parameters}{SEIRDAge_interventions}(object)
+
+\S4method{intervention_parameters}{SEIRDAge_interventions}(object) <- value
+
+\S4method{run}{SEIRDAge_interventions}(object, times, solve_method = "lsoda")
 }
 \arguments{
 \item{object}{An object of the class SEIRDAge_interventions.}
 
-\item{value}{a named list of form list(beta=, kappa=, gamma=, mu=)
-
-All rates of change between compartments are equal regardless of
-age group.}
+\item{value}{(list) list of intervention parameters: starts & stops}
 
 \item{times}{(vector) time sequence over which to solve the model.
 Must be of the form seq(t_start,t_end,by=t_step). Default time series
 is seq(0, 100, by = 1).}
-
-\item{t_intervention_1_2}{time at which the first intervention takes place and
-the model switches to utilising contact_matrix_2 to solve the ode system}
-
-\item{t_intervention_2_3}{time at which the second intervention takes place and
-the model switches to utilising contact_matrix_3 to solve the ode system}
 
 \item{solve_method}{A string indicating the chosen numerical integration
 method for solving the ode system. Default is \code{lsoda} which is also the
@@ -59,7 +50,9 @@ Updated version of the age-structured SEIR model with interventions
 
 Transmission parameters of SEIRDAge_interventions model.
 
-Updated version of the age-structured SEIR model.
+Updated version of the age-structured SEIR model with interventions.
+
+object of class SEIRDAge_interventions with intervention parameters assigned.
 
 a data frame containing the time vector and time series of S, R, I and
 D population fractions for each age group outputs with incidence numbers
@@ -93,6 +86,13 @@ age-structured SEIR model.
 If the transmission parameters provided to are not 1-dimensional an error is
 thrown.
 
+\item \code{intervention_parameters}: Retrieves intervention parameters of SEIRDAge_interventions model.
+
+\item \code{intervention_parameters<-}: Setter method for intervention parameters of the SEIRDAge_interventions model.
+
+Intervention parameters have same size. A tanh function is used to smooth interventions during simulation. This class is designed for interventions
+which last several days at least and have several days between them; interventions involving rapid fluctuations may be distorted.
+
 \item \code{run}: Method to simulate output using from model.
 
 Solves a system to ODEs which form an
@@ -102,10 +102,12 @@ evolution of population fractions in Susceptible (S), Exposed (E), Infected
 given by
 where C is a contact matrix whose elements represents the
 contact between different age groups (rows) with age groups of
-people they come in contact with (columns). The model encorperates the
-influence of non-pharmeceutical interventions (NPIs) which act to reduce the
-degree of social contact between individuals. This is is done by splitting
-any simulation of the model into 3 intervals and utilising a different
+people they come in contact with (columns). Inter(t) is the value at time t
+of the intervention protocol defined by
+the intervention parameters. This function relies on the package deSolve.
+The model encorperates the influence of non-pharmeceutical interventions (NPIs)
+which act to reduce the degree of social contact between individuals. This is is
+done by splitting any simulation of the model into 3 intervals and utilising a different
 contact matrix in each interval to simulate the introduction of NPIs through
 time. This function relies on the
 package deSolve to numerically integrate the set of equations above.
@@ -123,6 +125,9 @@ model.}
 \item{\code{transmission_parameter_names}}{names of the transmission parameters used
 by the model.}
 
+\item{\code{intervention_parameter_names}}{list of names of intervention parameters
+(characters). Default is list ("starts", "stops").}
+
 \item{\code{initial_conditions}}{named list containing the initial conditions of the
 model. Initial values for each compartment, S0, E0, I0, R0.}
 
@@ -130,24 +135,14 @@ model. Initial values for each compartment, S0, E0, I0, R0.}
 parameters of the model. Transmission parameters b, k, g represent the
 rates of changes between the compartments.}
 
-\item{\code{contact_matrix_1}}{A square matrix with dimension
+\item{\code{intervention_parameters}}{list of values for intervention parameters
+(double).}
+
+\item{\code{contact_matrix}}{A list of square matrices, each with dimension
 equal to n_age_categories x n_age_categories. This matrix represents the
 contact between different age groups (rows) with age groups of
-people they come in contact with (columns) in the 1st interval of the
+people they come in contact with (columns) in the ist interval of the
 simulation (normally with no restriction on social contact.}
-
-\item{\code{contact_matrix_2}}{A square matrix with dimension
-equal to n_age_categories x n_age_categories. This matrix represents the
-contact between different age groups (rows) with age groups of
-people they come in contact with (columns) in the 2nd interval of the
-simulation (normally with measures in place to limit social contact).}
-
-\item{\code{contact_matrix_3}}{A square matrix with dimension
-equal to n_age_categories x n_age_categories. This matrix represents the
-contact between different age groups (rows) with age groups of
-people they come in contact with (columns) in the 3rd interval of the
-simulation (normally with some relaxation of measures compared to the
-2nd interval).}
 
 \item{\code{n_age_categories}}{number of age categories.}
 

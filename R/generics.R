@@ -92,3 +92,29 @@ setGeneric("R0", def = function(model) {
   standardGeneric("R0")
 })
 
+
+
+#' Retrieves intervention parameters of SEIRDV or SEIRDAge_interventions model.
+#'
+#' @param object An object of a model class within comomodels package (SEIRDV or SEIRDAge_interventions).
+#' 
+#' @export
+setGeneric("intervention_parameters",
+           function(object) standardGeneric("intervention_parameters"))
+
+
+#' Set intervention parameters of the SEIRV or SEIRDAge model.
+#'
+#' Intervention parameters have same size. This class is designed for interventions
+#' which last several days at least and have several days between them.
+#'
+#' @param object An object of a model class within comomodels package (SEIRDV or SEIRDAge_interventions).
+#' @param value (list) list of intervention parameters: starts, stops and coverages.
+#'
+#' @return object of class within comomodels package
+#' @export
+setGeneric(
+  "intervention_parameters<-",
+  function(object, value) {
+    standardGeneric("intervention_parameters<-")
+  })
