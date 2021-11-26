@@ -404,8 +404,8 @@ run_SEIRDVAge <- function(nu_val) {
 
 # run model across different nu values
 nu_vals <- c(0, 0.2, 0.4, 0.6, 10)
-for(i in seq_along(nu_2530_vals)) {
-  nu_temp <- nu_2530_vals[i]
+for(i in seq_along(nu_vals)) {
+  nu_temp <- nu_vals[i]
   temp <- run_SEIRDVAge(nu_temp) %>% mutate(nu=nu_temp)
   if(i == 1)
     result <- temp %>% mutate(nu=nu_temp)
