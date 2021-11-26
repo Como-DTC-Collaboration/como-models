@@ -48,9 +48,9 @@ this model. The ODEs describing how the five populations evolve over time are
 $$\frac{\text{d}S}{\text{d}t} = -\beta S I - \nu \text{Inter}(t) S + \delta_V V + \delta_R R + \delta_{VR} VR,$$
 $$\frac{\text{d}E}{\text{d}t} = \beta S I -\kappa E,$$
 $$\frac{\text{d}I}{\text{d}t} = \kappa E - (\gamma + \mu) I,$$
-$$\frac{\text{d}R}{\text{d}t} = \gamma I - \delta_R R - \nu Inter(t) R,$$
-$$\frac{\text{d}V}{\text{d}t} = \nu Inter(t) S - \delta_V V$$
-$$\frac{\text{d}VR}{\text{d}t} = \nu Inter(t) R - \delta_{VR} VR$$
+$$\frac{\text{d}R}{\text{d}t} = \gamma I - \delta_R R - \nu \text{Inter}(t) R,$$
+$$\frac{\text{d}V}{\text{d}t} = \nu \text{Inter}(t) S - \delta_V V$$
+$$\frac{\text{d}VR}{\text{d}t} = \nu \text{Inter}(t) R - \delta_{VR} VR$$
 
 where $\beta$, $\kappa$, $\gamma$, $\mu$, $\nu$, $\delta_V$, $\delta_R$ and $\delta_{VR}$ are
 positive parameters. The rate at which susceptible individuals are infected
@@ -68,7 +68,7 @@ Susceptible individuals are vaccinated at a maximum rate $\nu$. Among those who 
 (recovered and vaccinated), people lose their immunity against the virus at different
 rates depending on what type of immunity they acquired: $\delta_V$ for those vaccinated,
 $\delta_R$ for those previously infected and $\delta_VR$ for those previously infected that
-received the vaccine after they recovered. $Inter(t)$ is the value
+received the vaccine after they recovered. $\text{Inter}(t)$ is the value
 at time t of the intervention protocol defined by the intervention parameters.
 
 In addition to these five main ODEs, the model also keeps track of the cumulative number 
@@ -111,8 +111,8 @@ The initial conditions must sum to one. If they do not, an error is thrown.
 
 Now we simulate the system from $t=0$ days to $t=200$ days.
 ```{r}
-intervention_parameters(my_model) <- list(starts=c(17, 35, 42),
-                                          stops=c(25, 39, 49),
+intervention_parameters(my_model) <- list(starts=c(17, 110, 150),
+                                          stops=c(90, 139, 209),
                                           coverages=c(1, 1, 1))
 times <- seq(0, 200, by = 1)
 out_df <- run(my_model, times)
@@ -125,8 +125,8 @@ be taken into account in our modeling.
 
 Below we can see a plot of the level of interventions that occur at each time step.
 ```{r, fig.height = 5, fig.width = 7}
-int_parms <- InterventionParameters(start=c(17, 35, 42),
-                                    stop=c(25, 39, 49),
+int_parms <- InterventionParameters(start=c(17, 110, 150),
+                                    stop=c(90, 139, 209),
                                     coverage=c(1, 1, 1))
 
 sim_parms <- SimulationParameters(start=0, stop=200, tstep = 0.1)
@@ -189,8 +189,8 @@ run_seirdv <- function(delta_V_val) {
   inits <- list(S0=0.99, E0=0, I0=0.01, R0=0, V0=0, VR0=0)
   params <- list(beta=1, kappa=0.9, gamma=0.5, mu=0.1, nu=0.4, delta_V=delta_V_val,
                  delta_R=0.05, delta_VR = 0.02)
-  interv<- list(starts=c(17, 35, 42),
-                stops=c(25, 39, 49),
+  interv<- list(starts=c(17, 110, 150),
+                stops=c(90, 139, 209),
                 coverages=c(1, 1, 1))
   model <- SEIRDV(initial_conditions = inits,
                 transmission_parameters=params,
@@ -201,7 +201,7 @@ run_seirdv <- function(delta_V_val) {
 }
 
 # run model across different delta_V values
-delta_V_vals <- c(0.1, 0.05, 0.01, 0.2, 0.5)
+delta_V_vals <- c(0.001, 0.05, 0.01, 0.2, 0.5)
 for(i in seq_along(delta_V_vals)) {
   delta_V_temp <- delta_V_vals[i]
   temp <- run_seirdv(delta_V_temp) %>% mutate(delta_V=delta_V_temp)
@@ -223,8 +223,7 @@ result %>%
 
 ```
 As we can see from the plot above, larger rates of immunity decay $\delta_V$ in vaccinated
-individuals make the second wave of the number of deaths in the epidemic occur much closer to the first
-peak. For smaller $\delta_V$, we see no deaths for larger stretches of time.
+individuals make the wave of the number of deaths in the epidemic last longer.
 
 We now investigate the sensitivity of the number of deaths to the maximum vaccination rate, $\nu$. We run the model for varying values of $\nu$ and plot the
 number of deaths per day over time.
@@ -234,8 +233,8 @@ run_seirdv <- function(nu_val) {
   inits <- list(S0=0.99, E0=0, I0=0.01, R0=0, V0=0, VR0=0)
   params <- list(beta=1, kappa=0.9, gamma=0.5, mu=0.1, nu=nu_val, delta_V=0.1,
                  delta_R=0.05, delta_VR = 0.02)
-  interv<- list(starts=c(17, 35, 42),
-                stops=c(25, 39, 49),
+  interv<- list(starts=c(17, 110, 150),
+                stops=c(90, 139, 209),
                 coverages=c(1, 1, 1))
   model <- SEIRDV(initial_conditions = inits,
                 transmission_parameters=params,
@@ -267,7 +266,7 @@ result %>%
         text=element_text(size=20))
 
 ```
-As we can see from the plot above, larger rates of maximum vaccination $\nu$ make the second wave of the number of deaths in the epidemic occur much further to the first peak. For larger $\nu$, we see no deaths for larger stretches of time, even though the second peak is larger.
+As we can see from the plot above, larger rates of maximum vaccination $\nu$ make the height and duration of wave of the number of deaths in the epidemic last less.
 
 We now investigate the sensitivity of the start time of intervention values, `start_val`. We run the model for varying values of `start_val` and plot the number of deaths per day over time.
 

@@ -109,7 +109,7 @@ recovered, infectious, recovered and vaccinated individuals. Susceptible
 individuals ($S$) have not been exposed to the virus. Exposed individuals ($E$) have been
 exposed to the virus and have been infected but are not yet infectious to others; they are 
 in the incubation period. Infectious individuals ($I$) can spread the virus to 
-others.  Recovered individuals ($R$) are no longer
+others. Recovered individuals ($R$) are no longer
 infectious, but they can return to the susceptible population when they lose their
 immunity. Vaccinated individuals ($V$) cannot become infected and are not ill at
 the time, but as it was the case with the recovered population, their immunity
@@ -118,12 +118,12 @@ We can vaccinate not only the susceptibles, but also $E$, $I$ and $R$s. However,
 they have already been exposed to the illness so they do not change compartment
 assignment. Births and deaths unrelated to the infection are not considered in
 this model. The ODEs describing how the five populations evolve over time are
-$$\frac{\text{d}S_i}{\text{d}t} = -\beta S_i \Sigma_{j}C_{ij} I_j - \nu \text{Inter}(t) S_i + \delta_{V} V_i + \delta_{R} R_i + \delta_{VR} VR_i,$$
+$$\frac{\text{d}S_i}{\text{d}t} = -\beta S_i \Sigma_{j}C_{ij} I_j - \nu \text{Inter}_i(t) S_i + \delta_{V} V_i + \delta_{R} R_i + \delta_{VR} VR_i,$$
 $$\frac{\text{d}E_i}{\text{d}t} = \beta S_i \Sigma_{j}C_{ij} I_j -\kappa E_i,$$
 $$\frac{\text{d}I_i}{\text{d}t} = \kappa E_i - (\gamma + \mu) I_i,$$
-$$\frac{\text{d}R_i}{\text{d}t} = \gamma I_i - \delta_R R_i - \nu Inter(t) R_i,$$
-$$\frac{\text{d}V_i}{\text{d}t} = \nu Inter(t) S_i - \delta_V V_i$$
-$$\frac{\text{d}VR_i}{\text{d}t} = \nu Inter(t) R_i - \delta_{VR} VR_i$$
+$$\frac{\text{d}R_i}{\text{d}t} = \gamma I_i - \delta_R R_i - \nu \text{Inter}_i(t) R_i,$$
+$$\frac{\text{d}V_i}{\text{d}t} = \nu \text{Inter}_i(t) S_i - \delta_V V_i$$
+$$\frac{\text{d}VR_i}{\text{d}t} = \nu \text{Inter}_i(t) R_i - \delta_{VR} VR_i$$
 
 where $\beta$, $\kappa$, $\gamma$, $\mu$, $\nu$, $\delta_V$, $\delta_R$ and $\delta_{VR}$ are
 positive parameters. The rate at which susceptible individuals are infected
@@ -141,7 +141,7 @@ Susceptible individuals are vaccinated at a maximum rate $\nu$. Among those who 
 (recovered and vaccinated), people lose their immunity against the virus at different
 rates depending on what type of immunity they acquired: $\delta_V$ for those vaccinated,
 $\delta_R$ for those previously infected and $\delta_VR$ for those previously infected that
-received the vaccine after they recovered. $Inter(t)$ is the value
+received the vaccine after they recovered. $\text{Inter}(t)$ is the value
 at time t of the intervention protocol defined by the intervention parameters.
 
 In addition to these five main ODEs, the model also keeps track of the cumulative number 
@@ -249,7 +249,7 @@ start of an epidemic so there is a delay in vaccination. Similarly, vaccination
 programs may not run at the same rate all the time, so such fluctuations need to
 be taken into account in our modeling. Vaccination levels and start times may differ between
 different age groups. In this instantiation of the model, vaccination of the each age group occurs
-at a different stage
+at a different stage.
 
 Below we can see a plot of the a classical level of interventions that occur at each time step.
 ```{r, fig.height = 5, fig.width = 7}
@@ -276,7 +276,7 @@ for(i in 1:n_ages){
 ```
 Interventions for this model last several days at least and have several days between them.
 
-The simulation returns two objects: one is a data frame comprising the states over time. Here, the infectious proportion is steadily declining, plummeting to 0 after $t=20$.
+The simulation returns two objects: one is a data frame comprising the states over time.
 ```{r, fig.height = 5, fig.width = 7}
 states = out_df$states
 changes = out_df$changes
@@ -288,7 +288,7 @@ states %>%
   labs(x = "time (days)", y = "fraction of the population") +
   theme(text = element_text(size = 20))  
 ```
-Zooming in on the infected population, we see that the younger age groups have the highest peak infected population levels. Moreover, the waning immunity feature allows for multiple peaks to occur in the number of infected, centred around 12.5, the second around 110 with a later, smaller wave at around 160.
+Zooming in on the infected population, we see that the younger age groups have the highest peak infected population levels. Moreover, the waning immunity feature allows for multiple peaks to occur in the number of infected, centered around 12.5, the second tailing right after the first one, and another wave beginning at around 160 and peaking towards the end of the time interval. For the younger age groups the number of daily infections remains somewhat constant until they drop around day 125.
 ```{r, fig.width=8, fig.height=5}
 states %>%
   filter(compartment=="I") %>% 
@@ -333,7 +333,7 @@ changes %>%
 
 ## Sensitivity analysis
 In this section, we investigate the sensitivity of the number of deaths to the loss-of-immunity rate
-in recovered individuals who have also been vaccinated, $\delta_VR$. We run the model for varying values of $\delta_VR$ and plot the number of deaths per day over time.
+in recovered individuals who have also been vaccinated, $\delta_{VR}$. We run the model for varying values of $\delta_VR$ and plot the number of deaths per day over time.
 
 ```{r, fig.height = 5, fig.width = 7}
 # function to setup and run model for different delta_VR values
@@ -377,21 +377,18 @@ result %>%
   theme(text = element_text(size = 20)) 
 
 ```
-As we can see from the plot above, larger rates of immunity decay $\delta_VR$ in vaccinated recovered
-individuals make the second wave of the number of deaths in the epidemic occur much closer to the first
-peak. Also, the earlier the second wave occurs, the higher its amplitude will be.
+As we can see from the plot above, larger rates of immunity decay $\delta_{VR}$ in vaccinated recovered
+individuals make the second wave of the number of deaths in the epidemic have a higher peak. For $\delta_{VR}>0.01$ a third wave starts to manifest after $t=175$.
 
-We now investigate the sensitivity of the number of deaths to the maximum vaccination rate, $\nu$. We run the model for varying values of $\nu$ for the 25-30 age group and plot the
-number of deaths per day over time.
+We now investigate the sensitivity of the number of deaths to the maximum vaccination rate, $\nu$. We run the model for varying values of $\nu$ and plot the number of deaths per day over time.
 ```{r, fig.height = 5, fig.width = 7}
 # function to setup and run model for different nu values
-run_SEIRDVAge <- function(nu_2530_val) {
-  nu_2530 <- nu_2530_val
+run_SEIRDVAge <- function(nu_val) {
   inits <- list(S0=pop_fraction*0.99, E0=rep(0, n_ages), I0=pop_fraction*0.01,
                 R0=rep(0, n_ages), V0=rep(0, n_ages), VR0=rep(0, n_ages),
                 D0=rep(0, n_ages))
   params <- list(beta=1, kappa=0.9, gamma=0.5, mu=mu,
-                 nu= c(rep(0.4, 5), nu_2530, rep(0.4, n_ages-6)), 
+                 nu= nu_val, 
                  delta_V=0.1, delta_R=0.05, delta_VR = 0.02)
   interv<- interven
   model <- SEIRDVAge(n_age_categories = n_ages,
@@ -406,12 +403,12 @@ run_SEIRDVAge <- function(nu_2530_val) {
 }
 
 # run model across different nu values
-nu_2530_vals <- c(0, 0.2, 0.4, 0.6, 10)
+nu_vals <- c(0, 0.2, 0.4, 0.6, 10)
 for(i in seq_along(nu_2530_vals)) {
   nu_temp <- nu_2530_vals[i]
-  temp <- run_SEIRDVAge(nu_temp) %>% mutate(nu_2530=nu_temp)
+  temp <- run_SEIRDVAge(nu_temp) %>% mutate(nu=nu_temp)
   if(i == 1)
-    result <- temp %>% mutate(nu_2530=nu_temp)
+    result <- temp %>% mutate(nu=nu_temp)
   else
     result <- result %>% bind_rows(temp)
 }
@@ -420,14 +417,14 @@ for(i in seq_along(nu_2530_vals)) {
 result %>% 
   filter(compartment=="Deaths") %>% 
   ggplot(aes(x=time, y=value, color = age_range)) +
-  facet_wrap(~nu_2530) +
+  facet_wrap(~nu) +
   geom_line() +
   scale_colour_viridis_d() +
   labs(x = "time (days)", y = "fraction of the population \n that died per day") +
   theme(text = element_text(size = 20))
 
 ```
-As we can see from the plot above, larger rates of maximum vaccination $\nu_{25-35}$ make the second wave of the number of deaths in the epidemic occur later compared to the first peak. For larger $\nu_{25-35}$, we see that the height of the second peak is larger.
+As we can see from the plot above, larger rates of maximum vaccination $\nu$ make the subsequent waves of the number of deaths in the epidemic peak lower. For $\nu=10$, we see no deaths in most age groups between the first two waves. For the case when no vaccination occurs $\nu=0$ we see that the daily number of deaths remains relatively constant after the first wave and larger than for any of the other values analysed.
 
 We now investigate the sensitivity of the start time of intervention values, `start_val`. We run the model for varying values of `start_val` and plot the number of deaths per day over time. The intervention profile is the same in each of the cases, only shifted by this quantity `start_val`.
 ```{r, fig.height = 5, fig.width = 7}
@@ -452,10 +449,11 @@ var_interven <- function(start){
       interven[[i]]$starts <- 100-7*i
       interven[[i]]$stops <-  190-7*i
     }
+    interven[[i]]$starts <- interven[[i]]$starts + start
+    interven[[i]]$stops <- interven[[i]]$stops + start
+  
     interven[[i]]$coverages <- 1
   }
-  interven[[i]]$starts <- interven[[i]]$starts + start
-  interven[[i]]$stops <- interven[[i]]$stops + start
 
   return(interven)
 }
@@ -501,5 +499,56 @@ result %>%
   theme(text = element_text(size = 20))
 
 ```
-As we can see from the plot above, larger start time of intervention values, `start_val` will produce longer secondary waves connected to the first peak. In the case of vaccination early on `start_val`=10, we observe a disjoint secondary wave around 180, smaller in amplitude than the first one.
+As we can see from the plot above, larger start time of intervention values, `start_val` make the second wave riding of the tail of the first one last plateau for longer and at a higher level.
 
+We will compare now the two possible scenarios when we make the intervention the age-dependent and the case when we apply the same protocol of vaccination regardless of age groups. 
+```{r, fig.height = 5, fig.width = 7}
+# function to setup and run model for different delta_VR values
+run_SEIRDVAge <- function(interv_type) {
+  inits <- list(S0=pop_fraction*0.99, E0=rep(0, n_ages), I0=pop_fraction*0.01,
+                R0=rep(0, n_ages), V0=rep(0, n_ages), VR0=rep(0, n_ages),
+                D0=rep(0, n_ages))
+  params <- list(beta=1, kappa=0.9, gamma=0.5, mu=mu, nu=0.4, delta_V=0.1,
+                 delta_R=0.05, delta_VR = 0.02)
+  if(interv_type == 'distinct'){
+    interv<- interven
+  }
+  else{
+    interv <- list(list(starts=50,
+                   stops=140,
+                   coverages=1))
+  }
+  model <- SEIRDVAge(n_age_categories = n_ages,
+                contact_matrix = c_combined_wider,
+                age_ranges = as.list(age_names),
+                initial_conditions = inits,
+                transmission_parameters=params,
+                interventions = interv)
+  times <- seq(0, 200, by = 1)
+  out_df <- run(model, times)
+  out_df$changes
+}
+
+# run model across different intervention types
+interv_types <- c('distinct', 'common')
+for(i in seq_along(interv_types)) {
+  interv_type_temp <- interv_types[i]
+  temp <- run_SEIRDVAge(interv_type_temp) %>% mutate(interv_type=interv_type_temp)
+  if(i == 1)
+    result <- temp %>% mutate(interv_type=interv_type_temp)
+  else
+    result <- result %>% bind_rows(temp)
+}
+
+# plot results
+result %>% 
+  filter(compartment=="Deaths") %>% 
+  ggplot(aes(x=time, y=value, color = age_range)) +
+  facet_wrap(~interv_type) +
+  geom_line() +
+  scale_colour_viridis_d() +
+  labs(x = "time (days)", y = "fraction of the population \n that died per day") +
+  theme(text = element_text(size = 20)) 
+
+```
+In the case of a `common` vaccination protocol for all age groups, not only is the first peak of the number of deaths higher than in the case of age-specific interventions, but the second peak tailing the first is also more pronounced and lasts longer and the third wave occurs sooner and is also higher in amplitude then for the `distinct` interventions case. This suggests that a age-dependent policy for vaccination proves to be more effective in reducing the daily number of deaths throughout the epidemic than the one-method-fits-all approach.
