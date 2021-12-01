@@ -188,8 +188,8 @@ my_model <- SEIRDVAge(n_age_categories = n_ages,
 ```
 
 Next, we set the parameter values for $\beta$, $\kappa$, $\gamma$, $\mu$, $\nu$,
-$\delta_V$, $\delta_R$ and $\delta_{VR}$. For realistic results, the mortality
-parameter $\mu$ is age-dependent as according to [Verity (2020)](https://www.medrxiv.org/content/early/2020/03/13/2020.03.09.20033357):
+$\delta_V$, $\delta_R$ and $\delta_{VR}$. For results inspired by the COVID pandemic,
+the mortality parameter $\mu$ is age-dependent as according to [Verity (2020)](https://www.medrxiv.org/content/early/2020/03/13/2020.03.09.20033357):
 ```{r}
 mu <- c(0.000016, 0.000016, 0.00007, 0.00007, 0.00031, 0.00031, 0.0026, 0.0026,
      0.0048, 0.0048, 0.006, 0.006, 0.019, 0.019, 0.043, 0.043)
