@@ -403,14 +403,15 @@ setMethod(
           start=interventions(object)[[i]]$starts,
           stop=interventions(object)[[i]]$stops,
           coverage= interventions(object)[[i]]$coverages)
-      inter_prot[[i]] <- intervention_protocol(int_parms, sim_parms, 1)
+      prot <- intervention_protocol(int_parms, sim_parms, 1)
+      inter_prot[[i]] <- approxfun(prot$time,
+                                   prot$coverage, rule=2)
     }
     
     inter <- function(t){
       interven <- vector("numeric", length = length(interventions(object)))
       for(i in 1:length(interventions(object))){
-        interven[i] <- approxfun(inter_prot[[i]]$time,
-                                 inter_prot[[i]]$coverage, rule=2)(t)
+        interven[i] <- inter_prot[[i]](t)
       }
       return(interven)
     }

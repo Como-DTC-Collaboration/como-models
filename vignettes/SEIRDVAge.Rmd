@@ -140,7 +140,7 @@ individuals die due to the infection after $1/ \mu$ days, making the death rate 
 Susceptible individuals are vaccinated at a maximum rate $\nu$. Among those who are immune
 (recovered and vaccinated), people lose their immunity against the virus at different
 rates depending on what type of immunity they acquired: $\delta_V$ for those vaccinated,
-$\delta_R$ for those previously infected and $\delta_VR$ for those previously infected that
+$\delta_R$ for those previously infected and $\delta_{VR}$ for those previously infected that
 received the vaccine after they recovered. $\text{Inter}(t)$ is the value
 at time t of the intervention protocol defined by the intervention parameters.
 
@@ -188,7 +188,8 @@ my_model <- SEIRDVAge(n_age_categories = n_ages,
 ```
 
 Next, we set the parameter values for $\beta$, $\kappa$, $\gamma$, $\mu$, $\nu$,
-$\delta_V$, $\delta_R$ and $\delta_{VR}$:
+$\delta_V$, $\delta_R$ and $\delta_{VR}$. For realistic results, the mortality
+parameter $\mu$ is age-dependent as according to [Verity (2020)](https://www.medrxiv.org/content/early/2020/03/13/2020.03.09.20033357):
 ```{r}
 mu <- c(0.000016, 0.000016, 0.00007, 0.00007, 0.00031, 0.00031, 0.0026, 0.0026,
      0.0048, 0.0048, 0.006, 0.006, 0.019, 0.019, 0.043, 0.043)
@@ -252,7 +253,7 @@ different age groups. In this instantiation of the model, vaccination of the eac
 at a different stage.
 
 Below we can see a plot of the a classical level of interventions that occur at each time step.
-```{r, fig.height = 5, fig.width = 7}
+```{r, fig.height = 3, fig.width = 7}
 
 parameters <- interven
 
@@ -269,7 +270,7 @@ for(i in 1:n_ages){
     ggplot(aes(x=time, y=coverage)) +
     geom_line() +
     scale_color_brewer(palette = "Dark2") +
-    labs(x = "time (days)", y = "level of intervention") +
+    labs(x = "time (days)", y = paste0("level of intervention for ages\n", age_names[i])) +
     theme(legend.position = "bottom", legend.title = element_blank(),
           text = element_text(size = 20)))
 }
@@ -333,7 +334,7 @@ changes %>%
 
 ## Sensitivity analysis
 In this section, we investigate the sensitivity of the number of deaths to the loss-of-immunity rate
-in recovered individuals who have also been vaccinated, $\delta_{VR}$. We run the model for varying values of $\delta_VR$ and plot the number of deaths per day over time.
+in recovered individuals who have also been vaccinated, $\delta_{VR}$. We run the model for varying values of $\delta_{VR}$ and plot the number of deaths per day over time.
 
 ```{r, fig.height = 5, fig.width = 7}
 # function to setup and run model for different delta_VR values
@@ -551,4 +552,4 @@ result %>%
   theme(text = element_text(size = 20)) 
 
 ```
-In the case of a `common` vaccination protocol for all age groups, not only is the first peak of the number of deaths higher than in the case of age-specific interventions, but the second peak tailing the first is also more pronounced and lasts longer and the third wave occurs sooner and is also higher in amplitude then for the `distinct` interventions case. This suggests that a age-dependent policy for vaccination proves to be more effective in reducing the daily number of deaths throughout the epidemic than the one-method-fits-all approach.
+In the case of a `common` vaccination protocol for all age groups, not only is the first peak of the number of deaths higher than in the case of age-specific interventions, but the second peak tailing the first is also more pronounced and lasts longer and the third wave occurs sooner and is also higher in amplitude then for the `distinct` interventions case.
