@@ -19,10 +19,12 @@ knitr::opts_chunk$set(
 ```{r setup}
 library(comomodels)
 library(tidyverse)
+
+# NPI includes school closures, physical distancing, shielding of older people (ie, ≥70 years), self-isolation of symptomatic individuals, and a combination of all four policies. (https://www.thelancet.com/journals/lanpub/article/PIIS2468-2667(20)30133-X/fulltext)
 ```
 
 ## Introduction
-A key aspect of modeling the spread of COVID-19 is the implementation of non-pharmaceutical interventions such as self isolating reducing physical contact through social distancing and shielding vulnerable groups. In this vignette, we implement the effect of a number of such interventions and examine their influence on virus transmission using an age structured SEIRD model.
+A key aspect of modeling the spread of COVID-19 is the implementation of non-pharmaceutical interventions,  such as self isolating reducing physical contact through social distancing and shielding vulnerable groups. In this vignette, we implement the effect of a number of such interventions and examine their influence on virus transmission using an age structured SEIRD model.
 
 For this vignette we utilise an example case for social contact and subsequent virus transmission. The contact matrices, $C$ indicate the expected number of contacts an individual of age class $i$ experiences with age class $j$ per day. In this package, we include country-level estimates of contact matrices (Prem et al., 2017; for full details see data documentation). There are actually four types of contact matrix corresponding to daily numbers of contacts at home, work, school and all other settings. Here, we visualise these for India.
 ```{r, fig.width=10, fig.height=8}
@@ -102,10 +104,10 @@ c_combined_wider <- c_combined %>%
 
 # create model
 my_model <- SEIRDAge_interventions(n_age_categories = n_ages,
-                 contact_matrix = list(c_combined_wider,
-                                       c_combined_wider,
-                                       c_combined_wider,
-                                       c_combined_wider),
+                 contact_matrix = c_combined_wider,#list(c_combined_wider,
+                                       #c_combined_wider,
+                                       #c_combined_wider,
+                                       #c_combined_wider),
                  age_ranges = as.list(age_names)
                  )
 ```
@@ -270,7 +272,7 @@ changes %>%
 We now investigate the sensitivity of the start time of intervention values, `start_val`. We run the model for varying values of `start_val` and plot the number of deaths per day over time. The intervention profile is the same in each of the cases, only shifted by this quantity
 
 
-In this section, we investigate the sensitivity of the transmission parameter $\beta$ .
+In this section, we investigate the sensitivity of different starting time .
 
 ```{r, fig.height = 5, fig.width = 7}
 var_interven <- function(start){
@@ -313,11 +315,11 @@ run_SEIRDAge_interventions <- function(start_val) {
                kappa = 0.5, gamma = 0.5, mu = 0.01)
   interv<- var_interven(start = start_val)
   model <- SEIRDAge_interventions(n_age_categories = n_ages,
-                contact_matrix = list(c_combined_wider,
-                                      c_combined_wider,
-                                      c_combined_wider,
-                                      c_combined_wider
-                                      ),
+                contact_matrix = c_combined_wider,#list(c_combined_wider,
+                                      #c_combined_wider,
+                                      #c_combined_wider,
+                                      #c_combined_wider
+                                      #),
                 age_ranges = as.list(age_names),
                 initial_conditions = inits,
                 transmission_parameters=params,
@@ -365,11 +367,11 @@ run_SEIRDAge_interventions <- function(beta_isolated) {
                beta_isolated = beta_isolated, beta_not_isolated = 1,
                kappa = 0.5, gamma = 0.5, mu = 0.01)
   model <- SEIRDAge_interventions(n_age_categories = n_ages,
-                contact_matrix = list(c_combined_wider,
-                                      c_combined_wider,
-                                      c_combined_wider,
-                                      c_combined_wider
-                                      ),
+                contact_matrix = c_combined_wider,#list(c_combined_wider,
+                                      #c_combined_wider,
+                                      #c_combined_wider,
+                                      #c_combined_wider
+                                      #),
                 age_ranges = as.list(age_names),
                 initial_conditions = inits,
                 transmission_parameters=params,

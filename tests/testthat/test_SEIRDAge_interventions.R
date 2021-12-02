@@ -127,8 +127,9 @@ test_that("can set new initial conditions for the SEIRDAge_interventions", {
 test_that("can set new transmission parameters for the SEIRDAge", {
   my_model <- SEIRDAge_interventions(n_age_categories = 2,
                                      age_ranges = list('0-50', '50-100'), 
-                                     contact_matrix= list(matrix(c(1,0,0,1), nrow = 2),
-                                                          matrix(c(1,0,0,1), nrow = 2)))
+                                     contact_matrix= matrix(c(1,0,0,1), nrow = 2)
+                                     )#list(matrix(c(1,0,0,1), nrow = 2),
+                                                          #matrix(c(1,0,0,1), nrow = 2)))
   transmission_parameters(my_model) <- list(isolated_frac = 0.4,
                                             beta_isolated = 1, beta_not_isolated = 1, 
                                             kappa = 0.5, gamma = 0.5, mu = 0.01)

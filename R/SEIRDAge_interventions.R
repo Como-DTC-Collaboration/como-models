@@ -53,7 +53,7 @@ SEIRDAge_interventions <- setClass('SEIRDAge_interventions',
                                      interventions = 'list',
                                      age_ranges = 'list',
                                      n_age_categories = 'numeric',
-                                     contact_matrix= 'list'
+                                     contact_matrix= 'matrix' #'list'
                                    ),                 
                                    # prototypes for the slots, automatically set output and param
                                    # names
@@ -68,7 +68,7 @@ SEIRDAge_interventions <- setClass('SEIRDAge_interventions',
                                      interventions = vector(mode = "list", length = 3),
                                      age_ranges = vector(mode = 'list'),
                                      n_age_categories = NA_real_,
-                                     contact_matrix= vector(mode = 'list')
+                                     contact_matrix= matrix(NA) # vector(mode = 'list')
                                    )
 )
 
@@ -197,11 +197,13 @@ setMethod(
     }
     
     # Set the row and column names of the instance's contact matrix
-    for(i in seq(length(object@contact_matrix))){
-      rownames(object@contact_matrix[[i]]) <- object@age_ranges
-      colnames(object@contact_matrix[[i]]) <- object@age_ranges
-      
-    }
+    rownames(object@contact_matrix) <- object@age_ranges
+    colnames(object@contact_matrix) <- object@age_ranges
+    # for(i in seq(length(object@contact_matrix))){
+    #   rownames(object@contact_matrix[[i]]) <- object@age_ranges
+    #   colnames(object@contact_matrix[[i]]) <- object@age_ranges
+    #   
+    # }
     
     # if all above tests are passed, assign the trans_params namelist to the
     # object
@@ -285,9 +287,10 @@ setMethod(
 #' contact between different age groups (rows) with age groups of
 #' people they come in contact with (columns). Inter(t) is the value at time t
 #' of the intervention protocol defined by
-#' the intervention parameters. This function relies on the package deSolve.
+#' the intervention parameters.
 #' The model encorperates the influence of non-pharmeceutical interventions (NPIs)
-#' which act to reduce the degree of social contact between individuals. This is is
+#' which act to reduce the degree of social contact and/or change the transmission
+#' parameters beta between individuals. This is
 #' done by splitting any simulation of the model into several intervals and utilising
 #' a different contact matrix in each interval to simulate the introduction of NPIs through
 #' time. This function relies on the package deSolve to numerically integrate 
@@ -344,7 +347,7 @@ setMethod(
                     gamma = object@transmission_parameters$gamma,
                     mu = object@transmission_parameters$mu)
     
-    C = object@contact_matrix[[1]]
+    C = object@contact_matrix#[[1]]
     
     # set intervention parameters vector
     
@@ -383,6 +386,8 @@ setMethod(
         as.list(c(state, parameters)),
         {
           inter <- input(t)
+          #print(inter)
+          #print("=========")
           #intv <- Intervention[which(as.integer(t)==times)]
           #isIntervention <- 1 * (intv>0)
           #C <- object@contact_matrix[[intv+1]]
@@ -396,17 +401,17 @@ setMethod(
           
           
           # rate of change
-          dS <- - S*(beta_isolated * C %*% I * inter * isolated_frac  + beta_not_isolated * C %*% (I * (1-isolated_frac)))
-          dE <- S*(beta_isolated * C %*% I * inter * isolated_frac  + beta_not_isolated * C %*% (I * (1-isolated_frac))) - kappa * E
+          dS <- - S*(beta_isolated * C %*% I * isolated_frac * inter + beta_not_isolated * C %*% I * (1-isolated_frac) * (1 - inter))
+          dE <- S*(beta_isolated * C %*% I * isolated_frac * inter + beta_not_isolated * C %*% I * (1-isolated_frac) * (1 - inter)) - kappa * E
           dI <- kappa * E - gamma * I - mu * I
           dR <- gamma * I
           dD <- mu * I
-          dcc <- S*(beta_isolated * C %*% I * inter * isolated_frac  + beta_not_isolated * C %*% (I * (1-isolated_frac)))
+          dcc <- - S*(beta_isolated * C %*% I * isolated_frac * inter + beta_not_isolated * C %*% I * (1-isolated_frac) * (1 - inter))
           # return the rate of change
           list(c(dS, dE, dI, dR, dD, dcc))
         })
     }
-
+    
     # call ode solver
     out <- ode(
       y = state, times = times, func = right_hand_side,
