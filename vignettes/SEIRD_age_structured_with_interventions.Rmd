@@ -1,0 +1,423 @@
+---
+title: "SEIRD_age_structred_with_interventions"
+author: "Oscar Dimdore-Miles, Idil Cazimoglu and Liangti Dai"
+date: "28/10/2021"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{The SEIRDAge_interventions model}
+  %\VignetteEngine{knitr::knitr}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(comomodels)
+library(tidyverse)
+```
+
+## Introduction
+A key aspect of modeling the spread of COVID-19 is the implementation of non-pharmaceutical interventions such as self isolating reducing physical contact through social distancing and shielding vulnerable groups. In this vignette, we implement the effect of a number of such interventions and examine their influence on virus transmission using an age structured SEIRD model.
+
+For this vignette we utilise an example case for social contact and subsequent virus transmission. The contact matrices, $C$ indicate the expected number of contacts an individual of age class $i$ experiences with age class $j$ per day. In this package, we include country-level estimates of contact matrices (Prem et al., 2017; for full details see data documentation). There are actually four types of contact matrix corresponding to daily numbers of contacts at home, work, school and all other settings. Here, we visualise these for India.
+```{r, fig.width=10, fig.height=8}
+# reformat matrices for plotting
+ages <- seq(0, 80, 5)
+age_names <- vector(length = 16)
+for(i in seq_along(age_names)) {
+  age_names[i] <- paste0(ages[i], "-", ages[i + 1])
+}
+
+format_matrix <- function(contact_matrix, age_names) {
+  colnames(contact_matrix) <- age_names
+  contact_matrix$age_infectee <- age_names
+  contact_matrix %>%
+    pivot_longer(all_of(age_names)) %>% 
+    rename(age_infector=name) %>% 
+    mutate(age_infector=fct_relevel(age_infector, age_names)) %>% 
+    mutate(age_infectee=fct_relevel(age_infectee, age_names))
+}
+
+
+c_home <- format_matrix(contact_home$India, age_names) %>% mutate(type="home")
+c_work <- format_matrix(contact_work$India, age_names) %>% mutate(type="work")
+c_school <- format_matrix(contact_school$India, age_names) %>% mutate(type="school")
+c_other <- format_matrix(contact_other$India, age_names) %>% mutate(type="other")
+
+c_all <- c_home %>%
+  bind_rows(c_work) %>% 
+  bind_rows(c_school) %>% 
+  bind_rows(c_other)
+
+# plot all
+c_all %>%
+  ggplot(aes(x=age_infector, y=age_infectee, fill=value)) +
+  geom_tile() +
+  scale_fill_viridis_c() +
+  facet_wrap(~type)
+```
+
+We can see that the majority of contacts fall between younger individuals, occurring at home or "other" locations. At home, however, there is more substantial intergenerational mixing than in other settings.
+
+We make an overall contact matrix by summming contributions from social settings together.
+```{r, fig.width=8, fig.height=5}
+c_combined <- c_all %>% 
+  group_by(age_infectee, age_infector) %>% 
+  summarise(value=sum(value))
+c_combined %>% 
+  ggplot(aes(x=age_infector, y=age_infectee, fill=value)) +
+  geom_tile() +
+  scale_fill_viridis_c()
+```
+
+
+
+
+## Simulation examples
+
+Now we create a model that includes this age-structured mixing. Since the contact matrices have 16 age classes, we instantiate a model with this number of classes. We also give it transmission parameters, populate the age classes with initial conditions and use our overall contact matrix.
+
+We use country-level demographics from the UN and, for this example, initialise the model with a uniform initial infected population of 1% across all age groups. The remaining 99% of the population starts as susceptibles. We set the ...
+```{r}
+load(file = "../data/population.rda")
+# use demographic data to create normalised population fractions
+pops = population[population$country == 'India', ]$pop
+pop_fraction = pops/sum(pops)
+## the contact matrix has an upper group of 80+, so we sum the remaining fractions beyond this point
+pop_fraction[16] = sum(pop_fraction[16:21])
+pop_fraction = pop_fraction[1:16]
+# reshape contact matrix into 16x16 form
+n_ages <- 16
+c_combined_wider <- c_combined %>% 
+  pivot_wider(id_cols = age_infectee, names_from = age_infector,
+              values_from=value) %>% 
+  ungroup() %>% 
+  select(-age_infectee) %>% 
+  as.matrix()
+
+# create model
+my_model <- SEIRDAge_interventions(n_age_categories = n_ages,
+                 contact_matrix = list(c_combined_wider,
+                                       c_combined_wider,
+                                       c_combined_wider,
+                                       c_combined_wider),
+                 age_ranges = as.list(age_names)
+                 )
+```
+
+Next, we set the parameter values for $\beta$, $\kappa$, $\gamma$, $\mu$, $\nu$,
+$\delta_V$, $\delta_R$ and $\delta_{VR}$. For results inspired by the COVID pandemic,
+the mortality parameter $\mu$ is age-dependent as according to [Verity (2020)](https://www.medrxiv.org/content/early/2020/03/13/2020.03.09.20033357):
+```{r}
+mu <- c(0.000016, 0.000016, 0.00007, 0.00007, 0.00031, 0.00031, 0.0026, 0.0026,
+     0.0048, 0.0048, 0.006, 0.006, 0.019, 0.019, 0.043, 0.043)
+
+params <- list(isolated_frac = 0.4,
+               beta_isolated = 0.5, beta_not_isolated = 1,
+               kappa = 0.5, gamma = 0.5, mu = 0.01)
+transmission_parameters(my_model) <- params
+```
+
+To check that the parameters have been set correctly, we call
+```{r}
+transmission_parameters(my_model)
+```
+
+
+We now need to set the initial conditions for the model. We only set the initial conditions $S(0)$, $E(0)$, $I(0)$, $R(0)$, $V(0)$ and $VR(0)$.
+```{r}
+initial_conditions(my_model) <- list(S0=pop_fraction*0.99,
+                                     E0=rep(0, n_ages),
+                                     I0=pop_fraction*0.01,
+                                     R0=rep(0, n_ages),
+                                     D0=rep(0, n_ages)
+                                     )
+```
+
+
+The initial conditions must sum to one. If they do not, an error is thrown.
+
+Now we simulate the system from $t=0$ days to $t=200$ days.
+```{r}
+interven <- vector(mode = "list", length = n_ages)
+
+for(i in 1:n_ages){
+  if(is.element(i, 1:2)){
+    interven[[i]]$starts <- 150
+    interven[[i]]$stops <-  190
+  }
+  else if(is.element(i, 3:5)){
+    interven[[i]]$starts <- 120
+    interven[[i]]$stops <-  180
+  }
+  else if(is.element(i, 14:16)){
+    interven[[i]]$starts <- 30
+    interven[[i]]$stops <-  110
+  }
+  else{
+    interven[[i]]$starts <- 100-7*i
+    interven[[i]]$stops <-  190-7*i
+  }
+  interven[[i]]$coverages <- 1
+}
+
+interventions(my_model) <- interven
+times <- seq(0, 200, by = 1)
+out_df <- run(my_model, times)
+```
+
+The added intervention feature allows for variable levels of vaccination in a population.
+In most cases, a vaccine is not available or considered necessary right from the
+start of an epidemic so there is a delay in vaccination. Similarly, vaccination
+programs may not run at the same rate all the time, so such fluctuations need to
+be taken into account in our modeling. Vaccination levels and start times may differ between
+different age groups. In this instantiation of the model, vaccination of the each age group occurs
+at a different stage.
+
+Below we can see a plot of the a classical level of interventions that occur at each time step.
+```{r, fig.height = 7, fig.width = 7}
+parameters <- interven
+sim_parms <- SimulationParameters(start=0, stop=200, tstep = 0.1)
+interventions <- vector(mode = "list", length = n_ages)
+df_interventions_age = data.frame()
+for(i in 1:n_ages){
+  int_parms <- InterventionParameters(start=parameters[[i]]$starts,
+                                      stop=parameters[[i]]$stops,
+                                      coverage=parameters[[i]]$coverages)
+  df_current <- data.frame(intervention_protocol(int_parms, sim_parms, 1))
+  df_current$age <- age_names[i]
+  df_interventions_age <- rbind(df_interventions_age, df_current)
+}
+
+ggplot(df_interventions_age, aes(x=time, y=coverage)) +
+    geom_line() +
+    scale_color_brewer(palette = "Dark2") +
+    labs(x = "time (days)", y = "level of intervention") +
+    theme(legend.position = "bottom", legend.title = element_blank(),
+          text = element_text(size = 20)
+          ) + 
+    facet_wrap( ~ age, nrow = 4)
+```
+
+Interventions for this model last several days at least and have several days between them.
+
+The simulation returns two objects: one is a data frame comprising the states over time.
+```{r, fig.height = 5, fig.width = 7}
+states = out_df$states
+changes = out_df$changes
+states %>%
+  ggplot(aes(x=time, y=value, colour=age_range)) +
+  geom_line() +
+  facet_wrap(~compartment) +
+  scale_colour_viridis_d() +
+  labs(x = "time (days)", y = "fraction of the population") +
+  theme(text = element_text(size = 20))  
+```
+
+
+Zooming in on the infected population, we see that the younger age groups have the highest peak infected population levels.
+```{r, fig.width=8, fig.height=5}
+states %>%
+  filter(compartment=="I") %>% 
+  ggplot(aes(x=time, y=value, colour=age_range)) +
+  geom_line() +
+  facet_wrap(~compartment) +
+  scale_colour_viridis_d() +
+  labs(x = "time (days)", y = "fraction of the population") +
+  theme(text = element_text(size = 20)) 
+```
+
+
+The simulation also outputs incidence and deaths. These are derived from the state variables. Incidence is just the difference between the cumulative number of cases between two time points,
+
+$$ \text{incidence(t)} = C(t) - C(t - 1),$$
+
+since this shows the number of cases which have arisen between these time  points. Deaths are also given by a difference, but, in this instance, between the cumulative number of deaths at two consecutive time points:
+
+$$ \text{deaths(t)} = D(t) - D(t - 1).$$
+
+```{r fig2, fig.height = 5, fig.width = 7}
+changes <- out_df$changes
+changes %>%
+  filter(compartment=="Incidence") %>% 
+  ggplot(aes(x=time, y=value, colour=age_range)) +
+  geom_line() +
+  facet_wrap(~compartment, scales="free") +
+  scale_colour_viridis_d() +
+  labs(x = "time (days)", y = "fraction of the population") +
+  theme(text = element_text(size = 20)) 
+changes %>%
+  filter(compartment=="Deaths") %>% 
+  ggplot(aes(x=time, y=value, colour=age_range)) +
+  geom_line() +
+  facet_wrap(~compartment, scales="free") +
+  scale_colour_viridis_d() +
+  labs(x = "time (days)", y = "fraction of the population") +
+  theme(text = element_text(size = 20)) 
+```
+
+
+
+## Sensitivity analysis
+
+
+
+We now investigate the sensitivity of the start time of intervention values, `start_val`. We run the model for varying values of `start_val` and plot the number of deaths per day over time. The intervention profile is the same in each of the cases, only shifted by this quantity
+
+
+In this section, we investigate the sensitivity of the transmission parameter $\beta$ .
+
+```{r, fig.height = 5, fig.width = 7}
+var_interven <- function(start){
+  interven <- vector(mode = "list", length = n_ages)
+  for(i in 1:n_ages){
+    if(is.element(i, 1:2)){
+      interven[[i]]$starts <- 150
+      interven[[i]]$stops <-  190
+    }
+    else if(is.element(i, 3:5)){
+      interven[[i]]$starts <- 120
+      interven[[i]]$stops <-  180
+    }
+    else if(is.element(i, 14:16)){
+      interven[[i]]$starts <- 30
+      interven[[i]]$stops <-  110
+    }
+    else{
+      interven[[i]]$starts <- 100-7*i
+      interven[[i]]$stops <-  190-7*i
+    }
+    interven[[i]]$starts <- interven[[i]]$starts + start
+    interven[[i]]$stops <- interven[[i]]$stops + start
+  
+    interven[[i]]$coverages <- 1
+  }
+  return(interven)
+}
+run_SEIRDAge_interventions <- function(start_val) {
+  start <- start_val
+  
+  inits <- list(S0=pop_fraction*0.99,
+                E0=rep(0, n_ages),
+                I0=pop_fraction*0.01,
+                R0=rep(0, n_ages),
+                D0=rep(0, n_ages)
+                )
+  params <- list(isolated_frac = 0.4,
+               beta_isolated = 0.3, beta_not_isolated = 1,
+               kappa = 0.5, gamma = 0.5, mu = 0.01)
+  interv<- var_interven(start = start_val)
+  model <- SEIRDAge_interventions(n_age_categories = n_ages,
+                contact_matrix = list(c_combined_wider,
+                                      c_combined_wider,
+                                      c_combined_wider,
+                                      c_combined_wider
+                                      ),
+                age_ranges = as.list(age_names),
+                initial_conditions = inits,
+                transmission_parameters=params,
+                interventions = interv)
+  times <- seq(0, 200, by = 1)
+  out_df <- run(model, times)
+  out_df$changes
+}
+# run model across different nu values
+start_vals <- c(10, 25, 40, 75, 94)
+for(i in seq_along(start_vals)) {
+  start_temp <- start_vals[i]
+  temp <- run_SEIRDAge_interventions(start_temp) %>% mutate(start=start_temp)
+  if(i == 1)
+    result <- temp %>% mutate(start=start_temp)
+  else
+    result <- result %>% bind_rows(temp)
+}
+# plot results
+result %>% 
+  filter(compartment=="Deaths") %>% 
+  ggplot(aes(x=time, y=value, color = age_range)) +
+  facet_wrap(~start) +
+  geom_line() +
+  scale_colour_viridis_d() +
+  labs(x = "time (days)", y = "fraction of the population \n that died per day") +
+  theme(text = element_text(size = 20))
+
+
+```
+
+
+
+In this section, we investigate the sensitivity of the transmission parameter $\beta$ .
+
+```{r, fig.height = 5, fig.width = 7}
+run_SEIRDAge_interventions <- function(beta_isolated) {
+  inits <- list(S0=pop_fraction*0.99,
+                E0=rep(0, n_ages),
+                I0=pop_fraction*0.01,
+                R0=rep(0, n_ages),
+                D0=rep(0, n_ages)
+                )
+  params <- list(isolated_frac = 0.4,
+               beta_isolated = beta_isolated, beta_not_isolated = 1,
+               kappa = 0.5, gamma = 0.5, mu = 0.01)
+  model <- SEIRDAge_interventions(n_age_categories = n_ages,
+                contact_matrix = list(c_combined_wider,
+                                      c_combined_wider,
+                                      c_combined_wider,
+                                      c_combined_wider
+                                      ),
+                age_ranges = as.list(age_names),
+                initial_conditions = inits,
+                transmission_parameters=params,
+                interventions = interven)
+  times <- seq(0, 200, by = 1)
+  out_df <- run(model, times)
+  out_df$changes
+}
+# run model across different nu values
+beta_isolated_vals <- c(0.0, 0.1, 0.3, 0.5, 0.7, 0.9)
+for(i in seq_along(beta_isolated_vals)) {
+  beta_isolated_temp <- beta_isolated_vals[i]
+  temp <- run_SEIRDAge_interventions(beta_isolated_temp) %>% mutate(beta_isolated=beta_isolated_temp)
+  if(i == 1)
+    result <- temp %>% mutate(beta_isolated=beta_isolated_temp)
+  else
+    result <- result %>% bind_rows(temp)
+}
+# plot results
+result %>% 
+  filter(compartment=="Deaths") %>% 
+  ggplot(aes(x=time, y=value, color = age_range)) +
+  facet_wrap(~beta_isolated) +
+  geom_line() +
+  scale_colour_viridis_d() +
+  labs(x = "time (days)", y = "fraction of the population \n that died per day") +
+  theme(text = element_text(size = 20))
+
+
+```
+
+
+
+
+
+
+
+
+
+
+We next simulate the model and visualise all the dynamics of each compartment.
+```{r, fig.width=10, fig.height=5}
+# res <- run(model, time=seq(0, 100, by = 1))$states
+# 
+# res %>%
+#   filter(compartment!="Incidence") %>%
+#   ggplot(aes(x=time, y=value, colour=age_range)) +
+#   geom_line() +
+#   facet_wrap(~compartment)
+```
+We can observe oscillations in the exposed and infectious population, corresponding to the time intervals where isolation is applied.
