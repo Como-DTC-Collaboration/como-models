@@ -223,7 +223,7 @@ setMethod(
 #' method for solving the ode system. Default is `lsoda` which is also the
 #' default for the ode function in the deSolve package used in this function.
 #'
-#' @return data frame containing the time vector and time series of S, R, I and
+#' @return data frame containing the time vector and time series of S, E, I, R and
 #' D population fractions for each age group outputs with incidence numbers
 #' for each age group.
 #' 
@@ -245,7 +245,7 @@ setMethod(
       stop('Evaluation times of the model storage format must be increasing')
     }
     
-    #fetch number of age catagories
+    #fetch number of age categories
     n_age <- object@n_age_categories
     
     # set initial state vector
@@ -257,7 +257,7 @@ setMethod(
                cc = rep(0, n_age))
     
     # set parameters vector
-    parameters <- c(b = transmission_parameters(object)$b,
+    parameters <- list(b = transmission_parameters(object)$b,
                     k = transmission_parameters(object)$k,
                     g = transmission_parameters(object)$g,
                     mu = transmission_parameters(object)$mu)

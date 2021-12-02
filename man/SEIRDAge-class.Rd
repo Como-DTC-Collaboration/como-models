@@ -46,7 +46,7 @@ Transmission parameters of SEIRDAge model.
 
 Updated version of the age-structured SEIRD model.
 
-data frame containing the time vector and time series of S, R, I and
+data frame containing the time vector and time series of S, E, I, R and
 D population fractions for each age group outputs with incidence numbers
 for each age group.
 }
