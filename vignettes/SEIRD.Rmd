@@ -1,6 +1,6 @@
 ---
 title: "The SEIRD model"
-author: "Hui Jia Farm and Solveig A. van der Vegt"
+author: "Hui Jia Farm, Solveig A. van der Vegt and Ben Lambert"
 output: rmarkdown::html_vignette
 vignette: >
   %\VignetteIndexEntry{The basic SEIR model}
@@ -69,17 +69,65 @@ Supposing there is a given number of infected individuals at $t=0$ represented b
 
 $$E(t) = E_0 \exp (- \kappa t)$$
 representing exponential decay, which we can plot assuming $E_0=1$ and $kappa=0.5$:
-```{r}
+```{r, fig.height = 5, fig.width = 7}
+# function to return exponential decay
+E <- function(E_0, kappa, t) {E_0 * exp(-kappa * t)}
+
+# make values to plot
 E_0 <- 1
 kappa <- 0.5
 t <- seq(0, 10, 0.01)
-E <- E_0 * exp(-kappa * t)
-tibble(t, E) %>% 
+E_vals <- E(E_0, kappa, t)
+
+tibble(t=t, E=E_vals) %>% 
   ggplot(aes(x=t, y=E)) +
-  geom_line()
+  geom_line() +
+  xlab("time (days)")
 ```
 
-We can also show the effect of changing $\kappa$: unsurprisingly, as $\kappa$ increases, the rate of decay in 
+We can also show the effect of changing $\kappa$: unsurprisingly, as $\kappa$ increases, the rate at which individuals become infectious increases and there is faster decay.
+```{r, fig.height = 5, fig.width = 7}
+kappa_1 <- 0.5
+kappa_2 <- 1
+kappa_3 <- 2
+E_1 <- E(E_0, kappa=kappa_1, t=t)
+E_2 <- E(E_0, kappa=kappa_2, t=t)
+E_3 <- E(E_0, kappa=kappa_3, t=t)
+tibble(t, E=E_1, kappa=kappa_1) %>% 
+  bind_rows(tibble(t, E=E_2, kappa=kappa_2)) %>% 
+  bind_rows(tibble(t, E=E_3, kappa=kappa_3)) %>% 
+  ggplot(aes(x=t, y=E, colour=as.factor(kappa))) +
+  geom_line() +
+  scale_color_brewer("kappa", palette = "Dark2") +
+  xlab("time (days)")
+```
+An alternative way to view these exponential decay curves is as probability distributions governing the time taken for an exposed individual to become infectious. This is referred to as the latency period. Whilst rigorous proof of this requires considering the equivalent stochastic version of this model, the mean from the deterministic model matches the mean of the stochastic equivalent. As such, the waiting time for an individual to transition from exposed to infectious classes is governed by an exponential distribution. Using repeatedly sampled PCR test data from close contacts of confirmed cases in mainland China, a recent study estimated the latency period of COVID-19 as 5.51 days and a log-normal probability distribution was found to represent that waiting period (Xi et al., Estimating the Latent Period of Coronavirus Disease 2019, 2021). Below we compare the waiting period for the log-normal distribution fit in this study with an exponential distribution with the same latency period.
+
+```{r}
+# values derived from Xi et al., Table S2 
+mu <- 1.61
+sigma <- 0.44
+
+# equivalent decay for exponential model
+kappa <- 1 / 5.51
+
+# generate densities across rate of time
+t <- seq(0, 20, 0.01)
+lnorm_vals <- dlnorm(t, mu, sigma)
+exp_vals <- dexp(t, kappa)
+
+tibble(t, value=lnorm_vals, model="log-normal") %>% 
+  bind_rows(tibble(t, value=exp_vals, model="exponential")) %>% 
+  ggplot(aes(x=t, y=value, colour=model)) +
+  geom_line() +
+  scale_color_brewer("Model", palette = "Dark2") +
+  ylab("density") +
+  xlab("time (days)")
+```
+
+Although these share a common mean waiting period, there are considerable differences between the curves that characterise the waiting period. Show the CDFs
+
+In particular, the exponential curve predicts that $X$ individuals will have become 
 
 
 Natural births and deaths -- in other words, those unrelated to infection -- are 
