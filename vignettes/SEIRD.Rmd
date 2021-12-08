@@ -15,7 +15,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
+```{r setup, warning=FALSE, include=FALSE}
 library(comomodels)
 library(ggplot2)
 library(glue)
@@ -23,27 +23,20 @@ library(dplyr)
 ```
 
 ## Introduction
-This document explains the basics of the SEIRD model. The model describes
-how populations of susceptible, exposed, infectious and recovered
-individuals evolve over time. A simple
-ordinary differential equation (ODE) is defined for each of the populations. 
-In `comomodels`, we provide users with a premade SEIRD model and here use it to 
-illustrate how this type of model works.
+This document introduces the deterministic SEIRD model, which is the foundation around which many, more advanced models of COVID-19 transmission dynamics are based (for example, all the other models within this package). In this vignette, we explain what this model represents, and we show how it can be used to understand epidemic dynamics typical of the "waves" of infection seen during the COVID-19 pandemic.
 
 ## The SEIRD Model
-The SEIRD model consists of four ODEs describing populations of susceptible,
-recovered, infectious and recovered individuals. Susceptible
-individuals ($S$) have not been exposed to the virus. Exposed individuals ($E$) 
-have been exposed to the virus and have been infected but are not yet infectious 
-to others -- they are in the incubation period. Infectious individuals ($I$) can 
-spread the virus to others. Recovered individuals ($R$) are no longer 
-infectious, and, in this model, have acquired immunity as they do not return
-to the susceptible population. Natural births and deaths -- in other words, those unrelated to infection -- are 
-not considered in this model. Therefore, the SEIRD model is suitable only to 
-diseases that span a short period of time, when natural births and deaths 
-do not significantly affect dynamics.
-The ODEs describing how the four populations 
-evolve over time are $$\frac{\text{d}S}{\text{d}t} = -\beta S I,$$
+The SEIRD model is an example of a compartmental model in mathematical epidemiology (see, for example, Anderson and May, 1992). In these types of models, individuals are assumed at a particular point in time to belong to only one of a number of "compartments": discrete containers where all individuals within them are assumed to be in the same state. In an SEIRD model, there are five such compartments / states: Susceptible, Exposed, Infectious, Recovered and Dead. Susceptible individuals ($S$) have not been exposed to the virus. Exposed individuals ($E$) have been exposed to the virus and have been infected but are not yet infectious to others -- they are in the incubation period. Infectious individuals ($I$) can spread the virus to others. Recovered individuals ($R$) are no longer infectious, and, in this model, have acquired immunity as they do not return to the susceptible population. Some individuals, however, unfortunately do not recover from infection and die as a result, falling into the dead state ($D$).
+
+By assuming that individuals belong only to one of these states, the model effectively assumes that all other information outside of these states is unimportant for transmission. So, an individual's age, their location and any pre-existing medical conditions they may have are, for example, unnaccounted for in this model.
+
+In the SEIRD model, individuals are allowed to transition between the states.
+
+
+The SEIRD model consists of four ODEs describing populations of susceptible, recovered, infectious and recovered individuals. Natural births and deaths -- in other words, those unrelated to infection -- are 
+not considered in this model. Therefore, the SEIRD model is suitable only to  diseases that span a short period of time, when natural births and deaths  do not significantly affect dynamics. The ODEs describing how the four populations  evolve over time are
+
+$$\frac{\text{d}S}{\text{d}t} = -\beta S I,$$
 $$\frac{\text{d}E}{\text{d}t} = \beta S I -\kappa E,$$
 $$\frac{\text{d}I}{\text{d}t} = \kappa E - (\gamma + \mu) I,$$
 $$\frac{\text{d}R}{\text{d}t} = \gamma I,$$
