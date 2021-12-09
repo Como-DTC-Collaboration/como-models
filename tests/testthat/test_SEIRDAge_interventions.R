@@ -14,11 +14,11 @@ test_that("SEIRDAge gets instantiated", {
                list('S0', 'E0', 'I0', 'R0', 'D0'))
   
   expect_equal(my_model@transmission_parameter_names,
-               list('isolated_frac','beta_isolated', 'beta_not_isolated', 'kappa', 'gamma', 'mu'))
+               list('beta_interventions', 'beta', 'kappa', 'gamma', 'mu'))
   
-  expect_length(my_model@initial_conditions, 5)
-  
-  expect_length(my_model@transmission_parameters, 6)
+  expect_length(my_model@initial_conditions, length(my_model@initial_condition_names))
+
+  expect_length(my_model@transmission_parameters, length(my_model@transmission_parameter_names))
   
   expect_length(my_model@age_ranges, my_model@n_age_categories)
   
@@ -30,7 +30,7 @@ test_that("can retrieve SEIRDAge transmission parameters", {
   my_model <- SEIRDAge_interventions(n_age_categories = 2)
   
   expect_equal(transmission_parameters(my_model),
-               vector(mode = "list", length = 6))
+               vector(mode = "list", length = length(my_model@transmission_parameter_names)))
 })
 
 test_that("can set new initial conditions for the SEIRDAge_interventions", {
@@ -126,18 +126,23 @@ test_that("can set new initial conditions for the SEIRDAge_interventions", {
 
 test_that("can set new transmission parameters for the SEIRDAge", {
   my_model <- SEIRDAge_interventions(n_age_categories = 2,
+                                     n_interventions = 2,
                                      age_ranges = list('0-50', '50-100'), 
-                                     contact_matrix= matrix(c(1,0,0,1), nrow = 2)
-                                     )#list(matrix(c(1,0,0,1), nrow = 2),
-                                                          #matrix(c(1,0,0,1), nrow = 2)))
-  transmission_parameters(my_model) <- list(isolated_frac = 0.4,
-                                            beta_isolated = 1, beta_not_isolated = 1, 
+                                     contact_matrix= matrix(c(1,0,0,1), nrow = 2),
+                                     contact_matrix_interventions = list(
+                                       matrix(c(1,0,0,1), nrow = 2),
+                                       matrix(c(1,0,0,1), nrow = 2)
+                                       )
+  )
+                                     
+  transmission_parameters(my_model) <- list(#isolated_interventions = 0.4,
+                                            beta_interventions= c(0.5, 0.5), beta = 1, 
                                             kappa = 0.5, gamma = 0.5, mu = 0.01)
   
   # Test output is correct
-  expected_transpar <- list('isolated_frac' = 0.4,
-                            'beta_isolated' = 1,
-                            'beta_not_isolated' = 1,
+  expected_transpar <- list(#'isolated_interventions' = 0.4,
+                            'beta_interventions' = c(0.5, 0.5),
+                            'beta' = 1,
                             'kappa'=0.5,
                             'gamma'=0.5,
                             'mu' = 0.01)
@@ -169,7 +174,7 @@ test_that("can run simulation for the SEIRDAge_interventions", {
   #                                      R0=c(0, 0),
   #                                      D0 = c(0,0))
   # 
-  # transmission_parameters(my_model) <- list(isolated_frac = 0.4,
+  # transmission_parameters(my_model) <- list(isolated_interventions = 0.4,
   #                                           beta_isolated = 1, beta_not_isolated = 1, 
   #                                           kappa = 0.5, gamma = 0.5, mu = 0.01)
   # interventions(my_model) <- list(starts=0, stops=10, coverages=1)

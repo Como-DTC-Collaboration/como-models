@@ -22,12 +22,19 @@ NULL
 #'     rates of changes between the compartments.
 #' @slot intervention_parameters list of values for intervention parameters
 #'       (double).
-#' @slot contact_matrix A list of square matrices, each with dimension
+#' @slot interventions list of intervention periods
+#' @slot contact_matrix A square matrices, each with dimension
+#'     equal to n_age_categories x n_age_categories. This matrix represents the
+#'     contact between different age groups (rows) with age groups of
+#'     people they come in contact with (columns) in the ist interval of the
+#'     simulation (normally with no restriction on social contact.
+#' @slot contact_matrix_interventions A list of square matrices, each with dimension
 #'     equal to n_age_categories x n_age_categories. This matrix represents the
 #'     contact between different age groups (rows) with age groups of
 #'     people they come in contact with (columns) in the ist interval of the
 #'     simulation (normally with no restriction on social contact.
 #' @slot n_age_categories number of age categories.
+#' @slot n_interventions number of intervention periods.
 #' @slot age_ranges list of string characters representing the range of ages of
 #'     people in each age category. This object must have length
 #'     \code{n_age_categories} (otherwise an error is returned) and each element
@@ -53,22 +60,26 @@ SEIRDAge_interventions <- setClass('SEIRDAge_interventions',
                                      interventions = 'list',
                                      age_ranges = 'list',
                                      n_age_categories = 'numeric',
-                                     contact_matrix= 'matrix' #'list'
+                                     n_interventions = 'numeric',
+                                     contact_matrix= 'matrix',
+                                     contact_matrix_interventions = 'list'
                                    ),                 
                                    # prototypes for the slots, automatically set output and param
                                    # names
                                    prototype = list(
                                      output_names = list('S', 'E', 'I', 'R', 'D' ,'Incidence'),
                                      initial_condition_names = list('S0', 'E0', 'I0', 'R0', 'D0'),
-                                     transmission_parameter_names = list('isolated_frac', 'beta_isolated', 'beta_not_isolated', 
+                                     transmission_parameter_names = list('beta_interventions', 'beta', 
                                                                          'kappa', 'gamma', 'mu'),
                                      intervention_parameter_names = list("starts", "stops", "coverages"), 
                                      initial_conditions = vector(mode = "list", length = 5),
-                                     transmission_parameters = vector(mode = "list", length = 6),
-                                     interventions = vector(mode = "list", length = 3),
+                                     transmission_parameters = vector(mode = "list", length = 5),
+                                     interventions = vector(mode = "list"),
                                      age_ranges = vector(mode = 'list'),
-                                     n_age_categories = NA_real_,
-                                     contact_matrix= matrix(NA) # vector(mode = 'list')
+                                     n_age_categories = NA_integer_,
+                                     n_interventions = NA_integer_,
+                                     contact_matrix = matrix(NA),
+                                     contact_matrix_interventions = vector(mode = 'list')
                                    )
 )
 
@@ -179,36 +190,36 @@ setMethod(
   function(object, value) {
     
     # create list of parameter values
-    isolated_frac <- value$isolated_frac
-    beta_isolated <- value$beta_isolated
-    beta_not_isolated <- value$beta_not_isolated
+    #intervention_frac <- value$intervention_frac
+    beta_interventions <- value$beta_interventions
+    beta <- value$beta
     kappa <- value$kappa
     gamma <- value$gamma
     mu <- value$mu
     
-    trans_params <- list(isolated_frac, beta_isolated, beta_not_isolated, kappa, gamma, mu)
-    
+    # set transmission parameters
+    trans_params <- list(beta_interventions, beta, kappa, gamma, mu)
     # add names to each value
     names(trans_params) = object@transmission_parameter_names
     
     # check format of parameters b, k and g
-    if(length(beta_isolated) != 1 | length(beta_not_isolated) != 1 | length(kappa) != 1 | length(gamma) != 1){
+    if(length(beta) != 1 | length(kappa) != 1 | length(gamma) != 1){
       stop('The parameter values should be 1-dimensional.')
     }
-    
-    # Set the row and column names of the instance's contact matrix
-    rownames(object@contact_matrix) <- object@age_ranges
-    colnames(object@contact_matrix) <- object@age_ranges
-    # for(i in seq(length(object@contact_matrix))){
-    #   rownames(object@contact_matrix[[i]]) <- object@age_ranges
-    #   colnames(object@contact_matrix[[i]]) <- object@age_ranges
-    #   
-    # }
     
     # if all above tests are passed, assign the trans_params namelist to the
     # object
     object@transmission_parameters <- trans_params
     
+    
+    # Set the row and column names of each of the instance's contact matrix
+    rownames(object@contact_matrix) <- object@age_ranges
+    colnames(object@contact_matrix) <- object@age_ranges
+    
+    for(i in seq_along(object@contact_matrix_interventions)){
+      rownames(object@contact_matrix_interventions[[i]]) <- object@age_ranges
+      colnames(object@contact_matrix_interventions[[i]]) <- object@age_ranges
+    }
     return(object)
   })
 
@@ -228,7 +239,7 @@ setMethod("interventions", "SEIRDAge_interventions",
 #' which last several days at least and have several days between them; interventions involving rapid fluctuations may be distorted.
 #'
 #' @param object an object of the class SEIRDAge_interventions
-#' @param value (list) list of intervention parameters: starts & stops
+#' @param value (list) list of intervention parameters: starts, stops, coverages
 #'
 #' @return object of class SEIRDAge_interventions with intervention parameters assigned.
 #'
@@ -237,7 +248,8 @@ setMethod(
   "interventions<-", "SEIRDAge_interventions",
   function(object, value) {
     if (length(value) != 1 &
-        length(value) != object@n_age_categories){
+        length(value) != object@n_age_categories &
+        length(value) != object@n_interventions){
       stop("Need one intervention must be for all age groups or one per age group.")
     }
     
@@ -276,11 +288,11 @@ setMethod(
 #' (I), Recovered (R) and Dead (D) groups in a given age group indexed by i is
 #' given by
 #'
-#' \deqn{\frac{dS_i(t)}{dt} = - \beta_{isolated} S_i(t) \Sigma_{j}C_{ij}{isolated\_frac * I_j(t)} - \beta_{not_isolated} S_i(t) \Sigma_{j}C_{ij}{(1-isolated\_frac) * I_j(t)}
-#' \deqn{\frac{dE_i(t)}{dt} = \beta_{isolated} S_i(t) \Sigma_{j}C_{ij}{isolated\_frac * I_j(t)} - \beta_{not_isolated} S_i(t) \Sigma_{j}C_{ij}{(1-isolated\_frac) * I_j(t)} - \kappa E_i(t)}
+#' \deqn{\frac{dS_i(t)}{dt} = - \beta_{t} S_i(t) \Sigma_{j}}
+#' \deqn{\frac{dE_i(t)}{dt} = \beta_{t} S_i(t) \Sigma_{j}C_{t,ij}}
 #' \deqn{\frac{dI_i(t)}{dt} = \kappa E_i(t) - \gamma I_i(t) - \mu I_i(t)}
-#' \deqn{\frac{dR_i(t)}{dt} = \gamma I_i(t)
-#' \deqn{\frac{dC(t)}{dt} = \beta_{isolated} S_i(t) \Sigma_{j}C_{ij}{isolated\_frac * I_j(t)} - \beta_{not_isolated} S_i(t) \Sigma_{j}C_{ij}{(1-isolated\_frac) * I_j(t)}
+#' \deqn{\frac{dR_i(t)}{dt} = \gamma I_i(t)}
+#' \deqn{\frac{dC(t)}{dt} = \beta_{t} S_i(t) \Sigma_{j}C_{t,ij}}
 #' \deqn{\frac{dD_i(t)}{dt} = \mu I_i(t)}
 #'
 #' where C is a contact matrix whose elements represents the
@@ -326,6 +338,10 @@ setMethod(
       stop("Initial conditions must be set before running.")
     if (is.null(unlist(object@interventions)))
       stop("Intervention parameters must be set before running.")
+    if (is.null(unlist(object@contact_matrix)))
+      stop("Contact matrix must be set before running.")
+    if (is.null(unlist(object@contact_matrix_interventions)))
+      stop("Contact matrix at each intervention period must be set before running.")
     
     # fetch number of age catagories
     age <- object@n_age_categories
@@ -338,59 +354,46 @@ setMethod(
                D = object@initial_conditions$D0,
                cc = rep(0, age))
     
-    # dt = times[2]-times[1]
     # set parameters vector
-    parameters <- c(isolated_frac = object@transmission_parameters$isolated_frac,
-                    beta_isolated = object@transmission_parameters$beta_isolated,
-                    beta_not_isolated = object@transmission_parameters$beta_not_isolated,
+    parameters <- c(#intervention_frac = object@transmission_parameters$intervention_frac,
+                    beta_interventions = object@transmission_parameters$beta_interventions,
+                    beta = object@transmission_parameters$beta,
                     kappa = object@transmission_parameters$kappa,
                     gamma = object@transmission_parameters$gamma,
                     mu = object@transmission_parameters$mu)
     
-    C = object@contact_matrix#[[1]]
+    C = object@contact_matrix_interventions
+    C[[object@n_interventions+1]] = object@contact_matrix
+    beta_finals = c(object@transmission_parameters$beta_interventions,
+                    object@transmission_parameters$beta)
     
     # set intervention parameters vector
-    
-    # use tstep=0.1 and tanh_slope=1 for good nice step-function-like shape of
-    # the intervention wave
-    sim_parms <- SimulationParameters(start = 0, stop = tail(times, n=1),
-                                      tstep = 0.1)
-    
-    
-    inter_prot <- vector("list", length = length(interventions(object)))
-    for(i in 1:length(interventions(object))){
-      int_parms <- 
-        InterventionParameters(
-          start=interventions(object)[[i]]$starts,
-          stop=interventions(object)[[i]]$stops,
-          coverage= interventions(object)[[i]]$coverages)
-      prot <- intervention_protocol(int_parms, sim_parms, 1)
-      inter_prot[[i]] <- approxfun(prot$time,
-                                   prot$coverage, rule=2)
+    #  function for the ode to give the correct beta_interventions and contact matrices at corresponding time point
+    #  currently, we consider applying same beta_interventions for all age groups. SHOULD MODIFY!
+    idx_interv <- function(t){
+      idx_interv <- -1
+      i = 1
+      while ((idx_interv < 0) & (i <= object@n_interventions)){
+        #print(paste(idx_interv, i))
+        if ((t>=interventions(object)[[i]]$starts) & (t<=interventions(object)[[i]]$stops)) idx_interv = i
+        i = i+1
+      } 
+      # assign to the idx referring to the non-intervention parameter
+      if(idx_interv < 0) idx_interv = object@n_interventions + 1
+      return(idx_interv)
     }
+    idx_interv_list <- lapply(times, function(t)idx_interv(t))
+    inter <- approxfun(times, idx_interv_list, rule=2) # avoid NA
     
-    inter <- function(t){
-      interven <- vector("numeric", length = length(interventions(object)))
-      for(i in 1:length(interventions(object))){
-        interven[i] <- inter_prot[[i]](t)
-      }
-      return(interven)
-    }
-    #print(interven)
-    
-    # function for RHS of ode system
-    #Intervention = GetIdxIntervention(object, times)
-    
+    # In each intervention, the contact matrix 
     right_hand_side <- function(t, state, parameters, input) {
       with(
         as.list(c(state, parameters)),
         {
+          #beta_finals <- c(beta_interventions, beta)
           inter <- input(t)
-          #print(inter)
-          #print("=========")
-          #intv <- Intervention[which(as.integer(t)==times)]
-          #isIntervention <- 1 * (intv>0)
-          #C <- object@contact_matrix[[intv+1]]
+          C_final <- C[[inter]]
+          beta_final <- beta_finals[inter]
           
           S <- state[1:age]
           E <- state[(age + 1):(2 * age)]
@@ -401,12 +404,15 @@ setMethod(
           
           
           # rate of change
-          dS <- - S*(beta_isolated * C %*% I * isolated_frac * inter + beta_not_isolated * C %*% I * (1-isolated_frac) * (1 - inter))
-          dE <- S*(beta_isolated * C %*% I * isolated_frac * inter + beta_not_isolated * C %*% I * (1-isolated_frac) * (1 - inter)) - kappa * E
+          #dS <- - S*(beta_interventions * C %*% I  * inter + beta * C %*% I * (1 - inter))
+          dS <- - S*(beta_final * C_final %*% I)
+          #dE <- S*(beta_interventions * C %*% I * inter + beta * C %*% I * (1 - inter)) - kappa * E
+          dE <- S*(beta_final * C_final %*% I) - kappa * E
           dI <- kappa * E - gamma * I - mu * I
           dR <- gamma * I
           dD <- mu * I
-          dcc <- - S*(beta_isolated * C %*% I * isolated_frac * inter + beta_not_isolated * C %*% I * (1-isolated_frac) * (1 - inter))
+          #dcc <- S*(beta_interventions * C %*% I * inter + beta * C %*% I * (1 - inter))
+          dcc <- S*(beta_final * C_final %*% I)
           # return the rate of change
           list(c(dS, dE, dI, dR, dD, dcc))
         })
@@ -463,19 +469,4 @@ setMethod(
   })
 
 
-GetIdxIntervention <- function(object, times){
-  #calculate dt (timestep)
-  dt = times[2] - times[1]
-  Intervention <- rep(0, length(times))
-  n_interventions <- length(object@interventions[["starts"]])
-  
-  for(intv in seq(n_interventions)){
-    Intervention[seq(object@interventions[["starts"]][intv],
-                     object@interventions[["stops"]][intv],
-                     dt)] = intv
-  }
-  return(Intervention)
-  
-  
-}
 
