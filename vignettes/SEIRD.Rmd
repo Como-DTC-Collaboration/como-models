@@ -180,30 +180,23 @@ $$\frac{\text{d}C}{\text{d}t} = \text{newly exposed} = \beta S I,$$
 where we assume $C(0) = 0$. The number of new infections arising between two time intervals $t_1$ and $t_2$ is then: $C(t_2) - C(t_1)$. Similarly, the number of deaths occuring over the same interval is the difference in the cumulative deaths: $D(t_2) - D(t_1)$.
 
 ## Steady states
-Steady states of the system described above are computed by setting the 
-right-hand sides of the ODEs equal to zero. Taking the equation for the 
+We can now consider whether there are equilibrium states of the system: values of the state variables where, unless perturbed, the system will remain where it is. To do so, we set the right-hand sides of the ODEs to zero. Taking the equation for the 
 susceptibles:
 
 $$\frac{\text{d}S}{\text{d}t} = -\beta S I = 0.$$
 
-This only has solutions if either $S=0$, in which case there are no individuals 
-left to infect; or $I=0$, in which case there are no infectious individuals, and 
-the disease does not invade the population. Considering all four ODEs, we see 
-that $I=0$ is required to ensure that $\frac{\text{d}R}{\text{d}t} = 0$ and that 
-$E$ must be zero to ensure that $\frac{\text{d}E}{\text{d}t}= 0$. $S$ and $R$ 
-are then free to take any non-negative value as long as $S + R + D = 1$.
-
-We next illustrate how this model works using functionality available in 
-`comomodels`.
+This only has solutions if either $S=0$, in which case there are no individuals left to infect; or $I=0$, in which case there are no infectious individuals: in other words, an infection has not been imported into the population. Considering all four ODEs, $I=0$ implies that $\frac{\text{d}R}{\text{d}t} = 0$ and $\frac{\text{d}D}{\text{d}t} = 0$. Additionally, so long as there are no exposed individuals, $\frac{\text{d}E}{\text{d}t}= 0$ and $\frac{\text{d}I}{\text{d}t}= 0$ and 
+So the equilbria are given by $S=S'$, $E=0$, and $I=0$ which corresponds to a situation when there are no infected or infectious individuals in the population. In other words, in this model, there is no endemic equilbrium when the infection remains present throughout the population; only epidemic dynamics are possible.
 
 ## The `SEIRD` class
+We now show how `comomodels` can be used to create and simulate from an SEIRD model.
 
 We first create an `SEIRD` object that we will use to run simulations.
 ```{r}
 my_model <- SEIRD()
 ```
 
-Next, we set the parameter values for $\beta$, $\kappa$, $\gamma$ and $\mu$:
+Next, we set parameter values for $\beta$, $\kappa$, $\gamma$ and $\mu$. Here, these are arbitrary values that we use to illustrate simulations.
 ```{r}
 params <- list(beta=1, kappa=0.9, gamma=0.5, mu=0.1)
 transmission_parameters(my_model) <- params
@@ -227,9 +220,8 @@ times <- seq(0, 50, by = 1)
 out_df <- run(my_model, times)
 ```
 
-The simulation returns two objects: one is a data frame comprising the states 
-over time. Here, there's a peak in the infectious proportion between $t=15$ and 
-$t=20$.
+The simulation returns two objects: one is a data frame comprising the states over time. Here, we see that, over time, the proportion of susceptible individuals declines over time as the infection penetrates through the population. Initially, there are relatively few infected individuals but this then grows, reaching a peak between $t=15$ and $t=20$ and then declining when there are relatively few susceptibles left. The number of recovered and dead individuals also grows over time.
+
 ```{r, fig.height = 5, fig.width = 7}
 states <- out_df$states
 
@@ -241,15 +233,11 @@ ggplot(states, aes(x = time, y = value)) +
         text = element_text(size = 20))
 ```
 
-The simulation also outputs incidence and deaths. These are derived from the 
-state variables. Incidence is just the difference between the cumulative number 
-of cases between two time points,
+The simulation also outputs daily case incidence and deaths. These are derived from the state variables. Incidence is just the difference between the cumulative number of cases between two time points,
 
 $$ \text{incidence(t)} = C(t) - C(t - 1),$$
 
-since this shows the number of cases which have arisen between these time 
-points. Deaths are also given by a difference, but, in this instance, between 
-the cumulative number of deaths at two consecutive time points:
+since this shows the number of cases which have arisen between these time points. Deaths are also given by a difference, but, in this instance, between the cumulative number of deaths at two consecutive time points:
 
 $$ \text{deaths(t)} = D(t) - D(t - 1).$$
 
@@ -260,27 +248,28 @@ ggplot(changes, aes(x = time, y = value * 1000, fill = compartment)) +
   geom_bar(stat="identity", position = position_dodge()) +
   labs(x = "time (days)", y = "cases per 1000 of the \n population per day") +
   theme(legend.position = "bottom", legend.title = element_blank(),
-        text = element_text(size = 20))
+        text = element_text(size = 20)) +
+  scale_fill_brewer(palette = "Dark2")
 ```
 
 ## Sensitivity analysis
-In this section, we investigate the sensitivity of the number of deaths to the 
-transmission rate, $\beta$. We run the model for varying values of $\beta$ and 
-plot the number of deaths per day over time.
+The SEIRD has four transmission parameters which influence the type of dynamics resultant by the system. In epidemiological systems, these parameters are not known and are set either by fitting the model to data or from external studies. As such, assessing the sensitivity of the model's outputs to the input parameters is crucial.
+
+In this section, we first investigate the sensitivity of the number of deaths to the transmission rate, $\beta$. To do so, we run the model across a range of different $\beta$ values and plot the proportions infectious.
 ```{r, fig.height = 5, fig.width = 7}
 # function to setup and run model for different beta values
 run_seird <- function(beta_val) {
-  inits <- list(S0=0.99, E0=0, I0=0.01, R0=0)
+  inits <- list(S0=0.999, E0=0, I0=0.001, R0=0)
   params <- list(beta=beta_val, kappa=0.9, gamma=0.5, mu=0.1)
   model <- SEIRD(initial_conditions = inits,
                 transmission_parameters=params)
-  times <- seq(0, 50, by = 1)
+  times <- seq(0, 100, by = 0.1)
   out_df <- run(model, times)
-  out_df$changes
+  out_df$states
 }
 
 # run model across different beta values
-beta_vals <- c(0.1, 0.5, 0.75, 1, 2)
+beta_vals <- seq(0.1, 2, 0.1)
 for(i in seq_along(beta_vals)) {
   beta_temp <- beta_vals[i]
   temp <- run_seird(beta_temp) %>% mutate(beta=beta_temp)
@@ -292,44 +281,59 @@ for(i in seq_along(beta_vals)) {
 
 # plot results
 result %>% 
-  filter(compartment=="Deaths") %>% 
-  ggplot(aes(x=time, y=value * 1000, fill = as.factor(beta))) +
-  geom_bar(stat = "identity", position = position_dodge()) +
-  labs(x = "time (days)", y = "deaths per 1000 of the \n population per day",
-       fill = "values of beta") +
-  theme(legend.position = "bottom", legend.title = element_text(size = 15),
-        text = element_text(size = 20))
-
+  filter(compartment=="I") %>% 
+  ggplot(aes(x=time, y=value, colour = beta, group=as.factor(beta))) +
+  geom_line() +
+  scale_color_viridis_c() +
+  xlab("time (days)") +
+  ylab("Infectious proportion")
 ```
 
-Why do some epidemics die out quickly but others don't? This is can be explored 
-through the basic reproductive number, $R_0$, which is the expected number of 
-people infected by a single infectious individual in a population where everyone 
-is susceptible (i.e $S_0 \approx 1$). Note that this basic reproductive number 
-is unrelated to the initial condition for the recovered population! If $R_0>1$, 
-an infectious individual infects more than one other person and the epidemic 
-initially grows exponentially; if $R_0<1$, an infectious individual infects less 
-than one other person and the epidemic dies out quickly. In an SEIRD model with 
-normalized populations, the reproductive number is given by:
+Why do some of the simulations produce epidemic waves whereas others fail to do so?
 
-$$R_0 = \beta /(\gamma + \mu).$$
-We now calculate the reproductive number, $R_0$, for $\beta=0.1$ and $\beta=0.75$.
+This is can be explored through the basic reproductive number, $R_0$, which is the expected number of people infected by a single infectious individual in a population where everyone is susceptible. (Note that this basic reproductive numberis unrelated to the initial condition for the recovered population.) 
+
+If $R_0>1$, an infectious individual infects more than one other person and the epidemic initially grows exponentially; if $R_0<1$, an infectious individual infects less than one other person and the epidemic fails to materialise.
+
+But how can we calculate the $R_0$ value? In a fully susceptible population, $S=1$, meaning that the number of newly infected individuals produced per unit time is $\beta I$. So the number of new infections produced for a single infectious individual is $\beta$ per unit time. To determine the number of new infections that a single individual produces on average, we then need to know the typical duration of infectiousness. Once an individual becomes infectious, there are two mechanisms by which they stop being so: either they recover or they die. The overall rate at which these occur is $\gamma + \mu$, so the average period an individual spends in the infectious state is $1/(\gamma + \mu)$. So, the number of new infections produced by an infected individual is:
+
+$$R_0 = \text{new infections per unit time} \times \text{duration of infectiousness} = \beta /(\gamma + \mu).$$
+
+We can now calculate $R_0$ for each of the curves using the inbuilt function in `comomodels`. We then colour the curves according to this value; we also make the type of line drawn depend on whether $R_0>1$.
 ```{r, fig.height = 5, fig.width = 7}
-inits <- list(S0=0.99, E0=0, I0=0.01, R0=0)
+# convenience function to determine R_0
+find_R0 <- function(beta_val) {
+  inits <- list(S0=0.999, E0=0, I0=0.001, R0=0)
+  params <- list(beta=beta_val, kappa=0.9, gamma=0.5, mu=0.1)
+  model <- SEIRD(initial_conditions = inits,
+                transmission_parameters=params)
+  R0(model)
+}
 
-beta_val <- 0.1
-params <- list(beta=beta_val, kappa=0.9, gamma=0.5, mu=0.1)
-model1 <- SEIRD(initial_conditions = inits,
-              transmission_parameters=params)
+# calculate R_0 values
+R0_vals <- vector(length = length(beta_vals))
+for(i in seq_along(beta_vals)) {
+  R0_vals[i] <- find_R0(beta_vals[i])
+}
 
-beta_val <- 0.75
-params <- list(beta=beta_val, kappa=0.9, gamma=0.5, mu=0.1)
-model2 <- SEIRD(initial_conditions = inits,
-              transmission_parameters=params)
-paste0("R0(beta=0.1) = ", R0(model1))
-paste0("R0(beta=0.75) = ", R0(model2))
+# create lookup
+lookup <- tibble(beta=beta_vals,
+                 R0=R0_vals)
+
+# merge with results
+result <- result %>% 
+  left_join(lookup)
+
+# plot by R0
+result %>% 
+  mutate(R0_above=R0>1) %>% 
+  filter(compartment=="I") %>% 
+  ggplot(aes(x=time, y=value, colour = R0, group=as.factor(beta))) +
+  geom_line(aes(linetype=R0_above)) +
+  scale_color_viridis_c() +
+  scale_linetype("R0>1") +
+  xlab("time (days)") +
+  ylab("Infectious proportion")
 ```
 
-We see that for $\beta = 0.1$, $R_0 < 1$ and for $\beta = 0.75$, $R_0 > 1$. This 
-explains why in the first case the epidemic died out quickly, and in the second 
-case the infection initially spreads fast!
+From this, it is evident that $R_0>1$ is required for an epidemic to arise. As such, we see the importance of $R_0$ for dictating whether or not a pathogen successfully invades a population.
