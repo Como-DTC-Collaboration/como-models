@@ -47,28 +47,28 @@ digraph PrimC{
 
 Exposed ($E$) individuals then become infectious ($I$) over time as they transition out of the latency period. For infectious individuals, there are two potential transitions: either an individual recovers and they enter the recovered state ($R$) where they remain forever; or they die, entering the dead state ($D$).
 
-In the model that we discuss here, it is assumed that the population size is sufficiently large that we can view the number of individuals in a given compartment on a continuous scale. We also assume that the process governing the dynamics is deterministic: that is, given the current state of the system (i.e. the numbers of individuals in the $S$, $E$, $I$, $R$ and $D$ compartments), we can perfectly forecast its future behaviour. In reality, this is unlikely to hold since our model neglects to consider a myriad of factors that can influence the resultant epidemic. Indeed, stochastic models try to account for these unobserved elements by assuming randomness plays a role in the underlying dynamics. Nevertheless, in many instances, particularly when a population size is large, assuming deterministic system dynamics may give a good approximation of the mean of equivalent stochastic systems (Erban et al.).
+For all models in this packages, it is assumed that the population size is sufficiently large that we can view the number of individuals in a given compartment on a continuous scale. We also assume that the process governing the dynamics is deterministic: that is, given the current state of the system (i.e. the numbers of individuals in the $S$, $E$, $I$, $R$ and $D$ compartments), we can perfectly forecast its future behaviour. In reality, this is unlikely to hold since our model neglects to consider a myriad of factors that can influence the resultant epidemic. Indeed, stochastic models try to account for these unobserved elements by assuming randomness plays a role in the underlying dynamics. Nevertheless, in many instances, particularly when a population size is large, assuming deterministic system dynamics may give a good approximation of the mean of equivalent stochastic systems (Erban et al.).
 
 Additionally, the modelling framework that we use assumes that the system changes continuously over time. Specifically, the system assumes that changes in the compartments are governed by a system of coupled ordinary differential equations (ODEs). An example of such an equation is:
 
 $$\frac{\text{d}S}{\text{d}t} = -\text{newly exposed} = -\beta S I,$$
 
-where the left-hand side gives the rate of growth of the susceptible compartment. Since, here, we have not modelled births nor natural (i.e. non-COVID-19 deaths), the only way in which the number of susceptible individuals changes is through those individuals becoming exposed to infection. In this model, we assume that individuals are "well-mixed" -- that is, that a susceptible individual can potentially contact with any infected individual in the population: this means that there are $S * I$ contacts between susceptible and infected individuals at a point in time. Note, this is unlikely to be the case in reality, since populations are highly structured, both geographically and societally, meaning that individuals interact mostly with people in their immediate social group. In the model, the rate at which contacts between a susceptible and infected individual results in transmission is given by $\beta>0$, meaning that the overall rate that susceptibles become exposed is given by $\beta * S * I$. Because this leads to a decline in the susceptible group size, we require a minus sign in the above equation for $\frac{\text{d}S}{\text{d}t}$.
+where the left-hand side gives the rate of growth of the susceptible compartment. Since, here, we have not modelled births nor natural deaths (i.e. non-COVID-19 deaths), the only way in which the number of susceptible individuals changes is through those individuals becoming exposed to infection. In this model, we assume that individuals are "well-mixed" -- that is, that a susceptible individual can potentially contact with any infected individual in the population: this means that there are $S * I$ contacts between susceptible and infected individuals at a point in time. Note, this is unlikely to be the case in reality, since populations are highly structured, both geographically and societally, meaning that individuals interact mostly with people in their immediate social group. In the model, the rate at which contacts between a susceptible and infected individual results in transmission is given by $\beta>0$, meaning that the overall rate that susceptibles become exposed is given by $\beta * S * I$. Because this leads to a decline in the susceptible group size, we require a minus sign in the above equation for $\frac{\text{d}S}{\text{d}t}$.
 
-Note that $\beta$ is a rate (per unit time) at which a susceptible individual becomes infected on contact with an infected individual. It is not a probability as it is sometimes mistakenly labelled and so $\beta > 1$.
+Note that $\beta$ is a rate (per unit time) at which a susceptible individual becomes infected on contact with an infected individual. It is not a probability as it is sometimes mistakenly labelled and so $\beta > 1$ is possible.
 
 The full SEIRD model consists of four ODEs that a coupled together: the first of these governs the behaviour of susceptible individuals, which has already been introduced. The next equation governs the growth of the exposed compartment:
 
 $$\frac{\text{d}E}{\text{d}t} = \text{newly exposed} - \text{newly infectious} = \beta S I -\kappa E,$$
 where the rate of change is given by the difference between the flow into this compartment due to those individuals who have been newly exposed and the flow out of it, through those who have newly become infectious. (These represent the two arrows going into and out of the $E$ compartment in the arrow graph above.)
 
-We can gain insight into how the flow out of the $E$ compartment works by imagining that we run out of infected individuals at a given time: here, we assume $t=0$. The new equation then becomes:
+We can gain insight into how the flow out of the $E$ compartment works by imagining that we exhaust the infected individuals at a given time: $t=0$. The new equation then becomes:
 
 $$\frac{\text{d}E}{\text{d}t} = -\kappa E,$$
 Supposing there is a given number of infected individuals at $t=0$ represented by $E=E_0$, we can solve the above equation to yield an expression for the number of exposed over time:
 
 $$E(t) = E_0 \exp (- \kappa t)$$
-representing exponential decay, which we can plot assuming $E_0=1$ and $kappa=0.5$:
+representing exponential decay, which we can plot assuming $E_0=1$ and $\kappa=0.5$:
 ```{r, fig.height = 5, fig.width = 7}
 # function to return exponential decay
 E <- function(E_0, kappa, t) {E_0 * exp(-kappa * t)}
@@ -101,9 +101,9 @@ tibble(t, E=E_1, kappa=kappa_1) %>%
   scale_color_brewer("kappa", palette = "Dark2") +
   xlab("time (days)")
 ```
-An alternative way to view these exponential decay curves is as probability distributions governing the time taken for an exposed individual to become infectious. This is referred to as the latency period. Whilst rigorous proof of this requires considering the equivalent stochastic version of this model, the mean from the deterministic model matches the mean of the stochastic equivalent. As such, the waiting time for an individual to transition from exposed to infectious classes is governed by an exponential distribution. Using repeatedly sampled PCR test data from close contacts of confirmed cases in mainland China, a recent study estimated the latency period of COVID-19 as 5.51 days and a log-normal probability distribution was found to represent that waiting period (Xi et al., Estimating the Latent Period of Coronavirus Disease 2019, 2021). Below we compare the waiting period for the log-normal distribution fit in this study with an exponential distribution with the same latency period.
+An alternative way to view these exponential decay curves is as probability distributions governing the time taken for an exposed individual to become infectious. This period is referred to as the latency period. Whilst rigorous proof of this requires considering the equivalent stochastic version of this model, the mean from the deterministic model matches the mean of the stochastic equivalent. As such, the waiting time for an individual to transition from exposed to infectious classes is governed by an exponential distribution. Using repeatedly sampled PCR test data from close contacts of confirmed cases in mainland China, a recent study estimated the latency period of COVID-19 as 5.51 days and a log-normal probability distribution was found to represent that waiting period (Xi et al., Estimating the Latent Period of Coronavirus Disease 2019, 2021). Below we compare the waiting period for the log-normal distribution fit in this study with an exponential distribution with the same latency period.
 
-```{r}
+```{r, fig.height = 5, fig.width = 7}
 # values derived from Xi et al., Table S2 
 mu <- 1.61
 sigma <- 0.44
@@ -125,43 +125,61 @@ tibble(t, value=lnorm_vals, model="log-normal") %>%
   xlab("time (days)")
 ```
 
-Although these share a common mean waiting period, there are considerable differences between the curves that characterise the waiting period. Show the CDFs
+Although these share a common mean waiting period, there are considerable differences between the curves that characterise the waiting period. An alternative way to view this is through the cumulative distribution functions:
+```{r, fig.height = 5, fig.width = 7}
+lnorm_vals <- plnorm(t, mu, sigma)
+exp_vals <- pexp(t, kappa)
 
-In particular, the exponential curve predicts that $X$ individuals will have become 
+tibble(t, value=lnorm_vals, model="log-normal") %>% 
+  bind_rows(tibble(t, value=exp_vals, model="exponential")) %>% 
+  ggplot(aes(x=t, y=value, colour=model)) +
+  geom_line() +
+  scale_color_brewer("Model", palette = "Dark2") +
+  ylab("density") +
+  xlab("time (days)")
+```
+
+For example, the exponential curve predicts that approximately `r round(pexp(2.5, kappa), 2) * 100`% individuals will have become infectious after 2.5 days versus `r round(plnorm(2.5, mu, sigma),2) * 100`% for the log-normal one.
+
+Whether these differences matter depends on the form and parameters of the model. In COVID-19, the latency period is relatively short, so, for an SEIRD model, the difference between the assumed exponential distribution on waiting time versus a more realistic modal one are unlikely to substantially affect the dynamics. However, for a disease with a longer latency period, this may not be the case. Similarly, if, instead of an SEIRD model, we assumed a structure where there was a presymptomatic compartment of infectious individuals, then the characteristics of the time interval spent in this state could be important.
+
+The next compartment we consider is the infectious. This compartment grows in size as newly infectious individuals flow into it; over time, some infectious recover and, unfortunately, others die, both of which reduce the growth rate:
+
+$$\frac{\text{d}I}{\text{d}t} = \text{newly infectious} - \text{newly recovered} - \text{deaths} = \kappa E - (\gamma + \mu) I,$$
+
+Here, $\gamma>0$ dictates the rate at which infectious individuals recover; $\mu>0$ dictates the rate of death from infection.
+
+The final two compartments are for the recovered and dead individuals and take the form:
+
+$$\frac{\text{d}R}{\text{d}t} = \text{newly recovered} = \gamma I,$$
+$$\frac{\text{d}D}{\text{d}t} = \text{deaths} = \mu I.$$
+
+We note that natural births and deaths -- in other words, those unrelated to infection -- are not considered in this model. Therefore, the SEIRD model is suitable only to  diseases that span a short period of time, when natural births and deaths  do not significantly affect dynamics.
 
 
-Natural births and deaths -- in other words, those unrelated to infection -- are 
-not considered in this model. Therefore, the SEIRD model is suitable only to  diseases that span a short period of time, when natural births and deaths  do not significantly affect dynamics. The ODEs describing how the four populations  evolve over time are
+Overall, then, the system ODEs describing how the compartment populations  evolve over time is:
 
 $$\frac{\text{d}S}{\text{d}t} = -\beta S I,$$
 $$\frac{\text{d}E}{\text{d}t} = \beta S I -\kappa E,$$
-$$\frac{\text{d}I}{\text{d}t} = \kappa E - (\gamma + \mu) I,$$
-$$\frac{\text{d}R}{\text{d}t} = \gamma I,$$
-where $\beta>0$, $\kappa>0$, $\gamma>0$ and $\mu>0$.
-The rate at which susceptible individuals are infected depends on the fraction
-of the population that are susceptible and infectious and the rate at which interactions between infectious and susceptible individuals lead to infections, $\beta$.
-Exposed individuals become infectious at rate $\kappa$. $1/ \kappa$ is
-the mean incubation time of the virus, i.e. how many days after exposure the individual
-becomes infectious to others. Infectious individuals can either recover or die
-because of the disease. Infectious individuals recover at a mean of $1/ \gamma$
-days. Similarly, infectious
-individuals die due to the infection after a mean of $1/ \mu$ days.
+$$\frac{\text{d}I}{\text{d}t} =\kappa E - (\gamma + \mu) I,$$
 
-In addition to these four main ODEs, the model also keeps track of the 
-cumulative number of cases ($C$) and the cumulative number of disease-related 
-deaths ($D$) over time
-$$\frac{\text{d}C}{\text{d}t} = \beta S I,$$
+$$\frac{\text{d}R}{\text{d}t} = \gamma I,$$
 $$\frac{\text{d}D}{\text{d}t} = \mu I.$$
 
-The system is closed by specifying the initial conditions
-$$S(0) = S_\text{init},\ E(0) = E_\text{init},\ I(0) = I_\text{init},\ R(0) = R_\text{init},\ C(0) = C_\text{init},\ D(0) = D_\text{init},$$
-where $C_\text{init} = E_\text{init} + I_\text{init} + R_\text{init}$ to ensure 
-the cases that occur before $t=0$ are also counted.
-In the implementation of the model in this package, the variables are normalized 
-so$S(t) + E(t) + I(t) + R(t) + D(t) \equiv 1$ for any given $t$. This means that 
-each of these state variables represents the fraction of the population in each 
-of these states at a given point in time.
+Having specified the form of the growth rate for each of the compartments, we need to specialise the initial sizes of each of the compartments, which we do via the initial conditions:
 
+$$S(0) = S_\text{init},\ E(0) = E_\text{init},\ I(0) = I_\text{init},\ R(0) = R_\text{init},\ D(0) = D_\text{init}.$$
+
+With both the system of ODEs and initial conditions specified, we can solve for the states over time, resulting in $S(t), E(t), I(t), R(t)$ and $D(t)$. Since the system of ODEs has no analytic solution, the system is solved numerically, using a numerical integrator. In this package, we use the R package `deSolve` [include citation] to numerically integrate the system, and the user can specify which of its numerical integrators to use (by default, it is the LSODA [include citation]).
+
+In the implementation of the model in this package, the variables are normalized  so$S(t) + E(t) + I(t) + R(t) + D(t) \equiv 1$ for any given $t$. This means that  each of these state variables represents the fraction of the population in each  of these states at a given point in time.
+
+Typical epidemic data includes the number of new cases or new deaths occurring over a time interval. To calculate the number of cases arising over a time period, we track the cumulative number of cases through the following equation:
+
+$$\frac{\text{d}C}{\text{d}t} = \text{newly exposed} = \beta S I,$$
+where we assume $C(0) = 0$. The number of new infections arising between two time intervals $t_1$ and $t_2$ is then: $C(t_2) - C(t_1)$. Similarly, the number of deaths occuring over the same interval is the difference in the cumulative deaths: $D(t_2) - D(t_1)$.
+
+## Steady states
 Steady states of the system described above are computed by setting the 
 right-hand sides of the ODEs equal to zero. Taking the equation for the 
 susceptibles:
