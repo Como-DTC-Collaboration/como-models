@@ -16,7 +16,8 @@ Suggests:
     knitr,
     markdown,
     rmarkdown,
-    DiagrammeR
+    DiagrammeR,
+    webshot
 Config/testthat/edition: 3
 Imports: 
     deSolve,
