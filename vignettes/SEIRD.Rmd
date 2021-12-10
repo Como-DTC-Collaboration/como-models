@@ -291,7 +291,7 @@ result %>%
 
 Why do some of the simulations produce epidemic waves whereas others fail to do so?
 
-This is can be explored through the basic reproductive number, $R_0$, which is the expected number of people infected by a single infectious individual in a population where everyone is susceptible. (Note that this basic reproductive numberis unrelated to the initial condition for the recovered population.) 
+This is can be explored through the basic reproductive number, $R_0$, which is the expected number of people infected by a single infectious individual in a population where everyone is susceptible. (Note that this basic reproductive number is unrelated to the initial condition for the recovered population.) 
 
 If $R_0>1$, an infectious individual infects more than one other person and the epidemic initially grows exponentially; if $R_0<1$, an infectious individual infects less than one other person and the epidemic fails to materialise.
 
