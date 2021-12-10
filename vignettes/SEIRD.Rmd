@@ -350,7 +350,7 @@ Throughout the course of an epidemic, the fraction who are susceptible to infect
 $$R_t = R_0 * S(t) = \beta S(t) /(\gamma + \mu).$$
 
 We can plot $R_t$ over time for the initial simulations performed. We also show the proportion infectious over time (scaled up by a proportion to make the peak clearly visible).
-```{r}
+```{r, fig.height = 5, fig.width = 7}
 # calculate Rt
 R0_val <- R0(my_model)
 s_df <- states %>% 
