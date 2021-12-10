@@ -186,7 +186,7 @@ susceptibles:
 $$\frac{\text{d}S}{\text{d}t} = -\beta S I = 0.$$
 
 This only has solutions if either $S=0$, in which case there are no individuals left to infect; or $I=0$, in which case there are no infectious individuals: in other words, an infection has not been imported into the population. Considering all four ODEs, $I=0$ implies that $\frac{\text{d}R}{\text{d}t} = 0$ and $\frac{\text{d}D}{\text{d}t} = 0$. Additionally, so long as there are no exposed individuals, $\frac{\text{d}E}{\text{d}t}= 0$ and $\frac{\text{d}I}{\text{d}t}= 0$ and 
-So the equilbria are given by $S=S'$, $E=0$, and $I=0$ which corresponds to a situation when there are no infected or infectious individuals in the population. In other words, in this model, there is no endemic equilbrium when the infection remains present throughout the population; only epidemic dynamics are possible.
+So the equilibria are given by $S=S'$, $E=0$, and $I=0$ which corresponds to a situation when there are no infected or infectious individuals in the population. In other words, in this model, there is no endemic equilibrium when the infection remains present throughout the population; only epidemic dynamics are possible.
 
 ## The `SEIRD` class
 We now show how `comomodels` can be used to create and simulate from an SEIRD model.
