@@ -308,7 +308,7 @@ We introduce the intervention into the outbreak period of the epidemic.
 
 In this section, we investigate the sensitivity of different starting time.
 
-```{r, fig.height = 5, fig.width = 10}
+```{r, fig.height = 5, fig.width = 15}
 run_SEIRDAge_interventions_single_intv <- function(beta_interventions, contact_matrix_interventions) {
   inits <- list(S0=pop_fraction*0.99,
                 E0=rep(0, n_ages),
@@ -329,7 +329,7 @@ run_SEIRDAge_interventions_single_intv <- function(beta_interventions, contact_m
     initial_conditions = inits,
     transmission_parameters=params,
     interventions = list(list("starts"=5, "stops"=20, "coverages"=1)))
-  times <- seq(0, 100, by = 1)
+  times <- seq(0, 50, by = 1)
   out_df <- run(model, times)
   out_df
 }
@@ -416,27 +416,41 @@ result <- result %>% bind_rows(model_l$changes %>% mutate(scenario="lockdown"))
 result_states <- result_states %>% bind_rows(model_l$states %>% mutate(scenario="lockdown"))
 
 
+# add intervention intervals
+result[result$scenario!="baseline", "interv_starts"] <- 5
+result[result$scenario!="baseline", "interv_stops"] <- 20
+result_states[result_states$scenario!="baseline", "interv_starts"] <- 5
+result_states[result_states$scenario!="baseline", "interv_stops"] <- 20
+
 
 # plot results
 result_states %>% 
   filter(compartment=="S" | compartment=="R") %>% 
   ggplot_results_by_compartment(text_size = 15) + 
-  facet_grid(compartment ~ scenario)
+  facet_grid(compartment ~ scenario) +
+  geom_rect(aes_string(xmin = "interv_starts", xmax = "interv_stops", ymin = -Inf, ymax = Inf),
+             colour="red", fill=NA)
 
 result_states %>% 
   filter(compartment=="I" | compartment=="E") %>% 
   ggplot_results_by_compartment(text_size = 15) + 
-  facet_grid(compartment ~ scenario)
+  facet_grid(compartment ~ scenario) +
+  geom_rect(aes_string(xmin = "interv_starts", xmax = "interv_stops", ymin = -Inf, ymax = Inf),
+             colour="red", fill=NA)
 
 result %>% 
   filter(compartment=="Deaths") %>%
   ggplot_results_by_compartment(labs_y="fraction of the population \n that died per day", text_size = 15) +
-  facet_wrap(~scenario)
+  facet_wrap(~scenario) +
+  geom_rect(aes_string(xmin = "interv_starts", xmax = "interv_stops", ymin = -Inf, ymax = Inf),
+             colour="red", fill=NA, linewidth=0.5)
 
 result %>% 
   filter(compartment=="Incidence") %>% 
   ggplot_results_by_compartment(labs_y="fraction of the population \n that is newly infected per day", text_size = 15) +
-  facet_wrap(~scenario)
+  facet_wrap(~scenario) +
+  geom_rect(aes_string(xmin = "interv_starts", xmax = "interv_stops", ymin = -Inf, ymax = Inf),
+             colour="red", fill=NA)
 
 
 ```
@@ -461,7 +475,7 @@ infectious disease.
 In this section, we further explore the combinations of different NPI scenarios. 
 This time we focus on the effect of different ordering of NPIs. 
 Here we focus on two NPIs, self-isolation and physical distancing.
-```{r}
+```{r, fig.height=5, fig.width=15}
 run_SEIRDAge_interventions_mult_intv <- function(beta_interventions, contact_matrix_interventions, n_interventions) {
   inits <- list(S0=pop_fraction*0.99,
                 E0=rep(0, n_ages),
@@ -472,7 +486,7 @@ run_SEIRDAge_interventions_mult_intv <- function(beta_interventions, contact_mat
   mu <- c(0.000016, 0.000016, 0.00007, 0.00007, 0.00031, 0.00031, 0.0026, 0.0026,
      0.0048, 0.0048, 0.006, 0.006, 0.019, 0.019, 0.043, 0.043)
   params <- list(beta_interventions = beta_interventions, beta = 1,
-               kappa = 0.9, gamma = 0.5, mu = mu)
+               kappa = 0.9, gamma = 0.3, mu = mu)
   model <- SEIRDAge_interventions(
     n_age_categories = n_ages,
     n_interventions = n_interventions,
@@ -482,8 +496,8 @@ run_SEIRDAge_interventions_mult_intv <- function(beta_interventions, contact_mat
     initial_conditions = inits,
     transmission_parameters=params,
     interventions = list(list("starts"=5, "stops"=10, "coverages"=1),
-                         list("starts"=28, "stops"=35, "coverages"=1)))
-  times <- seq(0, 100, by = 1)
+                         list("starts"=15, "stops"=25, "coverages"=1)))
+  times <- seq(0, 50, by = 1)
   out_df <- run(model, times)
   out_df
 }
@@ -522,30 +536,46 @@ result <- result %>% bind_rows(model_si_pd$changes %>% mutate(scenario="si-pd"))
 result_states <- result_states %>% bind_rows(model_si_pd$states %>% mutate(scenario="si-pd"))
 
 
+
+# add intervention intervals
+result[result$scenario!="baseline", "interv_starts"] <- c(5, 15)
+result[result$scenario!="baseline", "interv_stops"] <- c(10, 25)
+result_states[result_states$scenario!="baseline", "interv_starts"] <- c(5, 15)
+result_states[result_states$scenario!="baseline", "interv_stops"] <- c(10, 25)
+
+
 # plot results
 result_states %>% 
   filter(compartment=="S" | compartment=="R") %>% 
-  ggplot_results_by_compartment(text_size = 15) + 
+  ggplot_results_by_compartment(text_size = 15) +
+  geom_rect(aes_string(xmin = "interv_starts", xmax = "interv_stops", ymin = -Inf, ymax = Inf),
+             colour="red", fill=NA) +
   facet_grid(compartment ~ scenario)
 
 result_states %>% 
   filter(compartment=="I" | compartment=="E") %>% 
-  ggplot_results_by_compartment(text_size = 15) + 
+  ggplot_results_by_compartment(text_size = 15) +
+  geom_rect(aes_string(xmin = "interv_starts", xmax = "interv_stops", ymin = -Inf, ymax = Inf),
+             colour="red", fill=NA) + 
   facet_grid(compartment ~ scenario)
 
 result %>% 
   filter(compartment=="Deaths") %>%
   ggplot_results_by_compartment(labs_y="fraction of the population \n that died per day", text_size = 15) +
+  geom_rect(aes_string(xmin = "interv_starts", xmax = "interv_stops", ymin = -Inf, ymax = Inf),
+             colour="red", fill=NA) +
   facet_wrap(~scenario)
 
 result %>% 
   filter(compartment=="Incidence") %>% 
   ggplot_results_by_compartment(labs_y="fraction of the population \n that is newly infected per day", text_size = 15) +
+  geom_rect(aes_string(xmin = "interv_starts", xmax = "interv_stops", ymin = -Inf, ymax = Inf),
+             colour="red", fill=NA) +
   facet_wrap(~scenario)
 
 ```
 
-We can see different intervention results of the epidemic under different combinations of NPIs.
+We can see different intervention results of the epidemic under different combinations of NPIs. (ADD MORE)
 
 
 

@@ -288,11 +288,11 @@ setMethod(
 #' (I), Recovered (R) and Dead (D) groups in a given age group indexed by i is
 #' given by
 #'
-#' \deqn{\frac{dS_i(t)}{dt} = - \beta_{t} S_i(t) \Sigma_{j}}
-#' \deqn{\frac{dE_i(t)}{dt} = \beta_{t} S_i(t) \Sigma_{j}C_{t,ij}}
-#' \deqn{\frac{dI_i(t)}{dt} = \kappa E_i(t) - \gamma I_i(t) - \mu I_i(t)}
-#' \deqn{\frac{dR_i(t)}{dt} = \gamma I_i(t)}
-#' \deqn{\frac{dC(t)}{dt} = \beta_{t} S_i(t) \Sigma_{j}C_{t,ij}}
+#' \deqn{\frac{dS_i(t)}{dt} = -\beta_i(t) S_i \Sigma_{j}C_{ij}(t) I_j}
+#' \deqn{\frac{dE_i(t)}{dt} = \beta_i(t) S_i \Sigma_{j}C{ij}(t) I_j-\kappa E_i}
+#' \deqn{\frac{dI_i(t)}{dt} = \kappa E_i - (\gamma + \mu) I_i}
+#' \deqn{\frac{dR_i(t)}{dt} = \frac{\text{d}R_i}{\text{d}t} = \gamma I_i}
+#' \deqn{\frac{dC(t)}{dt} = \beta_i(t) S_i \Sigma_{j}C_{ij}(t) I_j}}
 #' \deqn{\frac{dD_i(t)}{dt} = \mu I_i(t)}
 #'
 #' where C is a contact matrix whose elements represents the
