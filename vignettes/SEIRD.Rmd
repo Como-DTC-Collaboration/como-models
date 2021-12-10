@@ -57,7 +57,7 @@ where the left-hand side gives the rate of growth of the susceptible compartment
 
 Note that $\beta$ is a rate (per unit time) at which a susceptible individual becomes infected on contact with an infected individual. It is not a probability as it is sometimes mistakenly labelled and so $\beta > 1$ is possible.
 
-The full SEIRD model consists of four ODEs that a coupled together: the first of these governs the behaviour of susceptible individuals, which has already been introduced. The next equation governs the growth of the exposed compartment:
+The full SEIRD model consists of four ODEs that are coupled together: the first of these governs the behaviour of susceptible individuals, which has already been introduced. The next equation governs the growth of the exposed compartment:
 
 $$\frac{\text{d}E}{\text{d}t} = \text{newly exposed} - \text{newly infectious} = \beta S I -\kappa E,$$
 where the rate of change is given by the difference between the flow into this compartment due to those individuals who have been newly exposed and the flow out of it, through those who have newly become infectious. (These represent the two arrows going into and out of the $E$ compartment in the arrow graph above.)
