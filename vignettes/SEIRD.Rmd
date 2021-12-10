@@ -343,3 +343,35 @@ result %>%
 ```
 
 From this, it is evident that $R_0>1$ is required for an epidemic to arise. As such, we see the importance of $R_0$ for dictating whether or not a pathogen successfully invades a population.
+
+## Effective reproduction number
+Throughout the course of an epidemic, the fraction who are susceptible to infection fluctuates over time. As such, the average number of secondary infections produced by a single infected individual changes. This can be quantified by the effective reproduction number, $R_t$, which represents the average number of new infections caused by an infected individual at time $t$. To obtain $R_t$, we simply multiply $R_0$ by the fraction of the population susceptible:
+
+$$R_t = R_0 * S(t) = \beta S(t) /(\gamma + \mu).$$
+
+We can plot $R_t$ over time for the initial simulations performed. We also show the proportion infectious over time (scaled up by a proportion to make the peak clearly visible).
+```{r}
+# calculate Rt
+R0_val <- R0(my_model)
+s_df <- states %>% 
+  filter(compartment=="S") %>% 
+  mutate(value=value * R0_val) %>% 
+  mutate(compartment="Rt")
+
+# plot: blowing up I value so that peak is visible
+states %>% 
+  bind_rows(s_df) %>% 
+  mutate(value=if_else(compartment=="I", 10 * value, value)) %>% 
+  filter(compartment %in% c("Rt", "I")) %>% 
+  ggplot(aes(x = time, y = value)) +
+  geom_hline(yintercept = 1, linetype=2) +
+  geom_line(aes(color = compartment)) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(x = "time (days)", y = "value of each compartment") +
+  theme(legend.position = "bottom", legend.title = element_blank(),
+        text = element_text(size = 20))
+```
+
+Here, we see that as $R_t\rightarrow 1$, we reach so-called "herd immunity", and there are no longer sufficient susceptibles in the population to continue epidemic growth. In other words, the infection has run out of fuel, and the epidemic declines.
+
+## References
