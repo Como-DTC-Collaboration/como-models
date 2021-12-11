@@ -153,8 +153,13 @@ setMethod('transmission_parameters', 'SEIRDAge',
 #'
 #' @param value a named list of form list(b=, k=, g=, mu=)
 #'
-#' All rates of change between compartments are equal regardless of
-#' age group.
+#' Here b is the rate of infection; k is the rate of transitioning from the
+#' infected to infectious compartment; g is the rate of recovery. The
+#' parameters b, and k are numbers. The death rate
+#' mu can and recovery rate g either be a single number, in which case all ages
+#' are assumed to
+#' have the same rate; or it can be a vector of length equal to the number of
+#' age classes. 
 #'
 #' @return Updated version of the age-structured SEIRD model.
 #' @export
@@ -175,12 +180,17 @@ setMethod(
     names(trans_params) = object@transmission_parameter_names
     
     # check format of parameters b, k and g
-    if(length(b) != 1 | length(k) != 1 | length(g) != 1){
+    if(length(b) != 1 | length(k) != 1){
       stop('The parameter values should be 1-dimensional.')
     }
     
     if(length(mu) != 1 & length(mu) != object@n_age_categories){
       stop('The mortality parameter values should be of length 1 or
+            number of age classes.')
+    }
+    
+    if(length(g) != 1 & length(g) != object@n_age_categories){
+      stop('The recovery rate parameter values should be of length 1 or
             number of age classes.')
     }
     
@@ -205,9 +215,9 @@ setMethod(
 #'
 #' \deqn{\frac{dS_i(t)}{dt} = - \beta S_i(t) \Sigma_{j}C_{ij} I_j(t)}
 #' \deqn{\frac{dE_i(t)}{dt} = \beta S_i(t) \Sigma_{j}C_{ij} I_j(t) - \kappa E_i(t)}
-#' \deqn{\frac{dI_i(t)}{dt} = \kappa E_i(t) - \gamma I_i(t) - \mu I_i(t)}
+#' \deqn{\frac{dI_i(t)}{dt} = \kappa E_i(t) - \gamma I_i(t) - \mu_i I_i(t)}
 #' \deqn{\frac{dR_i(t)}{dt} = \gamma I_i(t)}
-#' \deqn{\frac{dD_i(t)}{dt} = \mu I_i(t)}
+#' \deqn{\frac{dD_i(t)}{dt} = \mu_i I_i(t)}
 
 #' where C is a contact matrix whose elements represents the
 #' contact between different age groups (rows) with age groups of
