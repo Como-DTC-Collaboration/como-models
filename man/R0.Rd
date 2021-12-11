@@ -4,7 +4,7 @@
 \alias{R0}
 \title{Calculates basic reproduction number}
 \usage{
-R0(model)
+R0(model, ...)
 }
 \arguments{
 \item{model}{a model object from comomodels package}

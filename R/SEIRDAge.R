@@ -358,7 +358,7 @@ setMethod(
 #' resulting in infection per unit time in age group i is beta N_i C_ij, where
 #' N_i corresponds to the proportion of the population in that age group and
 #' C_ij is the contact matrix element. The average duration of infection is
-#' 1 / (mu_j + gamma_j) for age group j. This means the average number of
+#' 1 / (mu_j + gamma_j) for an individual in age group j. This means the average number of
 #' secondary infections of type i caused by an infectious individual of type j is 
 #' g_ij = beta N_i C_ij / (mu_i + gamma_i). R0 is then given by the dominant
 #' eigenvalue of the G matrix.
