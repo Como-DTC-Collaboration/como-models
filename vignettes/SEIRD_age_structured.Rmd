@@ -2,6 +2,7 @@
 title: "The age-structured SEIRD model"
 author: "Oscar Dimdore-Miles and Ioana Bouros"
 output: rmarkdown::html_vignette
+bibliography: references.bib
 vignette: >
   %\VignetteIndexEntry{SEIR_age_structured}
   %\VignetteEngine{knitr::knitr}
@@ -15,17 +16,18 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
+```{r setup, include = FALSE}
 library(comomodels)
 library(tidyverse)
 ```
 
 ## Introduction
+The basic SEIRD model assumes that individuals with the same infection status behave identically and that the infection has the same effect. In reality, however, those individuals with the same infection status may differ substantively. In particular, individuals' age is likely to correlate with both social differences -- for example, a teenager may mix with more people per day than an elderly person -- and biological differences -- for example, the severity of illness may, on average, be generally worse in the elderly (as is known to be the case for COVID-19 [@])
+
+
 This document explains the basics of an age-structured SEIRD model. The model describes
 how populations of susceptible, exposed, infectious, recovered and dead individuals evolve over time.
-In this model, each age class, $i$, has its own system of five coupled differential equations governing
-movements between these compartments. If age classes did not interact with one another, these set of equations would
-follow:
+In this model, each age class, $i$, has its own system of five coupled differential equations governing movements between these compartments. If age classes did not interact with one another, these set of equations would simply follow the basic SEIRD dynamics:
 
 \begin{align}
 \frac{\text{d}S_i}{\text{d}t} &= -\beta S_i I_i\\
