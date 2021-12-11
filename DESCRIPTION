@@ -15,7 +15,9 @@ Suggests:
     testthat (>= 3.0.0),
     knitr,
     markdown,
-    rmarkdown
+    rmarkdown,
+    DiagrammeR,
+    webshot
 Config/testthat/edition: 3
 Imports: 
     deSolve,
