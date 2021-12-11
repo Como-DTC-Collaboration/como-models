@@ -78,7 +78,6 @@ df %>%
 ```
 From this, we see the dramatic rise in the risk of death beginning at around the 50-59 age class.
 
-
 ## Intermixing between age groups
 The aforementioned system of ODEs does not, currently, allow individuals from different age classes to mix with one another. However, in reality, a susceptible individual from a given age class can become infected from any age class: to capture this aspect of the model, infected individuals of any
 age are supposed to inter-mix, with the mixing rate dictated by a so-called "contact matrix", $C$.
@@ -152,22 +151,20 @@ We now use this contact matrix to allow infections to pass between age groups. T
 
 Specifically, the term $S_i \Sigma_{j}C_{ij} I_j$ effectively indicates the expected number of contacts between susceptible individuals of age class $i$ with infected individuals across all classes.
 
-
-
 ## Simulation examples 
-
-Now we create a model that includes this age-structured mixing. Since the contact matrices have 16 age classes, we instantiate a model with this number of classes. We also give it transmission parameters, populate the age classes with initial conditions and use our overall contact matrix.
-
-We use country-level demographics from the UN and, for this example, initialise the model with a uniform initial infected population of 1% across all age groups. The remaining 99% of the population starts
-as susceptible.
+Now we create a model that includes this age-structured mixing. Since the contact matrices have 16 age classes, we instantiate a model with this number of classes. We use country-level demographics from the UN and, for this example, initialise the model with a uniform initial infected population of 1% across all age groups. The remaining 99% of the population starts as susceptible.
 ```{r}
+# load UN data (which is available in the repo)
 load(file = "../data/population.rda")
+
 # use demographic data to create normalised population fractions
 pops = population[population$country == 'India', ]$pop
 pop_fraction = pops/sum(pops)
-## the contact matrix has an upper group of 80+, so we sum the remaining fractions beyond this point
+
+# the contact matrix has an upper group of 80+, so we sum the remaining fractions beyond this point
 pop_fraction[16] = sum(pop_fraction[16:21])
 pop_fraction = pop_fraction[1:16]
+
 # reshape contact matrix into 16x16 form
 n_ages <- 16
 c_combined_wider <- c_combined %>% 
@@ -176,17 +173,37 @@ c_combined_wider <- c_combined %>%
   ungroup() %>% 
   select(-age_infectee) %>% 
   as.matrix()
+
 # create model
 model <- comomodels::SEIRDAge(n_age_categories = n_ages,
                  contact_matrix = c_combined_wider,
                  age_ranges = as.list(age_names))
-transmission_parameters(model) <- list(b=1, k=0.5, g=0.5, mu = 0.01)
+
+# set initial conditions
 initial_conditions(model) <- list(S0=pop_fraction*0.99,
                                   E0=rep(0, n_ages),
                                   I0=pop_fraction*0.01,
                                   R0=rep(0, n_ages),
                                   D0=rep(0, n_ages))
 ```
+
+We next give it transmission parameters. Here, we assume an average latency period of 5.5 days (as has been estimated for COVID-19; @xin2021estimating), and an average duration of infectiousness of 2 days (which indicates that, after 10 days, <1\% would be infectious, which is in line with UK policy which assumes individuals cannot pass on infection after 10 days; @stayathome2021). For simplicity, we assume that symptom onset occurs at the time an individual becomes infectious (although evidence suggests there is presymptomatic transmission; @stayathome2021).
+
+We assume the following parameterisation: $\eta = 1/{\text{av. time until noninfectious}}=1/2$
+
+\begin{align}
+\gamma &= \eta (1-\text{CFR})\\
+\mu &= \eta \text{CFR}.
+\end{align}
+
+```{r}
+eta <- 1 / 2
+kappa <- 1 / 5.5
+
+transmission_parameters(model) <- list(b=1, k=kappa, g=, mu=0.01)
+```
+
+
 
 We next simulate the model and visualise all the dynamics of each compartment.
 ```{r, fig.width=10, fig.height=5}
