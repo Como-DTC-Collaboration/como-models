@@ -185,9 +185,6 @@ test_that("can set new transmission parameters for the SEIRDAge", {
     transmission_parameters(my_model) <- list(b=1, k=c(1, 0), g=0.5, mu = 0.01)
   )
   expect_error(
-    transmission_parameters(my_model) <- list(b=1, k=0.5, g=c(1, 0),  mu = 0.01)
-  )
-  expect_error(
     transmission_parameters(my_model) <- list(b=1, k=0.5, g=0.5,
                                               mu = c(0.01, 0.01, 0.1))
   )

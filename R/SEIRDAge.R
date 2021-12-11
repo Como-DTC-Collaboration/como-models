@@ -155,8 +155,9 @@ setMethod('transmission_parameters', 'SEIRDAge',
 #'
 #' Here b is the rate of infection; k is the rate of transitioning from the
 #' infected to infectious compartment; g is the rate of recovery. The
-#' parameters b, k, and g are simply numbers. The death rate
-#' mu can either be a single number, in which case all ages are assumed to
+#' parameters b, and k are numbers. The death rate
+#' mu can and recovery rate g either be a single number, in which case all ages
+#' are assumed to
 #' have the same rate; or it can be a vector of length equal to the number of
 #' age classes. 
 #'
@@ -179,12 +180,17 @@ setMethod(
     names(trans_params) = object@transmission_parameter_names
     
     # check format of parameters b, k and g
-    if(length(b) != 1 | length(k) != 1 | length(g) != 1){
+    if(length(b) != 1 | length(k) != 1){
       stop('The parameter values should be 1-dimensional.')
     }
     
     if(length(mu) != 1 & length(mu) != object@n_age_categories){
       stop('The mortality parameter values should be of length 1 or
+            number of age classes.')
+    }
+    
+    if(length(g) != 1 & length(g) != object@n_age_categories){
+      stop('The recovery rate parameter values should be of length 1 or
             number of age classes.')
     }
     
