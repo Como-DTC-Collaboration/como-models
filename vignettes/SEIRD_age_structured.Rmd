@@ -24,7 +24,7 @@ library(tidyverse)
 ## Introduction
 The basic SEIRD model assumes that individuals with the same infection status behave identically and that the infection has the same effect. In reality, however, individuals with the same infection status may differ substantively. In particular, individuals' age is likely to correlate with both social differences -- for example, a teenager may mix with more people per day than an elderly person -- and biological differences -- for example, the severity of illness may, on average, be generally worse in the elderly (as is known to be the case for COVID-19 [@verity2020estimates]).
 
-Models which allow different transmission dynamics for different age groups can capture these differences, and this document explains the basics of an age-structured SEIRD model. The model describes how populations of susceptible, exposed, infectious, recovered and dead individuals evolve over time. In this model, each age class, $i$, has its own system of five coupled differential equations governing movements between these compartments. If age classes did not interact with one another, these set of equations would simply follow the basic SEIRD dynamics:
+Models which allow varying transmission dynamics for different age groups can capture these differences, and this document explains the basics of an age-structured SEIRD model. The model describes how populations of susceptible, exposed, infectious, recovered and dead individuals evolve over time. In this model, each age class, $i$, has its own system of five coupled differential equations governing movements between these compartments. If age classes did not interact with one another, these set of equations would simply follow the basic SEIRD dynamics:
 
 \begin{align}
 \frac{\text{d}S_i}{\text{d}t} &= -\beta S_i I_i\\
@@ -34,20 +34,65 @@ Models which allow different transmission dynamics for different age groups can 
 \frac{\text{d}D_i}{\text{d}t} &= \mu I_i.
 \end{align}
 
-This system of ODEs could then be solved independently for each age group $i$, and each of their dynamics would be the same as for the non-age-structured SEIRD model.
+This system of ODEs could then be solved independently for each age group $i$, and each of their dynamics would be the same as for the non-age-structured SEIRD model. Additionally, infection transmission through each of the age classes would be identical, aside from any differences in the initial conditions of each compartment.
 
-However, in reality, a susceptible individual from a given age class can become infected from any age class: to capture this aspect of the model, infected individuals of any
+## Age-dependent mortality
+For COVID-19 transmission, a key difference is that the death rate varies by age [@verity2020estimates]. We can allow different rates of death by modifying the equation for infectious and dead compartments to:
+
+\begin{align}
+\frac{\text{d}I_i}{\text{d}t} &= \kappa E_i - (\gamma + \mu_i) I_i\\
+\frac{\text{d}D_i}{\text{d}t} &= \mu_i I_i.
+\end{align}
+
+where each compartment has its own death rate, $\mu_i$. Since, in this model, there are only two fates for an infectious individual -- death and recovery -- the proportion of infectious individuals who die is given by:
+
+\begin{equation}
+\text{CFR} = \frac{\text{rate of death}}{\text{rate of death} + \text{rate of recovery}} = \frac{\mu}{\mu + \gamma},
+\end{equation}
+
+where $\text{CFR}$ denotes the case fatality ratio. In @verity2020estimates, the CFR was shown to vary strongly with age using aggregate case and deaths data for mainland China extracted until March 2020. Here we graph their estimates.
+```{r, fig.width=6, fig.height=4}
+# for 80+ group we pick upper age to be 110
+df <- tribble(
+  ~lower_age, ~upper_age, ~cfr,
+  0, 9, 0.00260,
+  10, 19, 0.0148,
+  20, 29, 0.0600,
+  30, 39, 0.146,
+  40, 49, 0.295,
+  50, 59, 1.25,
+  60, 69, 3.99,
+  70, 79, 8.61,
+  80, 110, 13.4) %>% 
+  mutate(cfr = cfr / 100) %>% 
+  mutate(age_range=paste0(lower_age, "-", upper_age)) %>% 
+  mutate(age_range=as.factor(age_range)) %>% 
+  mutate(age_range=fct_reorder(age_range, lower_age))
+
+df %>% 
+  ggplot(aes(x=age_range, y=cfr)) +
+  geom_point() +
+  scale_y_continuous(labels=scales::percent_format(accuracy = 1)) +
+  xlab("Age range") +
+  ylab("CFR")
+```
+From this, we see the dramatic rise in the risk of death beginning at around the 50-59 age class.
+
+
+## Intermixing between age groups
+The aforementioned system of ODEs does not, currently, allow individuals from different age classes to mix with one another. However, in reality, a susceptible individual from a given age class can become infected from any age class: to capture this aspect of the model, infected individuals of any
 age are supposed to inter-mix, with the mixing rate dictated by a so-called "contact matrix", $C$.
 
-The elements of contact matrices, $C_{i,j}$ indicate the expected number of contacts an individual of age class $i$ experiences with age class $j$ per day. In this package, we include country-level estimates of contact matrices (Prem et al., 2017; for full details see data documentation). There are actually four types of contact matrix corresponding to daily numbers of contacts at home, work, school and all other settings. Here, we visualise these for India.
-```{r}
+The elements of contact matrices, $C_{i,j}$ indicate the expected number of contacts an individual of age class $i$ experiences with age class $j$ per day. In this package, we include country-level estimates of contact matrices (@prem2017projecting; for full details see data documentation). There are actually four types of contact matrix corresponding to daily numbers of contacts at home, work, school and all other settings. Here, we visualise these for India.
+
+```{r, include = FALSE}
 load(file = "../data/contact_home.rda")
 load(file = "../data/contact_work.rda")
 load(file = "../data/contact_school.rda")
 load(file = "../data/contact_other.rda")
 ```
 
-```{r, fig.width=10, fig.height=8}
+```{r, fig.width=8, fig.height=6}
 # reformat matrices for plotting
 ages <- seq(0, 80, 5)
 age_names <- vector(length = 16)
@@ -75,7 +120,7 @@ c_all <- c_home %>%
 c_all %>%
   ggplot(aes(x=age_infector, y=age_infectee, fill=value)) +
   xlab("age group of infector") + ylab("age group of infectee") +
-  theme(text = element_text(size=20),
+  theme(text = element_text(size=14),
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   geom_tile() +
   scale_fill_viridis_c() +
