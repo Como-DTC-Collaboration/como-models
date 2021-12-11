@@ -334,7 +334,7 @@ setMethod(
     changes <- out_temp %>% 
       dplyr::filter(.data$compartment %in% c("cc", "D")) %>% 
       dplyr::group_by(.data$compartment, .data$age_range) %>% 
-      dplyr::mutate(value = c(0, diff(.data$value))) %>% 
+      dplyr::mutate(value = c(NA, diff(.data$value))) %>% 
       dplyr::mutate(compartment = dplyr::if_else(.data$compartment == "cc", "Incidence",
                                                  "Deaths")) %>% 
       dplyr::ungroup() %>% 
@@ -347,4 +347,40 @@ setMethod(
       dplyr::ungroup()
     
     return(list("states" = states, "changes" = changes))
-  })
+})
+
+#' @describeIn SEIRDAge Calculates basic reproduction number for SEIRDAge model
+#'
+#' To calculate this parameter, we first calculate the next generation matrix
+#' G, where G_ij gives the expected number of secondary infections of type i
+#' caused by a single infectious individual of type j, assuming that all
+#' of type i are susceptible. In the SEIRDAge model, the number of contacts
+#' resulting in infection per unit time in age group i is beta N_i C_ij, where
+#' N_i corresponds to the proportion of the population in that age group and
+#' C_ij is the contact matrix element. The average duration of infection is
+#' 1 / (mu_j + gamma_j) for age group j. This means the average number of
+#' secondary infections of type i caused by an infectious individual of type j is 
+#' g_ij = beta N_i C_ij / (mu_i + gamma_i). R0 is then given by the dominant
+#' eigenvalue of the G matrix.
+#'
+#' @param model an SEIRDAge model
+#' @param population_fractions the fraction of the population in each age group
+#'
+#' @return an R0 value
+#' 
+#' @export
+setMethod("R0", "SEIRDAge", function(model, population_fractions) {
+  beta <- model@transmission_parameters$b
+  gamma <- model@transmission_parameters$g
+  mu <- model@transmission_parameters$mu
+  C <- model@contact_matrix
+  
+  # calculate next generation matrix
+  C_times_N <- sweep(C, 1, population_fractions, "*")
+  death_plus_recovery <- mu + gamma
+  G <- sweep(beta * C_times_N, 1, death_plus_recovery, "/")
+  
+  # return dominant eigenvalue of it
+  lambda_dominant <- eigen(G)$values[1]
+  Re(lambda_dominant)
+})

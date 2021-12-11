@@ -151,8 +151,8 @@ We now use this contact matrix to allow infections to pass between age groups. T
 
 Specifically, the term $S_i \Sigma_{j}C_{ij} I_j$ effectively indicates the expected number of contacts between susceptible individuals of age class $i$ with infected individuals across all classes.
 
-## Simulation examples 
-Now we create a model that includes this age-structured mixing. Since the contact matrices have 16 age classes, we instantiate a model with this number of classes. We use country-level demographics from the UN and, for this example, initialise the model with a uniform initial infected population of 1% across all age groups. The remaining 99% of the population starts as susceptible.
+## Simulating an epidemic characteristic of the first COVID-19 wave
+Now we create a model that includes this age-structured mixing. Since the contact matrices have 16 age classes, we instantiate a model with this number of classes. We use country-level demographics from the UN and, for this example, initialise the model with a uniform initial infected population of 0.1% across all age groups. The remaining 99.9% of the population starts as susceptible.
 ```{r}
 # load UN data (which is available in the repo)
 load(file = "../data/population.rda")
@@ -180,9 +180,9 @@ model <- comomodels::SEIRDAge(n_age_categories = n_ages,
                  age_ranges = as.list(age_names))
 
 # set initial conditions
-initial_conditions(model) <- list(S0=pop_fraction*0.99,
+initial_conditions(model) <- list(S0=pop_fraction*0.999,
                                   E0=rep(0, n_ages),
-                                  I0=pop_fraction*0.01,
+                                  I0=pop_fraction*0.001,
                                   R0=rep(0, n_ages),
                                   D0=rep(0, n_ages))
 ```
@@ -196,18 +196,50 @@ We assume the following parameterisation: $\eta = 1/{\text{av. time until noninf
 \mu &= \eta \text{CFR}.
 \end{align}
 
+For the transmission rate, we assume an arbitrary value $\beta=1$ which produces epidemic dynamics (that is, $R_0>1$). 
 ```{r}
-eta <- 1 / 2
 kappa <- 1 / 5.5
+eta <- 1 / 2
+beta <- 0.35
 
-transmission_parameters(model) <- list(b=1, k=kappa, g=, mu=0.01)
+# assume cfr constant within age ranges of contact matrix bands
+get_lower_age <- function(x) {
+  as.numeric(substr(x, 1, regexpr("-", x) - 1))
+}
+get_upper_age <- function(x) {
+  as.numeric(substr(x, regexpr("-", x) + 1, nchar(x)))
+}
+lower_age <- map_dbl(age_names, get_lower_age)
+upper_age <- map_dbl(age_names, get_upper_age)
+middle_age <- (lower_age + upper_age) / 2
+
+# assume CFR is constant within age hands
+cfr_vals <- vector(length = length(middle_age))
+cfr_getter <- function(age, df) {
+  for(j in 1:nrow(df)) {
+    if(age > df$lower_age[j] & age <= df$upper_age[j])
+      return(df$cfr[j])
+  }
+}
+cfr_vals <- map_dbl(middle_age, ~cfr_getter(., df))
+gamma_vals <- eta * (1 - cfr_vals)
+mu_vals <- eta * cfr_vals
+
+transmission_parameters(model) <- list(b=beta, k=kappa, g=gamma_vals, mu=mu_vals)
 ```
 
+```{r}
+death_plus_recovery <- mu_vals + gamma_vals
+c_times_s <- sweep(c_combined_wider, 1, pop_fraction, "*")
+G <- t(t(0.35 * c_times_s) / death_plus_recovery)
+eigen(G)$values[1]
+R0(model, pop_fraction)
+```
 
 
 We next simulate the model and visualise all the dynamics of each compartment.
 ```{r, fig.width=10, fig.height=5}
-res <- run(model, times=seq(0, 50, by = 0.1))
+res <- run(model, times=seq(0, 500, by = 0.1))
 states = res$states
 changes = res$changes
 states %>%
@@ -243,6 +275,18 @@ changes %>%
   theme(text = element_text(size = 20)) 
 ```
 
+But, due to the much higher rate of death in the older age groups, these experience a much higher rate of death.
+```{r, fig.width=8, fig.height=5}
+changes %>%
+  filter(compartment=="Deaths") %>% 
+  ggplot(aes(x=time, y=value, colour=age_range)) +
+  geom_line() +
+  facet_wrap(~compartment, scales="free") +
+  scale_colour_viridis_d() +
+  labs(x = "time (days)", y = "fraction of the population") +
+  theme(text = element_text(size = 20)) 
+```
+
 ## Sensitivity to initial conditions
 We now simulate the same model but with different distributions of initial infections to show the sensitivity of the model to initial conditions. First, we set all initial infections to 0.3% of the total population and place this uniformly across age groups between 15 and 30. Second, we place all infections (also 0.3% of the total population) uniformly across age groups 55-70. 
 ```{r}
@@ -252,8 +296,8 @@ model_1530 <- comomodels::SEIRDAge(n_age_categories = n_ages,
 model_5570 <- comomodels::SEIRDAge(n_age_categories = n_ages,
                  contact_matrix = c_combined_wider,
                  age_ranges = as.list(age_names))
-transmission_parameters(model_1530) <- list(b=1, k=0.5, g=0.5, mu=0.01)
-transmission_parameters(model_5570) <- list(b=1, k=0.5, g=0.5, mu=0.01)
+transmission_parameters(model_1530) <- list(b=beta, k=kappa, g=gamma_vals, mu=mu_vals)
+transmission_parameters(model_5570) <- list(b=beta, k=kappa, g=gamma_vals, mu=mu_vals)
 S0_1530 = pop_fraction
 S0_1530[4:6] = S0_1530[4:6] - 0.001
 I0_1530 = rep(0, n_ages)
@@ -275,10 +319,10 @@ initial_conditions(model_5570) <- list(S0=S0_5570,
 ```
 
 
-Now we simulate both models and plot the infections over time. We can see that for the model initialised with infections among 15-30 years olds, the peak of infections appears earlier and dies away quicker than the model initialised with infections in 55-70 year olds. Despite this difference, the magnitude of the infection peaks in both cases are comparable as well as the distribution of infections for each age group. 
+Now we simulate both models and plot the infections over time. For the model initialised with infections among 15-30 years olds, the peak of infections appears earlier and dies away quicker than the model initialised with infections in 55-70 year olds. Despite this difference, the magnitude of the infection peaks in both cases are comparable as well as the distribution of infections for each age group. 
 
 ```{r, fig.width=8, fig.height=5}
-res <- run(model_1530, time=seq(0, 50, by = 0.1))$states
+res <- run(model_1530, time=seq(0, 70, by = 0.1))$states
 res %>%
   filter(compartment=="I") %>% 
   ggplot(aes(x=time, y=value, colour=age_range))  +
@@ -287,7 +331,7 @@ res %>%
   scale_colour_viridis_d() +
   geom_line() +
   facet_wrap(~compartment)
-res <- run(model_5570, time=seq(0, 50, by = 0.1))$states
+res <- run(model_5570, time=seq(0, 70, by = 0.1))$states
 res %>%
   filter(compartment=="I") %>% 
   ggplot(aes(x=time, y=value, colour=age_range)) +
@@ -297,5 +341,8 @@ res %>%
   geom_line() +
   facet_wrap(~compartment)
 ```
+
+This example shows that the nature of the seeding population (i.e. the population initially infected)
+can significantly influence the resultant dynamics. Here, because the younger age groups have more daily contact with other individuals, an epidemic seeded with them goes through the population faster than one seeded more uniformly across older ages.
 
 ## References
