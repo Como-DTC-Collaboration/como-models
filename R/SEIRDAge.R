@@ -334,7 +334,7 @@ setMethod(
     changes <- out_temp %>% 
       dplyr::filter(.data$compartment %in% c("cc", "D")) %>% 
       dplyr::group_by(.data$compartment, .data$age_range) %>% 
-      dplyr::mutate(value = c(NA, diff(.data$value))) %>% 
+      dplyr::mutate(value = c(0, diff(.data$value))) %>% 
       dplyr::mutate(compartment = dplyr::if_else(.data$compartment == "cc", "Incidence",
                                                  "Deaths")) %>% 
       dplyr::ungroup() %>% 
