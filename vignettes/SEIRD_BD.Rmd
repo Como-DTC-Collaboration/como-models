@@ -21,3 +21,55 @@ library(tidyverse)
 
 ## Introduction
 Over longer timescales, natural births and deaths can affect the ability of an infectious disease to invade a population. If there is no maternal immunity inherited by newborns, we may assume they are susceptible to infection. This replenishment of the susceptible population can, over long periods, allow an infectious disease to re-invade a population, and an epidemic wave may reoccur. In this notebook, we investigate this phenomenon.
+
+Here, we use the basic SEIRD model equations, but extend these to include natural birth and death terms.
+
+$$\frac{\text{d}S}{\text{d}t} = \lambda -\beta S I - \nu S,$$
+$$\frac{\text{d}E}{\text{d}t} = \beta S I - (\kappa + \nu) E,$$
+$$\frac{\text{d}I}{\text{d}t} = \kappa E - (\gamma + \mu + \nu) I,$$
+$$\frac{\text{d}R}{\text{d}t} = \gamma I + \nu R,$$
+$$\frac{\text{d}D}{\text{d}t} = \mu I + \nu (S + E + I + R).$$
+Here, $\lambda\geq 0$ represents the rate of birth into the population. Note, this term will cause the population size to increase over time. $\nu > 0$ represents the rate of death due to causes unrelated to COVID-19.
+
+The system is closed by specifying the initial conditions
+$$S(0) = S_0,\ E(0) = E_0,\ I(0) = I_0,\ R(0) = r_0,\ D(0) = D_0.$$
+Note, we have used $r_0$ here to avoid ambiguity with the basic reproduction number.
+
+## Basic reproduction number
+The basic reproduction number, $R_0$, is obtained in similar fashion to that of the basic SEIRD model. A slight difference here is that exposed individuals can die before they pass on infection. So, $R_0$ for the SEIRD_BD model is given by:
+
+\begin{align}
+\begin{split}
+R_0 = &\text{ # infected per unit time by an infectious indiv. } \times\\
+&\text{ prob. of surviving latency period } \times\\
+&\text{ av. duration of infectiousness},
+\end{split}
+\end{align}
+
+where we have assumed the entire population are susceptible, in line with the definition of the basic reproduction number [insert citation for diekerman].
+
+which is given by:
+
+\begin{equation}
+R_0 = \beta \times \frac{\kappa}{\kappa + \nu} \times \frac{1}{\gamma + \mu + \nu}.
+\end{equation}
+
+Where we note that, if $\nu=0$, the basic reproduction reduces to that for the basic SEIRD model without vital dynamics: $R_0 = \beta / (\gamma + \mu)$. Indeed, consider COVID-19 transmission, the rate of becoming infectious and death rate due to disease are each much greater than the rate of natural death, so the two reproduction numbers will be approximately equal.
+
+## Multiple epidemic waves
+Let's create an SEIRD_BD model.
+```{r}
+model <- SEIRD_BD()
+```
+
+And we are going to start with 0.01\% infectious individuals and everyone else is susceptible.
+```{r}
+initial_conditions(model) <- list(S0=0.999, E0=0, I0=0.001, R0=0)
+```
+
+We assume that the rate of 
+```{r}
+
+```
+
+Plot time-varying reproduction number.
