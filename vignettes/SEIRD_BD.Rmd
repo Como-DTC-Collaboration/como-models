@@ -67,7 +67,7 @@ And we are going to start with 0.01\% infectious individuals and everyone else i
 initial_conditions(model) <- list(S0=0.999, E0=0, I0=0.001, R0=0)
 ```
 
-We assume that the rate of 
+We next give it transmission parameters. Here, we assume an average latency period of 5.5 days (as has been estimated for COVID-19; @xin2021estimating), and an average duration of infectiousness of 2 days (which indicates that, after 10 days, <1\% would be infectious, which is in line with UK policy which assumes individuals cannot pass on infection after 10 days; @stayathome2021). 
 ```{r}
 
 ```
