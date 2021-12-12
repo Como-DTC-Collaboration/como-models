@@ -33,17 +33,24 @@ By assuming that individuals belong only to one of these states, the model effec
 
 In compartmental models, individuals can move between these states following one of a predefined set of paths. In the SEIRD model, susceptible individuals can become infected with the virus after exposure to it from an infectious individual. In doing so, they can move from the susceptible compartment to the exposed, as is illustrated in the left-hand nodes of the below graph as indicated by the $S\rightarrow E$ transition.
 ```{r, echo=FALSE, warning=FALSE, out.width = "400px"}
-library(DiagrammeR)
-grViz("
-digraph PrimC{
-  graph [rankdir = 'LR']
-  node [shape = circle]
-  S E I R D
-  S -> E [label = '&#946; * S * I']
-  E -> I [label = 'kappa * E']
-  I -> R [label = 'gamma * I']
-  I -> D [label = 'mu * I']
-  }")
+# library(DiagrammeR)
+# library(DiagrammeRsvg)
+# library(webshot)
+# library(rsvg)
+# g <- grViz("
+# digraph PrimC{
+#   graph [rankdir = 'LR']
+#   node [shape = circle]
+#   S E I R D
+#   S -> E [label = '&#946; * S * I']
+#   E -> I [label = 'kappa * E']
+#   I -> R [label = 'gamma * I']
+#   I -> D [label = 'mu * I']
+#   }")
+# tmp = DiagrammeRsvg::export_svg(g)
+# tmp = charToRaw(tmp)
+# rsvg::rsvg_png(tmp, "images/seird.png", width = 1000)
+knitr::include_graphics("images/seird.png")
 ```
 
 Exposed ($E$) individuals then become infectious ($I$) over time as they transition out of the latency period. For infectious individuals, there are two potential transitions: either an individual recovers and they enter the recovered state ($R$) where they remain forever; or they die, entering the dead state ($D$).
