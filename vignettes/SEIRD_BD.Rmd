@@ -29,11 +29,25 @@ $$\frac{\text{d}E}{\text{d}t} = \beta S I - (\kappa + \nu) E,$$
 $$\frac{\text{d}I}{\text{d}t} = \kappa E - (\gamma + \mu + \nu) I,$$
 $$\frac{\text{d}R}{\text{d}t} = \gamma I + \nu R,$$
 $$\frac{\text{d}D}{\text{d}t} = \mu I + \nu (S + E + I + R).$$
-Here, $\lambda\geq 0$ represents the rate of birth into the population. Note, this term will cause the population size to increase over time. $\nu > 0$ represents the rate of death due to causes unrelated to COVID-19.
+
+Here, $\lambda\geq 0$ represents the rate of birth into the population. The effect of this term is to increase the population size over time. $\nu > 0$ represents the rate of death due to causes unrelated to COVID-19.
 
 The system is closed by specifying the initial conditions
 $$S(0) = S_0,\ E(0) = E_0,\ I(0) = I_0,\ R(0) = r_0,\ D(0) = D_0.$$
+
 Note, we have used $r_0$ here to avoid ambiguity with the basic reproduction number.
+
+If we ignore death due to COVID-19 infection (i.e. set $\mu=0$), the evolution of the population size, $N(t)=S(t)+E(t)+I(t)+R(t)$ is given by:
+
+\begin{equation}
+\frac{\text{d}N}{\text{d}t} = \lambda - \nu N.
+\end{equation}
+
+which has a steady state: $N* = \lambda / \nu$. Assuming the initial population size, $N(0)$, is below this, it grows at an ever-declining rate towards this steady state:
+
+\begin{equation}
+N(t) = N* - (N* - N(0)) \exp(-\nu t).
+\end{equation}
 
 ## Basic reproduction number
 The basic reproduction number, $R_0$, is obtained in similar fashion to that of the basic SEIRD model. A slight difference here is that exposed individuals can die before they pass on infection. So, $R_0$ for the SEIRD_BD model is given by:
@@ -78,7 +92,7 @@ cfr <- 0.0138
 gamma <- eta * (1 - cfr)
 mu <- eta * cfr
 nu <- 1 / (365.25 * 3)
-lambda <- 34
+lambda <- 0.01
 
 transmission_parameters(model) <- list(
   beta=1,
@@ -88,6 +102,28 @@ transmission_parameters(model) <- list(
   lambda=lambda,
   nu=nu)
 ```
+
+We now run the model using these parameters.
+```{r}
+results <- run(model, times = seq(0, 1000, 1))
+
+states <- results$states
+pop_size <- states %>% 
+  group_by(time) %>% 
+  summarise(total_pop=sum(value))
+states <- states %>%
+  left_join(pop_size) %>% 
+  mutate(value=value / total_pop)
+  
+states %>% 
+  filter(compartment=="D") %>% 
+  ggplot(aes(x = time, y = value)) +
+  geom_line(aes(color = compartment)) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(x = "time (days)", y = "fraction of the population") +
+  theme(text = element_text(size = 14)) 
+```
+
 
 Plot time-varying reproduction number.
 
