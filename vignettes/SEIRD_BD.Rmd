@@ -67,9 +67,28 @@ And we are going to start with 0.01\% infectious individuals and everyone else i
 initial_conditions(model) <- list(S0=0.999, E0=0, I0=0.001, R0=0)
 ```
 
-We next give it transmission parameters. Here, we assume an average latency period of 5.5 days (as has been estimated for COVID-19; @xin2021estimating), and an average duration of infectiousness of 2 days (which indicates that, after 10 days, <1\% would be infectious, which is in line with UK policy which assumes individuals cannot pass on infection after 10 days; @stayathome2021). 
-```{r}
+We next give it transmission parameters. Here, we assume an average latency period of 5.5 days (as has been estimated for COVID-19; @xin2021estimating), and an average duration of infectiousness of 2 days (which indicates that, after 10 days, <1\% would be infectious, which is in line with UK policy which assumes individuals cannot pass on infection after 10 days; @stayathome2021).
 
+Here, we assume a case fatality ratio of 1.38\% [verity citation].
+
+```{r}
+kappa <- 1 / 5.5
+eta <- 1 / 2
+cfr <- 0.0138
+gamma <- eta * (1 - cfr)
+mu <- eta * cfr
+nu <- 1 / (365.25 * 3)
+lambda <- 34
+
+transmission_parameters(model) <- list(
+  beta=1,
+  kappa=kappa,
+  gamma=gamma,
+  mu=mu,
+  lambda=lambda,
+  nu=nu)
 ```
 
 Plot time-varying reproduction number.
+
+https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/lifeexpectancies/bulletins/nationallifetablesunitedkingdom/2018to2020
