@@ -196,7 +196,7 @@ setMethod(
                     gamma = transmission_parameters(object)$gamma,
                     mu = transmission_parameters(object)$mu,
                     lambda = transmission_parameters(object)$lambda,
-                    nu = transmission_parameters(object)$lambda)
+                    nu = transmission_parameters(object)$nu)
     # function for RHS of ode system
     right_hand_side <- function(t, state, parameters) {
       with(

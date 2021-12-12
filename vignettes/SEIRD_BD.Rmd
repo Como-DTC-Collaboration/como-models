@@ -91,7 +91,7 @@ eta <- 1 / 2
 cfr <- 0.0138
 gamma <- eta * (1 - cfr)
 mu <- eta * cfr
-nu <- 1 / (365.25 * 3)
+nu <- 0.001
 lambda <- 0.01
 
 transmission_parameters(model) <- list(
@@ -105,10 +105,11 @@ transmission_parameters(model) <- list(
 
 We now run the model using these parameters.
 ```{r}
-results <- run(model, times = seq(0, 1000, 1))
+results <- run(model, times = seq(0, 2000, 1))
 
 states <- results$states
 pop_size <- states %>% 
+  filter(compartment != "D") %>% 
   group_by(time) %>% 
   summarise(total_pop=sum(value))
 states <- states %>%
@@ -116,7 +117,7 @@ states <- states %>%
   mutate(value=value / total_pop)
   
 states %>% 
-  filter(compartment=="D") %>% 
+  filter(compartment == "I") %>% 
   ggplot(aes(x = time, y = value)) +
   geom_line(aes(color = compartment)) +
   scale_color_brewer(palette = "Dark2") +
