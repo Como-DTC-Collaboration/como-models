@@ -39,6 +39,7 @@ Collate:
     'SEIRDAge.R'
     'SEIRDV.R'
     'SEIRDVAge.R'
+    'SEIRD_BD.R'
     'SEIRD_RU.R'
     'SEIaImIsRD.R'
     'data.R'

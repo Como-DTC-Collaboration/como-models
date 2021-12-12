@@ -1,0 +1,23 @@
+---
+title: "SEIRD_BD: a compartmental model including natural births and deaths"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{SEIRD_BD}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup, include=FALSE}
+library(comomodels)
+library(tidyverse)
+```
+
+## Introduction
+Over longer timescales, natural births and deaths can affect the ability of an infectious disease to invade a population. If there is no maternal immunity inherited by newborns, we may assume they are susceptible to infection. This replenishment of the susceptible population can, over long periods, allow an infectious disease to re-invade a population, and an epidemic wave may reoccur. In this notebook, we investigate this phenomenon.

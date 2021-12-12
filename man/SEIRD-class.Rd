@@ -52,7 +52,7 @@ time series of incidences and deaths population fraction.
 an R0 value
 }
 \description{
-This class represents the SEIR model, showing how populations of susceptible,
+This class represents the SEIRD model, showing how populations of susceptible,
 exposed, infectious and recovered individuals evolve over time.
 }
 \section{Methods (by generic)}{
@@ -68,7 +68,7 @@ All initial conditions must sum up to 1.
 If the initial conditions provided to do not sum to 1, an error is thrown.
 
 \item \code{transmission_parameters<-}: Set transmission parameters (beta, kappa, gamma and mu)
-of the SEIR model.
+of the SEIRD model.
 
 If the transmission parameters provided to are not 1-dimensional an error is
 thrown.

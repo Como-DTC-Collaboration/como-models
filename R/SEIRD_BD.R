@@ -21,7 +21,8 @@ NULL
 #' @import glue
 #' @import reshape2
 #'
-#' @export SEIRD
+#' @export SEIRD_BD
+#' 
 SEIRD_BD <- setClass("SEIRD_BD",
          # slots
          slots = c(
@@ -42,40 +43,41 @@ SEIRD_BD <- setClass("SEIRD_BD",
          )
 )
 
+# Setter and getter methods for initial_conditions
 
-#' @describeIn SEIRD_BU Retrieves initial conditions of SEIRD_BU model.
+#' @describeIn SEIRD_BD Retrieves initial conditions of SEIRD_BD model.
 #'
-#' @param object An object of the class SEIRD_BU.
+#' @param object An object of the class SEIRD_BD.
 #' 
 #' @export
-setMethod("initial_conditions", "SEIRD_BU",
+setMethod("initial_conditions", "SEIRD_BD",
           function(object) object@initial_conditions)
 
 
-#' @describeIn SEIRD_BU Retrieves transmission parameters of SEIR model.
+#' @describeIn SEIRD_BD Retrieves transmission parameters of SEIRD_BD model.
 #'
-#' @param object An object of the class SEIRD_BU.
+#' @param object An object of the class SEIRD_BD.
 #' 
 #' @export
-setMethod("transmission_parameters", "SEIRD_BU",
+setMethod("transmission_parameters", "SEIRD_BD",
           function(object) object@transmission_parameters)
 
-# SEIRD_BU class specific functions
+# SEIRD_BD class specific functions
 
-#' @describeIn SEIRD_BU Setter method for initial conditions (S0, E0, I0 and R0)
-#' of the SEIR model.
+#' @describeIn SEIRD_BD Setter method for initial conditions (S0, E0, I0 and R0)
+#' of the SEIRD_BD model.
 #'
 #' All initial conditions must sum up to 1.
 #' If the initial conditions provided to do not sum to 1, an error is thrown.
 #'
-#' @param object an object of the class SEIRD_BU
+#' @param object an object of the class SEIRD_BD
 #' @param value (list) list of initial conditions S0, E0, I0, R0.
 #'
-#' @return object of class SEIRD_BU with initial conditions assigned.
+#' @return object of class SEIRD_BD with initial conditions assigned.
 #' 
 #' @export
 setMethod(
-  "initial_conditions<-", "SEIRD_BU",
+  "initial_conditions<-", "SEIRD_BD",
   function(object, value) {
 
     if (mean(names(value) %in% object@initial_condition_names) != 1)
@@ -102,21 +104,21 @@ setMethod(
   })
 
 
-#' @describeIn SEIRD_BU Set transmission parameters (beta, kappa, gamma, mu, lambda, nu)
-#' of the SEIRD_BU model.
+#' @describeIn SEIRD_BD Set transmission parameters (beta, kappa, gamma, mu, lambda, nu)
+#' of the SEIRD_BD model.
 #'
 #' If the transmission parameters provided to are not 1-dimensional an error is
 #' thrown.
 #'
-#' @param object (SEIRD_BU model)
+#' @param object (SEIRD_BD model)
 #' @param value (list) list of values for beta, kappa, gamma, mu, lambda, nu
 #'
-#' @return object of class SEIRD_BU with transmission parameter values
+#' @return object of class SEIRD_BD with transmission parameter values
 #' assigned.
 #' 
 #' @export
 setMethod(
-  "transmission_parameters<-", "SEIRD_BU",
+  "transmission_parameters<-", "SEIRD_BD",
   function(object, value) {
 
     # create list of parameter values
@@ -143,7 +145,7 @@ setMethod(
   })
 
 
-#' @describeIn SEIRD_BU Solves ODEs of the SEIRD_BU specified in object
+#' @describeIn SEIRD_BD Solves ODEs of the SEIRD_BD specified in object
 #' for the time points specified in times and integration method specified in
 #' solve_method.
 #'
@@ -156,7 +158,7 @@ setMethod(
 #'
 #' This function relies on the package deSolve.
 #'
-#' @param object an object of the class SEIRD_BU
+#' @param object an object of the class SEIRD_BD
 #' @param times (double) a sequence of time points at which the solution to
 #' the system of ODEs should be returned. Must be of the form
 #' seq(t_start, t_end, by=t_step). Default time series is seq(0, 100, by = 1).
@@ -170,7 +172,7 @@ setMethod(
 #' 
 #' @export
 setMethod(
-  "run", "SEIRD_BU",
+  "run", "SEIRD_BD",
   function(object, times, solve_method = "lsoda") {
     if (!is.double(times)) {
       stop("Evaluation times of the model storage format must be a vector.")
@@ -248,17 +250,17 @@ setMethod(
     list("states" = states, "changes" = changes)
   })
 
-#' @describeIn SEIRD_BU Calculates basic reproduction number for SEIRD_BU model
+#' @describeIn SEIRD_BD Calculates basic reproduction number for SEIRD_BD model
 #'
 #' The R0 parameter is given by:
 #' \deqn{R_0 = \beta \kappa / (\kappa + \nu) * 1/(\gamma + \mu + \nu)}
 #'
-#' @param model an SEIRD_BU model
+#' @param model an SEIRD_BD model
 #'
 #' @return an R0 value
 #' 
 #' @export
-setMethod("R0", "SEIRD_BU", function(model) {
+setMethod("R0", "SEIRD_BD", function(model) {
   beta <- model@transmission_parameters$beta
   gamma <- model@transmission_parameters$gamma
   mu <- model@transmission_parameters$mu
