@@ -18,43 +18,28 @@ knitr::opts_chunk$set(
 <!-- badges: start -->
 <!-- badges: end -->
 
-The goal of comomodels is to ...
+The goal of `comomodels` is to provide pedagogical material for the understanding of transmission dynamics modelling based on compartmental models. The Susceptible-Exposed-Infectious-Recovered-Dead (SEIRD) model is the basis of all the models included in the package. The SEIRD model is extended to model different age groups, varying infectiousness, vaccination, meta-populations and others. The schematic figure below shows the various models in the `comomodels` package. 
+
+
+The list of available models are:
+1. SEIRD model.
+2. SEIaImIsRD model - SEIRD model with varying infectiousness, i.e. asymptomatic, mildly symptomatic and severely symptomatic.
+3. SEIRDV model - SEIRD model with vaccination.
+4. SEIRD_RU model - SEIRD model with two meta-populations, i.e. rural and urban population.
+5. SEIRDAge model - SEIRD model with different age groups.
+6. SEIRDVAge model - SEIRD model with vaccination and different age groups.
+7. SEIRDNPIAge model - SEIRD model with non-pharmaceutical intervention, e.g. isolation.
 
 ## Installation
 
-You can install the released version of comomodels from [CRAN](https://CRAN.R-project.org) with:
-
-``` r
-install.packages("comomodels")
-```
-
-And the development version from [GitHub](https://github.com/) with:
+You can install the development version of comomodels from [GitHub](https://github.com/) with:
 
 ``` r
 # install.packages("devtools")
 devtools::install_github("Como-DTC-Collaboration/como-models")
 ```
+
 ## Example
 
-This is a basic example which shows you how to solve a common problem:
+There are a series of vignettes, available here: X, which are tutorials for each models. 
 
-```{r example}
-library(comomodels)
-## basic example code
-```
-
-What is special about using `README.Rmd` instead of just `README.md`? You can include R chunks like so:
-
-```{r cars}
-summary(cars)
-```
-
-You'll still need to render `README.Rmd` regularly, to keep `README.md` up-to-date. `devtools::build_readme()` is handy for this. You could also use GitHub Actions to re-render `README.Rmd` every time you push. An example workflow can be found here: <https://github.com/r-lib/actions/tree/master/examples>.
-
-You can also embed plots, for example:
-
-```{r pressure, echo = FALSE}
-plot(pressure)
-```
-
-In that case, don't forget to commit and push the resulting figure files, so they display on GitHub and CRAN.
