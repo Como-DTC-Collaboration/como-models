@@ -25,7 +25,6 @@ D <- 0
 # params
 beta <- list(asymptomatic = 0.80, mild = 0.90, severe = 1.00)
 kappa <- 0.50
-omega <- 0.01
 p_symptom <- list(mild = 0.35, severe = 0.05)
 gamma <- list(asymptomatic = 0.9, mild = 0.50, severe = 0.05)
 mu <- list(asymptomatic = 0.005, mild = 0.05, severe = 0.30)
@@ -37,7 +36,7 @@ test_that("SEIaImIsRD validate", {
   # 1. create the instance in class SEIaImIsRD
   model <- SEIaImIsRD()
   # 2. set up parameters and initial population
-  transmission_parameters(model) <- list(beta = beta, kappa = kappa, omega = omega, p_symptom = p_symptom, gamma = gamma, mu = mu)
+  transmission_parameters(model) <- list(beta = beta, kappa = kappa, p_symptom = p_symptom, gamma = gamma, mu = mu)
   initial_conditions(model) <- list(S = S, E = E, I_asymptomatic = I_asymptomatic, I_mild = I_mild, I_severe = I_severe, R = R, D = D)
   # 3. ode simulation and plot
   model.output <- run(model, t)
@@ -77,8 +76,8 @@ test_that("model error input", {
     # missing population group (S)
     initial_conditions(model) <- list(E = E, I_asymptomatic = I_asymptomatic, I_mild = I_mild, I_severe = I_severe, R = R, D = D)
     # missing parameter (beta)
-    transmission_parameters(model) <- list(kappa = kappa, omega = omega, p_symptom = p_symptom, gamma = gamma, mu = mu)
+    transmission_parameters(model) <- list(kappa = kappa, p_symptom = p_symptom, gamma = gamma, mu = mu)
     # p_symptom sum greater than 1
-    transmission_parameters(model) <- list(kappa = kappa, omega = omega, p_symptom = list(mild=0.7, severe=0.8), gamma = gamma, mu = mu)
+    transmission_parameters(model) <- list(kappa = kappa, p_symptom = list(mild=0.7, severe=0.8), gamma = gamma, mu = mu)
     })
 })
