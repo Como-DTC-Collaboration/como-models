@@ -14,11 +14,12 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+options(scipen=999)
 ```
 
 ```{r setup, include = FALSE}
 library(comomodels)
-library(ggplot2)
+library(tidyverse)
 ```
 
 ## Introduction
@@ -123,26 +124,40 @@ initial_conditions(model) <- list(S = S, E = E, I_asymptomatic = I_asymptomatic,
                                   I_mild = I_mild, I_severe = I_severe, R = R, D = D)
 ```
 
-We then set the parameter values. As with the other models, we set these parameters based on the COVID-19 pandemic. For a detailed derivation of the parameter values, see the `SEIRD_age` model vignette. We assume here that only individuals with severe symptoms die of the disease, i.e. $\mu_a = \mu_m = 0$. We also assume that asymptomatic and mildly symptomatic individuals recover at approximately the same rate, but severely symptomatic individuals recover slower. Approximately 35% of infected individuals will never develop symptoms, and thus belong to the asymptomatic group [@Sahe21]. The hospitalisation rate has varied significantly over the course of the COVID-19 pandemic but remains on the order of 10 per 100,000 confirmed infection which gives an indication of the fraction of infections that result in severe symptoms [@HospRates]. The fraction of infections with mild infections is then the vast majority: $1 - 0.35 - 0.0001 = 0.6499$. We assume that all infectious individuals are equally infectious. Below, we investigate what happens when we do not make this assumption.
+We then set the parameter values. As with the other models, we set these parameters based on the COVID-19 pandemic. For a detailed derivation of the parameter values, see the `SEIRDAge` model vignette. We assume here that only individuals with severe symptoms die of the disease, i.e. $\mu_a = \mu_m = 0$. We also assume that asymptomatic and mildly symptomatic individuals recover at approximately the same rate, but severely symptomatic individuals recover at half the rate. Approximately 35% of infected individuals will never develop symptoms, and thus belong to the asymptomatic group [@Sahe21]. For the delta variant of the virus, it has been estimated that the hospitalisation rate is around 2\% [@twohig2021hospital]. The hospitalisation fatality rate is assumed to be 27\% [@gray2021variability]. We first assume that all infectious individuals are equally infectious, and we set $\beta$ so that $R_0=2.4$ -- the same as the baseline reproduction number in report 9 [@ferguson2020report].
 ```{r}
-beta_overall <- 1.21
-beta <- list(asymptomatic = beta_overall, mild = beta_overall, severe = beta_overall)
-kappa <- 1 / 5.5
-zeta <- 1 / 2
-eta_symptom <- list(mild = 0.6499, severe=0.0001)
-gamma <- list(asymptomatic = zeta, mild = zeta,
-              severe = zeta * 0.5)
-mu <- list(asymptomatic = 0, mild = 0, severe = 0.01)
+beta_overall <- 1.20
+beta <- list(asymptomatic = beta_overall,
+             mild = beta_overall,
+             severe = beta_overall)
+p_severe <- 0.02
+p_asymp <- 0.35
+p_mild <- 1 - p_severe - p_asymp
+eta_symptom <- list(mild = p_mild, severe=p_severe)
 
-transmission_parameters(model) <- list(beta = beta, kappa = kappa,
-                                       p_symptom = eta_symptom, gamma = gamma, mu = mu)
-R0(model)
+zeta <- 1 / 2
+hfr <- 0.27
+severe_vs_mild_rate <- 0.5
+gamma <- list(
+  asymptomatic = zeta,
+  mild = zeta,
+  severe = zeta * severe_vs_mild_rate * (1 - hfr))
+
+mu <- list(asymptomatic = 0,
+           mild = 0,
+           severe = zeta * severe_vs_mild_rate * hfr)
+
+kappa <- 1 / 5.5
+transmission_parameters(model) <- list(
+  beta = beta, kappa = kappa, p_symptom = eta_symptom,
+  gamma = gamma, mu = mu)
+
+print(paste0("R0 = ", round(R0(model), 1)))
 ```
 
 To check that the parameters have been set correctly, we call
 ```{r}
 transmission_parameters(model)
-
 ```
 
 Lastly, we set time span and time step for the simulation outputs. Here we choose to output results at a daily resolution. Note that the numerical solvers used to integrate the ODEs (by default, the LSODA method) typically compute the variables at many more time points for numerical accuracy. The results are returned only for the specified time points.
@@ -150,40 +165,45 @@ Lastly, we set time span and time step for the simulation outputs. Here we choos
 t <- seq(0, 250, by = 1)
 ```
 
-We can now simulate the model with the function `run()` and compute $R_0$ for the specified parameter values with the function `R0`. We plot the evolution of $S$, $E$, $I_a$, $I_m$, $I_s$, $R$, and $D$ over time. We also plot the number of cases per day, and the number of deaths per day.
+We can now simulate the model. We plot the evolution of $S$, $E$, $I_a$, $I_m$, $I_s$, $R$, and $D$ over time.
 ```{r,  fig.align = "center", fig.show="hold",fig.height = 5, fig.width = 7}
 par(mfrow=c(1,2))
 # run the model
 output <- run(model, t)
-# compute R0
-R0 <- R0(model)
-print(paste0("model: R0=", R0))
 
-output_incidences <- output$changes[output$changes$compartment == "Incidence",]
-output_deaths <- output$changes[output$changes$compartment == "Deaths",]
-
-# plot groups of individuals over time
-ggplot(output$states, aes_string(x = "time", y = "value")) +
+# plot states over time
+states <- output$states
+ggplot(states, aes_string(x = "time", y = "value")) +
   geom_line(aes_string(colour = "compartment")) +
       scale_color_brewer(palette = "Dark2") + 
     theme(legend.position = "bottom", legend.title = element_blank()) +
     labs(x = "time (days)", y = "fraction of the population")
+```
 
-# plot number of cases over time
-ggplot(output_incidences, aes_string(x = "time", y = "value")) + 
-  geom_bar( stat="identity", position=position_dodge()) +
-      scale_fill_brewer(palette = "Dark2") + 
-    labs(x = "time (days)", y = "fraction of the population per day") +
-  ggtitle('Cases each day')
+We then focus on in on the infectious groups and see, as expected, that the bulk of infections are in the asymptomatic and mild groups.
+```{r, fig.align = "center", fig.show="hold",fig.height = 5, fig.width = 7}
+states %>% 
+  filter(str_detect(compartment, "I_")) %>%
+  ggplot(aes_string(x = "time", y = "value")) +
+  geom_line(aes_string(colour = "compartment")) +
+      scale_color_brewer(palette = "Dark2") + 
+    theme(legend.position = "bottom", legend.title = element_blank()) +
+    labs(x = "time (days)", y = "fraction of the population")
+```
+We now assume a population size in the UK of 67.5m [@ukpopulation2021] and plot the projected number of daily deaths using this model.
+```{r, fig.align = "center", fig.show="hold",fig.height = 5, fig.width = 7}
+pop_size <- 67.5e6
+output_deaths <- output$changes %>% 
+  filter(compartment=="Deaths") %>% 
+  mutate(value=pop_size * value)
 
 # plot number of deaths over time
 ggplot(output_deaths, aes_string(x = "time", y = "value")) + 
   geom_bar( stat="identity", position=position_dodge()) +
       scale_fill_brewer(palette = "Dark2") + 
-    labs(x = "time (days)", y = "fraction of the population per day") +
-  ggtitle('Deaths each day')
-
+    labs(x = "time (days)", y = "deaths per day")
 ```
+The maximum number of daily deaths predicted by this model is approximately `r round(max(output_deaths$value), 0)`, and overall, the number of deaths for such an unmitigated epidemic is predicted to be `r round(sum(output_deaths$value), 0)`-- a value comparable to the figure of 510,000 deaths predicted in report 9 [@ferguson2020report].
 
 #### Varying the value of $\beta$ 
 We consider what happens to the model dynamics if we change the infection rate. For example, what if asymptomatic individuals are significantly less infectious than mildly or severely symptomatic ones? We investigate this by lowering $\beta_a$ from 0.707 to 0.5 so that it is now half the infection rate of infectious individuals with severe symptoms.
