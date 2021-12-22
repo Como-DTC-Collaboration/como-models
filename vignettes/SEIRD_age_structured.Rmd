@@ -192,9 +192,11 @@ We next give it transmission parameters. Here, we assume an average latency peri
 We assume the following parameterisation: $\eta = 1/{\text{av. time until noninfectious}}=1/2$
 
 \begin{align}
-\gamma &= \eta (1-\text{CFR})\\
-\mu &= \eta \text{CFR}.
+\gamma_i &= \eta (1-\text{CFR}_i)\\
+\mu_i &= \eta \text{CFR}_i.
 \end{align}
+
+Indeed, this parameterisation is possible because we allow an age-dependent recovery rate, $\gamma_i$.
 
 The last parameter we need to set is the transmission rate, $\beta$, which we cover in the next section.
 
@@ -205,9 +207,40 @@ But how do we calculate $R_0$ for an age-structured model? We can reason in simi
 
 $$g_{ij} = \frac{\beta N_i C_{ij}}{(\mu_j + \gamma_j)}.$$
 The next generation matrix, $G$, is then effectively the matrix containing all the $g_{ij}$ elements [@jones2007notes]^[Technically, the matrix $G$ is only a subcomponent of this larger matrix, since we have not considered the exposed compartment in this derivation. But this submatrix has the same dominant eigenvalue as the overall matrix. For an interested reader, we now follow the methodology exposed in [@diekmann2010construction] to derive the next generation matrix for an age-structured model with two age groups. We consider only the infected compartments, $E$ and $I$, meaning we have four categories in total: $E_1$, $E_2$, $I_1$ and $I_2$ where the subscript indicates age grouping. We define a matrix $T$ whose elements $T_{ij}$ indicate the number of new infections produced per unit time into category $i$ given a single individual in category $j$. This matrix is then:
-
-]
-The individual elements of it dictate whether, from a disease-free equilibrium, there will be growth in the number of infections of type $i$, if $g_{ij}>1$. But, how do we know whether, on aggregate, there will be a growth in infections? To obtain this, we take the dominant eigenvalue of the matrix $G$ (@jones2007notes).
+$$
+T = \left(\begin{array}{cc} 
+0 & 0 & \beta N_1 C_{11} & \beta N_1 C_{12}\\
+0 & 0 & \beta N_2 C_{21} & \beta N_2 C_{22}\\
+0 & 0 & 0 & 0\\
+0 & 0 & 0 & 0
+\end{array}\right),
+$$
+where, for instance, $\beta N_1 C_{11}$ is the rate new infections are generated in the $E_1$ compartment (the row) due to a single individual in the $I_1$ compartment (the column). The bottom two rows are all zero because, in this system, no new infections are generated that immediately fall into the $I_i$ compartments. The first two columns are zero because the $E_i$ compartments do not themselves generated infections. Next, we construct the matrix $\Sigma$ whose elements, $\Sigma_{ij}$ indicate the rate of transition from compartment $j$ to $i$:
+$$
+\Sigma = \left(\begin{array}{cc} 
+-\kappa & 0 & 0 & 0\\
+0 & -\kappa & 0 & 0\\
+\kappa & 0 & -(\mu_1+\gamma_1) & 0\\
+0 & \kappa & 0 & -(\mu_2+\gamma_2)
+\end{array}\right),
+$$
+where, for instance, $\kappa$ indicates the rate at which either $E_1\rightarrow I_1$ or $E_2\rightarrow I_2$. The next generation matrix is then given by the product $-T\Sigma^{-1}$, which in this case evaluates to:
+$$
+K = \left(\begin{array}{cc} 
+ \beta C_{11}N_1 /(\mu_1+\gamma_1)  & \beta C_{12}N_1 /(\mu_2+\gamma_2) & \beta C_{11}N_1 /(\mu_1+\gamma_1)  & \beta C_{12}N_1 /(\mu_2+\gamma_2)\\
+\beta C_{21}N_2 /(\mu_1+\gamma_1)  & \beta C_{22}N_2 /(\mu_2+\gamma_2) & \beta C_{21}N_2 /(\mu_1+\gamma_1)  & \beta C_{22}N_2 /(\mu_2+\gamma_2)\\
+0 & 0 & 0 & 0\\
+0 & 0 & 0 & 0
+\end{array}\right),
+$$
+whose dominant eigenvalue is the same as that of the submatrix:
+$$
+G = \left(\begin{array}{cc} 
+ \beta C_{11}N_1 /(\mu_1+\gamma_1)  & \beta C_{12}N_1 /(\mu_2+\gamma_2)\\
+\beta C_{21}N_2 /(\mu_1+\gamma_1)  & \beta C_{22}N_2 /(\mu_2+\gamma_2)
+\end{array}\right),
+$$
+which is that considered in the main text.]. The individual elements of it dictate whether, from a disease-free equilibrium, there will be growth in the number of infections of type $i$, if $g_{ij}>1$. But, how do we know whether, on aggregate, there will be a growth in infections? To obtain this, we take the dominant eigenvalue of the matrix $G$ (@jones2007notes).
 
 This approach to finding (and, actually, defining $R_0$) comes from @diekmann1990definition, who proposed it as providing a measure of stability from the disease-free equilibrium in a linearised version of the system.
 
