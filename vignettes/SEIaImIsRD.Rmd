@@ -113,14 +113,14 @@ Next, we set the initial conditions. Because the populations are normalized, the
 ```{r}
 S <- 0.99
 E <- 0.01
-asymptomatic <- 0
-mild <- 0
-severe <- 0
+I_asymptomatic <- 0
+I_mild <- 0
+I_severe <- 0
 R <- 0
 D <- 0
 
-initial_conditions(model) <- list(S = S, E = E, asymptomatic = asymptomatic,
-                                  mild = mild, severe = severe, R = R, D = D)
+initial_conditions(model) <- list(S = S, E = E, I_asymptomatic = I_asymptomatic,
+                                  I_mild = I_mild, I_severe = I_severe, R = R, D = D)
 ```
 
 We then set the parameter values. As with the other models, we set these parameters based on the COVID-19 pandemic. For a detailed derivation of the parameter values, see the `SEIRD_age` model vignette. We assume here that only individuals with severe symptoms die of the disease, i.e. $\mu_a = \mu_m = 0$. We also assume that asymptomatic and mildly symptomatic individuals recover at approximately the same rate, but severely symptomatic individuals recover slower. Approximately 35% of infected individuals will never develop symptoms, and thus belong to the asymptomatic group [@Sahe21]. The hospitalisation rate has varied significantly over the course of the COVID-19 pandemic but remains on the order of 10 per 100,000 confirmed infection which gives an indication of the fraction of infections that result in severe symptoms [@HospRates]. The fraction of infections with mild infections is then the vast majority: $1 - 0.35 - 0.0001 = 0.6499$. We assume that all infectious individuals are equally infectious. Below, we investigate what happens when we do not make this assumption.

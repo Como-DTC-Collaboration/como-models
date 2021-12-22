@@ -29,10 +29,10 @@
 
 \item{value}{a named list of form list(b=, k=, g=, mu=)
 
-Here b is the rate of infection; k is the rate of transitioning from the
-infected to infectious compartment; g is the rate of recovery. The
-parameters b, and k are numbers. The death rate
-mu can and recovery rate g either be a single number, in which case all ages
+Here b is the rate of infection (S->I); k is the rate of transitioning from the
+infected to infectious compartment (E->I); g is the rate of recovery (I->R). The
+parameters b and k are numbers. The death rate
+mu and recovery rate g can either be a single number, in which case all ages
 are assumed to
 have the same rate; or it can be a vector of length equal to the number of
 age classes.}
@@ -110,7 +110,7 @@ package deSolve to numerically integrate the set of equations above.
 \item \code{R0}: Calculates basic reproduction number for SEIRDAge model
 
 To calculate this parameter, we first calculate the next generation matrix
-G, where G_ij gives the expected number of secondary infections of type i
+G, where G_ij gives the expected number of infections of type i
 caused by a single infectious individual of type j, assuming that all
 of type i are susceptible. In the SEIRDAge model, the number of contacts
 resulting in infection per unit time in age group i is beta N_i C_ij, where

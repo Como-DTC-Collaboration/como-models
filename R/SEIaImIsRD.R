@@ -36,8 +36,8 @@ SEIaImIsRD <- setClass(Class = "SEIaImIsRD",
            output_names = "list"
          ),
          prototype = list(
-           initial_condition_names = list("S0", "E0", "I_asymptomatic0",
-                                          "I_mild0", "I_severe0", "R0", "D0"),
+           initial_condition_names = list("S0", "E0", "I0_asymptomatic",
+                                          "I0_mild", "I0_severe", "R0", "D0"),
            transmission_parameter_names = list("beta", "kappa",
                                               "p_symptom", "gamma", "mu"),
            initial_conditions = vector(mode = "list", length = 7),
@@ -112,7 +112,7 @@ setMethod(
       object@initial_conditions <- init_pop_list
       object
       }
-    else stop(paste(errors, ", please check and rerun transmission_parameters<-.\n"))
+    else stop(paste(errors, ", please check and rerun initial_conditions<-.\n"))
   })
 
 
@@ -216,13 +216,13 @@ setMethod("run",
             times,
             solve_method = "lsoda") {
             # initial population groups
-            pop_groups <- c(S = object@initial_conditions$S,
-                            E = object@initial_conditions$E,
-                            I_asymptomatic = object@initial_conditions$I_asymptomatic,
-                            I_mild = object@initial_conditions$I_mild,
-                            I_severe = object@initial_conditions$I_severe,
-                            R = object@initial_conditions$R,
-                            D = object@initial_conditions$D,
+            pop_groups <- c(S = object@initial_conditions$S0,
+                            E = object@initial_conditions$E0,
+                            I_asymptomatic = object@initial_conditions$I0_asymptomatic,
+                            I_mild = object@initial_conditions$I0_mild,
+                            I_severe = object@initial_conditions$I0_severe,
+                            R = object@initial_conditions$R0,
+                            D = object@initial_conditions$D0,
                             C = 0)
             # parameters
             params <- c(beta = object@transmission_parameters$beta,
