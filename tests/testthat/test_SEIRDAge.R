@@ -185,9 +185,6 @@ test_that("can set new transmission parameters for the SEIRDAge", {
     transmission_parameters(my_model) <- list(b=1, k=c(1, 0), g=0.5, mu = 0.01)
   )
   expect_error(
-    transmission_parameters(my_model) <- list(b=1, k=0.5, g=c(1, 0),  mu = 0.01)
-  )
-  expect_error(
     transmission_parameters(my_model) <- list(b=1, k=0.5, g=0.5,
                                               mu = c(0.01, 0.01, 0.1))
   )
@@ -249,4 +246,24 @@ test_that("can run simulation for the SEIRDAge", {
   # Snapshot testing to check that outputs to the command line as expected
   # expect_snapshot_output(run(my_model, seq(0, 2, by = 1)))
 
+})
+
+test_that("R0 calculation works for SEIRDAge", {
+  my_model <- SEIRDAge(n_age_categories = 2,
+                       age_ranges = list('0-50', '50-100'), 
+                       contact_matrix = matrix(c(1,0,0,1), nrow = 2))
+  
+  initial_conditions(my_model) <- list(S0=c(0.6, 0.4),
+                                       E0=c(0, 0),
+                                       I0=c(0, 0),
+                                       R0=c(0, 0),
+                                       D0 = c(0,0))
+  
+  beta <- 1
+  gamma <- 0.5
+  mu <- 0.01
+  transmission_parameters(my_model) <- list(b=beta, k=0.5, g=c(gamma, gamma), mu = c(mu, mu))
+  
+  # if all individuals in one compartment then reduces to SEIRD
+  expect_true(abs(R0(my_model, c(1, 0)) - beta / (gamma + mu)) < 0.0001)
 })

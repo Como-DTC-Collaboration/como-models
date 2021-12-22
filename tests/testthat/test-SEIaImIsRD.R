@@ -47,11 +47,6 @@ test_that("SEIaImIsRD validate", {
 
   # check the validity of the model class and settings
   expect_s4_class(model, "SEIaImIsRD")
-  # print out R0 value
-  print(paste0("R0 = ", model.R0))
-  # view plot
-  print(p1)
-  print(p2)
 
   # check @output
   expect_equal(colnames(model.output$states),
