@@ -378,7 +378,7 @@ setMethod("R0", "SEIRDAge", function(model, population_fractions) {
   # calculate next generation matrix
   C_times_N <- sweep(C, 1, population_fractions, "*")
   death_plus_recovery <- mu + gamma
-  G <- sweep(beta * C_times_N, 1, death_plus_recovery, "/")
+  G <- sweep(beta * C_times_N, 2, death_plus_recovery, "/")
   
   # return dominant eigenvalue of it
   lambda_dominant <- eigen(G)$values[1]
