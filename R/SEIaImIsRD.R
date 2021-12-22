@@ -304,18 +304,18 @@ setMethod("R0", "SEIaImIsRD", function(model) {
   gamma <- model@transmission_parameters$gamma
   mu <- model@transmission_parameters$mu
   # define matrices F and V:
-  F <- matrix(0, 4, 4)
-  V <- matrix(0, 4, 4)
-  F[1, 2:4] <-  c(S * beta$asymptomatic, S * beta$mild, S * beta$severe)
-  V[1, 1] <- kappa
-  V[2, 1] <- -kappa * (1 - p_symptom$mild - p_symptom$severe)
-  V[2, 2] <- gamma$asymptomatic + mu$asymptomatic
-  V[3, 1] <- -kappa * p_symptom$mild
-  V[3, 3] <- gamma$mild + mu$mild
-  V[4, 1] <- -kappa * p_symptom$severe
-  V[4, 4] <- gamma$severe + mu$severe
+  Fmat <- matrix(0, 4, 4)
+  Vmat <- matrix(0, 4, 4)
+  Fmat[1, 2:4] <-  c(S * beta$asymptomatic, S * beta$mild, S * beta$severe)
+  Vmat[1, 1] <- kappa
+  Vmat[2, 1] <- -kappa * (1 - p_symptom$mild - p_symptom$severe)
+  Vmat[2, 2] <- gamma$asymptomatic + mu$asymptomatic
+  Vmat[3, 1] <- -kappa * p_symptom$mild
+  Vmat[3, 3] <- gamma$mild + mu$mild
+  Vmat[4, 1] <- -kappa * p_symptom$severe
+  Vmat[4, 4] <- gamma$severe + mu$severe
   # calculate R0 as the spectral radius for the matrix F x V^(-1):
-  eigVals <- eigen(F %*% (solve(V)))$values
+  eigVals <- eigen(Fmat %*% (solve(Vmat)))$values
   R0 = max(abs(eigVals))
   return(R0)
   })
