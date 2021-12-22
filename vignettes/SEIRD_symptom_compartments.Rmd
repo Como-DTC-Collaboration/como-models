@@ -30,7 +30,7 @@ We start by introducing the equations of the model and the computation of the ba
 
 ## The SEIaImIsRD Model
 To build the SEIaImIsRD model with three compartments of infectious individuals, we start with the basic SEIRD model. As a reminder, this model consists of a group of susceptible individuals, $S$, who are not infected but can be if they come in contact with an infectious individual, a group of exposed individuals, $E$, who have been infected but are not infectious yet, a singel group of infectious individuals, $I$, who can infect susceptibles, a group of recovered individuals, $R$, who have recovered from the infection and are now immune, and a group of dead individuals, $D$, who have died because of the disease.
-To account for the varying severity of symptoms, we take the group of infectious individuals $I$, and split them into three groups: asymptomatic, infectious individuals, $I_a$, mildly symptomatic, infectious individuals, $I_m$, and severely symptomatic, infectious individuals, $I_s$. Thus, this model consists of six ordinary differential equations (ODEs) to track al groups of individuals. The severity of symptoms can affect the probability that an infectious individual dies or infects someone else, e.g. if someone sneezes or coughs more, they could spread a respiratory virus faster. Therefor, in addition to defining new ODEs for the different groups of infectious individuals, we also need to account for these different groups in the ODEs describing the infection of susceptibles, and the number of dead individuals over time.
+To account for the varying severity of symptoms, we take the group of infectious individuals $I$, and split them into three groups: asymptomatic individuals, $I_a$; mildly symptomatic individuals, $I_m$; and severely ill individuals, $I_s$. Thus, this model consists of seven ordinary differential equations (ODEs) to track all groups of individuals. The severity of symptoms can affect the probability that an infectious individual dies or infects someone else, e.g. if someone sneezes or coughs more, they could spread a respiratory virus faster. Therefore, in addition to defining new ODEs for the different groups of infectious individuals, we also need to account for these different groups in the ODEs describing the infection of susceptibles, and the number of dead individuals over time.
 
 The SEIaImIsRD model thus consists of the following ODEs:
 
@@ -41,12 +41,12 @@ $$\frac{dI_{a}}{dt} = \eta_a \kappa E - (\gamma_a + \mu_a)I_a,$$
 $$\frac{dI_{m}}{dt} = \eta_m \kappa E - (\gamma_m + \mu_m)I_m,$$
 $$\frac{dI_{s}}{dt} = \eta_s\kappa E - (\gamma_s + \mu_s)I_s,$$
 $$\frac{\text{d}R}{\text{d}t} =  \gamma_a  I_a + \gamma_m I_m + \gamma_sI_s,$$
-where, for $i\in\{a, m, s\}$, the parameters $\beta_i$ are the rate at which an infected individual of symptom group $i$ infects susceptible individuals, $\eta_i$ are the fraction of exposed individuals moving into each of the different infected groups $i$ with $\sum_i\eta_i=1$, $\gamma_i$ are the rate at which individuals of symptom group $i$ recover from the disease, and $\mu_i$, the rate at which individuals of symptom group $i$ die of the disease. Parameter $\kappa$, the rate of becoming infectious when infected, is the same for all groups of infectious individuals, so their definition does not change from the SEIRD model.
-
-In addition to these six main ODEs above, the model also keeps track of the number of disease-related deaths ($D$) and the total number of cases ($C$) over time:
-
 $$\frac{\text{d}D}{\text{d}t} =  \mu_a  I_a + \mu_m I_m + \mu_sI_s,$$
-$$\frac{\text{d}C}{\text{d}t} = S (\beta_aI_a + \beta_mI_m + \beta_aI_s),$$
+where, for $i\in\{a, m, s\}$, the parameters $\beta_i$ are the rates at which an infected individual of symptom group $i$ infects susceptible individuals, $\eta_i$ are the fractions of exposed individuals moving into each of the different infected groups $i$ with $\sum_i\eta_i=1$, $\gamma_i$ are the rates at which individuals of symptom group $i$ recover from the disease, and $\mu_i$, the rates at which individuals of symptom group $i$ die of the disease. Parameter $\kappa$, the rate of becoming infectious when infected, is the same for all groups of infectious individuals, so their definition does not change from the SEIRD model.
+
+In addition to these seven main ODEs above, the model also keeps track of the total number of cases ($C$) over time. Here, we define a case to be anyone infected with COVID-19, and thus the rate of appearance of new cases is given by:
+
+$$\frac{\text{d}C}{\text{d}t} = S (\beta_aI_a + \beta_mI_m + \beta_aI_s).$$
 The system is closed by specifying the initial conditions
 $S(0) = S_\text{init},\ E(0) = E_\text{init},\ I_a(0) = I_{a,\text{init}},\ I_m(0) = I_{m,\text{init}},\ I_s(0) = I_{s,\text{init}},\ R(0) = R_\text{init},\ C(0) = C_\text{init},\ D(0) = D_\text{init}.$ We will use $C_\text{init} = 0$ in this vignette as we are only interested in the number of cases that occur over the time frame of the epidemic that we are modelling.
 
@@ -57,7 +57,7 @@ Before we numerically solve the SEIaImIsRD model, we derive an expression for th
 
 We calculate the basic reproduction number ($R_0$) using the next generation matrix approach. First, we select those populations in the model that contain infected individuals, i.e. those that are exposed, $E$, or infectious, $I_a$, $I_m$ and $I_s$. We define $x = [E, I_a, I_m, I_s]$ and rewrite the ODEs of the variables in $x$ to be of the form 
 $$\frac{\text{d}x_i}{\text{d}t} = \mathscr{F_i}(x) - \mathscr{V_i}(x),$$ 
-where $\mathscr{F_i}(x)$ is the rate of appearance of new infections in compartment $i$, and $\mathscr{V_i}(x)$ is the rate of other transitions between compartment $i$ and other infected compartments. For example, if we take $E$, then $\mathscr{F_E}(x) = S (\beta_aI_a + \beta_mI_m + \beta_sI_s)$ and $\mathscr{V_E}(x) = \kappa E$. Similarly, for $I_a$, $\mathscr{F_{I_a}}(x) = \eta_a \kappa E$ and $\mathscr{V_{I_a}}(x) = (\gamma_a + \mu_a)I_a$.
+where $\mathscr{F_i}(x)$ is the rate of appearance of new infections in compartment $i$, and $\mathscr{V_i}(x)$ is the rate of other transitions between compartment $i$ and other compartments. For example, if we take $E$, then $\mathscr{F}_E(x) = S (\beta_aI_a + \beta_mI_m + \beta_sI_s)$ and $\mathscr{V}_E(x) = \kappa E$. Similarly, for $I_a$, $\mathscr{F}_a(x) = \eta_a \kappa E$ and $\mathscr{V}_a(x) = (\gamma_a + \mu_a)I_a$.
 
 We now compute the matrices $F$ and $V$ for all variables in $x$:
 $$F=\frac{\partial \mathscr{F_i}{(x_0)}}{\partial x_j}\hspace{5mm}\text{and }\hspace{5mm}V=\frac{\partial \mathscr{V_i}{(x_0)}}{\partial x_j}.$$
@@ -69,7 +69,7 @@ where $\rho$ denotes the spectral radius of a matrix (i.e. the largest absolute 
 For the SEIaImIsRD model, matrices $F$ and $V$ are:
 $$
 F = \left(\begin{array}{cc} 
-0 & S_0\beta_{I_a} & S_0\beta_{I_m} & S_0\beta_{I_s}\\
+0 & S_0\beta_{a} & S_0\beta_{m} & S_0\beta_{s}\\
 0 & 0 & 0 & 0\\
 0 & 0 & 0 & 0\\
 0 & 0 & 0 & 0
