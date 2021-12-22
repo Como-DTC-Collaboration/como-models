@@ -1,6 +1,6 @@
 ---
 title: "The age-structured SEIRD model"
-author: "Oscar Dimdore-Miles and Ioana Bouros"
+author: "Oscar Dimdore-Miles, Ioana Bouros and Ben Lambert"
 output: rmarkdown::html_vignette
 bibliography: references.bib
 vignette: >
@@ -204,7 +204,10 @@ The last parameter we need to set is the transmission rate, $\beta$, which we co
 But how do we calculate $R_0$ for an age-structured model? We can reason in similar fashion as for the basic SEIRD model. We start by considering the the expected number of secondary infections of type $i$ caused by a single infectious individual of type $j$, assuming that all of type i are susceptible: we call this quantity $g_{ij}$. In an entirely susceptible population, the number of new infections of type $i$ caused by a single individual of type $j$ is $\beta N_i C_{ij}$ per unit time, where $N_i$ is the fraction of the population in age group $i$. The average duration of infection is $1 / (\mu_j + \gamma_j)$ for an individual in age group $j$. This means the average number of secondary infections of type i caused by an infectious individual of type j is:
 
 $$g_{ij} = \frac{\beta N_i C_{ij}}{(\mu_j + \gamma_j)}.$$
-The next generation matrix, $G$, is then the matrix containing all the $g_{ij}$ elements [@jones2007notes]. The individual elements of it dictate whether, from a disease-free equilibrium, there will be growth in the number of infections of type $i$, if $g_{ij}>1$. But, how do we know whether, on aggregate, there will be a growth in infections? To obtain this, we take the dominant eigenvalue of the matrix $G$ (@jones2007notes).
+The next generation matrix, $G$, is then effectively the matrix containing all the $g_{ij}$ elements [@jones2007notes]^[Technically, the matrix $G$ is only a subcomponent of this larger matrix, since we have not considered the exposed compartment in this derivation. But this submatrix has the same dominant eigenvalue as the overall matrix. For an interested reader, we now follow the methodology exposed in [@diekmann2010construction] to derive the next generation matrix for an age-structured model with two age groups. We consider only the infected compartments, $E$ and $I$, meaning we have four categories in total: $E_1$, $E_2$, $I_1$ and $I_2$ where the subscript indicates age grouping. We define a matrix $T$ whose elements $T_{ij}$ indicate the number of new infections produced per unit time into category $i$ given a single individual in category $j$. This matrix is then:
+
+]
+The individual elements of it dictate whether, from a disease-free equilibrium, there will be growth in the number of infections of type $i$, if $g_{ij}>1$. But, how do we know whether, on aggregate, there will be a growth in infections? To obtain this, we take the dominant eigenvalue of the matrix $G$ (@jones2007notes).
 
 This approach to finding (and, actually, defining $R_0$) comes from @diekmann1990definition, who proposed it as providing a measure of stability from the disease-free equilibrium in a linearised version of the system.
 
