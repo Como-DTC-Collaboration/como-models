@@ -308,11 +308,11 @@ setMethod("R0", "SEIaImIsRD", function(model) {
   Vmat <- matrix(0, 4, 4)
   Fmat[1, 2:4] <-  c(S * beta$asymptomatic, S * beta$mild, S * beta$severe)
   Vmat[1, 1] <- kappa
-  Fmat[2, 1] <- kappa * (1 - p_symptom$mild - p_symptom$severe)
+  Vmat[2, 1] <- -kappa * (1 - p_symptom$mild - p_symptom$severe)
   Vmat[2, 2] <- gamma$asymptomatic + mu$asymptomatic
-  Fmat[3, 1] <- kappa * p_symptom$mild
+  Vmat[3, 1] <- -kappa * p_symptom$mild
   Vmat[3, 3] <- gamma$mild + mu$mild
-  Fmat[4, 1] <- kappa * p_symptom$severe
+  Vmat[4, 1] <- -kappa * p_symptom$severe
   Vmat[4, 4] <- gamma$severe + mu$severe
   # calculate R0 as the spectral radius for the matrix F x V^(-1):
   eigVals <- eigen(Fmat %*% (solve(Vmat)))$values
