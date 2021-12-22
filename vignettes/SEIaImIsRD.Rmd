@@ -125,19 +125,24 @@ initial_conditions(model) <- list(S = S, E = E, I_asymptomatic = I_asymptomatic,
 
 We then set the parameter values. As with the other models, we set these parameters based on the COVID-19 pandemic. For a detailed derivation of the parameter values, see the `SEIRD_age` model vignette. We assume here that only individuals with severe symptoms die of the disease, i.e. $\mu_a = \mu_m = 0$. We also assume that asymptomatic and mildly symptomatic individuals recover at approximately the same rate, but severely symptomatic individuals recover slower. Approximately 35% of infected individuals will never develop symptoms, and thus belong to the asymptomatic group [@Sahe21]. The hospitalisation rate has varied significantly over the course of the COVID-19 pandemic but remains on the order of 10 per 100,000 confirmed infection which gives an indication of the fraction of infections that result in severe symptoms [@HospRates]. The fraction of infections with mild infections is then the vast majority: $1 - 0.35 - 0.0001 = 0.6499$. We assume that all infectious individuals are equally infectious. Below, we investigate what happens when we do not make this assumption.
 ```{r}
-beta <- list(asymptomatic = 0.707, mild = 0.707, severe = 0.707)
-kappa <- 1/5.5
+beta_overall <- 1.21
+beta <- list(asymptomatic = beta_overall, mild = beta_overall, severe = beta_overall)
+kappa <- 1 / 5.5
+zeta <- 1 / 2
 eta_symptom <- list(mild = 0.6499, severe=0.0001)
-gamma <- list(asymptomatic = 0.5, mild = 0.5, severe = 0.29)
+gamma <- list(asymptomatic = zeta, mild = zeta,
+              severe = zeta * 0.5)
 mu <- list(asymptomatic = 0, mild = 0, severe = 0.01)
 
 transmission_parameters(model) <- list(beta = beta, kappa = kappa,
                                        p_symptom = eta_symptom, gamma = gamma, mu = mu)
+R0(model)
 ```
 
 To check that the parameters have been set correctly, we call
 ```{r}
 transmission_parameters(model)
+
 ```
 
 Lastly, we set time span and time step for the simulation outputs. Here we choose to output results at a daily resolution. Note that the numerical solvers used to integrate the ODEs (by default, the LSODA method) typically compute the variables at many more time points for numerical accuracy. The results are returned only for the specified time points.
