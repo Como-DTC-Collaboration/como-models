@@ -70,15 +70,15 @@ For the SEIaImIsRD model, matrices $F$ and $V$ are:
 $$
 F = \left(\begin{array}{cc} 
 0 & S_0\beta_{I_a} & S_0\beta_{I_m} & S_0\beta_{I_s}\\
-0 & 0 & 0 & 0\\
-0 & 0 & 0 & 0\\
-0 & 0 & 0 & 0
+\kappa \eta_a & 0 & 0 & 0\\
+\kappa \eta_m & 0 & 0 & 0\\
+\kappa \eta_s & 0 & 0 & 0
 \end{array}\right), 
 \hspace{5mm}V = \left(\begin{array}{cc} 
 \kappa & 0 & 0 & 0\\
--\kappa \eta_a & \gamma_a + \mu_a & 0 & 0\\
--\kappa \eta_m & 0 & \gamma_m + \mu_m & 0\\
--\kappa \eta_s & 0 & 0 & \gamma_s + \mu_s
+ 0 & \gamma_a + \mu_a & 0 & 0\\
+0 & 0 & \gamma_m + \mu_m & 0\\
+0 & 0 & 0 & \gamma_s + \mu_s
 \end{array}\right)
 $$
 where $S_0$ is the initial number of susceptibles, which is equal to one as the whole population is assumed to be susceptible. $R_0$ is then calculated as $R_0 = \rho(FV^{-1})$.
