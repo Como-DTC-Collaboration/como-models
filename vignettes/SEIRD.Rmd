@@ -4,7 +4,7 @@ author: "Hui Jia Farm, Solveig A. van der Vegt and Ben Lambert"
 output: rmarkdown::html_vignette
 bibliography: references.bib
 vignette: >
-  %\VignetteIndexEntry{The basic SEIR model}
+  %\VignetteIndexEntry{The basic SEIRD model}
   %\VignetteEngine{knitr::knitr}
   %\VignetteEncoding{UTF-8}
 ---
@@ -55,7 +55,7 @@ knitr::include_graphics("images/seird.png")
 
 Exposed ($E$) individuals then become infectious ($I$) over time as they transition out of the latency period. For infectious individuals, there are two potential transitions: either an individual recovers and they enter the recovered state ($R$) where they remain forever; or they die, entering the dead state ($D$).
 
-For all models in this packages, it is assumed that the population size is sufficiently large that we can view the number of individuals in a given compartment on a continuous scale. We also assume that the process governing the dynamics is deterministic: that is, given the current state of the system (i.e. the numbers of individuals in the $S$, $E$, $I$, $R$ and $D$ compartments), we can perfectly forecast its future behaviour. In reality, this is unlikely to hold since our model neglects to consider a myriad of factors that can influence the resultant epidemic. Indeed, stochastic models try to account for these unobserved elements by assuming randomness plays a role in the underlying dynamics. Nevertheless, in many instances, particularly when a population size is large, assuming deterministic system dynamics may give a good approximation of the mean of equivalent stochastic systems [@erban2007practical].
+For all models in this package, it is assumed that the population size is sufficiently large that we can view the number of individuals in a given compartment on a continuous scale. We also assume that the process governing the dynamics is deterministic: that is, given the current state of the system (i.e. the numbers of individuals in the $S$, $E$, $I$, $R$ and $D$ compartments), we can perfectly forecast its future behaviour. In reality, this is unlikely to hold since our model neglects to consider a myriad of factors that can influence the resultant epidemic. Indeed, stochastic models try to account for these unobserved elements by assuming randomness plays a role in the underlying dynamics. Nevertheless, in many instances, particularly when a population size is large, assuming deterministic system dynamics may give a good approximation of the mean of equivalent stochastic systems [@erban2007practical].
 
 Additionally, the modelling framework that we use assumes that the system changes continuously over time. Specifically, the system assumes that changes in the compartments are governed by a system of coupled ordinary differential equations (ODEs). An example of such an equation is:
 
@@ -114,7 +114,7 @@ An alternative way to view these exponential decay curves is as probability dist
 
 In our ODE, we treat the population as a continuum, and there is thus no concept of a single discrete individual. It is possible to formulate discrete stochastic versions of this model which consider individual dynamics using a reaction-equation type model (@erban2007practical). For these stochastic models, the behaviour of the system is dictated by evolving probability distributions. It is possible to show that the probability of an individual being in the $E$ state for the equivalent stochastic model has the same mean as the deterministic model. This indicates that the probability an individual is in this state decays exponentially over time, and the mean time that individuals spend in this state is $1/\kappa$.
 
-Using repeatedly sampled PCR test data from close contacts of confirmed cases in mainland China, a recent study estimated the latency period of COVID-19 as 5.51 days and a log-normal probability distribution was found to represent that waiting period [@xin2021estimating]. Below we compare the waiting period for the log-normal distribution fit in this study with an exponential distribution with the same latency period.
+Using repeatedly sampled PCR test data from close contacts of confirmed cases in mainland China, a recent study estimated the latency period of COVID-19 as 5.51 days and a log-normal probability distribution was found to represent that waiting period [@xin2021estimating]. Below we compare the waiting period for the log-normal distribution fit in [@xin2021estimating] with an exponential distribution with the same latency period.
 
 ```{r, fig.height = 5, fig.width = 7}
 # values derived from Xi et al., Table S2 
@@ -167,7 +167,7 @@ The final two compartments are for the recovered and dead individuals and take t
 $$\frac{\text{d}R}{\text{d}t} = \text{newly recovered} = \gamma I,$$
 $$\frac{\text{d}D}{\text{d}t} = \text{deaths} = \mu I.$$
 
-We note that natural births and deaths -- in other words, those unrelated to infection -- are not considered in this model. Therefore, the SEIRD model is suitable only to  diseases that span a short period of time, when natural births and deaths  do not significantly affect dynamics.
+We note that natural births and deaths -- in other words, those unrelated to infection -- are not considered in this model. Therefore, the SEIRD model is suitable only to diseases that span a short period of time, when natural births and deaths do not significantly affect the stock of susceptible individuals.
 
 
 Overall, then, the system ODEs describing how the compartment populations  evolve over time is:
