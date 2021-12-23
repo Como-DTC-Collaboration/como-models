@@ -1,6 +1,6 @@
 ---
 title: "The SEIaImIsRD model"
-author: "Liangti Dai, David Seiferth and Solveig A. van der Vegt"
+author: "Liangti Dai, David Seiferth, Solveig A. van der Vegt and Ben Lambert"
 output: rmarkdown::html_vignette
 bibliography: references.bib
 vignette: >
@@ -27,7 +27,7 @@ This document introduces the SEIaImIsRD model. This model is an extension of the
 The motivation for including these separate populations of infectious individuals is two-fold. First, asymptomatic individuals are much less likely to be detected and recorded as infected than those with symptoms. The count of infected individuals might thus underestimate the actual size of the epidemic, and accounting for this in the model by including a group of asymptomatic individuals could paint a more realistic picture.
 Second, individuals with severe symptoms require treatment in hospitals and could die because of the disease, whereas asymptomatic and mildly symptomatic individuals will likely recover without needing clinical care. Splitting the population of infectiousness individuals into these three groups thus allows us to estimate the burden of COVID-19 related clinical care on the healthcare system. Estimating this burden has been a crucial modelling component throughout the COVID-19 pandemic, and estimates from modelling teams have, in part, motivated governments to impose a variety of interventions.
 
-We start by introducing the equations of the model and the computation of the basic reproduction number, $R_0$. We then show how the implementation of this model in the `como-models` package can be used.
+We start by introducing the equations of the model and the computation of the basic reproduction number, $R_0$. We then show how the implementation of this model in the `comomodels` package can be used.
 
 ## The SEIaImIsRD Model
 To build the SEIaImIsRD model with three compartments of infectious individuals, we start with the basic SEIRD model. As a reminder, this model consists of a group of susceptible individuals, $S$, who are not infected but can be if they come in contact with an infectious individual; a group of exposed individuals, $E$, who have been infected but are not infectious yet; a group of infectious individuals, $I$, who can infect susceptibles; a group of recovered individuals, $R$, who are now immune to reinfection; and a group of individuals, $D$, who have died due to COVID-19 infection.
@@ -101,10 +101,9 @@ $$
 R_0 = \sum_i\eta_i \phi_i.
 $$
 
-## The `SEIaImIsRD` class
-In this section we walk through an example of how to use the `SEIaImIsRD` class, the implementation of the SEIaImIsRD model in the `como-models` package.
+## Running simulations
+In this section we walk through an example of how to use the `SEIaImIsRD` class, the implementation of the SEIaImIsRD model in the `comomodels` package. In doing so, we parameterise the model using transmission parameters meant to representat of the epidemiology of COVID-19.
 
-### Initialization of the model
 To create a new `SEIaImIsRD` object, run:
 ```{r}
 model <- SEIaImIsRD()
@@ -112,8 +111,8 @@ model <- SEIaImIsRD()
 
 Next, we set the initial conditions. Because the populations are normalized, the populations must sum to one, or an error will be thrown.
 ```{r}
-S <- 0.99
-E <- 0.01
+S <- 0.999
+E <- 0.001
 I_asymptomatic <- 0
 I_mild <- 0
 I_severe <- 0
@@ -124,17 +123,17 @@ initial_conditions(model) <- list(S = S, E = E, I_asymptomatic = I_asymptomatic,
                                   I_mild = I_mild, I_severe = I_severe, R = R, D = D)
 ```
 
-We then set the parameter values. As with the other models, we set these parameters based on the COVID-19 pandemic. For a detailed derivation of the parameter values, see the `SEIRDAge` model vignette. We assume here that only individuals with severe symptoms die of the disease, i.e. $\mu_a = \mu_m = 0$. We also assume that asymptomatic and mildly symptomatic individuals recover at approximately the same rate, but severely symptomatic individuals recover at half the rate. Approximately 35% of infected individuals will never develop symptoms, and thus belong to the asymptomatic group [@Sahe21]. For the delta variant of the virus, it has been estimated that the hospitalisation rate is around 2\% [@twohig2021hospital]. The hospitalisation fatality rate is assumed to be 27\% [@gray2021variability]. We first assume that all infectious individuals are equally infectious, and we set $\beta$ so that $R_0=2.4$ -- the same as the baseline reproduction number in report 9 [@ferguson2020report].
+We then set the parameter values. As with the other models, we set these parameters based on the COVID-19 pandemic. For a detailed derivation of the parameter values, see the `SEIRDAge` model vignette. We assume here that only individuals with severe symptoms die of the disease, i.e. $\mu_a = \mu_m = 0$. We also assume that asymptomatic and mildly symptomatic individuals recover at approximately the same rate, but severely symptomatic individuals recover at half the rate. Approximately 35% of infected individuals will never develop symptoms, and thus belong to the asymptomatic group [@Sahe21]. For the delta variant of the virus, it has been estimated that the hospitalisation rate is around 2\% [@twohig2021hospital]. The hospitalisation fatality rate is assumed to be 27\% [@gray2021variability]. Here, for simplicity, we assume that all infectious individuals are equally infectious which may not be unrealistic if more severe cases are more likely to be isolated from ongoing contact (either due to self isolation or entering clinical care). We set $\beta$ so that $R_0=2.4$ -- the same as the baseline reproduction number in report 9 [@ferguson2020report]. To do so, we rearrange our expression above assuming $\beta_a=\beta_m=\beta_s$:
+
+$$
+\beta = \frac{R_0}{\sum_i \eta_i / (\mu_i+\gamma_i)}.
+$$
+
 ```{r}
-beta_overall <- 1.20
-beta <- list(asymptomatic = beta_overall,
-             mild = beta_overall,
-             severe = beta_overall)
 p_severe <- 0.02
 p_asymp <- 0.35
 p_mild <- 1 - p_severe - p_asymp
 eta_symptom <- list(mild = p_mild, severe=p_severe)
-
 zeta <- 1 / 2
 hfr <- 0.27
 severe_vs_mild_rate <- 0.5
@@ -147,17 +146,25 @@ mu <- list(asymptomatic = 0,
            mild = 0,
            severe = zeta * severe_vs_mild_rate * hfr)
 
+# incubation period of 5.5 days assumed
 kappa <- 1 / 5.5
+
+# determine beta to hit target R0
+R0_target <- 2.4
+p_symptoms <- c(p_asymp, p_mild, p_severe)
+gamma_plus_mu <- unlist(gamma) + unlist(mu)
+beta_overall <- R0_target / (sum(p_symptoms / gamma_plus_mu))
+beta <- list(asymptomatic = beta_overall,
+             mild = beta_overall,
+             severe = beta_overall)
+
+# set parameters of model
 transmission_parameters(model) <- list(
   beta = beta, kappa = kappa, p_symptom = eta_symptom,
   gamma = gamma, mu = mu)
 
+# check that target R0 hit
 print(paste0("R0 = ", round(R0(model), 1)))
-```
-
-To check that the parameters have been set correctly, we call
-```{r}
-transmission_parameters(model)
 ```
 
 Lastly, we set time span and time step for the simulation outputs. Here we choose to output results at a daily resolution. Note that the numerical solvers used to integrate the ODEs (by default, the LSODA method) typically compute the variables at many more time points for numerical accuracy. The results are returned only for the specified time points.
@@ -203,48 +210,111 @@ ggplot(output_deaths, aes_string(x = "time", y = "value")) +
       scale_fill_brewer(palette = "Dark2") + 
     labs(x = "time (days)", y = "deaths per day")
 ```
-The maximum number of daily deaths predicted by this model is approximately `r round(max(output_deaths$value), 0)`, and overall, the number of deaths for such an unmitigated epidemic is predicted to be `r round(sum(output_deaths$value), 0)`-- a value comparable to the figure of 510,000 deaths predicted in report 9 [@ferguson2020report].
+The maximum number of daily deaths predicted by this model is approximately `r round(max(output_deaths$value), 0)`, and overall, the number of deaths for such an unmitigated epidemic is predicted to be `r round(sum(output_deaths$value), 0)`-- a value comparable to the figure of 510,000 deaths predicted in report 9 [@ferguson2020report], which was produced using a more complex agent-based spatial model of COVID-19 transmission dynamics.
 
-#### Varying the value of $\beta$ 
-We consider what happens to the model dynamics if we change the infection rate. For example, what if asymptomatic individuals are significantly less infectious than mildly or severely symptomatic ones? We investigate this by lowering $\beta_a$ from 0.707 to 0.5 so that it is now half the infection rate of infectious individuals with severe symptoms.
-```{r, fig.align = "center", fig.show="hold",fig.height = 5, fig.width = 7}
-model2 <- model
-transmission_parameters(model2) <- list(beta = list(asymptomatic = 0.50, mild =  0.707, severe = 0.707),
-                                        kappa = kappa,
-                                        p_symptom = eta_symptom, gamma = gamma,
-                                        mu = mu)
-output <- run(model2, t)
-R0 <- R0(model2)
-
-output_incidences <- output$changes[output$changes$compartment == "Incidence",]
-output_deaths <- output$changes[output$changes$compartment == "Deaths",]
-
-# plot groups of individuals over time
-ggplot(output$states, aes_string(x = "time", y = "value")) +
-  geom_line(aes_string(colour = "compartment")) +
-      scale_color_brewer(palette = "Dark2") + 
-    theme(legend.position = "bottom", legend.title = element_blank()) +
-    labs(x = "time (days)", y = "fraction of the population")
-
-# plot number of cases over time
-ggplot(output_incidences, aes_string(x = "time", y = "value")) + 
-  geom_bar( stat="identity", position=position_dodge()) +
-      scale_fill_brewer(palette = "Dark2") + 
-    labs(x = "time (days)", y = "fraction of the population per day") +
-  ggtitle('Cases each day')
-
-# plot number of deaths over time
-ggplot(output_deaths, aes_string(x = "time", y = "value")) + 
-  geom_bar( stat="identity", position=position_dodge()) +
-      scale_fill_brewer(palette = "Dark2") + 
-    labs(x = "time (days)", y = "fraction of the population per day") +
-  ggtitle('Deaths each day')
-
-```
-We see that when $\beta_a$ is lowered, a far smaller fraction of the population gets infected. This is what we would expect. When we now compute $R_0$ for the model with this new parameter set, we get
+## Sensitivity analysis
+We now calculate the sensitivity of the overall number of deaths to two key parameters of the model via a local sensitivity analysis: the target $R_0$ value; $\eta_s$, the probability of severe symptoms. All other parameters are fixed as in the simulations above. To do so, we create a convenience function.
 ```{r}
-print(paste0("model2: R0=", R0))
+sensitivity_run <- function(R0_target=2.4,
+                            eta_s=0.02) {
+  
+  # instantiate model
+  model <- SEIaImIsRD()
+  
+  # initial conditions
+  S <- 0.999
+  E <- 0.001
+  I_asymptomatic <- 0
+  I_mild <- 0
+  I_severe <- 0
+  R <- 0
+  D <- 0
+  
+  initial_conditions(model) <- list(
+    S = S,
+    E = E,
+    I_asymptomatic = I_asymptomatic,
+    I_mild = I_mild,
+    I_severe = I_severe,
+    R = R,
+    D = D)
+  
+  # transmission parameters
+  p_severe <- eta_s
+  p_asymp <- 0.35
+  p_mild <- 1 - p_severe - p_asymp
+  eta_symptom <- list(mild = p_mild, severe=p_severe)
+  zeta <- 1 / 2
+  severe_vs_mild_rate <- 0.5
+  hfr <- 0.27
+  gamma <- list(
+    asymptomatic = zeta,
+    mild = zeta,
+    severe = zeta * severe_vs_mild_rate * (1 - hfr))
+  
+  mu <- list(asymptomatic = 0,
+             mild = 0,
+             severe = zeta * severe_vs_mild_rate * hfr)
+  
+  # incubation period of 5.5 days assumed
+  kappa <- 1 / 5.5
+  
+  # determine beta to hit target R0
+  p_symptoms <- c(p_asymp, p_mild, p_severe)
+  gamma_plus_mu <- unlist(gamma) + unlist(mu)
+  beta_overall <- R0_target / (sum(p_symptoms / gamma_plus_mu))
+  beta <- list(asymptomatic = beta_overall,
+               mild = beta_overall,
+               severe = beta_overall)
+  
+  # set parameters of model
+  transmission_parameters(model) <- list(
+    beta = beta, kappa = kappa, p_symptom = eta_symptom,
+    gamma = gamma, mu = mu)
+
+  # run model
+  t <- seq(0, 250, by = 1)
+  
+  output <- run(model, t)
+  pop_size <- 67.5e6
+  output_deaths <- output$changes %>%
+    filter(compartment=="Deaths") %>% 
+    mutate(value=pop_size * value)
+  sum(output_deaths$value)
+}
 ```
-So although $R_0>1$ still, its value is smaller than before, so the epidemic develops less quickly. This is to be expected if part of the infectious population is less infectious.
+
+First, we explore the impact of $R_0$ by varying this parameter and in each case counting the overall number of deaths. We plot $R_0$ versus the number of deaths and obtain a sigmoidal curve, which shows the greatest sensitivity around 1-1.5. Nonetheless, if we assume an uncertainty of $R_0=2.4\pm0.5$, we obtain a range from `r round(sensitivity_run(R0_target=1.9), 0)` to `r round(sensitivity_run(R0_target=2.9), 0)` deaths -- a substantial variation highlighting the central importance of knowing this quantity.
+```{r, fig.align = "center", fig.show="hold",fig.height = 5, fig.width = 7}
+R0_values <- seq(0.5, 4, 0.05)
+deaths <- vector(length = length(R0_values))
+for(i in seq_along(deaths)) {
+  deaths[i] <- sensitivity_run(R0_target = R0_values[i])
+}
+
+# plot
+tibble(R0=R0_values, Deaths=deaths) %>% 
+  ggplot(aes(x=R0, y=Deaths)) +
+  geom_line() +
+  geom_vline(xintercept = 2.4, colour="orange",
+             linetype=2)
+```
+We next consider the sensitivity of total deaths to the probability that infection results in severe symptoms. Unsurprisingly, the number of deaths strongly depends on this parameter, and the relationship is approximately linear. Supposing uncertainty given by $\eta_s=0.02\pm 0.01$, we obtain a range from `r round(sensitivity_run(eta_s=0.01), 0)` to `r round(sensitivity_run(eta_s=0.03), 0)` deaths. This variation shows the critical importance of knowing the fraction of cases likely to require hospitalisation. Initial analyses hint that the Omicron variant of SARS-CoV-2 may have a lower risk of hospitalisation than the Delta variant [@ferguson2021report50]. An issue is whether this lower rate of severe disease (if confirmed through multiple studies) will be overwhelmed by the explosive case counts reported from this variant around the world.
+```{r, fig.align = "center", fig.show="hold",fig.height = 5, fig.width = 7}
+vals <- seq(0.005, 0.06, 0.001)
+deaths <- vector(length = length(vals))
+for(i in seq_along(deaths)) {
+  deaths[i] <- sensitivity_run(eta_s=vals[i])
+}
+
+# plot
+tibble(prob_severe=vals, Deaths=deaths) %>% 
+  ggplot(aes(x=prob_severe, y=Deaths)) +
+  geom_line() +
+  geom_vline(xintercept = 0.02, colour="orange",
+             linetype=2) +
+  xlab("Probability of severe symptoms upon infection")
+```
+
 
 ## References
