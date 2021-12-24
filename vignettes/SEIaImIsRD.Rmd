@@ -282,7 +282,7 @@ sensitivity_run <- function(R0_target=2.4,
 }
 ```
 
-First, we explore the impact of $R_0$ by varying this parameter and in each case counting the overall number of deaths. We plot $R_0$ versus the number of deaths and obtain a sigmoidal curve, which shows the greatest sensitivity around 1-1.5. Nonetheless, if we assume an uncertainty of $R_0=2.4\pm0.5$, we obtain a range from `r round(sensitivity_run(R0_target=1.9), 0)` to `r round(sensitivity_run(R0_target=2.9), 0)` deaths -- a substantial variation highlighting the central importance of knowing this quantity.
+First, we explore the impact of $R_0$ (through $\beta$) and in each case counting the overall number of deaths. We plot $R_0$ versus the number of deaths and obtain a sigmoidal curve, which shows the greatest sensitivity around $1\leq R_0 \leq 1.5$. Nonetheless, if we assume an uncertainty of $R_0=2.4\pm0.5$, we obtain a range from `r round(sensitivity_run(R0_target=1.9), 0)` to `r round(sensitivity_run(R0_target=2.9), 0)` deaths -- a substantial variation highlighting the importance of knowing this quantity.
 ```{r, fig.align = "center", fig.show="hold",fig.height = 5, fig.width = 7}
 R0_values <- seq(0.5, 4, 0.05)
 deaths <- vector(length = length(R0_values))
