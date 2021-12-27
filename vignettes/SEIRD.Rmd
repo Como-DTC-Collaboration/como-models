@@ -209,43 +209,67 @@ We first create an `SEIRD` object that we will use to run simulations.
 my_model <- SEIRD()
 ```
 
-The most crucial step in using compartmental models of transmission dynamics is their parameterisation because different parameter ranges allow both qualitatively and (more typically for epidemic modelling) quantitatively different dynamics. There two main ways to estimate the parameters of such models: i) to use data collected in the laboratory or field to estimate individual parameters; or ii) to fit these models to field data and, in doing so, estimate potentially a collective of parameters. There are limitations to both approaches. The first does not account for how uncertainty in one parameter might influence our estimates of another: a higher value of $\beta$ can be offset by an increased value of $\mu$ to result in similar case counts, for instance. The second approach generally only allows a subset of parameters to be estimated, since the available data are sparse and insufficient to jointly determine all.
+The most crucial step in using compartmental models of transmission dynamics is their parameterisation because different parameter ranges allow both qualitatively and quantitatively different dynamics. There are two ways to estimate the parameters of such models: i) to use data collected in the laboratory or field to estimate individual parameters; or ii) to fit these models to field data and, in doing so, estimate potentially a collective of parameters. There are limitations to both approaches. The first does not account for how uncertainty in one parameter might influence our estimates of another: a higher value of $\beta$ can be offset by an increased value of $\mu$ to result in similar case counts, for instance. The second approach generally only allows a subset of parameters to be estimated, since the available data are sparse and insufficient to jointly determine all.
 
 Important though is that both approaches use data to determine parameters. And for practically all infectious diseases modelled, the available data do not pin down a model's parameters to a single set. It is thus important to determine whether the conclusions of modelling -- whether a new viral variant will lead a country's healthcare infrastructure to be overrun, for instance -- are sensitive to the parameter choices assumed. 
 
 Here, we follow the first approach to parameterising the SEIRD model, and show later how a sensitivity analysis can be performed. We provide an introduction to the second approach in [insert vignette for optimisation].
 
-The SEIRD model has four transmission parameters: $\beta$, $\kappa$, $\gamma$ and $\mu$. We choose $\kappa=1/5.5$, implicitly assuming a latency period of 5.5 days. We assume an average duration of infectiousness of 2 days, which indicates that, after 10 days, <1\% would be infectious -- in line with UK government policy that assumes individuals cannot pass on infection after 10 days [@stayathome2021]. We assume that 0.66\% of individuals infected with the virus die [@verity2020estimates]: this is termed an infection fatality ratio (IFR). Changing either $\gamma$ or $\mu$ affects both the rate at which individuals recover or die and the proportions which recover or die. As such, the implications of the individual parameter values are hard to intuit without recourse to the other. Here, we choose a different parameterisation that makes it simpler to set these parameters to appropriate values:
+The SEIRD model has four transmission parameters: $\beta$, $\kappa$, $\gamma$ and $\mu$. We choose $\kappa=1/5.5$, implicitly assuming a latency period of 5.5 days. We assume that 0.66\% of individuals infected with the virus die [@verity2020estimates]: this is termed an infection fatality ratio (IFR). Changing either $\gamma$ or $\mu$ affects both the rate at which individuals recover or die and the proportions which recover or die. As such, the implications of the individual parameter values are hard to intuit without recourse to the other. Here, we choose a different parameterisation that makes it simpler to set these parameters to appropriate values:
 
 \begin{align}
-\gamma &= \zeta (1-\text{CFR})\\
-\mu &= \zeta \text{CFR}.
+\gamma &= \zeta (1-\text{IFR})\\
+\mu &= \zeta \text{IFR}.
 \end{align}
 
+The proportion of infecteds who go on to die due to infection is given by the ratio of the rate of death to the overall rate out from the infectious compartment, which is the definition of the IFR:
+
+\begin{equation}
+\frac{\zeta \text{IFR}}{\zeta \text{IFR} + \zeta (1-\text{IFR})} = \text{IFR}.
+\end{equation}
+
+The average duration spent in the infectious compartment is given by:
+
+\begin{equation}
+\frac{1}{\zeta \text{IFR} + \zeta (1-\text{IFR})} = \frac{1}{\zeta}.
+\end{equation}
+
+We assume an average duration of infectiousness of 2 days, which indicates that, after 10 days, <1\% would be infectious -- in line with UK government policy that assumes individuals cannot pass on infection after 10 days [@stayathome2021]. As such, we set $\zeta = 1/2$.
+
+The remaining parameter, $\beta$, is set to a value to produce the same basic reproduction number as was assumed in the influential "report 9" from Imperial College [@ferguson2020report]: $R_0=2.4$ (see explanation of $R_0$ below).
+
 ```{r}
-params <- list(beta=1, kappa=0.9, gamma=0.5, mu=0.1)
+kappa <- 1 / 5.5
+IFR <- 0.0066
+zeta <- 1 / 2
+gamma <- zeta * (1 - IFR)
+mu <- zeta * IFR
+R0_target <- 2.4
+beta <- (mu + gamma) * R0_target
+
+params <- list(beta=beta, kappa=kappa, gamma=gamma, mu=mu)
 transmission_parameters(my_model) <- params
 ```
 
-To check that the parameters have been set correctly, we call
+To check that the parameters have been set as desired, we can call:
 ```{r}
 transmission_parameters(my_model)
 ```
+An additional set of parameters dictate the initial conditions of the system. Since SARS-CoV-2 is a novel virus, at the very beginning of the pandemic, everyone was susceptible. Here, we imagine a small number of infectious individuals entered a new population, at the start, representing 0.0001\% of the population.
 
-We now need to set the initial conditions for the model. We only set the initial 
-conditions $S(0)$, $E(0)$, $I(0)$ and $R(0)$.
 ```{r}
-initial_conditions(my_model) <- list(S0=0.99, E0=0, I0=0.01, R0=0)
+I0 <- 1e-6
+initial_conditions(my_model) <- list(S0=1-I0, E0=0, I0=I0, R0=0)
 ```
-The initial conditions must sum to one. If they do not, an error is thrown.
 
-Now we simulate the system from $t=0$ days to $t=50$ days.
+
+Now we simulate the system from $t=0$ days to $t=200$ days.
 ```{r}
-times <- seq(0, 50, by = 1)
+times <- seq(0, 200, by = 1)
 out_df <- run(my_model, times)
 ```
 
-The simulation returns two objects: one is a data frame comprising the states over time. Here, we see that, over time, the proportion of susceptible individuals declines over time as the infection penetrates through the population. Initially, there are relatively few infected individuals but this then grows, reaching a peak between $t=15$ and $t=20$ and then declining when there are relatively few susceptibles left. The number of recovered and dead individuals also grows over time.
+The simulation returns two objects: one is a data frame comprising the states over time. Here, we see that, over time, the proportion of susceptible individuals declines over time as the infection penetrates through the population. Initially, there are relatively few infected individuals but this then grows, reaching a peak between $t=75$ and $t=100$ days and then declining when there are relatively few susceptibles left. The number of recovered and dead individuals also grows over time.
 
 ```{r, fig.height = 5, fig.width = 7}
 states <- out_df$states
@@ -271,7 +295,7 @@ changes <- out_df$changes
 
 ggplot(changes, aes(x = time, y = value * 1000, fill = compartment)) +
   geom_bar(stat="identity", position = position_dodge()) +
-  labs(x = "time (days)", y = "cases per 1000 of the \n population per day") +
+  labs(x = "time (days)", y = "rate per 1000 of the \n population per day") +
   theme(legend.position = "bottom", legend.title = element_blank(),
         text = element_text(size = 20)) +
   scale_fill_brewer(palette = "Dark2")
