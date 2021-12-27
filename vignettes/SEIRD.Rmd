@@ -187,7 +187,7 @@ With both the system of ODEs and initial conditions specified, we can solve for 
 
 In the implementation of the model in this package, the variables are normalized  so$S(t) + E(t) + I(t) + R(t) + D(t) \equiv 1$ for any given $t$. This means that  each of these state variables represents the fraction of the population in each  of these states at a given point in time.
 
-Typical epidemic data includes the number of new cases or new deaths occurring over a time interval. To calculate the number of cases arising over a time period, we track the cumulative number of cases through the following equation:
+Typical epidemic data includes the number of new cases or new deaths occurring over a time interval. Here, we define "cases" to mean someone infected with the virus^[Note, that other definitions of cases are possible, however. For example, a "case" can refer to a clinical case -- i.e. someone presenting with symptoms.]. To calculate the number of cases arising over a time period, we track the cumulative number of cases through the following equation:
 
 $$\frac{\text{d}C}{\text{d}t} = \text{newly exposed} = \beta S I,$$
 where we assume $C(0) = 0$. The number of new infections arising between two time intervals $t_1$ and $t_2$ is then: $C(t_2) - C(t_1)$. Similarly, the number of deaths occuring over the same interval is the difference in the cumulative deaths: $D(t_2) - D(t_1)$.
@@ -209,9 +209,19 @@ We first create an `SEIRD` object that we will use to run simulations.
 my_model <- SEIRD()
 ```
 
-We next set parameter values for $\beta$, $\kappa$, $\gamma$ and $\mu$. We choose $\kappa=1/5.5$, implicitly assuming a latency period of 5.5 days. We assume an average duration of infectiousness of 2 days, which indicates that, after 10 days, <1\% would be infectious -- in line with UK government policy that assumes individuals cannot pass on infection after 10 days [@stayathome2021]. Thus, we set $\gamma=1/2$.
+The most crucial step in using compartmental models of transmission dynamics is their parameterisation because different parameter ranges allow both qualitatively and (more typically for epidemic modelling) quantitatively different dynamics. There two main ways to estimate the parameters of such models: i) to use data collected in the laboratory or field to estimate individual parameters; or ii) to fit these models to field data and, in doing so, estimate potentially a collective of parameters. There are limitations to both approaches. The first does not account for how uncertainty in one parameter might influence our estimates of another: a higher value of $\beta$ can be offset by an increased value of $\mu$ to result in similar case counts, for instance. The second approach generally only allows a subset of parameters to be estimated, since the available data are sparse and insufficient to jointly determine all.
 
-Next, we must set parameter values for $\beta$, $\kappa$, $\gamma$ and $\mu$. Here, these are arbitrary values that we use to illustrate simulations.
+Important though is that both approaches use data to determine parameters. And for practically all infectious diseases modelled, the available data do not pin down a model's parameters to a single set. It is thus important to determine whether the conclusions of modelling -- whether a new viral variant will lead a country's healthcare infrastructure to be overrun, for instance -- are sensitive to the parameter choices assumed. 
+
+Here, we follow the first approach to parameterising the SEIRD model, and show later how a sensitivity analysis can be performed. We provide an introduction to the second approach in [insert vignette for optimisation].
+
+The SEIRD model has four transmission parameters: $\beta$, $\kappa$, $\gamma$ and $\mu$. We choose $\kappa=1/5.5$, implicitly assuming a latency period of 5.5 days. We assume an average duration of infectiousness of 2 days, which indicates that, after 10 days, <1\% would be infectious -- in line with UK government policy that assumes individuals cannot pass on infection after 10 days [@stayathome2021]. We assume that 0.66\% of individuals infected with the virus die [@verity2020estimates]: this is termed an infection fatality ratio (IFR). Changing either $\gamma$ or $\mu$ affects both the rate at which individuals recover or die and the proportions which recover or die. As such, the implications of the individual parameter values are hard to intuit without recourse to the other. Here, we choose a different parameterisation that makes it simpler to set these parameters to appropriate values:
+
+\begin{align}
+\gamma &= \zeta (1-\text{CFR})\\
+\mu &= \zeta \text{CFR}.
+\end{align}
+
 ```{r}
 params <- list(beta=1, kappa=0.9, gamma=0.5, mu=0.1)
 transmission_parameters(my_model) <- params
