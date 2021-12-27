@@ -30,7 +30,6 @@
 \item{value}{A numeric named list of values for transmission parameters:
 beta - a named list of the effective contact rate from each infected group (i.e. rate at which an infected individual exposes susceptible), each element with value in \code{[0,1]}
 kappa - rate of progression from exposed to infectious (the reciprocal is the incubation period),
-omega - rate at which recovered individuals become susceptible,
 p_symptom - a named list of the probability of exposed individuals moving into each of the different infected groups,
 Here, only probabilities for the mild (p_symptom.mild) and severe (p_symptom.severe) groups need be specified and
 the asymptomatic probability is the remainder (1 - p_symptom.mild - p_symptom.severe). Thus we require
@@ -82,12 +81,12 @@ of the SEIaImIsRD model.
 
 \item \code{run}: Solves the ode system.
 
-\deqn{\frac{dS(t)}{dt} = -S(t)(\beta.asymptomatic I_{asymptomatic}(t) + \beta.mild I_{mild}(t) + \beta.severe I_{severe}(t)) + \omega R(t)}
+\deqn{\frac{dS(t)}{dt} = -S(t)(\beta.asymptomatic I_{asymptomatic}(t) + \beta.mild I_{mild}(t) + \beta.severe I_{severe}(t))}
 \deqn{\frac{dE(t)}{dt} = S(t)(\beta.asymptomatic I_{asymptomatic}(t) + \beta.mild I_{mild}(t) + \beta.severe I_{severe}(t)) - \kappa E(t)}
 \deqn{\frac{dI_{asymptomatic}(t)}{dt} = p_symptom.asymptomatic \kappa E(t) - (\gamma.asymptomatic + \mu.asymptomatic) I_{asymptomatic}(t)}
 \deqn{\frac{dI_{mild}(t)}{dt} = p_symptom.mild\kappa E(t) - (\gamma.mild + \mu.mild) I_{mild}(t)}
 \deqn{\frac{dI_{severe}(t)}{dt} = p_symptom.severe\kappa E(t) - (\gamma.severe + \mu.severe) I_{severe}(t)}
-\deqn{\frac{dR(t)}{dt} = -\omega R(t) + \gamma.asymptomatic I_{asymptomatic}(t) + \gamma.mild I_{mild}(t) + \gamma.severe I_{severe}(t)}
+\deqn{\frac{dR(t)}{dt} =  \gamma.asymptomatic I_{asymptomatic}(t) + \gamma.mild I_{mild}(t) + \gamma.severe I_{severe}(t)}
 \deqn{\frac{dD(t)}{dt} =  \mu.asymptomatic I_{asymptomatic}(t) + \mu.mild I_{mild}(t) + \mu.severe I_{severe}(t)}
 
 \item \code{R0}: Calculate the basic reproduction number (\code{R_0}) of the system using the next generation matrix approach.
