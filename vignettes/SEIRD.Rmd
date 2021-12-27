@@ -24,7 +24,7 @@ library(dplyr)
 ```
 
 ## Introduction
-This document introduces the deterministic SEIRD model, which is the foundation around which many, more advanced models of COVID-19 transmission dynamics are based (for example, all the other models within this package). In this vignette, we explain what this model represents, and we show how it can be used to understand epidemic dynamics typical of the "waves" of infection seen during the COVID-19 pandemic.
+This document introduces the deterministic SEIRD model, which is the foundation around which many, more advanced models of COVID-19 transmission dynamics are based (including all the other models within this package). In this vignette, we explain what this model represents, and we show how it can be used to understand epidemic dynamics typical of the "waves" of infection seen during the COVID-19 pandemic.
 
 ## The SEIRD Model
 The SEIRD model is an example of a compartmental model in mathematical epidemiology [@anderson1992infectious]. In these types of models, individuals are assumed at a particular point in time to belong to only one of a number of "compartments": discrete containers where all individuals within them are assumed to be in the same state. In an SEIRD model, there are five such compartments / states: Susceptible, Exposed, Infectious, Recovered and Dead. Susceptible individuals ($S$) have not been exposed to the virus. Exposed individuals ($E$) have been exposed to the virus and have been infected but are not yet infectious to others -- they are in the incubation period. Infectious individuals ($I$) can spread the virus to others. Recovered individuals ($R$) are no longer infectious, and, in this model, have acquired immunity as they do not return to the susceptible population. Some individuals, however, unfortunately do not recover from infection and die as a result, falling into the dead state ($D$).
@@ -114,7 +114,7 @@ An alternative way to view these exponential decay curves is as probability dist
 
 In our ODE, we treat the population as a continuum, and there is thus no concept of a single discrete individual. It is possible to formulate discrete stochastic versions of this model which consider individual dynamics using a reaction-equation type model (@erban2007practical). For these stochastic models, the behaviour of the system is dictated by evolving probability distributions. It is possible to show that the probability of an individual being in the $E$ state for the equivalent stochastic model has the same mean as the deterministic model. This indicates that the probability an individual is in this state decays exponentially over time, and the mean time that individuals spend in this state is $1/\kappa$.
 
-Using repeatedly sampled PCR test data from close contacts of confirmed cases in mainland China, a recent study estimated the latency period of COVID-19 as 5.51 days and a log-normal probability distribution was found to represent that waiting period [@xin2021estimating]. Below we compare the waiting period for the log-normal distribution fit in [@xin2021estimating] with an exponential distribution with the same latency period.
+Using repeatedly sampled PCR test data from close contacts of confirmed cases in mainland China, a recent study estimated the latency period of COVID-19 as 5.5 days and a log-normal probability distribution was found to represent that waiting period [@xin2021estimating]. Below we compare the waiting period for the log-normal distribution fit in [@xin2021estimating] with an exponential distribution with the same latency period.
 
 ```{r, fig.height = 5, fig.width = 7}
 # values derived from Xi et al., Table S2 
@@ -122,7 +122,7 @@ mu <- 1.61
 sigma <- 0.44
 
 # equivalent decay for exponential model
-kappa <- 1 / 5.51
+kappa <- 1 / 5.5
 
 # generate densities across rate of time
 t <- seq(0, 20, 0.01)
@@ -201,15 +201,17 @@ $$\frac{\text{d}S}{\text{d}t} = -\beta S I = 0.$$
 This only has solutions if either $S=0$, in which case there are no individuals left to infect; or $I=0$, in which case there are no infectious individuals: in other words, an infection has not been imported into the population. Considering all four ODEs, $I=0$ implies that $\frac{\text{d}R}{\text{d}t} = 0$ and $\frac{\text{d}D}{\text{d}t} = 0$. Additionally, so long as there are no exposed individuals, $\frac{\text{d}E}{\text{d}t}= 0$ and $\frac{\text{d}I}{\text{d}t}= 0$ and 
 So the equilibria are given by $S=S'$, $E=0$, and $I=0$ which corresponds to a situation when there are no infected or infectious individuals in the population. In other words, in this model, there is no endemic equilibrium when the infection remains present throughout the population; only epidemic dynamics are possible.
 
-## The `SEIRD` class
-We now show how `comomodels` can be used to create and simulate from an SEIRD model.
+## Using an SEIRD model to simulate COVID-19 dynamics
+We now show how `comomodels` can be used to create an SEIRD which captures the dominant characteristics of an unmitigated COVID-19 epidemic.
 
 We first create an `SEIRD` object that we will use to run simulations.
 ```{r}
 my_model <- SEIRD()
 ```
 
-Next, we set parameter values for $\beta$, $\kappa$, $\gamma$ and $\mu$. Here, these are arbitrary values that we use to illustrate simulations.
+We next set parameter values for $\beta$, $\kappa$, $\gamma$ and $\mu$. We choose $\kappa=1/5.5$, implicitly assuming a latency period of 5.5 days. We assume an average duration of infectiousness of 2 days, which indicates that, after 10 days, <1\% would be infectious -- in line with UK government policy that assumes individuals cannot pass on infection after 10 days [@stayathome2021]. Thus, we set $\gamma=1/2$.
+
+Next, we must set parameter values for $\beta$, $\kappa$, $\gamma$ and $\mu$. Here, these are arbitrary values that we use to illustrate simulations.
 ```{r}
 params <- list(beta=1, kappa=0.9, gamma=0.5, mu=0.1)
 transmission_parameters(my_model) <- params
