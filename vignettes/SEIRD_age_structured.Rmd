@@ -1,7 +1,8 @@
 ---
 title: "The age-structured SEIRD model"
-author: "Oscar Dimdore-Miles and Ioana Bouros"
+author: "Oscar Dimdore-Miles, Ioana Bouros and Ben Lambert"
 output: rmarkdown::html_vignette
+bibliography: references.bib
 vignette: >
   %\VignetteIndexEntry{SEIR_age_structured}
   %\VignetteEngine{knitr::knitr}
@@ -15,39 +16,82 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
+```{r setup, include = FALSE}
 library(comomodels)
 library(tidyverse)
 ```
 
 ## Introduction
-This document explains the basics of an age-structured SEIRD model. The model describes
-how populations of susceptible, exposed, infectious, recovered and dead individuals evolve over time.
-In this model, each age class, $i$, has its own system of five coupled differential equations governing
-movements between these compartments. If age classes did not interact with one another, these set of equations would
-follow:
+The [basic SEIRD model](https://github.com/Como-DTC-Collaboration/como-models/blob/main/vignettes/SEIRD.Rmd) assumes that individuals with the same infection status behave identically and that the infection has the same effect. In reality, however, individuals with the same infection status may differ substantively. In particular, individuals' age is likely to correlate with both social differences -- for example, a teenager may mix with more people per day than an elderly person -- and biological differences -- for example, the severity of illness may, on average, be generally worse in the elderly (as is known to be the case for COVID-19 [@verity2020estimates]).
+
+Models which allow varying transmission dynamics for different age groups can capture these differences, and this document explains the basics of an age-structured SEIRD model. The model describes how populations of susceptible, exposed, infectious, recovered and dead individuals evolve over time. In this model, each age class, $i$, has its own system of five coupled differential equations governing movements between these compartments. If age classes did not interact with one another, these set of equations would simply follow the basic SEIRD dynamics:
 
 \begin{align}
 \frac{\text{d}S_i}{\text{d}t} &= -\beta S_i I_i\\
 \frac{\text{d}E_i}{\text{d}t} &= \beta S_i I_i -\kappa E_i\\
 \frac{\text{d}I_i}{\text{d}t} &= \kappa E_i - (\gamma + \mu) I_i\\
 \frac{\text{d}R_i}{\text{d}t} &= \gamma I_i\\
-\frac{\text{d}D_i}{\text{d}t} &= \mu I_i
+\frac{\text{d}D_i}{\text{d}t} &= \mu I_i.
 \end{align}
 
-However, in reality, a susceptible individual from a given age class
-can become infected from any age class: to capture this aspect of the model, infected individuals of any
+This system of ODEs could then be solved independently for each age group $i$, and each of their dynamics would be the same as for the non-age-structured SEIRD model. Additionally, infection transmission through each of the age classes would be identical, aside from any differences in the initial conditions of each compartment.
+
+## Age-dependent mortality
+For COVID-19 transmission, a key difference is that the death rate varies by age [@verity2020estimates]. We can allow different rates of death by modifying the equation for infectious and dead compartments to:
+
+\begin{align}
+\frac{\text{d}I_i}{\text{d}t} &= \kappa E_i - (\gamma + \mu_i) I_i\\
+\frac{\text{d}D_i}{\text{d}t} &= \mu_i I_i.
+\end{align}
+
+where each compartment has its own death rate, $\mu_i$. Since, in this model, there are only two fates for an infectious individual -- death and recovery -- the proportion of infectious individuals who die is given by:
+
+\begin{equation}
+\text{CFR} = \frac{\text{rate of death}}{\text{rate of death} + \text{rate of recovery}} = \frac{\mu}{\mu + \gamma},
+\end{equation}
+
+where $\text{CFR}$ denotes the case fatality ratio. In @verity2020estimates, the CFR was shown to vary strongly with age using aggregate case and deaths data for mainland China extracted until March 2020. Here we graph their estimates.
+```{r, fig.width=6, fig.height=4}
+# for 80+ group we pick upper age to be 110
+df <- tribble(
+  ~lower_age, ~upper_age, ~cfr,
+  0, 9, 0.00260,
+  10, 19, 0.0148,
+  20, 29, 0.0600,
+  30, 39, 0.146,
+  40, 49, 0.295,
+  50, 59, 1.25,
+  60, 69, 3.99,
+  70, 79, 8.61,
+  80, 110, 13.4) %>% 
+  mutate(cfr = cfr / 100) %>% 
+  mutate(age_range=paste0(lower_age, "-", upper_age)) %>% 
+  mutate(age_range=as.factor(age_range)) %>% 
+  mutate(age_range=fct_reorder(age_range, lower_age))
+
+df %>% 
+  ggplot(aes(x=age_range, y=cfr)) +
+  geom_point() +
+  scale_y_continuous(labels=scales::percent_format(accuracy = 1)) +
+  xlab("Age range") +
+  ylab("CFR")
+```
+From this, we see the dramatic rise in the risk of death beginning at around the 50-59 age class.
+
+## Intermixing between age groups
+The aforementioned system of ODEs does not, currently, allow individuals from different age classes to mix with one another. However, in reality, a susceptible individual from a given age class can become infected from any age class: to capture this aspect of the model, infected individuals of any
 age are supposed to inter-mix, with the mixing rate dictated by a so-called "contact matrix", $C$.
 
-The elements of contact matrices, $C_{i,j}$ indicate the expected number of contacts an individual of age class $i$ experiences with age class $j$ per day. In this package, we include country-level estimates of contact matrices (Prem et al., 2017; for full details see data documentation). There are actually four types of contact matrix corresponding to daily numbers of contacts at home, work, school and all other settings. Here, we visualise these for India.
-```{r}
+The elements of contact matrices, $C_{i,j}$ indicate the expected number of contacts an individual of age class $i$ experiences with age class $j$ per day. In this package, we include country-level estimates of contact matrices (@prem2017projecting; for full details see data documentation). There are actually four types of contact matrix corresponding to daily numbers of contacts at home, work, school and all other settings. Here, we visualise these for India.
+
+```{r, include = FALSE}
 load(file = "../data/contact_home.rda")
 load(file = "../data/contact_work.rda")
 load(file = "../data/contact_school.rda")
 load(file = "../data/contact_other.rda")
 ```
 
-```{r, fig.width=10, fig.height=8}
+```{r, fig.width=8, fig.height=6}
 # reformat matrices for plotting
 ages <- seq(0, 80, 5)
 age_names <- vector(length = 16)
@@ -75,7 +119,7 @@ c_all <- c_home %>%
 c_all %>%
   ggplot(aes(x=age_infector, y=age_infectee, fill=value)) +
   xlab("age group of infector") + ylab("age group of infectee") +
-  theme(text = element_text(size=20),
+  theme(text = element_text(size=14),
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   geom_tile() +
   scale_fill_viridis_c() +
@@ -107,22 +151,20 @@ We now use this contact matrix to allow infections to pass between age groups. T
 
 Specifically, the term $S_i \Sigma_{j}C_{ij} I_j$ effectively indicates the expected number of contacts between susceptible individuals of age class $i$ with infected individuals across all classes.
 
-
-
-## Simulation examples 
-
-Now we create a model that includes this age-structured mixing. Since the contact matrices have 16 age classes, we instantiate a model with this number of classes. We also give it transmission parameters, populate the age classes with initial conditions and use our overall contact matrix.
-
-We use country-level demographics from the UN and, for this example, initialise the model with a uniform initial infected population of 1% across all age groups. The remaining 99% of the population starts
-as susceptible.
+## Simulating an epidemic characteristic of the first COVID-19 wave
+Now we create a model that includes this age-structured mixing. Since the contact matrices have 16 age classes, we instantiate a model with this number of classes. We use country-level demographics from the UN and, for this example, initialise the model with a uniform initial infected population of 0.1% across all age groups. The remaining 99.9% of the population starts as susceptible.
 ```{r}
+# load UN data (which is available in the repo)
 load(file = "../data/population.rda")
+
 # use demographic data to create normalised population fractions
 pops = population[population$country == 'India', ]$pop
 pop_fraction = pops/sum(pops)
-## the contact matrix has an upper group of 80+, so we sum the remaining fractions beyond this point
+
+# the contact matrix has an upper group of 80+, so we sum the remaining fractions beyond this point
 pop_fraction[16] = sum(pop_fraction[16:21])
 pop_fraction = pop_fraction[1:16]
+
 # reshape contact matrix into 16x16 form
 n_ages <- 16
 c_combined_wider <- c_combined %>% 
@@ -131,21 +173,114 @@ c_combined_wider <- c_combined %>%
   ungroup() %>% 
   select(-age_infectee) %>% 
   as.matrix()
+
 # create model
 model <- comomodels::SEIRDAge(n_age_categories = n_ages,
                  contact_matrix = c_combined_wider,
                  age_ranges = as.list(age_names))
-transmission_parameters(model) <- list(b=1, k=0.5, g=0.5, mu = 0.01)
-initial_conditions(model) <- list(S0=pop_fraction*0.99,
+
+# set initial conditions
+initial_conditions(model) <- list(S0=pop_fraction*0.999,
                                   E0=rep(0, n_ages),
-                                  I0=pop_fraction*0.01,
+                                  I0=pop_fraction*0.001,
                                   R0=rep(0, n_ages),
                                   D0=rep(0, n_ages))
 ```
 
-We next simulate the model and visualise all the dynamics of each compartment.
+We next give it transmission parameters. Here, we assume an average latency period of 5.5 days (as has been estimated for COVID-19; @xin2021estimating), and an average duration of infectiousness of 2 days (which indicates that, after 10 days, <1\% would be infectious, which is in line with UK policy which assumes individuals cannot pass on infection after 10 days; @stayathome2021). For simplicity, we assume that symptom onset occurs at the time an individual becomes infectious (although evidence suggests there is presymptomatic transmission; @stayathome2021).
+
+We assume the following parameterisation: $\eta = 1/{\text{av. time until noninfectious}}=1/2$
+
+\begin{align}
+\gamma_i &= \eta (1-\text{CFR}_i)\\
+\mu_i &= \eta \text{CFR}_i.
+\end{align}
+
+Indeed, this parameterisation is possible because we allow an age-dependent recovery rate, $\gamma_i$.
+
+The last parameter we need to set is the transmission rate, $\beta$, which we cover in the next section.
+
+## Basic reproduction number of age-structured models
+"Report 9" produced by Imperial College London [@ferguson2020report] was widely held to have been key to the UK government deciding to institute a lockdown in March 2020. In this report, the baseline reproduction number chosen was $R_0=2.4$. In this vignette, we wish to choose a value of $\beta$ to result in the same $R_0$ value.
+
+But how do we calculate $R_0$ for an age-structured model? We can reason in similar fashion as for the basic SEIRD model. We start by considering the the expected number of secondary infections of type $i$ caused by a single infectious individual of type $j$, assuming that all of type i are susceptible: we call this quantity $g_{ij}$. In an entirely susceptible population, the number of new infections of type $i$ caused by a single individual of type $j$ is $\beta N_i C_{ij}$ per unit time, where $N_i$ is the fraction of the population in age group $i$. The average duration of infection is $1 / (\mu_j + \gamma_j)$ for an individual in age group $j$. This means the average number of secondary infections of type i caused by an infectious individual of type j is:
+
+$$g_{ij} = \frac{\beta N_i C_{ij}}{(\mu_j + \gamma_j)}.$$
+The next generation matrix, $G$, is then effectively the matrix containing all the $g_{ij}$ elements [@jones2007notes]^[Technically, the matrix $G$ is only a subcomponent of this larger matrix, since we have not considered the exposed compartment in this derivation. But this submatrix has the same dominant eigenvalue as the overall matrix. For an interested reader, we now follow the methodology exposed in [@diekmann2010construction] to derive the next generation matrix for an age-structured model with two age groups. We consider only the infected compartments, $E$ and $I$, meaning we have four categories in total: $E_1$, $E_2$, $I_1$ and $I_2$ where the subscript indicates age grouping. We define a matrix $T$ whose elements $T_{ij}$ indicate the number of new infections produced per unit time into category $i$ given a single individual in category $j$. This matrix is then:
+$$
+T = \left(\begin{array}{cc} 
+0 & 0 & \beta N_1 C_{11} & \beta N_1 C_{12}\\
+0 & 0 & \beta N_2 C_{21} & \beta N_2 C_{22}\\
+0 & 0 & 0 & 0\\
+0 & 0 & 0 & 0
+\end{array}\right),
+$$
+where, for instance, $\beta N_1 C_{11}$ is the rate new infections are generated in the $E_1$ compartment (the row) due to a single individual in the $I_1$ compartment (the column). The bottom two rows are all zero because, in this system, no new infections are generated that immediately fall into the $I_i$ compartments. The first two columns are zero because the $E_i$ compartments do not themselves generated infections. Next, we construct the matrix $\Sigma$ whose elements, $\Sigma_{ij}$ indicate the rate of transition from compartment $j$ to $i$:
+$$
+\Sigma = \left(\begin{array}{cc} 
+-\kappa & 0 & 0 & 0\\
+0 & -\kappa & 0 & 0\\
+\kappa & 0 & -(\mu_1+\gamma_1) & 0\\
+0 & \kappa & 0 & -(\mu_2+\gamma_2)
+\end{array}\right),
+$$
+where, for instance, $\kappa$ indicates the rate at which either $E_1\rightarrow I_1$ or $E_2\rightarrow I_2$. The next generation matrix is then given by the product $-T\Sigma^{-1}$, which in this case evaluates to:
+$$
+K = \left(\begin{array}{cc} 
+ \beta C_{11}N_1 /(\mu_1+\gamma_1)  & \beta C_{12}N_1 /(\mu_2+\gamma_2) & \beta C_{11}N_1 /(\mu_1+\gamma_1)  & \beta C_{12}N_1 /(\mu_2+\gamma_2)\\
+\beta C_{21}N_2 /(\mu_1+\gamma_1)  & \beta C_{22}N_2 /(\mu_2+\gamma_2) & \beta C_{21}N_2 /(\mu_1+\gamma_1)  & \beta C_{22}N_2 /(\mu_2+\gamma_2)\\
+0 & 0 & 0 & 0\\
+0 & 0 & 0 & 0
+\end{array}\right),
+$$
+whose dominant eigenvalue is the same as that of the submatrix:
+$$
+G = \left(\begin{array}{cc} 
+ \beta C_{11}N_1 /(\mu_1+\gamma_1)  & \beta C_{12}N_1 /(\mu_2+\gamma_2)\\
+\beta C_{21}N_2 /(\mu_1+\gamma_1)  & \beta C_{22}N_2 /(\mu_2+\gamma_2)
+\end{array}\right),
+$$
+which is that considered in the main text.]. The individual elements of it dictate whether, from a disease-free equilibrium, there will be growth in the number of infections of type $i$, if $g_{ij}>1$. But, how do we know whether, on aggregate, there will be a growth in infections? To obtain this, we take the dominant eigenvalue of the matrix $G$ (@jones2007notes).
+
+This approach to finding (and, actually, defining $R_0$) comes from @diekmann1990definition, who proposed it as providing a measure of stability from the disease-free equilibrium in a linearised version of the system.
+
+In `comomodels`, we have implemented these calculations, and so can calculate $R_0$ for an age-structured model. As such, we have selected a value for $\beta$ below that reproduces $R_0=2.4$.
+```{r}
+kappa <- 1 / 5.5
+eta <- 1 / 2
+beta <- 0.707
+
+# assume cfr constant within age ranges of contact matrix bands
+get_lower_age <- function(x) {
+  as.numeric(substr(x, 1, regexpr("-", x) - 1))
+}
+get_upper_age <- function(x) {
+  as.numeric(substr(x, regexpr("-", x) + 1, nchar(x)))
+}
+lower_age <- map_dbl(age_names, get_lower_age)
+upper_age <- map_dbl(age_names, get_upper_age)
+middle_age <- (lower_age + upper_age) / 2
+
+# assume CFR is constant within age hands
+cfr_vals <- vector(length = length(middle_age))
+cfr_getter <- function(age, df) {
+  for(j in 1:nrow(df)) {
+    if(age > df$lower_age[j] & age <= df$upper_age[j])
+      return(df$cfr[j])
+  }
+}
+cfr_vals <- map_dbl(middle_age, ~cfr_getter(., df))
+gamma_vals <- eta * (1 - cfr_vals)
+mu_vals <- eta * cfr_vals
+
+transmission_parameters(model) <- list(b=beta, k=kappa, g=gamma_vals, mu=mu_vals)
+
+print(paste0("R_0 = ", round(R0(model, pop_fraction), 2)))
+```
+
+We next simulate the model and visualise the dynamics of each compartment.
 ```{r, fig.width=10, fig.height=5}
-res <- run(model, times=seq(0, 50, by = 0.1))
+res <- run(model, times=seq(0, 100, by = 0.1))
 states = res$states
 changes = res$changes
 states %>%
@@ -181,6 +316,18 @@ changes %>%
   theme(text = element_text(size = 20)) 
 ```
 
+But, due to the much higher rate of death in the older age groups, these experience a much higher rate of death.
+```{r, fig.width=8, fig.height=5}
+changes %>%
+  filter(compartment=="Deaths") %>% 
+  ggplot(aes(x=time, y=value, colour=age_range)) +
+  geom_line() +
+  facet_wrap(~compartment, scales="free") +
+  scale_colour_viridis_d() +
+  labs(x = "time (days)", y = "fraction of the population") +
+  theme(text = element_text(size = 20)) 
+```
+
 ## Sensitivity to initial conditions
 We now simulate the same model but with different distributions of initial infections to show the sensitivity of the model to initial conditions. First, we set all initial infections to 0.3% of the total population and place this uniformly across age groups between 15 and 30. Second, we place all infections (also 0.3% of the total population) uniformly across age groups 55-70. 
 ```{r}
@@ -190,8 +337,8 @@ model_1530 <- comomodels::SEIRDAge(n_age_categories = n_ages,
 model_5570 <- comomodels::SEIRDAge(n_age_categories = n_ages,
                  contact_matrix = c_combined_wider,
                  age_ranges = as.list(age_names))
-transmission_parameters(model_1530) <- list(b=1, k=0.5, g=0.5, mu=0.01)
-transmission_parameters(model_5570) <- list(b=1, k=0.5, g=0.5, mu=0.01)
+transmission_parameters(model_1530) <- list(b=beta, k=kappa, g=gamma_vals, mu=mu_vals)
+transmission_parameters(model_5570) <- list(b=beta, k=kappa, g=gamma_vals, mu=mu_vals)
 S0_1530 = pop_fraction
 S0_1530[4:6] = S0_1530[4:6] - 0.001
 I0_1530 = rep(0, n_ages)
@@ -213,10 +360,10 @@ initial_conditions(model_5570) <- list(S0=S0_5570,
 ```
 
 
-Now we simulate both models and plot the infections over time. We can see that for the model initialised with infections among 15-30 years olds, the peak of infections appears earlier and dies away quicker than the model initialised with infections in 55-70 year olds. Despite this difference, the magnitude of the infection peaks in both cases are comparable as well as the distribution of infections for each age group. 
+Now we simulate both models and plot the infections over time. For the model initialised with infections among 15-30 years olds, the peak of infections appears earlier and dies away quicker than the model initialised with infections in 55-70 year olds. Despite this difference, the magnitude of the infection peaks in both cases are comparable as well as the distribution of infections for each age group. 
 
 ```{r, fig.width=8, fig.height=5}
-res <- run(model_1530, time=seq(0, 50, by = 0.1))$states
+res <- run(model_1530, time=seq(0, 70, by = 0.1))$states
 res %>%
   filter(compartment=="I") %>% 
   ggplot(aes(x=time, y=value, colour=age_range))  +
@@ -225,7 +372,7 @@ res %>%
   scale_colour_viridis_d() +
   geom_line() +
   facet_wrap(~compartment)
-res <- run(model_5570, time=seq(0, 50, by = 0.1))$states
+res <- run(model_5570, time=seq(0, 70, by = 0.1))$states
 res %>%
   filter(compartment=="I") %>% 
   ggplot(aes(x=time, y=value, colour=age_range)) +
@@ -235,3 +382,8 @@ res %>%
   geom_line() +
   facet_wrap(~compartment)
 ```
+
+This example shows that the nature of the seeding population (i.e. the population initially infected)
+can significantly influence the resultant dynamics. Here, because the younger age groups have more daily contact with other individuals, an epidemic seeded with them goes through the population faster than one seeded more uniformly across older ages.
+
+## References

@@ -36,12 +36,12 @@ SEIaImIsRD <- setClass(Class = "SEIaImIsRD",
            output_names = "list"
          ),
          prototype = list(
-           initial_condition_names = list("S0", "E0", "I_asymptomatic0",
-                                          "I_mild0", "I_severe0", "R0", "D0"),
-           transmission_parameter_names = list("beta", "kappa", "omega",
+           initial_condition_names = list("S0", "E0", "I0_asymptomatic",
+                                          "I0_mild", "I0_severe", "R0", "D0"),
+           transmission_parameter_names = list("beta", "kappa",
                                               "p_symptom", "gamma", "mu"),
            initial_conditions = vector(mode = "list", length = 7),
-           transmission_parameters = vector(mode = "list", length = 6),
+           transmission_parameters = vector(mode = "list", length = 5),
            output_names = list("S", "E", "I_asymptomatic",
                                "I_mild", "I_severe", "R", "D",
                                "Incidence", "Deaths")
@@ -112,7 +112,7 @@ setMethod(
       object@initial_conditions <- init_pop_list
       object
       }
-    else stop(paste(errors, ", please check and rerun transmission_parameters<-.\n"))
+    else stop(paste(errors, ", please check and rerun initial_conditions<-.\n"))
   })
 
 
@@ -123,7 +123,6 @@ setMethod(
 #' @param value A numeric named list of values for transmission parameters:
 #' beta - a named list of the effective contact rate from each infected group (i.e. rate at which an infected individual exposes susceptible), each element with value in \code{[0,1]}
 #' kappa - rate of progression from exposed to infectious (the reciprocal is the incubation period),
-#' omega - rate at which recovered individuals become susceptible,
 #' p_symptom - a named list of the probability of exposed individuals moving into each of the different infected groups, 
 #' Here, only probabilities for the mild (p_symptom.mild) and severe (p_symptom.severe) groups need be specified and 
 #' the asymptomatic probability is the remainder (1 - p_symptom.mild - p_symptom.severe). Thus we require 
@@ -140,7 +139,6 @@ setMethod(
     object,
     value = list(beta = list(asymptomatic = NA_real_, mild = NA_real_, severe = NA_real_), 
     kappa = NA_real_, 
-    omega = NA_real_,
     p_symptom = list(mild = NA_real_, severe = NA_real_), 
     gamma = list(asymptomatic = NA_real_, mild = NA_real_, severe = NA_real_), 
     mu = list(asymptomatic = NA_real_, mild = NA_real_, severe = NA_real_))) {
@@ -195,12 +193,12 @@ setMethod(
 
 #' @describeIn SEIaImIsRD Solves the ode system.
 #'
-#' \deqn{\frac{dS(t)}{dt} = -S(t)(\beta.asymptomatic I_{asymptomatic}(t) + \beta.mild I_{mild}(t) + \beta.severe I_{severe}(t)) + \omega R(t)}
+#' \deqn{\frac{dS(t)}{dt} = -S(t)(\beta.asymptomatic I_{asymptomatic}(t) + \beta.mild I_{mild}(t) + \beta.severe I_{severe}(t))}
 #' \deqn{\frac{dE(t)}{dt} = S(t)(\beta.asymptomatic I_{asymptomatic}(t) + \beta.mild I_{mild}(t) + \beta.severe I_{severe}(t)) - \kappa E(t)}
 #' \deqn{\frac{dI_{asymptomatic}(t)}{dt} = p_symptom.asymptomatic \kappa E(t) - (\gamma.asymptomatic + \mu.asymptomatic) I_{asymptomatic}(t)}
 #' \deqn{\frac{dI_{mild}(t)}{dt} = p_symptom.mild\kappa E(t) - (\gamma.mild + \mu.mild) I_{mild}(t)}
 #' \deqn{\frac{dI_{severe}(t)}{dt} = p_symptom.severe\kappa E(t) - (\gamma.severe + \mu.severe) I_{severe}(t)}
-#' \deqn{\frac{dR(t)}{dt} = -\omega R(t) + \gamma.asymptomatic I_{asymptomatic}(t) + \gamma.mild I_{mild}(t) + \gamma.severe I_{severe}(t)}
+#' \deqn{\frac{dR(t)}{dt} =  \gamma.asymptomatic I_{asymptomatic}(t) + \gamma.mild I_{mild}(t) + \gamma.severe I_{severe}(t)}
 #' \deqn{\frac{dD(t)}{dt} =  \mu.asymptomatic I_{asymptomatic}(t) + \mu.mild I_{mild}(t) + \mu.severe I_{severe}(t)}
 #'
 #' @param object An object of class SEIaImIsRD
@@ -218,18 +216,17 @@ setMethod("run",
             times,
             solve_method = "lsoda") {
             # initial population groups
-            pop_groups <- c(S = object@initial_conditions$S,
-                            E = object@initial_conditions$E,
-                            I_asymptomatic = object@initial_conditions$I_asymptomatic,
-                            I_mild = object@initial_conditions$I_mild,
-                            I_severe = object@initial_conditions$I_severe,
-                            R = object@initial_conditions$R,
-                            D = object@initial_conditions$D,
+            pop_groups <- c(S = object@initial_conditions$S0,
+                            E = object@initial_conditions$E0,
+                            I_asymptomatic = object@initial_conditions$I0_asymptomatic,
+                            I_mild = object@initial_conditions$I0_mild,
+                            I_severe = object@initial_conditions$I0_severe,
+                            R = object@initial_conditions$R0,
+                            D = object@initial_conditions$D0,
                             C = 0)
             # parameters
             params <- c(beta = object@transmission_parameters$beta,
                         kappa = object@transmission_parameters$kappa,
-                        omega = object@transmission_parameters$omega,
                         p_symptom = object@transmission_parameters$p_symptom,
                         gamma = object@transmission_parameters$gamma,
                         mu = object@transmission_parameters$mu)
@@ -238,12 +235,12 @@ setMethod("run",
             ode_symptome_rhs <- function(t, pop_groups, parameters) {
               with(
                 as.list(c(pop_groups, params)), {
-                  dS <- -S * (beta.asymptomatic * I_asymptomatic + beta.mild * I_mild + beta.severe * I_severe) + omega * R
+                  dS <- -S * (beta.asymptomatic * I_asymptomatic + beta.mild * I_mild + beta.severe * I_severe)
                   dE <- S * (beta.asymptomatic * I_asymptomatic + beta.mild * I_mild + beta.severe * I_severe) - kappa * E
                   dI_a <- (1.0 - p_symptom.mild - p_symptom.severe) * kappa * E - (gamma.asymptomatic + mu.asymptomatic) * I_asymptomatic
                   dI_m <- p_symptom.mild * kappa * E - (gamma.mild + mu.mild) * I_mild
                   dI_s <- p_symptom.severe * kappa * E - (gamma.severe + mu.severe) * I_severe
-                  dR <- -omega * R + gamma.asymptomatic * I_asymptomatic + gamma.mild * I_mild + gamma.severe * I_severe
+                  dR <-  gamma.asymptomatic * I_asymptomatic + gamma.mild * I_mild + gamma.severe * I_severe
                   dD <-  mu.asymptomatic * I_asymptomatic + mu.mild * I_mild + mu.severe * I_severe
                   dC <- S * (beta.asymptomatic * I_asymptomatic + beta.mild * I_mild + beta.severe * I_severe)
                   # return the rate of cI_severenge
@@ -307,18 +304,18 @@ setMethod("R0", "SEIaImIsRD", function(model) {
   gamma <- model@transmission_parameters$gamma
   mu <- model@transmission_parameters$mu
   # define matrices F and V:
-  F <- matrix(0, 4, 4)
-  V <- matrix(0, 4, 4)
-  F[1, 2:4] <-  c(S * beta$asymptomatic, S * beta$mild, S * beta$severe)
-  V[1, 1] <- kappa
-  V[2, 1] <- -kappa * (1 - p_symptom$mild - p_symptom$severe)
-  V[2, 2] <- gamma$asymptomatic + mu$asymptomatic
-  V[3, 1] <- -kappa * p_symptom$mild
-  V[3, 3] <- gamma$mild + mu$mild
-  V[4, 1] <- -kappa * p_symptom$severe
-  V[4, 4] <- gamma$severe + mu$severe
+  Fmat <- matrix(0, 4, 4)
+  Vmat <- matrix(0, 4, 4)
+  Fmat[1, 2:4] <-  c(S * beta$asymptomatic, S * beta$mild, S * beta$severe)
+  Vmat[1, 1] <- kappa
+  Vmat[2, 1] <- -kappa * (1 - p_symptom$mild - p_symptom$severe)
+  Vmat[2, 2] <- gamma$asymptomatic + mu$asymptomatic
+  Vmat[3, 1] <- -kappa * p_symptom$mild
+  Vmat[3, 3] <- gamma$mild + mu$mild
+  Vmat[4, 1] <- -kappa * p_symptom$severe
+  Vmat[4, 4] <- gamma$severe + mu$severe
   # calculate R0 as the spectral radius for the matrix F x V^(-1):
-  eigVals <- eigen(F %*% (solve(V)))$values
+  eigVals <- eigen(Fmat %*% (solve(Vmat)))$values
   R0 = max(abs(eigVals))
   return(R0)
   })
