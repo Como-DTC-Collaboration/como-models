@@ -1,5 +1,5 @@
-test_that("SEIRDAge gets instantiated", {
-  my_model <- SEIRDAge_interventions(n_age_categories = 2,
+test_that("SEIRDAge_NPI gets instantiated", {
+  my_model <- SEIRDAge_NPI(n_age_categories = 2,
                        age_ranges = list('0-50', '50-100'))
   
   # Test output is correct
@@ -14,7 +14,7 @@ test_that("SEIRDAge gets instantiated", {
                list('S0', 'E0', 'I0', 'R0', 'D0'))
   
   expect_equal(my_model@transmission_parameter_names,
-               list('beta_interventions', 'beta', 'kappa', 'gamma', 'mu'))
+               list('beta_npi', 'beta', 'kappa', 'gamma', 'mu'))
   
   expect_length(my_model@initial_conditions, length(my_model@initial_condition_names))
 
@@ -26,15 +26,15 @@ test_that("SEIRDAge gets instantiated", {
 })
 
 
-test_that("can retrieve SEIRDAge transmission parameters", {
-  my_model <- SEIRDAge_interventions(n_age_categories = 2)
+test_that("can retrieve SEIRDAge_NPI transmission parameters", {
+  my_model <- SEIRDAge_NPI(n_age_categories = 2)
   
   expect_equal(transmission_parameters(my_model),
                vector(mode = "list", length = length(my_model@transmission_parameter_names)))
 })
 
-test_that("can set new initial conditions for the SEIRDAge_interventions", {
-  my_model <- SEIRDAge_interventions(n_age_categories = 2)
+test_that("can set new initial conditions for the SEIRDAge_NPI", {
+  my_model <- SEIRDAge_NPI(n_age_categories = 2)
   initial_conditions(my_model)<-list(S0=c(0.4, 0.4),
                                      E0=c(0, 0),
                                      I0=c(0.05, 0.15),
@@ -124,46 +124,31 @@ test_that("can set new initial conditions for the SEIRDAge_interventions", {
   )
 })
 
-test_that("can set new transmission parameters for the SEIRDAge", {
-  my_model <- SEIRDAge_interventions(n_age_categories = 2,
-                                     n_interventions = 2,
-                                     age_ranges = list('0-50', '50-100'), 
-                                     contact_matrix= matrix(c(1,0,0,1), nrow = 2),
-                                     contact_matrix_interventions = list(
-                                       matrix(c(1,0,0,1), nrow = 2),
-                                       matrix(c(1,0,0,1), nrow = 2)
-                                       )
-  )
+test_that("can calculate the basic reproduction number R0 for the SEIRDAge_NPI", {
+  my_model <- SEIRDAge_NPI(n_age_categories = 2,
+                           n_npi = 2,
+                           age_ranges = list('0-50', '50-100'), 
+                           contact_matrix= matrix(c(1,0,0,1), nrow = 2),
+                           contact_matrix_npi = list(
+                             matrix(c(1,0,0,1), nrow = 2),
+                             matrix(c(1,0,0,1), nrow = 2)
+                             )
+                           )
                                      
   transmission_parameters(my_model) <- list(#isolated_interventions = 0.4,
-                                            beta_interventions= c(0.5, 0.5), beta = 1, 
+                                            beta_npi = c(0.5, 0.5), beta = 1, 
                                             kappa = 0.5, gamma = 0.5, mu = 0.01)
+  initial_conditions(my_model)<-list(S0=c(0.4, 0.4),
+                                     E0=c(0, 0),
+                                     I0=c(0.05, 0.15),
+                                     R0=c(0, 0), 
+                                     D0 = c(0, 0))
   
-  # Test output is correct
-  expected_transpar <- list(#'isolated_interventions' = 0.4,
-                            'beta_interventions' = c(0.5, 0.5),
-                            'beta' = 1,
-                            'kappa'=0.5,
-                            'gamma'=0.5,
-                            'mu' = 0.01)
-  
-  expect_equal(transmission_parameters(my_model),
-               expected_transpar)
-  
-  # Test input errors
-  expect_error(
-    transmission_parameters(my_model) <- list(b=c(1, 0), k=0.5, g=0.5, mu = 0.01)
-  )
-  expect_error(
-    transmission_parameters(my_model) <- list(b=1, k=c(1, 0), g=0.5, mu = 0.01)
-  )
-  expect_error(
-    transmission_parameters(my_model) <- list(b=1, k=0.5, g=c(1, 0),  mu = 0.01)
-  )
+  print(R0(my_model))
 })
 
-test_that("can run simulation for the SEIRDAge_interventions", {
-  # my_model <- SEIRDAge_interventions(n_age_categories = 2,
+test_that("can run simulation for the SEIRDAge_NPI", {
+  # my_model <- SEIRDAge_NPI(n_age_categories = 2,
   #                      age_ranges = list('0-50', '50-100'), 
   #                      contact_matrix= list(matrix(c(1,0,0,1), nrow = 2),
   #                                           matrix(c(1,0,0,1), nrow = 2)))

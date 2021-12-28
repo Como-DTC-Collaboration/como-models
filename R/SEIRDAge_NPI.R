@@ -2,7 +2,7 @@
 #'
 NULL
 
-#' Defines an age-structured SEIR model with non pharmaceutical interventions
+#' Defines an age-structured SEIR model with non-pharmaceutical interventions (NPIs)
 #' which influence social contact. Methods solve the set of
 #' ordinary differential equations of the model with a chosen method of
 #' numerical integration.
@@ -13,28 +13,28 @@ NULL
 #'     model.
 #' @slot transmission_parameter_names names of the transmission parameters used
 #'     by the model.
-#' @slot intervention_parameter_names list of names of intervention parameters
+#' @slot npi_parameter_names list of names of NPI parameters
 #'       (characters). Default is list ("starts", "stops").
 #' @slot initial_conditions named list containing the initial conditions of the
 #'     model. Initial values for each compartment, S0, E0, I0, R0.
 #' @slot transmission_parameters named list containing the transmission
 #'     parameters of the model. Transmission parameters b, k, g represent the
 #'     rates of changes between the compartments.
-#' @slot intervention_parameters list of values for intervention parameters
+#' @slot npi_parameters list of values for NPI parameters
 #'       (double).
-#' @slot interventions list of intervention periods
+#' @slot interventions list of NPI periods
 #' @slot contact_matrix A square matrices, each with dimension
 #'     equal to n_age_categories x n_age_categories. This matrix represents the
 #'     contact between different age groups (rows) with age groups of
 #'     people they come in contact with (columns) in the ist interval of the
 #'     simulation (normally with no restriction on social contact.
-#' @slot contact_matrix_interventions A list of square matrices, each with dimension
+#' @slot contact_matrix_npi A list of square matrices, each with dimension
 #'     equal to n_age_categories x n_age_categories. This matrix represents the
 #'     contact between different age groups (rows) with age groups of
 #'     people they come in contact with (columns) in the ist interval of the
 #'     simulation (normally with no restriction on social contact.
 #' @slot n_age_categories number of age categories.
-#' @slot n_interventions number of intervention periods.
+#' @slot n_npi number of NPI periods.
 #' @slot age_ranges list of string characters representing the range of ages of
 #'     people in each age category. This object must have length
 #'     \code{n_age_categories} (otherwise an error is returned) and each element
@@ -46,76 +46,73 @@ NULL
 #' @import reshape2
 #' @importFrom methods new
 #' 
-#' @export SEIRDAge_interventions
+#' @export SEIRDAge_NPI
 #' 
-SEIRDAge_interventions <- setClass('SEIRDAge_interventions',
+SEIRDAge_NPI <- setClass('SEIRDAge_NPI',
                                    # slots
                                    slots = c(
                                      output_names = 'list',
                                      initial_condition_names = 'list',
                                      transmission_parameter_names = 'list',
-                                     intervention_parameter_names = 'list',
+                                     npi_parameter_names = 'list',
                                      initial_conditions = 'list',
                                      transmission_parameters = 'list',
                                      interventions = 'list',
                                      age_ranges = 'list',
                                      n_age_categories = 'numeric',
-                                     n_interventions = 'numeric',
+                                     n_npi = 'numeric',
                                      contact_matrix= 'matrix',
-                                     contact_matrix_interventions = 'list'
+                                     contact_matrix_npi = 'list'
                                    ),                 
                                    # prototypes for the slots, automatically set output and param
                                    # names
                                    prototype = list(
                                      output_names = list('S', 'E', 'I', 'R', 'D' ,'Incidence'),
                                      initial_condition_names = list('S0', 'E0', 'I0', 'R0', 'D0'),
-                                     transmission_parameter_names = list('beta_interventions', 'beta', 
+                                     transmission_parameter_names = list('beta_npi', 'beta', 
                                                                          'kappa', 'gamma', 'mu'),
-                                     intervention_parameter_names = list("starts", "stops", "coverages"), 
+                                     npi_parameter_names = list("starts", "stops", "coverages"), 
                                      initial_conditions = vector(mode = "list", length = 5),
                                      transmission_parameters = vector(mode = "list", length = 5),
                                      interventions = vector(mode = "list"),
                                      age_ranges = vector(mode = 'list'),
                                      n_age_categories = NA_integer_,
-                                     n_interventions = NA_integer_,
+                                     n_npi = NA_integer_,
                                      contact_matrix = matrix(NA),
-                                     contact_matrix_interventions = vector(mode = 'list')
+                                     contact_matrix_npi = vector(mode = 'list')
                                    )
 )
 
 # Setter and getter methods for initial_conditions of an age-structured
-# SEIR model with interventions.
+# SEIRD model with NPIs.
 
-#' @describeIn SEIRDAge_interventions Retrieves initial_conditions for an
-#' age-structured SEIR model.
+#' @describeIn SEIRDAge_NPI Retrieves initial_conditions for an
+#' age-structured SEIRD model.
 #'
-#' @param object An object of the class SEIRDAge_interventions.
+#' @param object An object of the class SEIRDAge_NPI.
 #'
-#' @return Initial conditions of SEIRDAge_interventions model.
+#' @return Initial conditions of SEIRDAge_NPI model.
 #'
 #' @export
-setMethod('initial_conditions', 'SEIRDAge_interventions',
+setMethod('initial_conditions', 'SEIRDAge_NPI',
           function(object) object@initial_conditions)
 
 
-# Sets initial_conditions of an age-structured
-# SEIR model with interventions.
-
-#' @describeIn SEIRDAge_interventions Sets initial_conditions of an age-structured
-#' SEIR model with interventions.
+#' @describeIn SEIRDAge_NPI Sets initial_conditions of an age-structured
+#' SEIRD model with NPIs.
 #' If the initial conditions provided to do not sum to 1 or of different
 #' sizes compared to the number of age groups, an error is thrown.
 #'
-#' @param object An object of the class SEIRDAge_interventions.
+#' @param object An object of the class SEIRDAge_NPI.
 #' @param value a named list of (S0, E0, I0, R0) where each element can be a list
 #' of vector of doubles, with each element corresponding to the fraction for a
 #' single age group.
 #'
-#' @return Updated version of the age-structured SEIR model with interventions
+#' @return Updated version of the age-structured SEIR model with NPIs
 #'
 #' @export
 setMethod(
-  'initial_conditions<-', 'SEIRDAge_interventions',
+  'initial_conditions<-', 'SEIRDAge_NPI',
   function(object, value) {
     S0 = value$S0
     E0 = value$E0
@@ -152,23 +149,24 @@ setMethod(
     return(object)
   })
 
-# Setter and getter methods for transmission_parameters of an age-structured
-# SEIRD model with interventions interventions
 
-#' @describeIn SEIRDAge_interventions Retrieves transmission_parameters for an
-#' age-structured SEIR model with interventions.
+# Setter and getter methods for transmission_parameters of an age-structured
+# SEIRD model with NPIs
+
+#' @describeIn SEIRDAge_NPI Retrieves transmission_parameters for an
+#' age-structured SEIR model with NPIs.
 #'
-#' @param object An object of the class SEIRDAge_interventions.
+#' @param object An object of the class SEIRDAge_NPI.
 #'
-#' @return Transmission parameters of SEIRDAge_interventions model.
+#' @return Transmission parameters of SEIRDAge_NPI model.
 #'
 #' @export
-setMethod('transmission_parameters', 'SEIRDAge_interventions',
+setMethod('transmission_parameters', 'SEIRDAge_NPI',
           function(object) object@transmission_parameters)
 
 
-#' @describeIn SEIRDAge_interventions Sets the transmission_parameters for an
-#' age-structured SEIRD model with interventions.
+#' @describeIn SEIRDAge_NPI Sets the transmission_parameters for an
+#' age-structured SEIRD model with NPIs.
 #' 
 #' Sets transmission_parameters of an
 #' age-structured SEIR model.
@@ -181,32 +179,36 @@ setMethod('transmission_parameters', 'SEIRDAge_interventions',
 #' All rates of change between compartments are equal regardless of
 #' age group.
 #'
-#' @return Updated version of the age-structured SEIR model with interventions.
+#' @return Updated version of the age-structured SEIR model with NPIs.
 #'
 #' @export
 #'
 setMethod(
-  'transmission_parameters<-', 'SEIRDAge_interventions',
+  'transmission_parameters<-', 'SEIRDAge_NPI',
   function(object, value) {
     
     # create list of parameter values
     #intervention_frac <- value$intervention_frac
-    beta_interventions <- value$beta_interventions
+    beta_npi <- value$beta_npi
     beta <- value$beta
     kappa <- value$kappa
     gamma <- value$gamma
     mu <- value$mu
     
     # set transmission parameters
-    trans_params <- list(beta_interventions, beta, kappa, gamma, mu)
+    trans_params <- list(beta_npi, beta, kappa, gamma, mu)
     # add names to each value
     names(trans_params) = object@transmission_parameter_names
     
-    # check format of parameters b, k and g
-    if(length(beta) != 1 | length(kappa) != 1 | length(gamma) != 1){
-      stop('The parameter values should be 1-dimensional.')
+    # check format of parameters: should be either a single 
+    # positive real value or a list of positive real values with
+    # the length equal to the number of age groups
+    for(param in trans_params){
+      if((length(param) != 1) & (length(param)!=object@n_age_categories)){
+        stop("The parameter values should be either 1-dimensional or of size
+             equal to the number of age groups")
+      }
     }
-    
     # if all above tests are passed, assign the trans_params namelist to the
     # object
     object@transmission_parameters <- trans_params
@@ -216,56 +218,53 @@ setMethod(
     rownames(object@contact_matrix) <- object@age_ranges
     colnames(object@contact_matrix) <- object@age_ranges
     
-    for(i in seq_along(object@contact_matrix_interventions)){
-      rownames(object@contact_matrix_interventions[[i]]) <- object@age_ranges
-      colnames(object@contact_matrix_interventions[[i]]) <- object@age_ranges
+    for(i in seq_along(object@contact_matrix_npi)){
+      rownames(object@contact_matrix_npi[[i]]) <- object@age_ranges
+      colnames(object@contact_matrix_npi[[i]]) <- object@age_ranges
     }
     return(object)
   })
 
 
-#' @describeIn SEIRDAge_interventions Retrieves intervention parameters of SEIRDAge_interventions model.
+#' @describeIn SEIRDAge_NPI Retrieves NPI parameters of SEIRDAge_NPI model.
 #'
-#' @param object An object of the class SEIRDAge_interventions.
+#' @param object An object of the class SEIRDAge_NPI.
 #'
 #' @export
-setMethod("interventions", "SEIRDAge_interventions",
+setMethod("interventions", "SEIRDAge_NPI",
           function(object) object@interventions)
 
 
-#' @describeIn SEIRDAge_interventions Setter method for intervention parameters of the SEIRDAge_interventions model.
+#' @describeIn SEIRDAge_NPI Setter method for NPI parameters of the SEIRDAge_NPI model.
 #'
-#' Intervention parameters have same size. A tanh function is used to smooth interventions during simulation. This class is designed for interventions
-#' which last several days at least and have several days between them; interventions involving rapid fluctuations may be distorted.
+#' @param object an object of the class SEIRDAge_NPI
+#' @param value (list) list of NPI parameters: starts, stops, coverages
 #'
-#' @param object an object of the class SEIRDAge_interventions
-#' @param value (list) list of intervention parameters: starts, stops, coverages
-#'
-#' @return object of class SEIRDAge_interventions with intervention parameters assigned.
+#' @return object of class SEIRDAge_NPI with NPI parameters assigned.
 #'
 #' @export
 setMethod(
-  "interventions<-", "SEIRDAge_interventions",
+  "interventions<-", "SEIRDAge_NPI",
   function(object, value) {
     if (length(value) != 1 &
         length(value) != object@n_age_categories &
-        length(value) != object@n_interventions){
+        length(value) != object@n_npi){
       stop("Need one intervention must be for all age groups or one per age group.")
     }
     
     for (i in seq_along(value)){
-      if (mean(names(value[[i]]) %in% object@intervention_parameter_names) != 1)
+      if (mean(names(value[[i]]) %in% object@npi_parameter_names) != 1)
         stop(paste0("Intervention parameters must contain: ",
-                    object@intervention_parameter_names))
+                    object@npi_parameter_names))
       
-      # raise errors if intervention parameters are not doubles
+      # raise errors if NPIparameters are not doubles
       for (p in list("starts", "stops", "coverages")) {
         if (!is.numeric(value[[i]][[p]])) {
           stop(glue("{p} format must be numeric"))
         }
       }
       
-      # check that the intervention parameters are all of the same size
+      # check that the NPI parameters are all of the same size
       if (length(value[[i]]$starts) != length(value[[i]]$stops)|
           length(value[[i]]$starts) != length(value[[i]]$coverages)|
           length(value[[i]]$coverages) != length(value[[i]]$stops)) {
@@ -280,7 +279,7 @@ setMethod(
 
 
 
-#' @describeIn SEIRDAge_interventions Method to simulate output using from model.
+#' @describeIn SEIRDAge_NPI Method to simulate output using from model.
 #'
 #' Solves a system to ODEs which form an
 #' age-structured simple SEIR model. The system of equations for the time
@@ -292,15 +291,14 @@ setMethod(
 #' \deqn{\frac{dE_i(t)}{dt} = \beta_i(t) S_i \Sigma_{j}C{ij}(t) I_j-\kappa E_i}
 #' \deqn{\frac{dI_i(t)}{dt} = \kappa E_i - (\gamma + \mu) I_i}
 #' \deqn{\frac{dR_i(t)}{dt} = \frac{\text{d}R_i}{\text{d}t} = \gamma I_i}
-#' \deqn{\frac{dC(t)}{dt} = \beta_i(t) S_i \Sigma_{j}C_{ij}(t) I_j}}
+#' \deqn{\frac{dC(t)}{dt} = \beta_i(t) S_i \Sigma_{j}C_{ij}(t) I_j}
 #' \deqn{\frac{dD_i(t)}{dt} = \mu I_i(t)}
 #'
 #' where C is a contact matrix whose elements represents the
 #' contact between different age groups (rows) with age groups of
 #' people they come in contact with (columns). Inter(t) is the value at time t
-#' of the intervention protocol defined by
-#' the intervention parameters.
-#' The model encorperates the influence of non-pharmeceutical interventions (NPIs)
+#' of the NPI protocol defined by the NPI (intervention) parameters.
+#' The model encorperates the influence of NPIs
 #' which act to reduce the degree of social contact and/or change the transmission
 #' parameters beta between individuals. This is
 #' done by splitting any simulation of the model into several intervals and utilising
@@ -308,7 +306,7 @@ setMethod(
 #' time. This function relies on the package deSolve to numerically integrate 
 #' the set of equations above.
 #'
-#' @param object An object of the class SEIRDAge_interventions.
+#' @param object An object of the class SEIRDAge_NPI.
 #' @param times (vector) time sequence over which to solve the model.
 #'        Must be of the form seq(t_start,t_end,by=t_step). Default time series
 #'        is seq(0, 100, by = 1).
@@ -325,7 +323,7 @@ setMethod(
 #' @importFrom magrittr "%>%"
 #' @importFrom rlang .data
 setMethod(
-  "run", 'SEIRDAge_interventions',
+  "run", 'SEIRDAge_NPI',
   function(object, times, solve_method = 'lsoda') {
     
     # error if times is not a vector or list of doubles
@@ -340,7 +338,7 @@ setMethod(
       stop("Intervention parameters must be set before running.")
     if (is.null(unlist(object@contact_matrix)))
       stop("Contact matrix must be set before running.")
-    if (is.null(unlist(object@contact_matrix_interventions)))
+    if (is.null(unlist(object@contact_matrix_npi)))
       stop("Contact matrix at each intervention period must be set before running.")
     
     # fetch number of age catagories
@@ -356,30 +354,30 @@ setMethod(
     
     # set parameters vector
     parameters <- c(#intervention_frac = object@transmission_parameters$intervention_frac,
-                    beta_interventions = object@transmission_parameters$beta_interventions,
+                    beta_npi = object@transmission_parameters$beta_npi,
                     beta = object@transmission_parameters$beta,
                     kappa = object@transmission_parameters$kappa,
                     gamma = object@transmission_parameters$gamma,
                     mu = object@transmission_parameters$mu)
     
-    C = object@contact_matrix_interventions
-    C[[object@n_interventions+1]] = object@contact_matrix
-    beta_finals = c(object@transmission_parameters$beta_interventions,
+    C = object@contact_matrix_npi
+    C[[object@n_npi+1]] = object@contact_matrix
+    beta_finals = c(object@transmission_parameters$beta_npi,
                     object@transmission_parameters$beta)
     
     # set intervention parameters vector
-    #  function for the ode to give the correct beta_interventions and contact matrices at corresponding time point
-    #  currently, we consider applying same beta_interventions for all age groups. SHOULD MODIFY!
+    #  function for the ode to give the correct beta_npi and contact matrices at corresponding time point
+    #  currently, we consider applying same beta_npi for all age groups. SHOULD MODIFY!
     idx_interv <- function(t){
       idx_interv <- -1
       i = 1
-      while ((idx_interv < 0) & (i <= object@n_interventions)){
+      while ((idx_interv < 0) & (i <= object@n_npi)){
         #print(paste(idx_interv, i))
         if ((t>=interventions(object)[[i]]$starts) & (t<=interventions(object)[[i]]$stops)) idx_interv = i
         i = i+1
       } 
       # assign to the idx referring to the non-intervention parameter
-      if(idx_interv < 0) idx_interv = object@n_interventions + 1
+      if(idx_interv < 0) idx_interv = object@n_npi + 1
       return(idx_interv)
     }
     idx_interv_list <- lapply(times, function(t)idx_interv(t))
@@ -390,7 +388,7 @@ setMethod(
       with(
         as.list(c(state, parameters)),
         {
-          #beta_finals <- c(beta_interventions, beta)
+          #beta_finals <- c(beta_npi, beta)
           inter <- input(t)
           C_final <- C[[inter]]
           beta_final <- beta_finals[inter]
@@ -404,14 +402,14 @@ setMethod(
           
           
           # rate of change
-          #dS <- - S*(beta_interventions * C %*% I  * inter + beta * C %*% I * (1 - inter))
+          #dS <- - S*(beta_npi * C %*% I  * inter + beta * C %*% I * (1 - inter))
           dS <- - S*(beta_final * C_final %*% I)
-          #dE <- S*(beta_interventions * C %*% I * inter + beta * C %*% I * (1 - inter)) - kappa * E
+          #dE <- S*(beta_npi * C %*% I * inter + beta * C %*% I * (1 - inter)) - kappa * E
           dE <- S*(beta_final * C_final %*% I) - kappa * E
           dI <- kappa * E - gamma * I - mu * I
           dR <- gamma * I
           dD <- mu * I
-          #dcc <- S*(beta_interventions * C %*% I * inter + beta * C %*% I * (1 - inter))
+          #dcc <- S*(beta_npi * C %*% I * inter + beta * C %*% I * (1 - inter))
           dcc <- S*(beta_final * C_final %*% I)
           # return the rate of change
           list(c(dS, dE, dI, dR, dD, dcc))
@@ -467,6 +465,48 @@ setMethod(
     
     return(list("states" = states, "changes" = changes))
   })
+
+#' @describeIn SEIRDAge_NPI Calculates the basic reproduction number for SEIRDAge_NPI model
+#'
+#' To calculate this parameter, we first calculate the next generation matrix
+#' G, where G_ij gives the expected number of secondary infections of type i
+#' caused by a single infectious individual of type j, assuming that all
+#' of type i are susceptible. In the SEIRDAge_NPI model, the number of contacts
+#' resulting in infection per unit time in age group i is beta N_i C_ij, where
+#' N_i corresponds to the proportion of the population in that age group and
+#' C_ij is the contact matrix element. The average duration of infection is
+#' 1 / (mu_j + gamma_j) for an individual in age group j. This means the average number of
+#' secondary infections of type i caused by an infectious individual of type j is 
+#' g_ij = beta N_i C_ij / (mu_i + gamma_i). R0 is then given by the dominant
+#' eigenvalue of the G matrix.
+#'
+#' @param model an SEIRDAge_NPI model
+#'
+#' @return an R0 value
+#' 
+#' @export
+setMethod("R0", "SEIRDAge_NPI", function(model) {
+  
+  beta <- model@transmission_parameters$beta
+  gamma <- model@transmission_parameters$gamma
+  mu <- model@transmission_parameters$mu
+  
+  # we apply the original contact matrix without any intervention
+  C <- model@contact_matrix
+  
+  # sum over all population groups for each age group
+  population_sums <- matrix(unlist(initial_conditions(model)), nrow = model@n_age_categories) %>% rowSums
+  # calculate population fractions
+  population_fractions <- population_sums / sum(population_sums)
+  # calculate next generation matrix
+  C_times_N <- sweep(C, 1, population_fractions, "*")
+  death_plus_recovery <- mu + gamma
+  G <- sweep(beta * C_times_N, 1, death_plus_recovery, "/")
+  
+  # return dominant eigenvalue of it
+  lambda_dominant <- eigen(G)$values[1]
+  Re(lambda_dominant)
+})
 
 
 

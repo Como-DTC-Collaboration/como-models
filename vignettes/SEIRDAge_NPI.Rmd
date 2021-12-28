@@ -1,10 +1,10 @@
 ---
-title: "SEIRD_age_structred_with_interventions"
+title: "SEIRDAge_NPI"
 author: "Oscar Dimdore-Miles, Idil Cazimoglu and Liangti Dai"
 date: "28/10/2021"
 output: rmarkdown::html_vignette
 vignette: >
-  %\VignetteIndexEntry{The SEIRDAge_interventions model}
+  %\VignetteIndexEntry{The SEIRDAge_NPI model}
   %\VignetteEngine{knitr::knitr}
   %\VignetteEncoding{UTF-8}
 ---
@@ -120,8 +120,8 @@ We now use this contact matrix to allow infections to pass between age groups. T
 Specifically, the term $S_i \Sigma_{j}C_{ij} I_j$ effectively indicates the expected number of contacts between susceptible individuals of age class $i$ with infected individuals across all classes.
 
 
-## The SEIRDVAge Model
-The SEIRDAge_interventions model consists of five ODEs describing five populations of susceptible,
+## The SEIRDAge_NPI Model
+The SEIRDAge_NPI model consists of five ODEs describing five populations of susceptible,
 recovered, infectious, recovered and vaccinated individuals. Susceptible
 individuals ($S$) have not been exposed to the virus. Exposed individuals ($E$) have been
 exposed to the virus and have been infected but are not yet infectious to others; they are 
@@ -176,7 +176,7 @@ $S(t) + E(t) + I(t) + R(t) + D(t) \equiv 1$ for any given $t$. This means that e
 
 We next illustrate how this model works using functionality available in `comomodels` through several simulation processes.
 
-## The `SEIRDAge_interventions` class
+## The `SEIRDAge_NPI` class
 
 
 ## Simulation examples
@@ -199,11 +199,11 @@ n_ages <- 16
 c_combined_wider <- combined_contact_matrices_wider(c_combined)
 
 # create model
-n_interventions = 1 # only one intervention
-my_model <- SEIRDAge_interventions(n_age_categories = n_ages,
-                                   n_interventions = n_interventions,
+n_npi = 1 # only one intervention
+model <- SEIRDAge_NPI(n_age_categories = n_ages,
+                                   n_npi = n_npi,
                                    contact_matrix = c_combined_wider,
-                                   contact_matrix_interventions = list(c_combined_wider*0.5),
+                                   contact_matrix_npi = list(c_combined_wider*0.5),
                                    age_ranges = as.list(age_names)
 )
 ```
@@ -215,20 +215,20 @@ the mortality parameter $\mu$ is age-dependent as according to [Verity (2020)](h
 mu <- c(0.000016, 0.000016, 0.00007, 0.00007, 0.00031, 0.00031, 0.0026, 0.0026,
      0.0048, 0.0048, 0.006, 0.006, 0.019, 0.019, 0.043, 0.043)
 
-params <- list(beta_interventions = 0.65, beta = 1,
+params <- list(beta_npi = 0.65, beta = 1,
                kappa = 0.9, gamma = 0.5, mu = mu)
-transmission_parameters(my_model) <- params
+transmission_parameters(model) <- params
 ```
 
 To check that the parameters have been set correctly, we call
 ```{r}
-transmission_parameters(my_model)
+transmission_parameters(model)
 ```
 
 
 We now need to set the initial conditions for the model. We only set the initial conditions $S(0)$, $E(0)$, $I(0)$, $R(0)$, $V(0)$ and $VR(0)$.
 ```{r}
-initial_conditions(my_model) <- list(S0=pop_fraction*0.99,
+initial_conditions(model) <- list(S0=pop_fraction*0.99,
                                      E0=rep(0, n_ages),
                                      I0=pop_fraction*0.01,
                                      R0=rep(0, n_ages),
@@ -241,15 +241,12 @@ The initial conditions must sum to one. If they do not, an error is thrown.
 
 Now we simulate the system from $t=0$ days to $t=100$ days, with a single intervention between $t=5$ and $t=20$.
 ```{r}
-# interven <- list(list("starts"=5, "stops"=20, "coverages"=1),
-#                  list("starts"=50, "stops"=70, "coverages"=1),
-#                  list("starts"=100, "stops"=130, "coverages"=1))
 
 interven <- list(list("starts"=5, "stops"=20, "coverages"=1))
 
-interventions(my_model) <- interven
+interventions(model) <- interven
 times <- seq(0, 100, by = 1)
-out_df <- run(my_model, times)
+out_df <- run(model, times)
 ```
 
 
@@ -292,14 +289,13 @@ changes %>%
 ```
 
 
-
 ## Sensitivity analysis
 
 
 Different non-pharmaceutical interventions introduce different changes 
 in contact rates and infectiousness of the infected individuals. 
 In the model, the differences present on the values of contact matrices 
-and $beta_interventions$. We now explore several NPI scenarios: **physical distancing**, **self-isolation of the infected groups**, **school closures**, **shielding of older population groups (ie, ≥70 years)**, and a combination of them (**lockdown**). 
+and $beta_npi$. We now explore several NPI scenarios: **physical distancing**, **self-isolation of the infected groups**, **school closures**, **shielding of older population groups (ie, ≥70 years)**, and a combination of them (**lockdown**). 
 
 For the parameters of each scenario, we adopt the settings from [Davies, et.al. (2020)](https://doi.org/10.1016/S2468-2667(20)30133-X).
 
@@ -309,7 +305,7 @@ We introduce the intervention into the outbreak period of the epidemic.
 In this section, we investigate the sensitivity of different starting time.
 
 ```{r, fig.height = 5, fig.width = 15}
-run_SEIRDAge_interventions_single_intv <- function(beta_interventions, contact_matrix_interventions) {
+run_SEIRDAge_NPI_single_intv <- function(beta_npi, contact_matrix_npi) {
   inits <- list(S0=pop_fraction*0.99,
                 E0=rep(0, n_ages),
                 I0=pop_fraction*0.01,
@@ -318,13 +314,13 @@ run_SEIRDAge_interventions_single_intv <- function(beta_interventions, contact_m
                 )
   mu <- c(0.000016, 0.000016, 0.00007, 0.00007, 0.00031, 0.00031, 0.0026, 0.0026,
      0.0048, 0.0048, 0.006, 0.006, 0.019, 0.019, 0.043, 0.043)
-  params <- list(beta_interventions = beta_interventions, beta = 1,
+  params <- list(beta_npi = beta_npi, beta = 1,
                kappa = 0.9, gamma = 0.5, mu = mu)
-  model <- SEIRDAge_interventions(
+  model <- SEIRDAge_NPI(
     n_age_categories = n_ages,
-    n_interventions = 1,
+    n_npi = 1,
     contact_matrix = c_combined_wider,
-    contact_matrix_interventions = contact_matrix_interventions,
+    contact_matrix_npi = contact_matrix_npi,
     age_ranges = as.list(age_names),
     initial_conditions = inits,
     transmission_parameters=params,
@@ -337,8 +333,8 @@ run_SEIRDAge_interventions_single_intv <- function(beta_interventions, contact_m
 
 
 # run model for different scenarios
-## basline (baseline: no interventions at all)
-model_base <- run_SEIRDAge_interventions_single_intv(1, list(c_combined_wider))
+## basline (baseline: no intervention at all)
+model_base <- run_SEIRDAge_NPI_single_intv(1, list(c_combined_wider))
 result <- model_base$changes %>% mutate(scenario="baseline")
 result_states <- model_base$states %>% mutate(scenario="baseline")
 
@@ -356,12 +352,12 @@ c_combined_wider_pd <- c_home %>%
   combine_contact_matrices() %>% 
   combined_contact_matrices_wider()
 
-model_pd <- run_SEIRDAge_interventions_single_intv(1, list(c_combined_wider_pd))
+model_pd <- run_SEIRDAge_NPI_single_intv(1, list(c_combined_wider_pd))
 result <- result %>% bind_rows(model_pd$changes %>% mutate(scenario="physical distancing"))
 result_states <- result_states %>% bind_rows(model_pd$states %>% mutate(scenario="physical distancing"))
 
 ## self-isolation of the infected groups: beta_intervention = beta * 0.65
-model_si <- run_SEIRDAge_interventions_single_intv(0.65*1, list(c_combined_wider))
+model_si <- run_SEIRDAge_NPI_single_intv(0.65*1, list(c_combined_wider))
 result <- result %>% bind_rows(model_si$changes %>% mutate(scenario="self-isolation"))
 result_states <- result_states %>% bind_rows(model_si$states %>% mutate(scenario="self-isolation"))
 
@@ -373,7 +369,7 @@ c_combined_wider_sc <- c_home %>%
   combine_contact_matrices() %>% 
   combined_contact_matrices_wider()
 
-model_sc <- run_SEIRDAge_interventions_single_intv(1, list(c_combined_wider_sc))
+model_sc <- run_SEIRDAge_NPI_single_intv(1, list(c_combined_wider_sc))
 result <- result %>% bind_rows(model_sc$changes %>% mutate(scenario="school closure"))
 result_states <- result_states %>% bind_rows(model_sc$states %>% mutate(scenario="school closure"))
 
@@ -393,7 +389,7 @@ c_combined_wider_so <- c_home %>%
   bind_rows(c_other_so) %>% 
   combine_contact_matrices() %>% 
   combined_contact_matrices_wider()
-model_so <- run_SEIRDAge_interventions_single_intv(1, list(c_combined_wider_so))
+model_so <- run_SEIRDAge_NPI_single_intv(1, list(c_combined_wider_so))
 result <- result %>% bind_rows(model_so$changes %>% mutate(scenario="shielding of older"))
 result_states <- result_states %>% bind_rows(model_so$states %>% mutate(scenario="shielding of older"))
 
@@ -411,7 +407,7 @@ c_combined_wider_l <- c_home %>%
   bind_rows(c_other_l) %>% 
   combine_contact_matrices() %>% 
   combined_contact_matrices_wider()
-model_l <- run_SEIRDAge_interventions_single_intv(0.65*1, list(c_combined_wider_l))
+model_l <- run_SEIRDAge_NPI_single_intv(0.65*1, list(c_combined_wider_l))
 result <- result %>% bind_rows(model_l$changes %>% mutate(scenario="lockdown"))
 result_states <- result_states %>% bind_rows(model_l$states %>% mutate(scenario="lockdown"))
 
@@ -443,7 +439,7 @@ result %>%
   ggplot_results_by_compartment(labs_y="fraction of the population \n that died per day", text_size = 15) +
   facet_wrap(~scenario) +
   geom_rect(aes_string(xmin = "interv_starts", xmax = "interv_stops", ymin = -Inf, ymax = Inf),
-             colour="red", fill=NA, linewidth=0.5)
+             colour="red", fill=NA)
 
 result %>% 
   filter(compartment=="Incidence") %>% 
@@ -476,7 +472,7 @@ In this section, we further explore the combinations of different NPI scenarios.
 This time we focus on the effect of different ordering of NPIs. 
 Here we focus on two NPIs, self-isolation and physical distancing.
 ```{r, fig.height=5, fig.width=15}
-run_SEIRDAge_interventions_mult_intv <- function(beta_interventions, contact_matrix_interventions, n_interventions) {
+run_SEIRDAge_NPI_mult_intv <- function(beta_npi, contact_matrix_npi, n_npi) {
   inits <- list(S0=pop_fraction*0.99,
                 E0=rep(0, n_ages),
                 I0=pop_fraction*0.01,
@@ -485,13 +481,13 @@ run_SEIRDAge_interventions_mult_intv <- function(beta_interventions, contact_mat
                 )
   mu <- c(0.000016, 0.000016, 0.00007, 0.00007, 0.00031, 0.00031, 0.0026, 0.0026,
      0.0048, 0.0048, 0.006, 0.006, 0.019, 0.019, 0.043, 0.043)
-  params <- list(beta_interventions = beta_interventions, beta = 1,
+  params <- list(beta_npi = beta_npi, beta = 1,
                kappa = 0.9, gamma = 0.3, mu = mu)
-  model <- SEIRDAge_interventions(
+  model <- SEIRDAge_NPI(
     n_age_categories = n_ages,
-    n_interventions = n_interventions,
+    n_npi = n_npi,
     contact_matrix = c_combined_wider,
-    contact_matrix_interventions = contact_matrix_interventions,
+    contact_matrix_npi = contact_matrix_npi,
     age_ranges = as.list(age_names),
     initial_conditions = inits,
     transmission_parameters=params,
@@ -505,31 +501,31 @@ run_SEIRDAge_interventions_mult_intv <- function(beta_interventions, contact_mat
 
 
 # run model for different scenarios
-## basline (baseline: no interventions at all)
+## basline (baseline: no intervention at all)
 result <- model_base$changes %>% mutate(scenario="baseline")
 result_states <- model_base$states %>% mutate(scenario="baseline")
 
 
-model_pd_pd <- run_SEIRDAge_interventions_mult_intv(c(1, 1), 
+model_pd_pd <- run_SEIRDAge_NPI_mult_intv(c(1, 1), 
                                                     list(c_combined_wider_pd, c_combined_wider_pd),
                                                     2)
 result <- result %>% bind_rows(model_pd_pd$changes %>% mutate(scenario="pd-pd"))
 result_states <- result_states %>% bind_rows(model_pd_pd$states %>% mutate(scenario="pd-pd"))
 
 ## self-isolation of the infected groups: beta_intervention = beta * 0.65
-model_si_si <- run_SEIRDAge_interventions_mult_intv(c(0.65*1, 0.65*1),
+model_si_si <- run_SEIRDAge_NPI_mult_intv(c(0.65*1, 0.65*1),
                                                       list(c_combined_wider, c_combined_wider),
                                                       2)
 result <- result %>% bind_rows(model_si_si$changes %>% mutate(scenario="si-si"))
 result_states <- result_states %>% bind_rows(model_si_si$states %>% mutate(scenario="si-si"))
 
-model_pd_si <- run_SEIRDAge_interventions_mult_intv(c(1, 0.65*1), 
+model_pd_si <- run_SEIRDAge_NPI_mult_intv(c(1, 0.65*1), 
                                                       list(c_combined_wider_pd, c_combined_wider),
                                                       2)
 result <- result %>% bind_rows(model_pd_si$changes %>% mutate(scenario="pd-si"))
 result_states <- result_states %>% bind_rows(model_pd_si$states %>% mutate(scenario="pd-si"))
 
-model_si_pd <- run_SEIRDAge_interventions_mult_intv(c(0.65*1, 1), 
+model_si_pd <- run_SEIRDAge_NPI_mult_intv(c(0.65*1, 1), 
                                                       list(c_combined_wider, c_combined_wider_pd),
                                                       2)
 result <- result %>% bind_rows(model_si_pd$changes %>% mutate(scenario="si-pd"))
