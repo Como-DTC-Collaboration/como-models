@@ -264,7 +264,7 @@ setMethod("R0", "SEIRD_BD", function(model) {
   beta <- model@transmission_parameters$beta
   gamma <- model@transmission_parameters$gamma
   mu <- model@transmission_parameters$mu
-  kappa <- model@transmission_parameters$nu
+  kappa <- model@transmission_parameters$kappa
   nu <- model@transmission_parameters$nu
   beta * kappa / (kappa + nu) * 1 / (gamma + mu + nu)
 })

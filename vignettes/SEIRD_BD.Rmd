@@ -1,6 +1,7 @@
 ---
 title: "SEIRD_BD: a compartmental model including natural births and deaths"
 output: rmarkdown::html_vignette
+bibliography: references.bib
 vignette: >
   %\VignetteIndexEntry{SEIRD_BD}
   %\VignetteEngine{knitr::rmarkdown}
@@ -43,10 +44,10 @@ If we ignore death due to COVID-19 infection (i.e. set $\mu=0$), the evolution o
 \frac{\text{d}N}{\text{d}t} = \lambda - \nu N.
 \end{equation}
 
-which has a steady state: $N* = \lambda / \nu$. Assuming the initial population size, $N(0)$, is below this, it grows at an ever-declining rate towards this steady state:
+which has a steady state: $N^* = \lambda / \nu$. Assuming the initial population size, $N(0)$, is below this, it grows at an ever-declining rate towards this steady state:
 
 \begin{equation}
-N(t) = N* - (N* - N(0)) \exp(-\nu t).
+N(t) = N^* - (N^* - N(0)) \exp(-\nu t).
 \end{equation}
 
 ## Basic reproduction number
@@ -60,7 +61,7 @@ R_0 = &\text{ # infected per unit time by an infectious indiv. } \times\\
 \end{split}
 \end{align}
 
-where we have assumed the entire population are susceptible, in line with the definition of the basic reproduction number [insert citation for diekerman].
+where we have assumed the entire population are susceptible, in line with the definition of the basic reproduction number [@diekmann1990definition].
 
 which is given by:
 
@@ -68,9 +69,9 @@ which is given by:
 R_0 = \beta \times \frac{\kappa}{\kappa + \nu} \times \frac{1}{\gamma + \mu + \nu}.
 \end{equation}
 
-Where we note that, if $\nu=0$, the basic reproduction reduces to that for the basic SEIRD model without vital dynamics: $R_0 = \beta / (\gamma + \mu)$. Indeed, consider COVID-19 transmission, the rate of becoming infectious and death rate due to disease are each much greater than the rate of natural death, so the two reproduction numbers will be approximately equal.
+Where we note that, if $\nu=0$, the basic reproduction reduces to that for the basic SEIRD model: $R_0 = \beta / (\gamma + \mu)$. Indeed, considering COVID-19 transmission, the rate of becoming infectious and death rate due to disease are each much greater than the rate of natural death, so the two reproduction numbers will be approximately equal.
 
-## Multiple epidemic waves
+## Multiple epidemic waves and an endemic steady state
 Let's create an SEIRD_BD model.
 ```{r}
 model <- SEIRD_BD()
@@ -81,21 +82,21 @@ And we are going to start with 0.01\% infectious individuals and everyone else i
 initial_conditions(model) <- list(S0=0.999, E0=0, I0=0.001, R0=0)
 ```
 
-We next give it transmission parameters. Here, we assume an average latency period of 5.5 days (as has been estimated for COVID-19; @xin2021estimating), and an average duration of infectiousness of 2 days (which indicates that, after 10 days, <1\% would be infectious, which is in line with UK policy which assumes individuals cannot pass on infection after 10 days; @stayathome2021).
-
-Here, we assume a case fatality ratio of 1.38\% [verity citation].
+We next give it transmission parameters. Here, we follow suit with the same parameter values as for the basic SEIRD model for $\mu$, $\kappa$ and $\gamma$. We start by allowing no natural death, by setting $\nu=0$. To illustrate an implication of replenishment of susceptibles, we include an unnaturally high birthrate where newborns account for 0.1\% of the population each day at beginning of simulations. Finally, we set $\beta$ so that $R_0=2.4$ as in report 9 by Imperial College [@ferguson2020report].
 
 ```{r}
 kappa <- 1 / 5.5
-eta <- 1 / 2
-cfr <- 0.0138
-gamma <- eta * (1 - cfr)
-mu <- eta * cfr
-nu <- 0.001
-lambda <- 0.01
+zeta <- 1 / 2
+ifr <- 0.0066
+gamma <- zeta * (1 - ifr)
+mu <- zeta * ifr
+nu <- 0.0
+lambda <- 0.001
+R0_target <- 2.4
+beta <- R0_target * (kappa + nu) / kappa * (gamma + mu + nu)
 
 transmission_parameters(model) <- list(
-  beta=1,
+  beta=beta,
   kappa=kappa,
   gamma=gamma,
   mu=mu,
@@ -103,29 +104,44 @@ transmission_parameters(model) <- list(
   nu=nu)
 ```
 
-We now run the model using these parameters.
-```{r}
-results <- run(model, times = seq(0, 2000, 1))
+We now run the model using these parameters and plot the infectious proportion over time. This plot illustrates repeated epidemic waves, each representing a re-invasion of the pathogen through the population.
+```{r, fig.width=10, fig.height=5}
+results <- run(model, times = seq(0, 5000, 1))
 
 states <- results$states
-pop_size <- states %>% 
-  filter(compartment != "D") %>% 
-  group_by(time) %>% 
-  summarise(total_pop=sum(value))
-states <- states %>%
-  left_join(pop_size) %>% 
-  mutate(value=value / total_pop)
   
-states %>% 
-  filter(compartment == "I") %>% 
+# plot infectious
+states %>%
+  filter(compartment == "I") %>%
   ggplot(aes(x = time, y = value)) +
   geom_line(aes(color = compartment)) +
   scale_color_brewer(palette = "Dark2") +
-  labs(x = "time (days)", y = "fraction of the population") +
-  theme(text = element_text(size = 14)) 
+  labs(x = "time (days)", y = "value") +
+  theme(text = element_text(size = 14))
 ```
 
+To see how this oscillatory behaviour occurs, we overlay the time-varying reproduction number, $R_t = R_0 S(t)$, on the same plot.
 
-Plot time-varying reproduction number.
+```{r, fig.width=10, fig.height=5}
+R_0 <- R0(model)
+states %>% 
+  mutate(value=if_else(compartment=="S", R_0 * value, value)) %>%
+  mutate(compartment=as.character(compartment)) %>% 
+  mutate(compartment=if_else(compartment=="S", "Rt", compartment)) %>% 
+  group_by(compartment) %>% 
+  mutate(value=if_else(compartment=="I", value / max(value), value)) %>% 
+  ungroup() %>% 
+  filter(compartment %in% c("Rt", "I")) %>% 
+  ggplot(aes(x = time, y = value))  +
+  geom_hline(yintercept = 1, linetype=2) +
+  geom_line(aes(color = compartment)) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(x = "time (days)", y = "value") +
+  theme(text = element_text(size = 14))
+```
 
-https://www.ons.gov.uk/peoplepopulationandcommunity/birthsdeathsandmarriages/lifeexpectancies/bulletins/nationallifetablesunitedkingdom/2018to2020
+This shows the new susceptibles born into the population lead $R_t$ to increase over time, until, eventually, $R_t>1$, and a new epidemic wave sweeps through the population. Over time, these waves occur more frequently and they become less marked.
+
+Eventually $R_t\rightarrow 1$, and an endemic equilibrium is reached, where a non-zero fraction of the population are infected. This is a notable difference from the SEIRD model, which does not permit a steady state. To determine that steady state fraction...
+
+## References
