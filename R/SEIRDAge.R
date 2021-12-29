@@ -153,8 +153,13 @@ setMethod('transmission_parameters', 'SEIRDAge',
 #'
 #' @param value a named list of form list(b=, k=, g=, mu=)
 #'
-#' All rates of change between compartments are equal regardless of
-#' age group.
+#' Here b is the rate of infection (S->I); k is the rate of transitioning from the
+#' infected to infectious compartment (E->I); g is the rate of recovery (I->R). The
+#' parameters b and k are numbers. The death rate
+#' mu and recovery rate g can either be a single number, in which case all ages
+#' are assumed to
+#' have the same rate; or it can be a vector of length equal to the number of
+#' age classes. 
 #'
 #' @return Updated version of the age-structured SEIRD model.
 #' @export
@@ -175,12 +180,17 @@ setMethod(
     names(trans_params) = object@transmission_parameter_names
     
     # check format of parameters b, k and g
-    if(length(b) != 1 | length(k) != 1 | length(g) != 1){
+    if(length(b) != 1 | length(k) != 1){
       stop('The parameter values should be 1-dimensional.')
     }
     
     if(length(mu) != 1 & length(mu) != object@n_age_categories){
       stop('The mortality parameter values should be of length 1 or
+            number of age classes.')
+    }
+    
+    if(length(g) != 1 & length(g) != object@n_age_categories){
+      stop('The recovery rate parameter values should be of length 1 or
             number of age classes.')
     }
     
@@ -205,9 +215,9 @@ setMethod(
 #'
 #' \deqn{\frac{dS_i(t)}{dt} = - \beta S_i(t) \Sigma_{j}C_{ij} I_j(t)}
 #' \deqn{\frac{dE_i(t)}{dt} = \beta S_i(t) \Sigma_{j}C_{ij} I_j(t) - \kappa E_i(t)}
-#' \deqn{\frac{dI_i(t)}{dt} = \kappa E_i(t) - \gamma I_i(t) - \mu I_i(t)}
+#' \deqn{\frac{dI_i(t)}{dt} = \kappa E_i(t) - \gamma I_i(t) - \mu_i I_i(t)}
 #' \deqn{\frac{dR_i(t)}{dt} = \gamma I_i(t)}
-#' \deqn{\frac{dD_i(t)}{dt} = \mu I_i(t)}
+#' \deqn{\frac{dD_i(t)}{dt} = \mu_i I_i(t)}
 
 #' where C is a contact matrix whose elements represents the
 #' contact between different age groups (rows) with age groups of
@@ -337,4 +347,40 @@ setMethod(
       dplyr::ungroup()
     
     return(list("states" = states, "changes" = changes))
-  })
+})
+
+#' @describeIn SEIRDAge Calculates basic reproduction number for SEIRDAge model
+#'
+#' To calculate this parameter, we first calculate the next generation matrix
+#' G, where G_ij gives the expected number of infections of type i
+#' caused by a single infectious individual of type j, assuming that all
+#' of type i are susceptible. In the SEIRDAge model, the number of contacts
+#' resulting in infection per unit time in age group i is beta N_i C_ij, where
+#' N_i corresponds to the proportion of the population in that age group and
+#' C_ij is the contact matrix element. The average duration of infection is
+#' 1 / (mu_j + gamma_j) for an individual in age group j. This means the average number of
+#' secondary infections of type i caused by an infectious individual of type j is 
+#' g_ij = beta N_i C_ij / (mu_i + gamma_i). R0 is then given by the dominant
+#' eigenvalue of the G matrix.
+#'
+#' @param model an SEIRDAge model
+#' @param population_fractions the fraction of the population in each age group
+#'
+#' @return an R0 value
+#' 
+#' @export
+setMethod("R0", "SEIRDAge", function(model, population_fractions) {
+  beta <- model@transmission_parameters$b
+  gamma <- model@transmission_parameters$g
+  mu <- model@transmission_parameters$mu
+  C <- model@contact_matrix
+  
+  # calculate next generation matrix
+  C_times_N <- sweep(C, 1, population_fractions, "*")
+  death_plus_recovery <- mu + gamma
+  G <- sweep(beta * C_times_N, 2, death_plus_recovery, "/")
+  
+  # return dominant eigenvalue of it
+  lambda_dominant <- eigen(G)$values[1]
+  Re(lambda_dominant)
+})
