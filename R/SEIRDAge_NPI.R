@@ -203,10 +203,12 @@ setMethod(
     # check format of parameters: should be either a single 
     # positive real value or a list of positive real values with
     # the length equal to the number of age groups
-    for(param in trans_params){
-      if((length(param) != 1) & (length(param)!=object@n_age_categories)){
-        stop("The parameter values should be either 1-dimensional or of size
-             equal to the number of age groups")
+    for(i in seq_along(trans_params)){
+      param_vals = trans_params[[i]]
+      param_name = names(trans_params[i])
+      if((length(param_vals) != 1) & (length(param_vals)!=object@n_age_categories)){
+        stop(paste0("The parameter value(s) of ", param_name, " should be of length 1 or
+            the number of age classes (i.e. object@n_age_categories)"))
       }
     }
     # if all above tests are passed, assign the trans_params namelist to the

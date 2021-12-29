@@ -29,8 +29,50 @@ test_that("SEIRDAge_NPI gets instantiated", {
 test_that("can retrieve SEIRDAge_NPI transmission parameters", {
   my_model <- SEIRDAge_NPI(n_age_categories = 2)
   
+  transmission_parameters(my_model) <- list(beta_npi = c(0.5, 0.5),
+                                            beta = 1,
+                                            kappa = c(1, 0.5),
+                                            gamma = 0.5,
+                                            mu = 0)
+
+  # Test output is correct
+  expected_ics <- list(beta_npi = c(0.5, 0.5),
+                       beta = 1,
+                       kappa = c(1, 0.5),
+		       gamma = 0.5,
+                       mu = 0)
+
   expect_equal(transmission_parameters(my_model),
-               vector(mode = "list", length = length(my_model@transmission_parameter_names)))
+               expected_ics)
+
+  # Test output length equal to the length of names
+  expect_equal(length(transmission_parameters(my_model)), 
+               length(my_model@transmission_parameter_names)
+  )
+  # Test output names are correct
+  expect_equal(sort(names(transmission_parameters(my_model))), 
+               sort(unlist(my_model@transmission_parameter_names))
+  )
+  # expect_equal(transmission_parameters(my_model),
+  #              vector(mode = "list", length = length(my_model@transmission_parameter_names)))
+
+  # Test input errors
+  ## missing params (mu)
+  expect_error(
+    transmission_parameters(my_model) <- list(beta_npi = c(0.5, 0.5),
+                                              beta = 1,
+                                              kappa = c(1, 0.5),
+                                              gamma = 0.5)
+  )
+  ## bad length (kappa)
+  expect_error(
+    transmission_parameters(my_model) <- list(beta_npi = c(0.5, 0.5),
+                                              beta = 1,
+                                              kappa = c(1, 0.5, 0.5),
+                                              gamma = 0.5, 
+                                              mu = 0)
+  )
+
 })
 
 test_that("can set new initial conditions for the SEIRDAge_NPI", {
