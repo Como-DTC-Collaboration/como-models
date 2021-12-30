@@ -1,5 +1,5 @@
 ---
-title: "SEIRD_BD: a compartmental model including natural births and deaths"
+title: "SEIRD_BD: including natural births and deaths and waning immunity"
 output: rmarkdown::html_vignette
 bibliography: references.bib
 vignette: >
@@ -21,9 +21,16 @@ library(tidyverse)
 ```
 
 ## Introduction
-Over longer timescales, natural births and deaths can affect the ability of an infectious disease to invade a population. If there is no maternal immunity inherited by newborns, we may assume they are susceptible to infection. This replenishment of the susceptible population can, over long periods, allow an infectious disease to re-invade a population, and an epidemic wave may reoccur. In this notebook, we investigate this phenomenon.
+Over longer timescales, natural births and deaths can affect the ability of an infectious disease to invade a population. If there is no maternal immunity inherited by newborns, we may assume they are susceptible to infection. This replenishment of the susceptible population can, over long periods, allow an infectious disease to re-invade a population, and an epidemic wave may reoccur.
 
-Here, we use the basic SEIRD model equations, but extend these to include natural birth and death terms.
+In the basic SEIRD model, an individual who has been exposed to a pathogen and "recovered" from infection is assumed to be immune to reinfection. Immunity to reinfection is known to wane in the time period following when individuals receive vaccinations [@goldberg2021waning]. Natural immunity resultant from previous infection with SARS-CoV-2 has been found to have a stronger and longer-lasting protection against the Delta version of the virus than the Pfizer BNT162b2 two-dose vaccine [@gazit2021comparing], although it is widely thought that the protection conferred by infection also wanes over time.
+
+Waning immunity has a similar impact on transmission dynamics as does including natural births in that it leads to replenishment of susceptible individuals. Though the rate at which it does so is different -- for COVID-19, it is likely much faster.
+
+In this notebook, we investigate how the dynamics of infection throughout the population are affected by natural birth and death and a waning natural immunity.
+
+## Natural birth and death
+We start by extending the basic SEIRD model to include natural birth and death terms.
 
 $$\frac{\text{d}S}{\text{d}t} = \lambda -\beta S I - \nu S,$$
 $$\frac{\text{d}E}{\text{d}t} = \beta S I - (\kappa + \nu) E,$$
@@ -50,7 +57,7 @@ which has a steady state: $N^* = \lambda / \nu$. Assuming the initial population
 N(t) = N^* - (N^* - N(0)) \exp(-\nu t).
 \end{equation}
 
-## Basic reproduction number
+### Basic reproduction number
 The basic reproduction number, $R_0$, is obtained in similar fashion to that of the basic SEIRD model. A slight difference here is that exposed individuals can die before they pass on infection. So, $R_0$ for the SEIRD_BD model is given by:
 
 \begin{align}
@@ -71,7 +78,7 @@ R_0 = \beta \times \frac{\kappa}{\kappa + \nu} \times \frac{1}{\gamma + \mu + \n
 
 Where we note that, if $\nu=0$, the basic reproduction reduces to that for the basic SEIRD model: $R_0 = \beta / (\gamma + \mu)$. Indeed, considering COVID-19 transmission, the rate of becoming infectious and death rate due to disease are each much greater than the rate of natural death, so the two reproduction numbers will be approximately equal.
 
-## Multiple epidemic waves and an endemic steady state
+### Multiple epidemic waves and an endemic steady state
 Let's create an SEIRD_BD model.
 ```{r}
 model <- SEIRD_BD()
@@ -90,8 +97,9 @@ zeta <- 1 / 2
 ifr <- 0.0066
 gamma <- zeta * (1 - ifr)
 mu <- zeta * ifr
-nu <- 0.0
-lambda <- 0.001
+nu <- 0
+lambda <- 2.7e-5
+omega <- 0 # waning natural immunity term -- to explore later
 R0_target <- 2.4
 beta <- R0_target * (kappa + nu) / kappa * (gamma + mu + nu)
 
@@ -101,19 +109,21 @@ transmission_parameters(model) <- list(
   gamma=gamma,
   mu=mu,
   lambda=lambda,
-  nu=nu)
+  nu=nu,
+  omega=omega)
 ```
 
 We now run the model using these parameters and plot the infectious proportion over time. This plot illustrates repeated epidemic waves, each representing a re-invasion of the pathogen through the population.
 ```{r, fig.width=10, fig.height=5}
-results <- run(model, times = seq(0, 5000, 1))
+results <- run(model, times = seq(0, 10000, 1))
 
 states <- results$states
-  
+changes <- results$changes
+
 # plot infectious
 states %>%
   filter(compartment == "I") %>%
-  ggplot(aes(x = time, y = value)) +
+  ggplot(aes(x = time/365, y = value)) +
   geom_line(aes(color = compartment)) +
   scale_color_brewer(palette = "Dark2") +
   labs(x = "time (days)", y = "value") +
@@ -143,5 +153,20 @@ states %>%
 This shows the new susceptibles born into the population lead $R_t$ to increase over time, until, eventually, $R_t>1$, and a new epidemic wave sweeps through the population. Over time, these waves occur more frequently and they become less marked.
 
 Eventually $R_t\rightarrow 1$, and an endemic equilibrium is reached, where a non-zero fraction of the population are infected. This is a notable difference from the SEIRD model, which does not permit a steady state. To determine that steady state fraction...
+
+## Waning natural immunity
+```{r}
+kappa <- 1 / 5.5
+zeta <- 1 / 2
+ifr <- 0.0066
+gamma <- zeta * (1 - ifr)
+mu <- zeta * ifr
+nu <- 1 / (80 * 365)
+lambda <- 2.7e-5
+omega <- 1 / 90
+R0_target <- 2.4
+beta <- R0_target * (kappa + nu) / kappa * (gamma + mu + nu)
+```
+
 
 ## References
