@@ -89,7 +89,7 @@ And we are going to start with 0.01\% infectious individuals and everyone else i
 initial_conditions(model) <- list(S0=0.999, E0=0, I0=0.001, R0=0)
 ```
 
-We next give it transmission parameters. Here, we follow suit with the same parameter values as for the basic SEIRD model for $\mu$, $\kappa$ and $\gamma$. We start by allowing no natural death, by setting $\nu=0$. To illustrate an implication of replenishment of susceptibles, we include an unnaturally high birthrate where newborns account for 0.1\% of the population each day at beginning of simulations. Finally, we set $\beta$ so that $R_0=2.4$ as in report 9 by Imperial College [@ferguson2020report].
+We next give it transmission parameters. Here, we follow suit with the same parameter values as for the basic SEIRD model for $\mu$, $\kappa$ and $\gamma$. We start by allowing no natural death, by setting $\nu=0$. To illustrate an implication of replenishment of susceptibles, we include an unnaturally high birth rate where newborns account for 0.1\% of the population each day at beginning of simulations. Finally, we set $\beta$ so that $R_0=2.4$ as in report 9 by Imperial College [@ferguson2020report].
 
 ```{r}
 kappa <- 1 / 5.5
@@ -98,7 +98,7 @@ ifr <- 0.0066
 gamma <- zeta * (1 - ifr)
 mu <- zeta * ifr
 nu <- 0
-lambda <- 2.7e-5
+lambda <- 0.001
 omega <- 0 # waning natural immunity term -- to explore later
 R0_target <- 2.4
 beta <- R0_target * (kappa + nu) / kappa * (gamma + mu + nu)
@@ -115,18 +115,19 @@ transmission_parameters(model) <- list(
 
 We now run the model using these parameters and plot the infectious proportion over time. This plot illustrates repeated epidemic waves, each representing a re-invasion of the pathogen through the population.
 ```{r, fig.width=10, fig.height=5}
-results <- run(model, times = seq(0, 10000, 1))
+# run model
+results <- run(model, times = seq(0, 5000, 1))
 
+# extract states
 states <- results$states
-changes <- results$changes
 
 # plot infectious
 states %>%
   filter(compartment == "I") %>%
-  ggplot(aes(x = time/365, y = value)) +
+  ggplot(aes(x = time / 365.25, y = value)) +
   geom_line(aes(color = compartment)) +
   scale_color_brewer(palette = "Dark2") +
-  labs(x = "time (days)", y = "value") +
+  labs(x = "time (years)", y = "value") +
   theme(text = element_text(size = 14))
 ```
 
@@ -142,17 +143,91 @@ states %>%
   mutate(value=if_else(compartment=="I", value / max(value), value)) %>% 
   ungroup() %>% 
   filter(compartment %in% c("Rt", "I")) %>% 
-  ggplot(aes(x = time, y = value))  +
+  ggplot(aes(x = time / 365.25, y = value))  +
   geom_hline(yintercept = 1, linetype=2) +
   geom_line(aes(color = compartment)) +
   scale_color_brewer(palette = "Dark2") +
-  labs(x = "time (days)", y = "value") +
+  labs(x = "time (years)", y = "value") +
   theme(text = element_text(size = 14))
 ```
 
 This shows the new susceptibles born into the population lead $R_t$ to increase over time, until, eventually, $R_t>1$, and a new epidemic wave sweeps through the population. Over time, these waves occur more frequently and they become less marked.
 
-Eventually $R_t\rightarrow 1$, and an endemic equilibrium is reached, where a non-zero fraction of the population are infected. This is a notable difference from the SEIRD model, which does not permit a steady state. To determine that steady state fraction...
+Eventually $R_t\rightarrow 1$, and an endemic equilibrium is reached, where a non-zero fraction of the population are infected. This is a notable difference from the SEIRD model, which does not permit a steady state.
+
+### Steady states
+To further explore the steady states of this system, we set the right-hand sides of the ordinary differential equations within the system to zero:
+
+$$\lambda -\beta S I - \nu S=0$$
+$$\beta S I - (\kappa + \nu) E=0$$
+$$\kappa E - (\gamma + \mu + \nu) I=0$$
+$$\gamma I + \nu R=0.$$
+Solving these simultaneously yields two possible equilibria: one representing the disease-free steady state; another representing the case when the disease becomes endemic. These states are given by:
+
+\begin{align}
+S^* &= \frac{(\kappa +\nu ) (\gamma +\mu +\nu )}{\beta  \kappa },\\
+E^* &= \frac{\lambda }{\kappa +\nu }-\frac{\nu  (\gamma +\mu +\nu )}{\beta  \kappa },\\
+I^* &= \frac{\kappa  \lambda }{(\kappa +\nu ) (\gamma +\mu +\nu )}-\frac{\nu }{\beta },\\
+R^* &= \frac{\gamma  \kappa  \lambda }{\nu  (\kappa +\nu ) (\gamma +\mu +\nu )}-\frac{\gamma
+   }{\beta }.
+\end{align}
+
+In determining the conditions when $I^*>0$, we find the following condition:
+
+\begin{equation}
+\beta >\frac{\nu  (\kappa +\nu ) (\gamma +\mu +\nu )}{\kappa  \lambda }
+\end{equation}
+
+For the previously simulated system, we calculate $I^*$ and overlay this on the plot to illustrate the limiting behaviour of the system.
+```{r, fig.width=10, fig.height=5}
+I_star = kappa * lambda / ((kappa + nu) * (gamma + kappa + nu)) - nu / beta
+
+states %>%
+  filter(compartment == "I") %>%
+  ggplot(aes(x = time / 365.25, y = value)) +
+  geom_hline(yintercept = I_star, linetype=2) +
+  geom_line(aes(color = compartment)) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(x = "time (years)", y = "value") +
+  theme(text = element_text(size = 14))
+```
+
+### Realistic parameter values for COVID-19
+The parameter values for $\nu$ and $\lambda$ considered thus far have been unrealistic. We now set these to more reasonable values for the UK. The average life expectancy of a female in the UK is 82.9 years for females and 79.0 years for males [@ons2021national]: assuming equal numbers of each sex, the average life expectancy is 80.95 years. To determine $\nu$, we calculate a per day mortality rate: $\nu=1/(80.95 \times 365.25)=3.4\times 10^{-5}$ per day. In 2019, the UK experienced 712,680 births in a population of 66.8 million [@ukpopulation2021]. As a fraction, annual births then represent roughly 1\% of the population. To determine $\lambda$, we put this on a daily rate resulting in $\lambda=2.9 \times 10^{-5}$. We use these parameter values to simulate the model.
+
+```{r, fig.width=10, fig.height=5}
+# set parameter values
+nu <- 1 / (80.95 * 365.25)
+lambda <- 712680/66.8e6/365.25
+
+beta <- R0_target * (kappa + nu) / kappa * (gamma + mu + nu)
+
+transmission_parameters(model) <- list(
+  beta=beta,
+  kappa=kappa,
+  gamma=gamma,
+  mu=mu,
+  lambda=lambda,
+  nu=nu,
+  omega=omega)
+
+# run model
+results <- run(model, times = seq(0, 50000, 1))
+
+# extract states
+states <- results$states
+
+# plot infectious
+states %>%
+  filter(compartment == "I") %>%
+  ggplot(aes(x = time / 365.25, y = value)) +
+  geom_line(aes(color = compartment)) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(x = "time (years)", y = "value") +
+  theme(text = element_text(size = 14))
+```
+From this, we see that there is a second epidemic wave, but it takes nearly 100 years for it to occur! So, birth and natural death (in the UK, at least) appear not to play substantial roles in causing epidemic re-emergence.
+
 
 ## Waning natural immunity
 ```{r}
@@ -161,7 +236,7 @@ zeta <- 1 / 2
 ifr <- 0.0066
 gamma <- zeta * (1 - ifr)
 mu <- zeta * ifr
-nu <- 1 / (80 * 365)
+
 lambda <- 2.7e-5
 omega <- 1 / 90
 R0_target <- 2.4
