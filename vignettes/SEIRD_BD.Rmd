@@ -1,5 +1,5 @@
 ---
-title: "SEIRD_BD: including natural births and deaths and waning immunity"
+title: "SEIRD_BD: including births and natural deaths and waning immunity"
 output: rmarkdown::html_vignette
 bibliography: references.bib
 vignette: >
@@ -13,6 +13,7 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>"
 )
+options(scipen=999)
 ```
 
 ```{r setup, include=FALSE}
@@ -21,27 +22,27 @@ library(tidyverse)
 ```
 
 ## Introduction
-Over longer timescales, natural births and deaths can affect the ability of an infectious disease to invade a population. If there is no maternal immunity inherited by newborns, we may assume they are susceptible to infection. This replenishment of the susceptible population can, over long periods, allow an infectious disease to re-invade a population, and an epidemic wave may reoccur.
+Over longer timescales, births and natural deaths can affect the ability of an infectious disease to invade a population. If there is no maternal immunity inherited by newborns, we may assume they are susceptible to infection. This replenishment of the susceptible population can, over long periods, allow an infectious disease to re-invade a population, and an epidemic wave may reoccur.
 
 In the basic SEIRD model, an individual who has been exposed to a pathogen and "recovered" from infection is assumed to be immune to reinfection. Immunity to reinfection is known to wane in the time period following when individuals receive vaccinations [@goldberg2021waning]. Natural immunity resultant from previous infection with SARS-CoV-2 has been found to have a stronger and longer-lasting protection against the Delta version of the virus than the Pfizer BNT162b2 two-dose vaccine [@gazit2021comparing], although it is widely thought that the protection conferred by infection also wanes over time.
 
-Waning immunity has a similar impact on transmission dynamics as does including natural births in that it leads to replenishment of susceptible individuals. Though the rate at which it does so is different -- for COVID-19, it is likely much faster.
+Waning immunity has a similar impact on transmission dynamics as does including births in that it leads to replenishment of susceptible individuals. Though the rate at which it does so is different -- for COVID-19, it is much faster.
 
-In this notebook, we investigate how the dynamics of infection throughout the population are affected by natural birth and death and a waning natural immunity.
+In this notebook, we investigate how the dynamics of infection throughout the population are affected by births and natural deaths and a waning natural immunity.
 
-## Natural birth and death
-We start by extending the basic SEIRD model to include natural birth and death terms.
+## Births and natural death
+To begin, we ignore waning natural immunity and etend the basic SEIRD model to include births and natural death terms.
 
 $$\frac{\text{d}S}{\text{d}t} = \lambda -\beta S I - \nu S,$$
 $$\frac{\text{d}E}{\text{d}t} = \beta S I - (\kappa + \nu) E,$$
 $$\frac{\text{d}I}{\text{d}t} = \kappa E - (\gamma + \mu + \nu) I,$$
-$$\frac{\text{d}R}{\text{d}t} = \gamma I + \nu R,$$
+$$\frac{\text{d}R}{\text{d}t} = \gamma I - \nu R,$$
 $$\frac{\text{d}D}{\text{d}t} = \mu I + \nu (S + E + I + R).$$
 
 Here, $\lambda\geq 0$ represents the rate of birth into the population. The effect of this term is to increase the population size over time. $\nu > 0$ represents the rate of death due to causes unrelated to COVID-19.
 
 The system is closed by specifying the initial conditions
-$$S(0) = S_0,\ E(0) = E_0,\ I(0) = I_0,\ R(0) = r_0,\ D(0) = D_0.$$
+$$S(0) = S_0,\ E(0) = E_0,\ I(0) = I_0,\ R(0) = r_0,\ D(0) = 0.$$
 
 Note, we have used $r_0$ here to avoid ambiguity with the basic reproduction number.
 
@@ -68,15 +69,13 @@ R_0 = &\text{ # infected per unit time by an infectious indiv. } \times\\
 \end{split}
 \end{align}
 
-where we have assumed the entire population are susceptible, in line with the definition of the basic reproduction number [@diekmann1990definition].
-
-which is given by:
+where we have assumed the entire population are susceptible, in line with the definition of the basic reproduction number [@diekmann1990definition]. This results in an expression:
 
 \begin{equation}
 R_0 = \beta \times \frac{\kappa}{\kappa + \nu} \times \frac{1}{\gamma + \mu + \nu}.
 \end{equation}
 
-Where we note that, if $\nu=0$, the basic reproduction reduces to that for the basic SEIRD model: $R_0 = \beta / (\gamma + \mu)$. Indeed, considering COVID-19 transmission, the rate of becoming infectious and death rate due to disease are each much greater than the rate of natural death, so the two reproduction numbers will be approximately equal.
+Where we note that, if $\nu=0$, the basic reproduction reduces to that for the basic SEIRD model: $R_0 = \beta / (\gamma + \mu)$. Indeed, for COVID-19 transmission, the rate of natural death is much lower than the rate of becoming infectious or the COVID-19-induced death rate, so the reproduction numbers of the basic SEIRD model and that above will be virtually indistinguishable.
 
 ### Multiple epidemic waves and an endemic steady state
 Let's create an SEIRD_BD model.
@@ -134,7 +133,10 @@ states %>%
 To see how this oscillatory behaviour occurs, we overlay the time-varying reproduction number, $R_t = R_0 S(t)$, on the same plot.
 
 ```{r, fig.width=10, fig.height=5}
+# calculate R_0
 R_0 <- R0(model)
+
+# plot: magnifying the infectious numbers so they are visible
 states %>% 
   mutate(value=if_else(compartment=="S", R_0 * value, value)) %>%
   mutate(compartment=as.character(compartment)) %>% 
@@ -153,7 +155,7 @@ states %>%
 
 This shows the new susceptibles born into the population lead $R_t$ to increase over time, until, eventually, $R_t>1$, and a new epidemic wave sweeps through the population. Over time, these waves occur more frequently and they become less marked.
 
-Eventually $R_t\rightarrow 1$, and an endemic equilibrium is reached, where a non-zero fraction of the population are infected. This is a notable difference from the SEIRD model, which does not permit a steady state.
+Eventually $R_t\rightarrow 1$, and an endemic equilibrium is reached, where a non-zero fraction of the population are infected. This is a notable difference from the SEIRD model, which does not permit an endemic steady state.
 
 ### Steady states
 To further explore the steady states of this system, we set the right-hand sides of the ordinary differential equations within the system to zero:
@@ -162,7 +164,7 @@ $$\lambda -\beta S I - \nu S=0$$
 $$\beta S I - (\kappa + \nu) E=0$$
 $$\kappa E - (\gamma + \mu + \nu) I=0$$
 $$\gamma I + \nu R=0.$$
-Solving these simultaneously yields two possible equilibria: one representing the disease-free steady state; another representing the case when the disease becomes endemic. These states are given by:
+Solving these simultaneously yields two possible equilibria: one representing the disease-free steady state; another representing the case when the disease becomes endemic. The endemic steady states are given by:
 
 \begin{align}
 S^* &= \frac{(\kappa +\nu ) (\gamma +\mu +\nu )}{\beta  \kappa },\\
@@ -172,10 +174,10 @@ R^* &= \frac{\gamma  \kappa  \lambda }{\nu  (\kappa +\nu ) (\gamma +\mu +\nu )}-
    }{\beta }.
 \end{align}
 
-In determining the conditions when $I^*>0$, we find the following condition:
+For $I^*>0$, we find the following condition:
 
 \begin{equation}
-\beta >\frac{\nu  (\kappa +\nu ) (\gamma +\mu +\nu )}{\kappa  \lambda }
+\beta >\frac{\nu  (\kappa +\nu ) (\gamma +\mu +\nu )}{\kappa  \lambda }.
 \end{equation}
 
 For the previously simulated system, we calculate $I^*$ and overlay this on the plot to illustrate the limiting behaviour of the system.
@@ -192,13 +194,13 @@ states %>%
   theme(text = element_text(size = 14))
 ```
 
-### Realistic parameter values for COVID-19
-The parameter values for $\nu$ and $\lambda$ considered thus far have been unrealistic. We now set these to more reasonable values for the UK. The average life expectancy of a female in the UK is 82.9 years for females and 79.0 years for males [@ons2021national]: assuming equal numbers of each sex, the average life expectancy is 80.95 years. To determine $\nu$, we calculate a per day mortality rate: $\nu=1/(80.95 \times 365.25)=3.4\times 10^{-5}$ per day. In 2019, the UK experienced 712,680 births in a population of 66.8 million [@ukpopulation2021]. As a fraction, annual births then represent roughly 1\% of the population. To determine $\lambda$, we put this on a daily rate resulting in $\lambda=2.9 \times 10^{-5}$. We use these parameter values to simulate the model.
+### More realistic parameter values for COVID-19
+The parameter values for $\nu$ and $\lambda$ considered thus far have been unrealistic. We now set these to more reasonable values for the UK. The average life expectancy of a female in the UK is 82.9 years for females and 79.0 years for males [@ons2021national]: assuming equal numbers of each sex, the average life expectancy is 80.95 years. To determine $\nu$, we calculate a per day mortality rate: $\nu=1/(80.95 \times 365.25)=3.4\times 10^{-5}$ per day. In 2019, the UK experienced 712,680 births in a population of 66.8 million [@ukpopulation2021]. As a fraction, annual births then represent roughly 1\% of the population. To determine $\lambda$, we convert this to a daily rate resulting in $\lambda=2.9 \times 10^{-5}$. We then use these parameter values to simulate the model.
 
 ```{r, fig.width=10, fig.height=5}
 # set parameter values
 nu <- 1 / (80.95 * 365.25)
-lambda <- 712680/66.8e6/365.25
+lambda <- 712680 / 66.8e6 / 365.25
 
 beta <- R0_target * (kappa + nu) / kappa * (gamma + mu + nu)
 
@@ -212,7 +214,7 @@ transmission_parameters(model) <- list(
   omega=omega)
 
 # run model
-results <- run(model, times = seq(0, 50000, 1))
+results <- run(model, times = seq(0, 100 * 365.25, 1))
 
 # extract states
 states <- results$states
@@ -230,18 +232,130 @@ From this, we see that there is a second epidemic wave, but it takes nearly 100 
 
 
 ## Waning natural immunity
-```{r}
-kappa <- 1 / 5.5
-zeta <- 1 / 2
-ifr <- 0.0066
-gamma <- zeta * (1 - ifr)
-mu <- zeta * ifr
+We now explore how the dynamics are affected by the introduction of waning natural immunity. Vaccine efficacy is known to wane after a number of months with rates of infection for those vaccinated six months ago similar to those in vaccine-naive individuals [@goldberg2021waning]. It appears that infection confers a protection against reinfection which remains strong up to around several months to a year post-infection [@leidi2021risk; @abu2021sars; @gallais2021evolution], but is also thought to eventually wane.
 
-lambda <- 2.7e-5
-omega <- 1 / 90
-R0_target <- 2.4
-beta <- R0_target * (kappa + nu) / kappa * (gamma + mu + nu)
+Here, to account for waning in natural immunity over time, we modify the $S$ and $R$ compartments to allow recovered individuals to become susceptible again:
+
+$$\frac{\text{d}S}{\text{d}t} = \lambda + \omega R -\beta S I - \nu S,$$
+$$\frac{\text{d}R}{\text{d}t} = \gamma I - (\nu + \omega) R,$$
+where $\omega\geq 0$ is the rate at which recovered individuals become once again susceptible.
+
+Note, this model does not allow primary infection to affect the risk of severe disease upon reinfection, which may be unrealistic for COVID-19, where this risk may be lowered. But including this effect would not likely substantially affect dynamics of infections, which is our focus here.
+
+To illustrate the impact of waning immunity to natural infection, we assume that the average duration of immunity to reinfection is 1.5 years. We then run simulations using the same parameters as above.
+
+```{r, fig.width=10, fig.height=5}
+omega <- 1 / (1.5 * 365.25)
+
+transmission_parameters(model) <- list(
+  beta=beta,
+  kappa=kappa,
+  gamma=gamma,
+  mu=mu,
+  lambda=lambda,
+  nu=nu,
+  omega=omega)
+
+# run model
+results <- run(model, times = seq(0, 10 * 365.25, 1))
+
+# extract states
+states <- results$states
+
+# plot infectious
+states %>%
+  filter(compartment == "I") %>%
+  ggplot(aes(x = time / 365.25, y = value)) +
+  geom_line(aes(color = compartment)) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(x = "time (years)", y = "value") +
+  theme(text = element_text(size = 14))
 ```
 
+This model illustrates reoccuring epidemic waves. Since the rate at which natural immunity to reinfection wanes is much faster the rate at which susceptibles are replenished due to birth, this leads to much more frequent epidemic waves.
+
+This model, as for the model above with births and deaths but no waning immunity, also allows an endemic steady state:
+
+$$S^* = \frac{(\kappa +\nu ) (\gamma +\mu +\nu )}{\beta  \kappa },$$
+
+$$E^* = \frac{(\nu +\omega ) (\gamma +\mu +\nu ) (\beta 
+   \kappa  \lambda - \nu  (\kappa +\nu ) (\gamma +\mu +\nu ))}{\beta  \kappa  (\gamma  \nu  (\kappa +\nu +\omega )+(\kappa +\nu )
+   (\mu +\nu ) (\nu +\omega ))},$$
+
+$$ I^* = \frac{(\nu +\omega ) (\beta  \kappa  \lambda -\nu  (\kappa +\nu ) (\gamma +\mu +\nu
+   ))}{\beta  (\gamma  \nu  (\kappa +\nu +\omega )+(\kappa +\nu ) (\mu +\nu ) (\nu
+   +\omega ))},$$
+   
+$$ R^* = \frac{\beta  \gamma  \kappa  \lambda -\gamma  \nu  (\kappa +\nu ) (\gamma +\mu +\nu
+   )}{\beta  (\gamma  \nu  (\kappa +\nu +\omega )+(\kappa +\nu ) (\mu +\nu ) (\nu +\omega
+   ))}.$$
+
+We now overlay $I^*$ on the plot above, running the model for longer to illustrate the approach to equilibrium.
+
+```{r, fig.width=10, fig.height=5}
+I_star <- (beta * kappa * lambda - nu * (kappa + nu) * (gamma + mu + nu)) * (nu + omega) / (beta * (kappa + nu) * (mu + nu) * (nu + omega) + gamma * nu * (kappa + nu + omega))
+
+# run model
+results <- run(model, times = seq(0, 100 * 365.25, 1))
+
+# extract states
+states <- results$states
+
+# plot infectious
+states %>%
+  filter(compartment == "I") %>%
+  ggplot(aes(x = time / 365.25, y = value)) +
+  geom_hline(yintercept = I_star, linetype=2) +
+  geom_line(aes(color = compartment)) +
+  scale_color_brewer(palette = "Dark2") +
+  labs(x = "time (years)", y = "value") +
+  theme(text = element_text(size = 14))
+```
+
+With this model, we can determine the number of daily cases expected to arise at the endemic equilibrium:
+
+\begin{equation}
+\frac{\text{d}C}{\text{d}t} = \beta S^* I^*,
+\end{equation}
+
+where $C$ represents cumulative case counts and $S^*$ and $I^*$ are constants. This implies new cases appearing each day given by:
+
+\begin{equation}
+C(t+1) - C(t) = \beta S^* I^*.
+\end{equation}
+
+```{r, include=FALSE}
+S_star <- (kappa + nu) * (gamma + mu + nu) / (beta * kappa)
+cases <- beta * I_star * S_star
+uk_pop <- 66.8e6
+cases <- round(cases * uk_pop, -3)
+```
+
+For the parameters of the model, this implies roughly `r cases` daily cases for the UK once we reach equilibrium -- a huge number. We now determine the sensitivity of this case count to assumptions about the duration of waning immunity. To do so, we consider average durations of immunity to reinfection ranging from 4 months to 3 years. In each case, we calculate the number of daily cases at the endemic equilibrium.
+
+```{r, fig.width=10, fig.height=5}
+# helper function
+daily_cases <- function(omega) {
+  S_star <- (kappa + nu) * (gamma + mu + nu) / (beta * kappa)
+cases <- beta * I_star * S_star
+  I_star <- (beta * kappa * lambda - nu * (kappa + nu) * (gamma + mu + nu)) * (nu + omega) / (beta * (kappa + nu) * (mu + nu) * (nu + omega) + gamma * nu * (kappa + nu + omega))
+  beta * S_star * I_star * 66.8e6
+}
+
+# sensitivity analysis
+immunity_durations <- seq(1 / 3, 3, length.out=50)
+omegas <- 1 / (365.25 * immunity_durations)
+cases <- daily_cases(omegas)
+df <- tibble(immunity_durations, cases)
+df %>% 
+  ggplot(aes(x=immunity_durations, y=cases)) +
+  geom_line() +
+  xlab("Average natural immunity to reinfection (years)") +
+  ylab("Daily endemic case counts")
+```
+
+Over the range of durations surveyed, the minimum case counts was `r round(min(df$cases), -3)` and maximum was `r round(max(df$cases), -3)`. 
+
+Whilst this model makes a number of simplifications, these simulations hint that interventions such as ongoing booster vaccination campaigns may be required to keep cases at a reasonable level.
 
 ## References
