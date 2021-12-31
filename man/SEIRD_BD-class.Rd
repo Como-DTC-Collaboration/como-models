@@ -4,11 +4,94 @@
 \name{SEIRD_BD-class}
 \alias{SEIRD_BD-class}
 \alias{SEIRD_BD}
+\alias{initial_conditions,SEIRD_BD-method}
+\alias{transmission_parameters,SEIRD_BD-method}
+\alias{initial_conditions<-,SEIRD_BD-method}
+\alias{transmission_parameters<-,SEIRD_BD-method}
+\alias{run,SEIRD_BD-method}
+\alias{R0,SEIRD_BD-method}
 \title{An S4 object representing the SEIRD_BD model.}
+\usage{
+\S4method{initial_conditions}{SEIRD_BD}(object)
+
+\S4method{transmission_parameters}{SEIRD_BD}(object)
+
+\S4method{initial_conditions}{SEIRD_BD}(object) <- value
+
+\S4method{transmission_parameters}{SEIRD_BD}(object) <- value
+
+\S4method{run}{SEIRD_BD}(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
+
+\S4method{R0}{SEIRD_BD}(model)
+}
+\arguments{
+\item{object}{an object of the class SEIRD_BD}
+
+\item{value}{(list) list of values for beta, kappa, gamma, mu, lambda, nu}
+
+\item{times}{(double) a sequence of time points at which the solution to
+the system of ODEs should be returned. Must be of the form
+seq(t_start, t_end, by=t_step). Default time series is seq(0, 100, by = 1).}
+
+\item{solve_method}{(string) a string of chosen numerical integration method
+for solving the ode system. Default is lsoda which is also the default for
+the ode function in the deSolve package used in this function.}
+
+\item{model}{an SEIRD_BD model}
+}
+\value{
+object of class SEIRD_BD with initial conditions assigned.
+
+object of class SEIRD_BD with transmission parameter values
+assigned.
+
+two dataframes: one with the time steps, age range, time series of S,
+E, I, R and D population fractions, and one with the time steps, age range,
+time series of incidences and deaths population fraction.
+
+an R0 value
+}
 \description{
 This class represents the SEIRD_BD model, showing how populations of susceptible,
 exposed, infectious and recovered individuals evolve over time.
 }
+\section{Methods (by generic)}{
+\itemize{
+\item \code{initial_conditions}: Retrieves initial conditions of SEIRD_BD model.
+
+\item \code{transmission_parameters}: Retrieves transmission parameters of SEIRD_BD model.
+
+\item \code{initial_conditions<-}: Setter method for initial conditions (S0, E0, I0 and R0)
+of the SEIRD_BD model.
+
+All initial conditions must sum up to 1.
+If the initial conditions provided to do not sum to 1, an error is thrown.
+
+\item \code{transmission_parameters<-}: Set transmission parameters (beta, kappa, gamma, mu, lambda, nu)
+of the SEIRD_BD model.
+
+If the transmission parameters provided to are not 1-dimensional an error is
+thrown.
+
+\item \code{run}: Solves ODEs of the SEIRD_BD specified in object
+for the time points specified in times and integration method specified in
+solve_method.
+
+\deqn{\frac{dS(t)}{dt} = lambda + omega R(t) - beta S(t) I(t) - nu S(t)}
+\deqn{\frac{dE(t)}{dt} =  beta S(t) I(t) - kappa E(t) - nu E(t)}
+\deqn{\frac{dI(t)}{dt} = kappa E(t) - (gamma + mu) I(t) - nu I(t)}
+\deqn{\frac{dR(t)}{dt} = gamma I(t) - (nu + omega) R(t)}
+\deqn{\frac{dD(t)}{dt} = mu I(t) + nu (S(t) + E(t) + I(t) + R(t))}
+\deqn{\frac{dC(t)}{dt} = beta S(t) I(t)}
+
+This function relies on the package deSolve.
+
+\item \code{R0}: Calculates basic reproduction number for SEIRD_BD model
+
+The R0 parameter is given by:
+\deqn{R_0 = \beta \kappa / (\kappa + \nu) * 1/(\gamma + \mu + \nu)}
+}}
+
 \section{Slots}{
 
 \describe{
@@ -19,7 +102,7 @@ incidence.}
 (characters). Default is list("S0", "E0", "I0", R0").}
 
 \item{\code{transmission_parameter_names}}{list of names of transmission parameters
-(characters). Default is list("beta", "kappa", "gamma", "mu", "lambda", "nu").}
+(characters). Default is list("beta", "kappa", "gamma", "mu", "lambda", "nu", "omega").}
 
 \item{\code{initial_conditions}}{list of values for initial conditions (double).}
 
