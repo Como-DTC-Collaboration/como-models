@@ -291,10 +291,10 @@ setMethod(
 #'
 #' \deqn{\frac{dS_i(t)}{dt} = -\beta_i(t) S_i \Sigma_{j}C_{ij}(t) I_j}
 #' \deqn{\frac{dE_i(t)}{dt} = \beta_i(t) S_i \Sigma_{j}C{ij}(t) I_j-\kappa E_i}
-#' \deqn{\frac{dI_i(t)}{dt} = \kappa E_i - (\gamma + \mu) I_i}
-#' \deqn{\frac{dR_i(t)}{dt} = \frac{\text{d}R_i}{\text{d}t} = \gamma I_i}
+#' \deqn{\frac{dI_i(t)}{dt} = \kappa E_i - (\gamma_i + \mu_i) I_i}
+#' \deqn{\frac{dR_i(t)}{dt} = \frac{\text{d}R_i}{\text{d}t} = \gamma_i I_i}
 #' \deqn{\frac{dC(t)}{dt} = \beta_i(t) S_i \Sigma_{j}C_{ij}(t) I_j}
-#' \deqn{\frac{dD_i(t)}{dt} = \mu I_i(t)}
+#' \deqn{\frac{dD_i(t)}{dt} = \mu_i I_i(t)}
 #'
 #' where C is a contact matrix whose elements represents the
 #' contact between different age groups (rows) with age groups of
@@ -356,15 +356,15 @@ setMethod(
     
     # set parameters vector
     parameters <- c(#intervention_frac = object@transmission_parameters$intervention_frac,
-                    beta_npi = object@transmission_parameters$beta_npi,
-                    beta = object@transmission_parameters$beta,
-                    kappa = object@transmission_parameters$kappa,
-                    gamma = object@transmission_parameters$gamma,
+                    b_npi = object@transmission_parameters$beta_npi,
+                    b = object@transmission_parameters$beta,
+                    k = object@transmission_parameters$kappa,
+                    g = object@transmission_parameters$gamma,
                     mu = object@transmission_parameters$mu)
     
     C = object@contact_matrix_npi
     C[[object@n_npi+1]] = object@contact_matrix
-    beta_finals = c(object@transmission_parameters$beta_npi,
+    b_finals = c(object@transmission_parameters$beta_npi,
                     object@transmission_parameters$beta)
     
     # set intervention parameters vector
@@ -393,7 +393,7 @@ setMethod(
           #beta_finals <- c(beta_npi, beta)
           inter <- input(t)
           C_final <- C[[inter]]
-          beta_final <- beta_finals[inter]
+          b_final <- b_finals[inter]
           
           S <- state[1:age]
           E <- state[(age + 1):(2 * age)]
@@ -402,17 +402,16 @@ setMethod(
           D <- state[(4 * age + 1):(5 * age)]
           cc <- state[(5 * age + 1):(6 * age)]
           
-          
+          g <- object@transmission_parameters$gamma
+          mu <- object@transmission_parameters$mu
+
           # rate of change
-          #dS <- - S*(beta_npi * C %*% I  * inter + beta * C %*% I * (1 - inter))
-          dS <- - S*(beta_final * C_final %*% I)
-          #dE <- S*(beta_npi * C %*% I * inter + beta * C %*% I * (1 - inter)) - kappa * E
-          dE <- S*(beta_final * C_final %*% I) - kappa * E
-          dI <- kappa * E - gamma * I - mu * I
-          dR <- gamma * I
+          dS <- - S*(b_final * C_final %*% I)
+          dE <- S*(b_final * C_final %*% I) - k * E
+          dI <- k * E - g * I - mu * I
+          dR <- g* I
           dD <- mu * I
-          #dcc <- S*(beta_npi * C %*% I * inter + beta * C %*% I * (1 - inter))
-          dcc <- S*(beta_final * C_final %*% I)
+          dcc <- S*(b_final * C_final %*% I)
           # return the rate of change
           list(c(dS, dE, dI, dR, dD, dcc))
         })
