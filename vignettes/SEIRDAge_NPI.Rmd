@@ -68,8 +68,8 @@ combined_contact_matrices_wider <- function(c_combined){
 ## Introduction
 
 Apart from pharmaceutical interventions such as vaccinations, in order to control the COVID-19 epidemic
-at social level[DDDD], a host of **non-pharmaceutical interventions (NPIs)** have been used by governments
-around the world. These applications include self-isolation upon testing positive or being in close contact with cases, physical distancing, shielding vulnerable (e.g. elderly) groups, school closure, lockdown, etc. Many of the NPI strategies are applied according to different age groups to adapt to their different social and biological differences, thus including NPIs as an extension to the [SEIRDAge model](https://github.com/Como-DTC-Collaboration/como-models/blob/main/vignettes/SEIRD_age_structured.Rmd) is a key aspect in modelling the epidemiology of COVID-19 transmission, especially on social level [DDDD]. 
+as public health measures, a host of **non-pharmaceutical interventions (NPIs)** have been used by governments
+around the world. These applications include self-isolation upon testing positive or being in close contact with cases, physical distancing, shielding vulnerable (e.g. elderly) groups, school closure, lockdown, etc. Many of the NPI strategies are applied according to different age groups to adapt to their different social and biological differences, thus including NPIs as an extension to the [SEIRDAge model](https://github.com/Como-DTC-Collaboration/como-models/blob/main/vignettes/SEIRD_age_structured.Rmd) is a key aspect in modelling the epidemiology of COVID-19 transmission, especially in terms of public health measures. 
 
 In this vignette, we introduce
 **an age-structured model including NPI strategies (SEIRDAge_NPI)** and demonstrate the effect of a number of 
@@ -565,7 +565,7 @@ number of infected cases and reduced deaths across all age groups. Looking at th
 fraction of the population that is newly infected over time (Incidence), *PD*, *SC* and *SI* and *lockdown*
 result in the decrease of the increasing rate of Incidence as soon as the intervention begeins, reaching lower peak values later on. In addition, *lockdown* controls the outbreak rapidly and thouroughly within the invervention period, but as the intervention lifts, the ungoing epidemic still arouses a second outbreak, though milder compared with the baseline. All strategies except *SO* extends the overall duration of the pandemic from 100 simulation
 time points in the baseline to around 150. All these suggest that even a short but stringent NPI, 
-such as lockdown, can still alleviate and defer an significant outbreak. Although NPI applications may take effects at a cost of extended pandemic duration once the intervention lifts, they can act as fast social-control measures that open a valuable time window for human beings to develop specific clinical and pharmaceutical methods as well as more comprehensive and long-term strategies when facing an unexpected
+such as lockdown, can still alleviate and defer an significant outbreak. Although NPI applications may take effects at a cost of extended pandemic duration once the intervention lifts, they can act as fast social-control measures that open a valuable time window for human beings to develop specific clinical and pharmaceutical methods as well as more comprehensive and long-term public health measures when facing an unexpected
 infectious disease.
 
 
