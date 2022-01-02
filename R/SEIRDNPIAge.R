@@ -500,6 +500,3 @@ setMethod("R0", "SEIRDNPIAge", function(model) {
   lambda_dominant <- eigen(G)$values[1]
   Re(lambda_dominant)
 })
-
-
-
