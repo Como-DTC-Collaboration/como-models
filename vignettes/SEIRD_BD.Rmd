@@ -21,13 +21,4 @@ library(comomodels)
 library(tidyverse)
 ```
 
-## Introduction
-Over longer timescales, births and natural deaths can affect the ability of an infectious disease to invade a population. If there is no maternal immunity inherited by newborns, we may assume they are susceptible to infection. This replenishment of the susceptible population can, over long periods, allow an infectious disease to re-invade a population, and an epidemic wave may reoccur.
-
-In the basic SEIRD model, an individual who has been exposed to a pathogen and "recovered" from infection is assumed to be immune to reinfection. Immunity to reinfection is known to wane in the time period following when individuals receive vaccinations [@goldberg2021waning]. Natural immunity resultant from previous infection with SARS-CoV-2 has been found to have a stronger and longer-lasting protection against the Delta version of the virus than the Pfizer BNT162b2 two-dose vaccine [@gazit2021comparing], although it is widely thought that the protection conferred by infection also wanes over time.
-
-Waning immunity has a similar impact on transmission dynamics as does including births in that it leads to replenishment of susceptible individuals. Though the rate at which it does so is different -- for COVID-19, it is much faster.
-
-In this notebook, we investigate how the dynamics of infection throughout the population are affected by births and natural deaths and a waning natural immunity.
-
 
