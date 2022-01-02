@@ -1,10 +1,10 @@
 ---
-title: "The age-structured SEIRD model"
+title: "The age-structured SEIRD model1"
 author: "Oscar Dimdore-Miles, Ioana Bouros and Ben Lambert"
 output: rmarkdown::html_vignette
 bibliography: references.bib
 vignette: >
-  %\VignetteIndexEntry{SEIR_age_structured}
+  %\VignetteIndexEntry{SEIR_age_structured1}
   %\VignetteEngine{knitr::knitr}
   %\VignetteEncoding{UTF-8}
 ---
