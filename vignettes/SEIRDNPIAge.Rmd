@@ -123,12 +123,7 @@ $$\frac{\text{d}D_i}{\text{d}t} = \mu_i I_i,$$
 where $i$ represents a particular age class, and $t$ represents a time point. $\kappa$, $\gamma_i$, $\mu_i$, $\nu$ are
 positive parameters as described in the [SEIRDAge model vignette](https://github.com/Como-DTC-Collaboration/como-models/blob/main/vignettes/SEIRD_age_structured.Rmd).
 
-The key parameters 
-
-In addition to these five main ODEs, the model also keeps track of the cumulative number of cases ($C$) (here defined as those individuals infected with the virus) over time:
-
-
-$$\frac{\text{d}C_i}{\text{d}t} = \beta(t) S_i \Sigma_{j}C_{ij}(t) I_j.$$
+The key parameters of the `SEIRDNPIAge` model are: $\beta_i(t)$ and $C_{ij}(t)$ representing time-dependent rates of infection and contact matrix elements, respectively. This model allows for discontinuous changes in either the rate parameter and / or the contact matrix over time in one or a number of intervention blocks.
 
 The system is closed by specifying the initial conditions
 $$S(0) = S_0,\ E(0) = E_0,\ I(0) = I_0,\ R(0) = R_0, \ D(0) = 0.$$
