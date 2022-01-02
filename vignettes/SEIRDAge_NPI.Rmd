@@ -17,14 +17,20 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
+## Introduction
+Before effective vaccines existed, the only public health interventions available to governments around the world were non-pharmaceutical interventions (NPIs). The types of NPIs deployed have included self-isolation upon testing positive or upon detection of them being in close contact with cases; physical distancing, where members of the public are encouraged to isolate from one another; shielding vulnerable groups, for example, by requiring elderly individuals to not mix with the public; school closures; country- or region-wide lockdowns, where members of the public are required to remain in their homes with (typically) stringent restrictions on the nature of and degree to which they socialise. 
+
+Many of the NPI strategies are applied according to different age groups to adapt to their different social and biological differences, thus including NPIs as an extension to the [SEIRDAge model](https://github.com/Como-DTC-Collaboration/como-models/blob/main/vignettes/SEIRD_age_structured.Rmd) is a key aspect in modelling the epidemiology of COVID-19 transmission, especially in terms of public health measures. 
+
+In this vignette, we introduce
+**an age-structured model including NPI strategies (SEIRDAge_NPI)** and demonstrate the effect of a number of 
+different NPI strategies to examine their effects of interventions.
+
+Before we start, we define helper functions for plotting and contact matrix processing
+```{r}
 library(comomodels)
 library(tidyverse)
-```
 
-
-Define helper functions for plotting and contact matrix processing
-```{r}
 # color by age groups
 ggplot_results_by_compartment <- function(output, x="time", y="value", colour="age_range", 
                                           labs_x = "time (days)", labs_y = "fraction of the population", text_size=20){
@@ -53,27 +59,14 @@ combine_contact_matrices <- function(c_all){
     summarise(value=sum(value))
 }
 
-
 combined_contact_matrices_wider <- function(c_combined){
   c_combined %>% 
     pivot_wider(id_cols = age_infectee, names_from = age_infector,
               values_from=value) %>% 
     ungroup() %>% 
     select(-age_infectee) %>% as.matrix()
-} 
-
-
+}
 ```
-
-## Introduction
-
-Apart from pharmaceutical interventions such as vaccinations, in order to control the COVID-19 epidemic
-as public health measures, a host of **non-pharmaceutical interventions (NPIs)** have been used by governments
-around the world. These applications include self-isolation upon testing positive or being in close contact with cases, physical distancing, shielding vulnerable (e.g. elderly) groups, school closure, lockdown, etc. Many of the NPI strategies are applied according to different age groups to adapt to their different social and biological differences, thus including NPIs as an extension to the [SEIRDAge model](https://github.com/Como-DTC-Collaboration/como-models/blob/main/vignettes/SEIRD_age_structured.Rmd) is a key aspect in modelling the epidemiology of COVID-19 transmission, especially in terms of public health measures. 
-
-In this vignette, we introduce
-**an age-structured model including NPI strategies (SEIRDAge_NPI)** and demonstrate the effect of a number of 
-different NPI strategies to examine their effects of interventions.
 
 ## The SEIRDAge_NPI Model
 Consistent with the [SEIRDAge model](https://github.com/Como-DTC-Collaboration/como-models/blob/main/vignettes/SEIRD_age_structured.Rmd), in the `SEIRDAge_NPI` model we decribes how populations of susceptible, exposed, infectious, recovered and dead individuals evolve over time, with taking into account of the intermixing between age groups via social contact matrices $C$, where the elements $C_{ij}$ indicate the expected number of contacts an individual of age class $i$ experiences with age class $j$ per day. In this package we use country-level estimates of contact matrices and visualise for India as an example for the four types of contact matrices: home, work, school and all other types:
@@ -197,7 +190,7 @@ We next illustrate how this model works using functionality available in `comomo
 
 ## Simulation examples
 
-We first load the dountry-level demographics from UN and set the number of age classes to be the same in the contact matrices, which is 16 in this instance.
+We first load the country-level demographics from UN and set the number of age classes to be the same in the contact matrices, which is 16 in this instance.
 
 ```{r}
 load(file = "../data/population.rda")
