@@ -46,9 +46,9 @@ NULL
 #' @import reshape2
 #' @importFrom methods new
 #' 
-#' @export SEIRDAge_NPI
+#' @export SEIRDNPIAge
 #' 
-SEIRDAge_NPI <- setClass('SEIRDAge_NPI',
+SEIRDNPIAge <- setClass('SEIRDNPIAge',
                                    # slots
                                    slots = c(
                                      output_names = 'list',
@@ -86,24 +86,24 @@ SEIRDAge_NPI <- setClass('SEIRDAge_NPI',
 # Setter and getter methods for initial_conditions of an age-structured
 # SEIRD model with NPIs.
 
-#' @describeIn SEIRDAge_NPI Retrieves initial_conditions for an
+#' @describeIn SEIRDNPIAge Retrieves initial_conditions for an
 #' age-structured SEIRD model.
 #'
-#' @param object An object of the class SEIRDAge_NPI.
+#' @param object An object of the class SEIRDNPIAge.
 #'
-#' @return Initial conditions of SEIRDAge_NPI model.
+#' @return Initial conditions of SEIRDNPIAge model.
 #'
 #' @export
-setMethod('initial_conditions', 'SEIRDAge_NPI',
+setMethod('initial_conditions', 'SEIRDNPIAge',
           function(object) object@initial_conditions)
 
 
-#' @describeIn SEIRDAge_NPI Sets initial_conditions of an age-structured
+#' @describeIn SEIRDNPIAge Sets initial_conditions of an age-structured
 #' SEIRD model with NPIs.
 #' If the initial conditions provided to do not sum to 1 or of different
 #' sizes compared to the number of age groups, an error is thrown.
 #'
-#' @param object An object of the class SEIRDAge_NPI.
+#' @param object An object of the class SEIRDNPIAge.
 #' @param value a named list of (S0, E0, I0, R0) where each element can be a list
 #' of vector of doubles, with each element corresponding to the fraction for a
 #' single age group.
@@ -112,7 +112,7 @@ setMethod('initial_conditions', 'SEIRDAge_NPI',
 #'
 #' @export
 setMethod(
-  'initial_conditions<-', 'SEIRDAge_NPI',
+  'initial_conditions<-', 'SEIRDNPIAge',
   function(object, value) {
     S0 = value$S0
     E0 = value$E0
@@ -153,19 +153,19 @@ setMethod(
 # Setter and getter methods for transmission_parameters of an age-structured
 # SEIRD model with NPIs
 
-#' @describeIn SEIRDAge_NPI Retrieves transmission_parameters for an
+#' @describeIn SEIRDNPIAge Retrieves transmission_parameters for an
 #' age-structured SEIR model with NPIs.
 #'
-#' @param object An object of the class SEIRDAge_NPI.
+#' @param object An object of the class SEIRDNPIAge.
 #'
-#' @return Transmission parameters of SEIRDAge_NPI model.
+#' @return Transmission parameters of SEIRDNPIAge model.
 #'
 #' @export
-setMethod('transmission_parameters', 'SEIRDAge_NPI',
+setMethod('transmission_parameters', 'SEIRDNPIAge',
           function(object) object@transmission_parameters)
 
 
-#' @describeIn SEIRDAge_NPI Sets the transmission_parameters for an
+#' @describeIn SEIRDNPIAge Sets the transmission_parameters for an
 #' age-structured SEIRD model with NPIs.
 #' 
 #' Sets transmission_parameters of an
@@ -184,7 +184,7 @@ setMethod('transmission_parameters', 'SEIRDAge_NPI',
 #' @export
 #'
 setMethod(
-  'transmission_parameters<-', 'SEIRDAge_NPI',
+  'transmission_parameters<-', 'SEIRDNPIAge',
   function(object, value) {
     
     # create list of parameter values
@@ -228,25 +228,25 @@ setMethod(
   })
 
 
-#' @describeIn SEIRDAge_NPI Retrieves NPI parameters of SEIRDAge_NPI model.
+#' @describeIn SEIRDNPIAge Retrieves NPI parameters of SEIRDNPIAge model.
 #'
-#' @param object An object of the class SEIRDAge_NPI.
+#' @param object An object of the class SEIRDNPIAge.
 #'
 #' @export
-setMethod("interventions", "SEIRDAge_NPI",
+setMethod("interventions", "SEIRDNPIAge",
           function(object) object@interventions)
 
 
-#' @describeIn SEIRDAge_NPI Setter method for NPI parameters of the SEIRDAge_NPI model.
+#' @describeIn SEIRDNPIAge Setter method for NPI parameters of the SEIRDNPIAge model.
 #'
-#' @param object an object of the class SEIRDAge_NPI
+#' @param object an object of the class SEIRDNPIAge
 #' @param value (list) list of NPI parameters: starts, stops, coverages
 #'
-#' @return object of class SEIRDAge_NPI with NPI parameters assigned.
+#' @return object of class SEIRDNPIAge with NPI parameters assigned.
 #'
 #' @export
 setMethod(
-  "interventions<-", "SEIRDAge_NPI",
+  "interventions<-", "SEIRDNPIAge",
   function(object, value) {
     if (length(value) != 1 &
         length(value) != object@n_age_categories &
@@ -281,7 +281,7 @@ setMethod(
 
 
 
-#' @describeIn SEIRDAge_NPI Method to simulate output using from model.
+#' @describeIn SEIRDNPIAge Method to simulate output using from model.
 #'
 #' Solves a system to ODEs which form an
 #' age-structured simple SEIR model. The system of equations for the time
@@ -308,7 +308,7 @@ setMethod(
 #' time. This function relies on the package deSolve to numerically integrate 
 #' the set of equations above.
 #'
-#' @param object An object of the class SEIRDAge_NPI.
+#' @param object An object of the class SEIRDNPIAge.
 #' @param times (vector) time sequence over which to solve the model.
 #'        Must be of the form seq(t_start,t_end,by=t_step). Default time series
 #'        is seq(0, 100, by = 1).
@@ -325,7 +325,7 @@ setMethod(
 #' @importFrom magrittr "%>%"
 #' @importFrom rlang .data
 setMethod(
-  "run", 'SEIRDAge_NPI',
+  "run", 'SEIRDNPIAge',
   function(object, times, solve_method = 'lsoda') {
     
     # error if times is not a vector or list of doubles
@@ -467,12 +467,12 @@ setMethod(
     return(list("states" = states, "changes" = changes))
   })
 
-#' @describeIn SEIRDAge_NPI Calculates the basic reproduction number for SEIRDAge_NPI model
+#' @describeIn SEIRDNPIAge Calculates the basic reproduction number for SEIRDNPIAge model
 #'
 #' To calculate this parameter, we first calculate the next generation matrix
 #' G, where G_ij gives the expected number of secondary infections of type i
 #' caused by a single infectious individual of type j, assuming that all
-#' of type i are susceptible. In the SEIRDAge_NPI model, the number of contacts
+#' of type i are susceptible. In the SEIRDNPIAge model, the number of contacts
 #' resulting in infection per unit time in age group i is beta N_i C_ij, where
 #' N_i corresponds to the proportion of the population in that age group and
 #' C_ij is the contact matrix element. The average duration of infection is
@@ -481,12 +481,12 @@ setMethod(
 #' g_ij = beta N_i C_ij / (mu_i + gamma_i). R0 is then given by the dominant
 #' eigenvalue of the G matrix.
 #'
-#' @param model an SEIRDAge_NPI model
+#' @param model an SEIRDNPIAge model
 #'
 #' @return an R0 value
 #' 
 #' @export
-setMethod("R0", "SEIRDAge_NPI", function(model) {
+setMethod("R0", "SEIRDNPIAge", function(model) {
   
   beta <- model@transmission_parameters$beta
   gamma <- model@transmission_parameters$gamma

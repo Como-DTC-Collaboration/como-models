@@ -1,5 +1,5 @@
-test_that("SEIRDAge_NPI gets instantiated", {
-  my_model <- SEIRDAge_NPI(n_age_categories = 2,
+test_that("SEIRDNPIAge gets instantiated", {
+  my_model <- SEIRDNPIAge(n_age_categories = 2,
                        age_ranges = list('0-50', '50-100'))
   
   # Test output is correct
@@ -26,8 +26,8 @@ test_that("SEIRDAge_NPI gets instantiated", {
 })
 
 
-test_that("can retrieve SEIRDAge_NPI transmission parameters", {
-  my_model <- SEIRDAge_NPI(n_age_categories = 2)
+test_that("can retrieve SEIRDNPIAge transmission parameters", {
+  my_model <- SEIRDNPIAge(n_age_categories = 2)
   
   transmission_parameters(my_model) <- list(beta_npi = c(0.5, 0.5),
                                             beta = 1,
@@ -75,8 +75,8 @@ test_that("can retrieve SEIRDAge_NPI transmission parameters", {
 
 })
 
-test_that("can set new initial conditions for the SEIRDAge_NPI", {
-  my_model <- SEIRDAge_NPI(n_age_categories = 2)
+test_that("can set new initial conditions for the SEIRDNPIAge", {
+  my_model <- SEIRDNPIAge(n_age_categories = 2)
   initial_conditions(my_model)<-list(S0=c(0.4, 0.4),
                                      E0=c(0, 0),
                                      I0=c(0.05, 0.15),
@@ -166,8 +166,8 @@ test_that("can set new initial conditions for the SEIRDAge_NPI", {
   )
 })
 
-test_that("can calculate the basic reproduction number R0 for the SEIRDAge_NPI", {
-  my_model <- SEIRDAge_NPI(n_age_categories = 2,
+test_that("can calculate the basic reproduction number R0 for the SEIRDNPIAge", {
+  my_model <- SEIRDNPIAge(n_age_categories = 2,
                            n_npi = 2,
                            age_ranges = list('0-50', '50-100'), 
                            contact_matrix= matrix(c(1,0,0,1), nrow = 2),
@@ -189,8 +189,8 @@ test_that("can calculate the basic reproduction number R0 for the SEIRDAge_NPI",
   print(R0(my_model))
 })
 
-test_that("can run simulation for the SEIRDAge_NPI", {
-  # my_model <- SEIRDAge_NPI(n_age_categories = 2,
+test_that("can run simulation for the SEIRDNPIAge", {
+  # my_model <- SEIRDNPIAge(n_age_categories = 2,
   #                      age_ranges = list('0-50', '50-100'), 
   #                      contact_matrix= list(matrix(c(1,0,0,1), nrow = 2),
   #                                           matrix(c(1,0,0,1), nrow = 2)))

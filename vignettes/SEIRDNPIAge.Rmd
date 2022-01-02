@@ -1,11 +1,11 @@
 ---
-title: "SEIRDAge_NPI"
+title: "SEIRDNPIAge"
 author: "Oscar Dimdore-Miles, Idil Cazimoglu and Liangti Dai"
 date: "28/10/2021"
 output: rmarkdown::html_vignette
 bibliography: references.bib
 vignette: >
-  %\VignetteIndexEntry{SEIRDAge_NPI}
+  %\VignetteIndexEntry{SEIRDNPIAge}
   %\VignetteEngine{knitr::knitr}
   %\VignetteEncoding{UTF-8}
 ---
@@ -23,7 +23,7 @@ Before effective vaccines existed, the only public health interventions availabl
 A variety of NPIs have been estimated as having substantially lowered COVID-19 transmission and reduced burdens on health systems across a range of countries [@flaxman2020estimating; @li2021temporal; @lai2020effect; @davies2020effects]. As such, these interventions were likely crucial in averting many COVID-19-related deaths.
 
 In this vignette, we introduce
-**an age-structured model including NPI strategies (SEIRDAge_NPI)** and demonstrate the effect of a number of different NPI strategies to examine the effects of interventions. Since a number of the aforementioned NPIs have varying effects on different age groups, we chose to account for them by extending the [SEIRDAge model](https://github.com/Como-DTC-Collaboration/como-models/blob/main/vignettes/SEIRD_age_structured.Rmd). 
+**an age-structured model including NPI strategies (SEIRDNPIAge)** and demonstrate the effect of a number of different NPI strategies to examine the effects of interventions. Since a number of the aforementioned NPIs have varying effects on different age groups, we chose to account for them by extending the [SEIRDAge model](https://github.com/Como-DTC-Collaboration/como-models/blob/main/vignettes/SEIRD_age_structured.Rmd). 
 
 Before we start, we define some helper functions for plotting and contact matrix processing which avoid repeated code.
 ```{r}
@@ -67,8 +67,8 @@ combined_contact_matrices_wider <- function(c_combined){
 }
 ```
 
-## The SEIRDAge_NPI Model
-Consistent with the [SEIRDAge model](https://github.com/Como-DTC-Collaboration/como-models/blob/main/vignettes/SEIRD_age_structured.Rmd), in the `SEIRDAge_NPI` model describes how populations of susceptible, exposed, infectious, recovered and dead individuals evolve over time. Intermixing between age groups is accounted for via social contact matrices $C$, where the elements $C_{ij}$ indicate the expected number of contacts an individual of age class $i$ experiences with age class $j$ per day. In this package, we provide country-level estimates of contact matrices [@prem2017projecting], which are broken down according to whether contacts occurred at home, work, school and "other" places.
+## The SEIRDNPIAge Model
+Consistent with the [SEIRDAge model](https://github.com/Como-DTC-Collaboration/como-models/blob/main/vignettes/SEIRD_age_structured.Rmd), in the `SEIRDNPIAge` model describes how populations of susceptible, exposed, infectious, recovered and dead individuals evolve over time. Intermixing between age groups is accounted for via social contact matrices $C$, where the elements $C_{ij}$ indicate the expected number of contacts an individual of age class $i$ experiences with age class $j$ per day. In this package, we provide country-level estimates of contact matrices [@prem2017projecting], which are broken down according to whether contacts occurred at home, work, school and "other" places.
 
 To provide an example, we first visualise the contact matrices for India.
 ```{r, fig.width=8, fig.height=6}
@@ -109,7 +109,7 @@ c_combined %>%
   scale_fill_viridis_c()
 ```
 
-The `SEIRDAge_NPI` model consists of five ODEs describing five populations of susceptible, recovered, infectious, recovered and dead individuals. Susceptible individuals ($S$) have not been exposed to the virus. Exposed individuals ($E$) have been exposed to the virus and have been infected but are not yet infectious to others; they are in the incubation period. Infectious individuals ($I$) can spread the virus to others. Recovered individuals ($R$) are no longer
+The `SEIRDNPIAge` model consists of five ODEs describing five populations of susceptible, recovered, infectious, recovered and dead individuals. Susceptible individuals ($S$) have not been exposed to the virus. Exposed individuals ($E$) have been exposed to the virus and have been infected but are not yet infectious to others; they are in the incubation period. Infectious individuals ($I$) can spread the virus to others. Recovered individuals ($R$) are no longer
 infectious and are protected from reinfection. Here, we assume that there is no waning natural immunity, so once individuals are recovered from infection they never become susceptible again. Births and natural deaths (i.e. those unrelated to COVID-19 infection) are not considered in this model. 
 
 The ODEs describing how the five populations evolve over time are:
@@ -120,48 +120,18 @@ $$\frac{\text{d}I_i}{\text{d}t} = \kappa E_i - (\gamma_i + \mu_i) I_i,$$
 $$\frac{\text{d}R_i}{\text{d}t} = \gamma_i I_i,$$
 $$\frac{\text{d}D_i}{\text{d}t} = \mu_i I_i,$$
 
-where $i$ represents a particular age class, and $t$ represents a time point. 
+where $i$ represents a particular age class, and $t$ represents a time point. $\kappa$, $\gamma_i$, $\mu_i$, $\nu$ are
+positive parameters as described in the [SEIRDAge model vignette](https://github.com/Como-DTC-Collaboration/como-models/blob/main/vignettes/SEIRD_age_structured.Rmd).
 
-Any NPI strategy can be appied to multiple, 
-non-overlapping time periods. Within each intervention period, we allow fully customised setting of
-its corresponding **contact matrices** and the **transmisson parameter $\beta$**. 
+The key parameters 
 
-Details of several transmission parameters are:
-
-* $\beta$, $\kappa$, $\gamma_i$, $\mu_i$, $\nu$ are
-positive parameters. 
-
-  * $\beta_i(t)$ - The rate at which susceptible individuals are infected
-depends on the fraction of the population that is susceptible, the fraction of
-the population that is infectious, and the odds of an infectious individual
-infecting a susceptible individual. This is represented in the
-first terms on the right-hand side of $\text{d}S/ \text{d}t$ and $\text{d}E/ \text{d}t$. 
-In this model, we consider $\beta$ to be time and age dependent, because the type and 
-time interval of each intervention can be different, and interventions can be applied 
-differently onto each age group. 
-
-  * $\kappa$ - The incubation time of the virus is $1/ \kappa$, i.e. how many days 
-after exposure the individual becomes infectious to others, thus exposed individuals 
-become infectious at rate $\kappa$. Infectious individuals can either recover or die
-because of the disease. 
-
-  * $\gamma_i$ - Infectious individuals recover in $1/ \gamma_i$
-days, thus individuals recover at rate $\gamma_i$.  In this model we consider different
-recovery rate for each age group, as different age groups require different time to recover.
+In addition to these five main ODEs, the model also keeps track of the cumulative number of cases ($C$) (here defined as those individuals infected with the virus) over time:
 
 
-  * $\mu_i$ - Infectious individuals die due to the infection after $1/ \mu_i$ days. In this model
-we consider different mortality rate for each age group, as different age groups
-exhibit different vulnerability to the infection.
-
-
-
-In addition to these five main ODEs, the model also keeps track of the cumulative number 
-of cases ($C$) and the cumulative number of disease-related deaths ($D$) over time
-$$\frac{\text{d}C_i}{\text{d}t} = \beta(t) S_i \Sigma_{j}C_{ij}(t) I_j,$$
+$$\frac{\text{d}C_i}{\text{d}t} = \beta(t) S_i \Sigma_{j}C_{ij}(t) I_j.$$
 
 The system is closed by specifying the initial conditions
-$$S(0) = S_0,\ E(0) = E_0,\ I(0) = I_0,\ R(0) = R_0, \ C(0) = 0,\ D(0) = 0.$$
+$$S(0) = S_0,\ E(0) = E_0,\ I(0) = I_0,\ R(0) = R_0, \ D(0) = 0.$$
 In the implementation of the model in this package, the variables are normalized so 
 $S(t) + E(t) + I(t) + R(t) + D(t) \equiv 1$ for any given $t$. This means that each of these state variables represents the fraction of the population in each of these states at a given point in time.
 
@@ -206,7 +176,7 @@ Here we demonstrate a simple scenario: a single intervention period that introdu
 ```{r}
 # create model
 n_npi = 1 # only one intervention
-model <- SEIRDAge_NPI(n_age_categories = n_ages,
+model <- SEIRDNPIAge(n_age_categories = n_ages,
                       n_npi = n_npi,
                       contact_matrix = c_combined_wider,
                       contact_matrix_npi = list(c_combined_wider*0.5),
@@ -244,7 +214,7 @@ $$
 \mu_i = \eta \text{CFR}_i.
 $$
 
-At this point, $\kappa$ is defined; $\gamma_i$ and $\mu_i$ can be derived; $\beta_i(t)$ needs to be set. In the setter function `transmission_parameters` for `SEIRDAge_NPI`, the parameter `beta` defines the transmission rate for each age group
+At this point, $\kappa$ is defined; $\gamma_i$ and $\mu_i$ can be derived; $\beta_i(t)$ needs to be set. In the setter function `transmission_parameters` for `SEIRDNPIAge`, the parameter `beta` defines the transmission rate for each age group
 when no invervention is applied; whereas `beta_npi` defines a list of age-dependent transmission rates that
 corresponds to each inverntion period, or a single vector or a value if there's only a single invervention period. Consistent with the examples presented in `SEIRDAge` class, here we choose a value for $\beta$ to be the same
 across all age groups to result in the same $R_0$ value ($R_0=2.4$) as reported in "Report 9" by Imperial College London (Ferguson et al. 2020), and we set `beta_npi` to be $0.65\beta$ for all age groups.
@@ -384,7 +354,7 @@ We introduce the intervention into the outbreak period of the epidemic.
 We first examine the effects of different NPI strategies applied on the same single intervention period:
 
 ```{r, fig.height = 5, fig.width = 15}
-run_SEIRDAge_NPI_single_intv <- function(beta_npi_frac, contact_matrix_npi) {
+run_SEIRDNPIAge_single_intv <- function(beta_npi_frac, contact_matrix_npi) {
   inits <- list(S0=pop_fraction*0.999,
                 E0=rep(0, n_ages),
                 I0=pop_fraction*0.001,
@@ -401,7 +371,7 @@ run_SEIRDAge_NPI_single_intv <- function(beta_npi_frac, contact_matrix_npi) {
   params <- list(beta_npi = beta_npi_frac * beta, beta = beta,
                kappa = kappa, gamma = gamma_vals, mu = mu_vals)
   
-  model <- SEIRDAge_NPI(
+  model <- SEIRDNPIAge(
     n_age_categories = n_ages,
     n_npi = 1,
     contact_matrix = c_combined_wider,
@@ -419,7 +389,7 @@ run_SEIRDAge_NPI_single_intv <- function(beta_npi_frac, contact_matrix_npi) {
 
 # run model for different scenarios
 ## basline (baseline: no intervention at all)
-model_base <- run_SEIRDAge_NPI_single_intv(1, list(c_combined_wider))
+model_base <- run_SEIRDNPIAge_single_intv(1, list(c_combined_wider))
 result <- model_base$changes %>% mutate(scenario="baseline")
 result_states <- model_base$states %>% mutate(scenario="baseline")
 
@@ -436,12 +406,12 @@ c_combined_wider_pd <- c_home %>%
   combine_contact_matrices() %>% 
   combined_contact_matrices_wider()
 
-model_pd <- run_SEIRDAge_NPI_single_intv(1, list(c_combined_wider_pd))
+model_pd <- run_SEIRDNPIAge_single_intv(1, list(c_combined_wider_pd))
 result <- result %>% bind_rows(model_pd$changes %>% mutate(scenario="physical distancing (PD)"))
 result_states <- result_states %>% bind_rows(model_pd$states %>% mutate(scenario="physical distancing (PD)"))
 
 ## self-isolation of the infected groups: beta_intervention = beta * 0.65
-model_si <- run_SEIRDAge_NPI_single_intv(0.65, list(c_combined_wider))
+model_si <- run_SEIRDNPIAge_single_intv(0.65, list(c_combined_wider))
 result <- result %>% bind_rows(model_si$changes %>% mutate(scenario="self-isolation"))
 result_states <- result_states %>% bind_rows(model_si$states %>% mutate(scenario="self-isolation (SI)"))
 
@@ -453,7 +423,7 @@ c_combined_wider_sc <- c_home %>%
   combine_contact_matrices() %>% 
   combined_contact_matrices_wider()
 
-model_sc <- run_SEIRDAge_NPI_single_intv(1, list(c_combined_wider_sc))
+model_sc <- run_SEIRDNPIAge_single_intv(1, list(c_combined_wider_sc))
 result <- result %>% bind_rows(model_sc$changes %>% mutate(scenario="school closure (SC)"))
 result_states <- result_states %>% bind_rows(model_sc$states %>% mutate(scenario="school closure (SC)"))
 
@@ -475,7 +445,7 @@ c_combined_wider_so <- c_home %>%
   bind_rows(c_other_so) %>% 
   combine_contact_matrices() %>% 
   combined_contact_matrices_wider()
-model_so <- run_SEIRDAge_NPI_single_intv(1, list(c_combined_wider_so))
+model_so <- run_SEIRDNPIAge_single_intv(1, list(c_combined_wider_so))
 result <- result %>% bind_rows(model_so$changes %>% mutate(scenario="shielding of older (SO)"))
 result_states <- result_states %>% bind_rows(model_so$states %>% mutate(scenario="shielding of older (SO)"))
 
@@ -493,7 +463,7 @@ c_combined_wider_l <- c_home %>%
   bind_rows(c_other_l) %>% 
   combine_contact_matrices() %>% 
   combined_contact_matrices_wider()
-model_l <- run_SEIRDAge_NPI_single_intv(0.65, list(c_combined_wider_l))
+model_l <- run_SEIRDNPIAge_single_intv(0.65, list(c_combined_wider_l))
 result <- result %>% bind_rows(model_l$changes %>% mutate(scenario="lockdown"))
 result_states <- result_states %>% bind_rows(model_l$states %>% mutate(scenario="lockdown"))
 
@@ -556,7 +526,7 @@ infectious disease.
 ### The effects of different ordering of NPIs
 We further explore the combinations of different NPI scenarios by focusing on the effect of different ordering of two NPIs, self-isolation (SO) and physical distancing (PD).
 ```{r, fig.height=5, fig.width=15}
-run_SEIRDAge_NPI_mult_intv <- function(beta_npi_frac, contact_matrix_npi, n_npi) {
+run_SEIRDNPIAge_mult_intv <- function(beta_npi_frac, contact_matrix_npi, n_npi) {
   inits <- list(S0=pop_fraction*0.999,
                 E0=rep(0, n_ages),
                 I0=pop_fraction*0.001,
@@ -571,7 +541,7 @@ run_SEIRDAge_NPI_mult_intv <- function(beta_npi_frac, contact_matrix_npi, n_npi)
   mu_vals <- eta * cfr_vals
   params <- list(beta_npi = beta_npi_frac*beta, beta = beta,
                kappa = kappa, gamma = gamma_vals, mu = mu_vals)
-  model <- SEIRDAge_NPI(
+  model <- SEIRDNPIAge(
     n_age_categories = n_ages,
     n_npi = n_npi,
     contact_matrix = c_combined_wider,
@@ -595,20 +565,20 @@ result <- model_base$changes %>% mutate(scenario="baseline")
 result_states <- model_base$states %>% mutate(scenario="baseline")
 
 
-model_pd_pd <- run_SEIRDAge_NPI_mult_intv(c(1, 1), list(c_combined_wider_pd, c_combined_wider_pd), 2)
+model_pd_pd <- run_SEIRDNPIAge_mult_intv(c(1, 1), list(c_combined_wider_pd, c_combined_wider_pd), 2)
 result <- result %>% bind_rows(model_pd_pd$changes %>% mutate(scenario="PD-PD"))
 result_states <- result_states %>% bind_rows(model_pd_pd$states %>% mutate(scenario="PD-PD"))
 
 ## self-isolation of the infected groups: beta_intervention = beta * 0.65
-model_si_si <- run_SEIRDAge_NPI_mult_intv(c(0.65, 0.65), list(c_combined_wider, c_combined_wider), 2)
+model_si_si <- run_SEIRDNPIAge_mult_intv(c(0.65, 0.65), list(c_combined_wider, c_combined_wider), 2)
 result <- result %>% bind_rows(model_si_si$changes %>% mutate(scenario="SI-SI"))
 result_states <- result_states %>% bind_rows(model_si_si$states %>% mutate(scenario="SI-SI"))
 
-model_pd_si <- run_SEIRDAge_NPI_mult_intv(c(1, 0.65), list(c_combined_wider_pd, c_combined_wider), 2)
+model_pd_si <- run_SEIRDNPIAge_mult_intv(c(1, 0.65), list(c_combined_wider_pd, c_combined_wider), 2)
 result <- result %>% bind_rows(model_pd_si$changes %>% mutate(scenario="PD-SI"))
 result_states <- result_states %>% bind_rows(model_pd_si$states %>% mutate(scenario="PD-SI"))
 
-model_si_pd <- run_SEIRDAge_NPI_mult_intv(c(0.65, 1), list(c_combined_wider, c_combined_wider_pd), 2)
+model_si_pd <- run_SEIRDNPIAge_mult_intv(c(0.65, 1), list(c_combined_wider, c_combined_wider_pd), 2)
 result <- result %>% bind_rows(model_si_pd$changes %>% mutate(scenario="SI-PD"))
 result_states <- result_states %>% bind_rows(model_si_pd$states %>% mutate(scenario="SI-PD"))
 
