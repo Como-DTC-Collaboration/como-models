@@ -355,7 +355,7 @@ setMethod(
                cc = rep(0, age))
     
     # set parameters vector
-    parameters <- c(#intervention_frac = object@transmission_parameters$intervention_frac,
+    parameters <- c(
                     b_npi = object@transmission_parameters$beta_npi,
                     b = object@transmission_parameters$beta,
                     k = object@transmission_parameters$kappa,
@@ -390,7 +390,6 @@ setMethod(
       with(
         as.list(c(state, parameters)),
         {
-          #beta_finals <- c(beta_npi, beta)
           inter <- input(t)
           C_final <- C[[inter]]
           b_final <- b_finals[inter]
