@@ -26,15 +26,17 @@ The currently available models include:
 2.  `SEIaImIsRD` model - an SEIRD model with groups of varying
     infectiousness. Here, we include asymptomatic, mildly symptomatic
     and severely ill groups.  
-3.  `SEIRDV` model - an SEIRD model including vaccinated compartments.  
-4.  `SEIRD_RU` model - two linked SEIRD models used to represent two
+3.  `SEIRDV` model - an SEIRD model including vaccinated compartments.
+4.  `SEIRD_BD` model - an SEIRD model including births and natural
+    deaths and waning natural immunity.
+5.  `SEIRD_RU` model - two linked SEIRD models used to represent two
     meta-populations, which here we label (and parameterise) as rural
     and urban populations.  
-5.  `SEIRDAge` model - an SEIRD model stratified by age, allowing
+6.  `SEIRDAge` model - an SEIRD model stratified by age, allowing
     intermixing across ages.
-6.  `SEIRDVAge` model - an age-stratified SEIRD model allowing
+7.  `SEIRDVAge` model - an age-stratified SEIRD model allowing
     vaccination of different age groups.  
-7.  `SEIRDNPIAge` model - an SEIRD model accounting for
+8.  `SEIRDNPIAge` model - an SEIRD model accounting for
     non-pharmaceutical interventions, such as self-isolation.
 
 ## Installation
