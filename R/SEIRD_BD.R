@@ -12,7 +12,7 @@ NULL
 #' @slot initial_condition_names list of names of initial conditions
 #'       (characters). Default is list("S0", "E0", "I0", R0").
 #' @slot transmission_parameter_names list of names of transmission parameters
-#'       (characters). Default is list("beta", "kappa", "gamma", "mu", "lambda", "nu", "omega").
+#'       (characters). Default is list("beta", "kappa", "gamma", "mu", "lambda", "nu", "delta").
 #' @slot initial_conditions list of values for initial conditions (double).
 #' @slot transmission_parameters list of values for transmission parameters
 #'       (double).
@@ -37,7 +37,7 @@ SEIRD_BD <- setClass("SEIRD_BD",
          prototype = list(
            output_names = list("S", "E", "I", "R", "D", "Incidence", "Deaths"),
            initial_condition_names = list("S0", "E0", "I0", "R0"),
-           transmission_parameter_names = list("beta", "kappa", "gamma", "mu", "lambda", "nu", "omega"),
+           transmission_parameter_names = list("beta", "kappa", "gamma", "mu", "lambda", "nu", "delta"),
            initial_conditions = vector(mode = "list", length = 4),
            transmission_parameters = vector(mode = "list", length = 4)
          )
@@ -149,10 +149,10 @@ setMethod(
 #' for the time points specified in times and integration method specified in
 #' solve_method.
 #'
-#' \deqn{\frac{dS(t)}{dt} = lambda + omega R(t) - beta S(t) I(t) - nu S(t)}
+#' \deqn{\frac{dS(t)}{dt} = lambda + delta R(t) - beta S(t) I(t) - nu S(t)}
 #' \deqn{\frac{dE(t)}{dt} =  beta S(t) I(t) - kappa E(t) - nu E(t)}
 #' \deqn{\frac{dI(t)}{dt} = kappa E(t) - (gamma + mu) I(t) - nu I(t)}
-#' \deqn{\frac{dR(t)}{dt} = gamma I(t) - (nu + omega) R(t)}
+#' \deqn{\frac{dR(t)}{dt} = gamma I(t) - (nu + delta) R(t)}
 #' \deqn{\frac{dD(t)}{dt} = mu I(t) + nu (S(t) + E(t) + I(t) + R(t))}
 #' \deqn{\frac{dC(t)}{dt} = beta S(t) I(t)}
 #'
@@ -197,7 +197,7 @@ setMethod(
                     mu = transmission_parameters(object)$mu,
                     lambda = transmission_parameters(object)$lambda,
                     nu = transmission_parameters(object)$nu,
-                    omega = transmission_parameters(object)$omega)
+                    delta = transmission_parameters(object)$delta)
     # function for RHS of ode system
     right_hand_side <- function(t, state, parameters) {
       with(
@@ -209,10 +209,10 @@ setMethod(
           c <- state[5]
           d <- state[6]
           # rate of change
-          ds <- lambda - beta * s * i - nu * s + omega * r
+          ds <- lambda - beta * s * i - nu * s + delta * r
           de <- beta * s * i - kappa * e - nu * e
           di <- kappa * e - (gamma + mu) * i - nu * i
-          dr <- gamma * i - nu * r - omega * r
+          dr <- gamma * i - nu * r - delta * r
           dc <- beta * s * i
           d_death <- mu * i + nu * (s + e + i + r)
           # return the rate of change

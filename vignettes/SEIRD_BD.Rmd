@@ -98,7 +98,7 @@ gamma <- zeta * (1 - ifr)
 mu <- zeta * ifr
 nu <- 0
 lambda <- 0.001
-omega <- 0 # waning natural immunity term -- to explore later
+delta <- 0 # waning natural immunity term -- to explore later
 R0_target <- 2.4
 beta <- R0_target * (kappa + nu) / kappa * (gamma + mu + nu)
 
@@ -109,7 +109,7 @@ transmission_parameters(model) <- list(
   mu=mu,
   lambda=lambda,
   nu=nu,
-  omega=omega)
+  delta=delta)
 ```
 
 We now run the model using these parameters and plot the infectious proportion over time. This plot illustrates repeated epidemic waves, each representing a re-invasion of the pathogen through the population.
@@ -211,7 +211,7 @@ transmission_parameters(model) <- list(
   mu=mu,
   lambda=lambda,
   nu=nu,
-  omega=omega)
+  delta=delta)
 
 # run model
 results <- run(model, times = seq(0, 100 * 365.25, 1))
@@ -232,20 +232,20 @@ From this, we see that there is a second epidemic wave, but it takes nearly 100 
 
 
 ## Waning natural immunity
-We now explore how the dynamics are affected by the introduction of waning natural immunity. Vaccine efficacy is known to wane after a number of months with rates of infection for those vaccinated six months ago similar to those in vaccine-naive individuals [@goldberg2021waning]. It appears that infection confers a protection against reinfection which remains strong up to around several months to a year post-infection [@leidi2021risk; @abu2021sars; @gallais2021evolution], but is also thought to eventually wane.
+We now explore how the dynamics are affected by the introduction of waning natural immunity. Vaccine efficacy is known to wane after a number of months for the vaccines developed thus far: for example, considering the BNT162b2 (Pfizer) vaccine, the rates of infection for those vaccinated six months ago are similar to those in vaccine-naive individuals [@goldberg2021waning]. It appears that infection confers a protection against reinfection which remains strong up to around several months to a year post-infection [@leidi2021risk; @abu2021sars; @gallais2021evolution], but is also thought to eventually wane.
 
 Here, to account for waning in natural immunity over time, we modify the $S$ and $R$ compartments to allow recovered individuals to become susceptible again:
 
-$$\frac{\text{d}S}{\text{d}t} = \lambda + \omega R -\beta S I - \nu S,$$
-$$\frac{\text{d}R}{\text{d}t} = \gamma I - (\nu + \omega) R,$$
-where $\omega\geq 0$ is the rate at which recovered individuals become once again susceptible.
+$$\frac{\text{d}S}{\text{d}t} = \lambda + \delta R -\beta S I - \nu S,$$
+$$\frac{\text{d}R}{\text{d}t} = \gamma I - (\nu + \delta) R,$$
+where $\delta\geq 0$ is the rate at which recovered individuals become once again susceptible.
 
 Note, this model does not allow primary infection to affect the risk of severe disease upon reinfection, which may be unrealistic for COVID-19, where this risk may be lowered. But including this effect would not likely substantially affect dynamics of infections, which is our focus here.
 
 To illustrate the impact of waning immunity to natural infection, we assume that the average duration of immunity to reinfection is 1.5 years. We then run simulations using the same parameters as above.
 
 ```{r, fig.width=10, fig.height=5}
-omega <- 1 / (1.5 * 365.25)
+delta <- 1 / (1.5 * 365.25)
 
 transmission_parameters(model) <- list(
   beta=beta,
@@ -254,7 +254,7 @@ transmission_parameters(model) <- list(
   mu=mu,
   lambda=lambda,
   nu=nu,
-  omega=omega)
+  delta=delta)
 
 # run model
 results <- run(model, times = seq(0, 10 * 365.25, 1))
@@ -278,22 +278,22 @@ This model, as for the model above with births and deaths but no waning immunity
 
 $$S^* = \frac{(\kappa +\nu ) (\gamma +\mu +\nu )}{\beta  \kappa },$$
 
-$$E^* = \frac{(\nu +\omega ) (\gamma +\mu +\nu ) (\beta 
-   \kappa  \lambda - \nu  (\kappa +\nu ) (\gamma +\mu +\nu ))}{\beta  \kappa  (\gamma  \nu  (\kappa +\nu +\omega )+(\kappa +\nu )
-   (\mu +\nu ) (\nu +\omega ))},$$
+$$E^* = \frac{(\nu +\delta ) (\gamma +\mu +\nu ) (\beta 
+   \kappa  \lambda - \nu  (\kappa +\nu ) (\gamma +\mu +\nu ))}{\beta  \kappa  (\gamma  \nu  (\kappa +\nu +\delta )+(\kappa +\nu )
+   (\mu +\nu ) (\nu +\delta ))},$$
 
-$$ I^* = \frac{(\nu +\omega ) (\beta  \kappa  \lambda -\nu  (\kappa +\nu ) (\gamma +\mu +\nu
-   ))}{\beta  (\gamma  \nu  (\kappa +\nu +\omega )+(\kappa +\nu ) (\mu +\nu ) (\nu
-   +\omega ))},$$
+$$ I^* = \frac{(\nu +\delta ) (\beta  \kappa  \lambda -\nu  (\kappa +\nu ) (\gamma +\mu +\nu
+   ))}{\beta  (\gamma  \nu  (\kappa +\nu +\delta )+(\kappa +\nu ) (\mu +\nu ) (\nu
+   +\delta ))},$$
    
 $$ R^* = \frac{\beta  \gamma  \kappa  \lambda -\gamma  \nu  (\kappa +\nu ) (\gamma +\mu +\nu
-   )}{\beta  (\gamma  \nu  (\kappa +\nu +\omega )+(\kappa +\nu ) (\mu +\nu ) (\nu +\omega
+   )}{\beta  (\gamma  \nu  (\kappa +\nu +\delta )+(\kappa +\nu ) (\mu +\nu ) (\nu +\delta
    ))}.$$
 
 We now overlay $I^*$ on the plot above, running the model for longer to illustrate the approach to equilibrium.
 
 ```{r, fig.width=10, fig.height=5}
-I_star <- (beta * kappa * lambda - nu * (kappa + nu) * (gamma + mu + nu)) * (nu + omega) / (beta * (kappa + nu) * (mu + nu) * (nu + omega) + gamma * nu * (kappa + nu + omega))
+I_star <- (beta * kappa * lambda - nu * (kappa + nu) * (gamma + mu + nu)) * (nu + delta) / (beta * (kappa + nu) * (mu + nu) * (nu + delta) + gamma * nu * (kappa + nu + delta))
 
 # run model
 results <- run(model, times = seq(0, 100 * 365.25, 1))
@@ -335,17 +335,17 @@ For the parameters of the model, this implies roughly `r cases` daily cases for 
 
 ```{r, fig.width=10, fig.height=5}
 # helper function
-daily_cases <- function(omega) {
+daily_cases <- function(delta) {
   S_star <- (kappa + nu) * (gamma + mu + nu) / (beta * kappa)
 cases <- beta * I_star * S_star
-  I_star <- (beta * kappa * lambda - nu * (kappa + nu) * (gamma + mu + nu)) * (nu + omega) / (beta * (kappa + nu) * (mu + nu) * (nu + omega) + gamma * nu * (kappa + nu + omega))
+  I_star <- (beta * kappa * lambda - nu * (kappa + nu) * (gamma + mu + nu)) * (nu + delta) / (beta * (kappa + nu) * (mu + nu) * (nu + delta) + gamma * nu * (kappa + nu + delta))
   beta * S_star * I_star * 66.8e6
 }
 
 # sensitivity analysis
 immunity_durations <- seq(1 / 3, 3, length.out=50)
-omegas <- 1 / (365.25 * immunity_durations)
-cases <- daily_cases(omegas)
+deltas <- 1 / (365.25 * immunity_durations)
+cases <- daily_cases(deltas)
 df <- tibble(immunity_durations, cases)
 df %>% 
   ggplot(aes(x=immunity_durations, y=cases)) +
