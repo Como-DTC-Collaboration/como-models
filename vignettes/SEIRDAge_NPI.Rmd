@@ -18,15 +18,14 @@ knitr::opts_chunk$set(
 ```
 
 ## Introduction
-Before effective vaccines existed, the only public health interventions available to governments around the world were non-pharmaceutical interventions (NPIs). The types of NPIs deployed have included self-isolation upon testing positive or upon detection of them being in close contact with cases; physical distancing, where members of the public are encouraged to isolate from one another; shielding vulnerable groups, for example, by requiring elderly individuals to not mix with the public; school closures; country- or region-wide lockdowns, where members of the public are required to remain in their homes with (typically) stringent restrictions on the nature of and degree to which they socialise. 
+Before effective vaccines existed, the only public health interventions available to governments around the world were non-pharmaceutical interventions (NPIs). The types of NPIs deployed have included, amongst other interventions: early detection and isolation of cases; mask-wearing and hand hygiene measures; physical distancing, where members of the public are encouraged to isolate from one another; shielding vulnerable groups, for example, by requiring elderly individuals to not mix with the public; school closures; and country- or region-wide lockdowns, where members of the public are required to remain in their homes with (typically) stringent restrictions on the nature of and degree to which they socialise.
 
-Many of the NPI strategies are applied according to different age groups to adapt to their different social and biological differences, thus including NPIs as an extension to the [SEIRDAge model](https://github.com/Como-DTC-Collaboration/como-models/blob/main/vignettes/SEIRD_age_structured.Rmd) is a key aspect in modelling the epidemiology of COVID-19 transmission, especially in terms of public health measures. 
+A variety of NPIs have been estimated as having substantially lowered COVID-19 transmission and reduced burdens on health systems across a range of countries [@flaxman2020estimating; @li2021temporal; @lai2020effect; @davies2020effects]. As such, these interventions were likely crucial in averting many COVID-19-related deaths.
 
 In this vignette, we introduce
-**an age-structured model including NPI strategies (SEIRDAge_NPI)** and demonstrate the effect of a number of 
-different NPI strategies to examine their effects of interventions.
+**an age-structured model including NPI strategies (SEIRDAge_NPI)** and demonstrate the effect of a number of different NPI strategies to examine the effects of interventions. Since a number of the aforementioned NPIs have varying effects on different age groups, we chose to account for them by extending the [SEIRDAge model](https://github.com/Como-DTC-Collaboration/como-models/blob/main/vignettes/SEIRD_age_structured.Rmd). 
 
-Before we start, we define helper functions for plotting and contact matrix processing
+Before we start, we define some helper functions for plotting and contact matrix processing which avoid repeated code.
 ```{r}
 library(comomodels)
 library(tidyverse)
@@ -69,8 +68,9 @@ combined_contact_matrices_wider <- function(c_combined){
 ```
 
 ## The SEIRDAge_NPI Model
-Consistent with the [SEIRDAge model](https://github.com/Como-DTC-Collaboration/como-models/blob/main/vignettes/SEIRD_age_structured.Rmd), in the `SEIRDAge_NPI` model we decribes how populations of susceptible, exposed, infectious, recovered and dead individuals evolve over time, with taking into account of the intermixing between age groups via social contact matrices $C$, where the elements $C_{ij}$ indicate the expected number of contacts an individual of age class $i$ experiences with age class $j$ per day. In this package we use country-level estimates of contact matrices and visualise for India as an example for the four types of contact matrices: home, work, school and all other types:
+Consistent with the [SEIRDAge model](https://github.com/Como-DTC-Collaboration/como-models/blob/main/vignettes/SEIRD_age_structured.Rmd), in the `SEIRDAge_NPI` model describes how populations of susceptible, exposed, infectious, recovered and dead individuals evolve over time. Intermixing between age groups is accounted for via social contact matrices $C$, where the elements $C_{ij}$ indicate the expected number of contacts an individual of age class $i$ experiences with age class $j$ per day. In this package, we provide country-level estimates of contact matrices [@prem2017projecting], which are broken down according to whether contacts occurred at home, work, school and "other" places.
 
+To provide an example, we first visualise the contact matrices for India.
 ```{r, fig.width=8, fig.height=6}
 # reformat matrices for plotting
 ages <- seq(0, 80, 5)
@@ -78,7 +78,6 @@ age_names <- vector(length = 16)
 for(i in seq_along(age_names)) {
   age_names[i] <- paste0(ages[i], "-", ages[i + 1])
 }
-
 
 c_home <- format_matrix(contact_home$India, age_names) %>% mutate(type="home")
 c_work <- format_matrix(contact_work$India, age_names) %>% mutate(type="work")
@@ -108,33 +107,25 @@ c_combined %>%
   ggplot(aes(x=age_infector, y=age_infectee, fill=value)) +
   geom_tile() +
   scale_fill_viridis_c()
-
-
 ```
-We now use this contact matrix to allow infections to pass between age groups, which gives us the
-full ODE system of the `SEIRDAge_NPI` model:
 
-
-The `SEIRDAge_NPI` model consists of five ODEs describing five populations of susceptible,
-recovered, infectious, recovered and dead individuals. Susceptible
-individuals ($S$) have not been exposed to the virus. Exposed individuals ($E$) have been
-exposed to the virus and have been infected but are not yet infectious to others; they are 
-in the incubation period. Infectious individuals ($I$) can spread the virus to 
-others. Recovered individuals ($R$) are no longer
-infectious, and no waning immunity is taken into accound. Any NPI strategy can be appied to multiple, 
-non-overlapping time periods. Within each intervention period, we allow fully customised setting of
-its corresponding **contact matrices** and the **transmisson parameter $\beta$**. 
-Births and deaths unrelated to the infection are not considered in
-this model. 
+The `SEIRDAge_NPI` model consists of five ODEs describing five populations of susceptible, recovered, infectious, recovered and dead individuals. Susceptible individuals ($S$) have not been exposed to the virus. Exposed individuals ($E$) have been exposed to the virus and have been infected but are not yet infectious to others; they are in the incubation period. Infectious individuals ($I$) can spread the virus to others. Recovered individuals ($R$) are no longer
+infectious and are protected from reinfection. Here, we assume that there is no waning natural immunity, so once individuals are recovered from infection they never become susceptible again. Births and natural deaths (i.e. those unrelated to COVID-19 infection) are not considered in this model. 
 
 The ODEs describing how the five populations evolve over time are:
 
 $$\frac{\text{d}S_i}{\text{d}t} = -\beta_i(t) S_i \Sigma_{j}C_{ij}(t) I_j,$$
-$$\frac{\text{d}E_i}{\text{d}t} = \beta_i(t) S_i \Sigma_{j}C{ij}(t) I_j-\kappa E_i,$$
+$$\frac{\text{d}E_i}{\text{d}t} = \beta_i(t) S_i \Sigma_{j}C_{ij}(t) I_j-\kappa E_i,$$
 $$\frac{\text{d}I_i}{\text{d}t} = \kappa E_i - (\gamma_i + \mu_i) I_i,$$
 $$\frac{\text{d}R_i}{\text{d}t} = \gamma_i I_i,$$
+$$\frac{\text{d}D_i}{\text{d}t} = \mu_i I_i,$$
 
-where $i$ and $j$ represents an age class, and $t$ represents a time point. 
+where $i$ represents a particular age class, and $t$ represents a time point. 
+
+Any NPI strategy can be appied to multiple, 
+non-overlapping time periods. Within each intervention period, we allow fully customised setting of
+its corresponding **contact matrices** and the **transmisson parameter $\beta$**. 
+
 Details of several transmission parameters are:
 
 * $\beta$, $\kappa$, $\gamma_i$, $\mu_i$, $\nu$ are
@@ -168,7 +159,6 @@ exhibit different vulnerability to the infection.
 In addition to these five main ODEs, the model also keeps track of the cumulative number 
 of cases ($C$) and the cumulative number of disease-related deaths ($D$) over time
 $$\frac{\text{d}C_i}{\text{d}t} = \beta(t) S_i \Sigma_{j}C_{ij}(t) I_j,$$
-$$\frac{\text{d}D_i}{\text{d}t} = \mu_i I_i.$$
 
 The system is closed by specifying the initial conditions
 $$S(0) = S_0,\ E(0) = E_0,\ I(0) = I_0,\ R(0) = R_0, \ C(0) = 0,\ D(0) = 0.$$
