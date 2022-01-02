@@ -37,7 +37,7 @@ Collate:
     'generics.R'
     'SEIRD.R'
     'SEIRDAge.R'
-    'SEIRDAge_NPI.R'
+    'SEIRDNPIAge.R'
     'SEIRDV.R'
     'SEIRDVAge.R'
     'SEIRD_RU.R'

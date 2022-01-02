@@ -255,11 +255,6 @@ params <- list(beta_npi = 0.65*beta, beta = beta,
 transmission_parameters(model) <- params
 ```
 
-To check that the parameters have been set correctly, we call
-```{r}
-transmission_parameters(model)
-```
-
 We can check if the basic reproduction number is as we expected:
 ```{r}
 print(paste0("R_0 = ", round(R0(model), 2)))

@@ -279,7 +279,18 @@ setMethod(
     object
   })
 
-
+# Select appropriate element of beta vector or contact matrix list
+intervention_index <- function(t, object){
+  idx_interv <- -1
+  i = 1
+  while ((idx_interv < 0) & (i <= object@n_npi)){
+    if ((t>=interventions(object)[[i]]$starts) & (t<=interventions(object)[[i]]$stops)) idx_interv = i
+    i = i+1
+  } 
+  # assign to the idx referring to the non-intervention parameter
+  if(idx_interv < 0) idx_interv = object@n_npi + 1
+  return(idx_interv)
+}
 
 #' @describeIn SEIRDNPIAge Method to simulate output using from model.
 #'
@@ -289,8 +300,8 @@ setMethod(
 #' (I), Recovered (R) and Dead (D) groups in a given age group indexed by i is
 #' given by
 #'
-#' \deqn{\frac{dS_i(t)}{dt} = -\beta_i(t) S_i \Sigma_{j}C_{ij}(t) I_j}
-#' \deqn{\frac{dE_i(t)}{dt} = \beta_i(t) S_i \Sigma_{j}C{ij}(t) I_j-\kappa E_i}
+#' \deqn{\frac{dS_i(t)}{dt} = -\beta(t) S_i \Sigma_{j}C_{ij}(t) I_j}
+#' \deqn{\frac{dE_i(t)}{dt} = \beta(t) S_i \Sigma_{j}C{ij}(t) I_j-\kappa E_i}
 #' \deqn{\frac{dI_i(t)}{dt} = \kappa E_i - (\gamma_i + \mu_i) I_i}
 #' \deqn{\frac{dR_i(t)}{dt} = \frac{\text{d}R_i}{\text{d}t} = \gamma_i I_i}
 #' \deqn{\frac{dC(t)}{dt} = \beta_i(t) S_i \Sigma_{j}C_{ij}(t) I_j}
@@ -355,8 +366,7 @@ setMethod(
                cc = rep(0, age))
     
     # set parameters vector
-    parameters <- c(
-                    b_npi = object@transmission_parameters$beta_npi,
+    parameters <- c(b_npi = object@transmission_parameters$beta_npi,
                     b = object@transmission_parameters$beta,
                     k = object@transmission_parameters$kappa,
                     g = object@transmission_parameters$gamma,
@@ -367,30 +377,12 @@ setMethod(
     b_finals = c(object@transmission_parameters$beta_npi,
                     object@transmission_parameters$beta)
     
-    # set intervention parameters vector
-    #  function for the ode to give the correct beta_npi and contact matrices at corresponding time point
-    #  currently, we consider applying same beta_npi for all age groups. SHOULD MODIFY!
-    idx_interv <- function(t){
-      idx_interv <- -1
-      i = 1
-      while ((idx_interv < 0) & (i <= object@n_npi)){
-        #print(paste(idx_interv, i))
-        if ((t>=interventions(object)[[i]]$starts) & (t<=interventions(object)[[i]]$stops)) idx_interv = i
-        i = i+1
-      } 
-      # assign to the idx referring to the non-intervention parameter
-      if(idx_interv < 0) idx_interv = object@n_npi + 1
-      return(idx_interv)
-    }
-    idx_interv_list <- lapply(times, function(t)idx_interv(t))
-    inter <- approxfun(times, idx_interv_list, rule=2) # avoid NA
-    
     # In each intervention, the contact matrix 
     right_hand_side <- function(t, state, parameters, input) {
       with(
         as.list(c(state, parameters)),
         {
-          inter <- input(t)
+          inter <- intervention_index(t, object)
           C_final <- C[[inter]]
           b_final <- b_finals[inter]
           
@@ -473,8 +465,9 @@ setMethod(
 #' caused by a single infectious individual of type j, assuming that all
 #' of type i are susceptible. In the SEIRDNPIAge model, the number of contacts
 #' resulting in infection per unit time in age group i is beta N_i C_ij, where
-#' N_i corresponds to the proportion of the population in that age group and
-#' C_ij is the contact matrix element. The average duration of infection is
+#' N_i corresponds to the proportion of the population in that age group, beta is the
+#' non-intervention transmission parameter and C_ij is the non-intervention contact
+#' matrix element. The average duration of infection is
 #' 1 / (mu_j + gamma_j) for an individual in age group j. This means the average number of
 #' secondary infections of type i caused by an infectious individual of type j is 
 #' g_ij = beta N_i C_ij / (mu_i + gamma_i). R0 is then given by the dominant
