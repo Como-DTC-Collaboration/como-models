@@ -47,34 +47,34 @@ For COVID-19 transmission, a key difference is that the death rate varies by age
 where each compartment has its own death rate, $\mu_i$. Since, in this model, there are only two fates for an infectious individual -- death and recovery -- the proportion of infectious individuals who die is given by:
 
 \begin{equation}
-\text{CFR} = \frac{\text{rate of death}}{\text{rate of death} + \text{rate of recovery}} = \frac{\mu}{\mu + \gamma},
+\text{IFR} = \frac{\text{rate of death}}{\text{rate of death} + \text{rate of recovery}} = \frac{\mu}{\mu + \gamma},
 \end{equation}
 
-where $\text{CFR}$ denotes the case fatality ratio. In @verity2020estimates, the CFR was shown to vary strongly with age using aggregate case and deaths data for mainland China extracted until March 2020. Here we graph their estimates.
+where $\text{IFR}$ denotes the infection fatality ratio. In @verity2020estimates, the IFR was shown to vary strongly with age using aggregate case and deaths data for mainland China extracted until March 2020. Here we graph their estimates.
 ```{r, fig.width=6, fig.height=4}
 # for 80+ group we pick upper age to be 110
 df <- tribble(
-  ~lower_age, ~upper_age, ~cfr,
-  0, 9, 0.00260,
-  10, 19, 0.0148,
-  20, 29, 0.0600,
-  30, 39, 0.146,
-  40, 49, 0.295,
-  50, 59, 1.25,
-  60, 69, 3.99,
-  70, 79, 8.61,
-  80, 110, 13.4) %>% 
-  mutate(cfr = cfr / 100) %>% 
+  ~lower_age, ~upper_age, ~IFR,
+  0, 9, 0.00161,
+  10, 19, 0.00695,
+  20, 29, 0.0309,
+  30, 39, 0.0844,
+  40, 49, 0.161,
+  50, 59, 0.595,
+  60, 69, 1.93,
+  70, 79, 4.28,
+  80, 110, 7.80) %>% 
+  mutate(IFR = IFR / 100) %>% 
   mutate(age_range=paste0(lower_age, "-", upper_age)) %>% 
   mutate(age_range=as.factor(age_range)) %>% 
   mutate(age_range=fct_reorder(age_range, lower_age))
 
 df %>% 
-  ggplot(aes(x=age_range, y=cfr)) +
+  ggplot(aes(x=age_range, y=IFR)) +
   geom_point() +
   scale_y_continuous(labels=scales::percent_format(accuracy = 1)) +
   xlab("Age range") +
-  ylab("CFR")
+  ylab("IFR")
 ```
 From this, we see the dramatic rise in the risk of death beginning at around the 50-59 age class.
 
@@ -192,8 +192,8 @@ We next give it transmission parameters. Here, we assume an average latency peri
 We assume the following parameterisation: $\eta = 1/{\text{av. time until noninfectious}}=1/2$
 
 \begin{align}
-\gamma_i &= \eta (1-\text{CFR}_i)\\
-\mu_i &= \eta \text{CFR}_i.
+\gamma_i &= \eta (1-\text{IFR}_i)\\
+\mu_i &= \eta \text{IFR}_i.
 \end{align}
 
 Indeed, this parameterisation is possible because we allow an age-dependent recovery rate, $\gamma_i$.
@@ -250,7 +250,7 @@ kappa <- 1 / 5.5
 eta <- 1 / 2
 beta <- 0.707
 
-# assume cfr constant within age ranges of contact matrix bands
+# assume IFR constant within age ranges of contact matrix bands
 get_lower_age <- function(x) {
   as.numeric(substr(x, 1, regexpr("-", x) - 1))
 }
@@ -261,17 +261,17 @@ lower_age <- map_dbl(age_names, get_lower_age)
 upper_age <- map_dbl(age_names, get_upper_age)
 middle_age <- (lower_age + upper_age) / 2
 
-# assume CFR is constant within age hands
-cfr_vals <- vector(length = length(middle_age))
-cfr_getter <- function(age, df) {
+# assume IFR is constant within age hands
+IFR_vals <- vector(length = length(middle_age))
+IFR_getter <- function(age, df) {
   for(j in 1:nrow(df)) {
     if(age > df$lower_age[j] & age <= df$upper_age[j])
-      return(df$cfr[j])
+      return(df$IFR[j])
   }
 }
-cfr_vals <- map_dbl(middle_age, ~cfr_getter(., df))
-gamma_vals <- eta * (1 - cfr_vals)
-mu_vals <- eta * cfr_vals
+IFR_vals <- map_dbl(middle_age, ~IFR_getter(., df))
+gamma_vals <- eta * (1 - IFR_vals)
+mu_vals <- eta * IFR_vals
 
 transmission_parameters(model) <- list(b=beta, k=kappa, g=gamma_vals, mu=mu_vals)
 
