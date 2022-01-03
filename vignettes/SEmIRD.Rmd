@@ -1,0 +1,34 @@
+---
+title: "SEmIRD"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{SEmIRD}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Introduction
+This vignette introduces the `SEmIRD` model. This model is an extension of the [SEIRD model](https://github.com/Como-DTC-Collaboration/como-models/blob/main/vignettes/SEIRD.Rmd) where there are three exposed compartments opposed to one. The ODEs describing the dynamics are hence:
+
+$$\frac{\text{d}S}{\text{d}t} = -\beta S I,$$
+$$\frac{\text{d}E_1}{\text{d}t} = \beta S I -\kappa E_1,$$
+$$\frac{\text{d}E_2}{\text{d}t} = \kappa E_1 -\kappa E_2,$$
+$$\frac{\text{d}E_3}{\text{d}t} = \kappa E_2 -\kappa E_3,$$
+
+$$\frac{\text{d}I}{\text{d}t} =\kappa E_3 - (\gamma + \mu) I,$$
+$$\frac{\text{d}R}{\text{d}t} = \gamma I,$$
+$$\frac{\text{d}D}{\text{d}t} = \mu I.$$
+
+## Rationale
+The main reason for having multiple exposed compartments is to allow there to be a non-exponential delay period between an individual becoming infected and turning infectious.
+
+```{r setup}
+library(comomodels)
+```
