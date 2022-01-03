@@ -235,9 +235,9 @@ print(paste0("R_0 = ", round(R0(model), 2)))
 
 Now we simulate the system assuming a single intervention between $t=20$ and $t=98$ days.
 ```{r}
-interven <- list(list("starts"=20, "stops"=98, "coverages"=1))
-
-interventions(model) <- interven
+# create inteverntion
+intervention <- list(list("starts"=20, "stops"=98))
+interventions(model) <- intervention
 
 # simulate for a year
 times <- seq(0, 365, by = 1)

@@ -71,7 +71,7 @@ SEIRDNPIAge <- setClass('SEIRDNPIAge',
                                      initial_condition_names = list('S0', 'E0', 'I0', 'R0', 'D0'),
                                      transmission_parameter_names = list('beta_npi', 'beta', 
                                                                          'kappa', 'gamma', 'mu'),
-                                     npi_parameter_names = list("starts", "stops", "coverages"), 
+                                     npi_parameter_names = list("starts", "stops"), 
                                      initial_conditions = vector(mode = "list", length = 5),
                                      transmission_parameters = vector(mode = "list", length = 5),
                                      interventions = vector(mode = "list"),
@@ -240,7 +240,7 @@ setMethod("interventions", "SEIRDNPIAge",
 #' @describeIn SEIRDNPIAge Setter method for NPI parameters of the SEIRDNPIAge model.
 #'
 #' @param object an object of the class SEIRDNPIAge
-#' @param value (list) list of NPI parameters: starts, stops, coverages
+#' @param value (list) list of NPI parameters: starts, stops
 #'
 #' @return object of class SEIRDNPIAge with NPI parameters assigned.
 #'
@@ -260,16 +260,14 @@ setMethod(
                     object@npi_parameter_names))
       
       # raise errors if NPIparameters are not doubles
-      for (p in list("starts", "stops", "coverages")) {
+      for (p in list("starts", "stops")) {
         if (!is.numeric(value[[i]][[p]])) {
           stop(glue("{p} format must be numeric"))
         }
       }
       
       # check that the NPI parameters are all of the same size
-      if (length(value[[i]]$starts) != length(value[[i]]$stops)|
-          length(value[[i]]$starts) != length(value[[i]]$coverages)|
-          length(value[[i]]$coverages) != length(value[[i]]$stops)) {
+      if (length(value[[i]]$starts) != length(value[[i]]$stops)) {
         stop("Invalid intervention parameters. Must have same size.")
       }
     }
@@ -494,7 +492,7 @@ setMethod("R0", "SEIRDNPIAge", function(model) {
   # calculate next generation matrix
   C_times_N <- sweep(C, 1, population_fractions, "*")
   death_plus_recovery <- mu + gamma
-  G <- sweep(beta * C_times_N, 1, death_plus_recovery, "/")
+  G <- sweep(beta * C_times_N, 2, death_plus_recovery, "/")
   
   # return dominant eigenvalue of it
   lambda_dominant <- eigen(G)$values[1]
