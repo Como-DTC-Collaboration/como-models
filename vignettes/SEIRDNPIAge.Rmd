@@ -88,27 +88,26 @@ What might those changes in these parameters represent? A change in $\beta$ repr
 
 The system is closed by specifying the initial conditions
 $$S(0) = S_0,\ E(0) = E_0,\ I(0) = I_0,\ R(0) = R_0, \ D(0) = 0.$$
-In the implementation of the model in this package, the variables are normalized so 
-$S(t) + E(t) + I(t) + R(t) + D(t) \equiv 1$ for any given $t$. This means that each of these state variables represents the fraction of the population in each of these states at a given point in time.
+In the implementation of the model in this package, the variables are normalized so $S(t) + E(t) + I(t) + R(t) + D(t) \equiv 1$ for any given $t$. This means that each of these state variables represents the fraction of the population in each of these states at a given point in time.
 
-The calculation of the basic reproduction number follows the same next-generation matrix approach as in the [SEIRDAge model](https://github.com/Como-DTC-Collaboration/como-models/blob/main/vignettes/SEIRD_age_structured.Rmd).
+The calculation of the basic reproduction number follows the same next-generation matrix approach as in the [SEIRDAge model](https://github.com/Como-DTC-Collaboration/como-models/blob/main/vignettes/SEIRD_age_structured.Rmd), and uses the non-intervention parameters to calculate it.
 
 ## Simulation examples
 
-We first load the country-level demographics from UN and set the number of age classes to be the same in the contact matrices, which is 16 in this instance.
+We first load the relevant contact matrices, country-level demographics from the UN for the UK.
 
 ```{r}
-# get contact matrices for India
+# get contact matrices for the UK
 ages <- seq(0, 80, 5)
 age_names <- vector(length = 16)
 for(i in seq_along(age_names)) {
   age_names[i] <- paste0(ages[i], "-", ages[i + 1])
 }
 
-c_home <- format_matrix(contact_home$India, age_names) %>% mutate(type="home")
-c_work <- format_matrix(contact_work$India, age_names) %>% mutate(type="work")
-c_school <- format_matrix(contact_school$India, age_names) %>% mutate(type="school")
-c_other <- format_matrix(contact_other$India, age_names) %>% mutate(type="other")
+c_home <- format_matrix(contact_home$`United Kingdom of Great Britain`, age_names) %>% mutate(type="home")
+c_work <- format_matrix(contact_work$`United Kingdom of Great Britain`, age_names) %>% mutate(type="work")
+c_school <- format_matrix(contact_school$`United Kingdom of Great Britain`, age_names) %>% mutate(type="school")
+c_other <- format_matrix(contact_other$`United Kingdom of Great Britain`, age_names) %>% mutate(type="other")
 
 c_all <- c_home %>%
   bind_rows(c_work) %>% 
@@ -117,13 +116,15 @@ c_all <- c_home %>%
 
 c_combined <- combine_contact_matrices(c_all)
 
-load(file = "../data/population.rda")
 # use demographic data to create normalised population fractions
-pops = population[population$country == 'India', ]$pop
+load(file = "../data/population.rda")
+pops = population[population$country == 'United Kingdom', ]$pop
 pop_fraction = pops/sum(pops)
+
 ## the contact matrix has an upper group of 80+, so we sum the remaining fractions beyond this point
 pop_fraction[16] = sum(pop_fraction[16:21])
 pop_fraction = pop_fraction[1:16]
+
 # reshape contact matrix into 16x16 form
 c_combined_wider <- combined_contact_matrices_wider(c_combined)
 # setting up the number of age classes
@@ -131,8 +132,7 @@ n_ages <- 16
 ```
 
 
-In model initiance, the parameters `n_ages` and `n_npi` represent the number of age classes and the number of NPI intervals, respectively; `contact_matrix` is a single matrix that represents the original contact matrix when no intervention is applied, whereas `contact_matrix_npi` defines a list of matrices corresponding to the contact matrices of each intervention period. The last parameter `age_ranges`
-gives the names for each age group.
+In model initiance, the parameters `n_ages` and `n_npi` represent the number of age classes and the number of NPI intervals, respectively; `contact_matrix` is a single matrix that represents the original contact matrix when no intervention is applied, whereas `contact_matrix_npi` defines a list of matrices corresponding to the contact matrices of each intervention period. The last parameter `age_ranges` gives the names for each age group.
 
 Here we demonstrate a simple scenario: a single intervention period that introduces a reduced rate in the connections between all age classes and a reduced infectious transmission rate:
 
@@ -174,10 +174,9 @@ $$
 \mu_i = \eta \text{IFR}_i.
 $$
 
-At this point, $\kappa$ is defined; $\gamma_i$ and $\mu_i$ can be derived; $\beta_i(t)$ needs to be set. In the setter function `transmission_parameters` for `SEIRDNPIAge`, the parameter `beta` defines the transmission rate for each age group
+At this point, $\kappa$ is defined; $\gamma_i$ and $\mu_i$ can be derived; $\beta(t)$ needs to be set. In the setter function `transmission_parameters` for `SEIRDNPIAge`, the parameter `beta` defines the transmission rate for each age group
 when no invervention is applied; whereas `beta_npi` defines a list of age-dependent transmission rates that
-corresponds to each inverntion period, or a single vector or a value if there's only a single invervention period. Consistent with the examples presented in `SEIRDAge` class, here we choose a value for $\beta$ to be the same
-across all age groups to result in the same $R_0$ value ($R_0=2.4$) as reported in "Report 9" by Imperial College London (Ferguson et al. 2020), and we set `beta_npi` to be $0.65\beta$ for all age groups.
+corresponds to each inverntion period, or a single vector or a value if there's only a single invervention period. Consistent with the examples presented in `SEIRDAge` class, here we choose a value for $\beta$ to be the same across all age groups to result in the same $R_0$ value ($R_0=2.4$) as reported in "Report 9" by Imperial College London (Ferguson et al. 2020), and we set `beta_npi` to be $0.65\beta$ for all age groups.
 
 ```{r}
 
@@ -202,7 +201,7 @@ df <- tribble(
 # setting up kappa, eta, beta
 kappa <- 1 / 5.5
 eta <- 1 / 2
-beta <- 0.707
+beta <- 1.69
 
 # assume IFR constant within age ranges of contact matrix bands
 get_lower_age <- function(x) {
@@ -318,7 +317,7 @@ run_SEIRDNPIAge_single_intv <- function(beta_npi_frac, contact_matrix_npi) {
                 )
   kappa <- 1 / 5.5
   eta <- 1 / 2
-  beta <- 0.707
+  beta <- 1.69
   IFR_vals <- map_dbl(middle_age, ~IFR_getter(., df))
   gamma_vals <- eta * (1 - IFR_vals)
   mu_vals <- eta * IFR_vals
