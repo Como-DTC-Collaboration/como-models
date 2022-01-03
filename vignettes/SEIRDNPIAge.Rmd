@@ -36,7 +36,6 @@ ggplot_results_by_compartment <- function(output, x="time", y="value", colour="a
   output %>%
   ggplot(aes_string(x=x, y=y, colour=colour)) +
   geom_line() +
-  #facet_wrap(~compartment) +
   scale_colour_viridis_d() +
   labs(x = labs_x, y = labs_y) +
   theme(text = element_text(size = text_size))  
@@ -68,8 +67,7 @@ combined_contact_matrices_wider <- function(c_combined){
 ```
 
 ## The SEIRDNPIAge Model
-The `SEIRDNPIAge` model consists of five ODEs describing five populations of susceptible, recovered, infectious, recovered and dead individuals. Susceptible individuals ($S$) have not been exposed to the virus. Exposed individuals ($E$) have been exposed to the virus and have been infected but are not yet infectious to others; they are in the incubation period. Infectious individuals ($I$) can spread the virus to others. Recovered individuals ($R$) are no longer
-infectious and are protected from reinfection. Here, we assume that there is no waning natural immunity, so once individuals are recovered from infection they never become susceptible again. Births and natural deaths (i.e. those unrelated to COVID-19 infection) are not considered in this model. Those infected individuals who have died due to infection form the "dead" ($D$) compartment.
+The `SEIRDNPIAge` model consists of five ODEs describing five populations of susceptible, recovered, infectious, recovered and dead individuals. Susceptible individuals ($S$) have not been exposed to the virus. Exposed individuals ($E$) have been exposed to the virus and have been infected but are not yet infectious to others; they are in the incubation period. Infectious individuals ($I$) can spread the virus to others. Recovered individuals ($R$) are no longer infectious and are protected from reinfection. Here, we assume that there is no waning natural immunity, so once individuals are recovered from infection they never become susceptible again. Births and natural deaths (i.e. those unrelated to COVID-19 infection) are not considered in this model. Those infected individuals who have died due to infection form the "dead" ($D$) compartment.
 
 The ODEs describing how the five populations evolve over time are:
 
@@ -92,10 +90,12 @@ In the implementation of the model in this package, the variables are normalized
 
 The calculation of the basic reproduction number follows the same next-generation matrix approach as in the [SEIRDAge model](https://github.com/Como-DTC-Collaboration/como-models/blob/main/vignettes/SEIRD_age_structured.Rmd), and uses the non-intervention parameters to calculate it.
 
-## Simulation examples
+## Mimicking the 1st UK lockdown
+On the 23rd March 2022, the Prime Minister of the UK announced the first lockdown in the country, ordering people to "stay at home" [@ifglockdowns2022]. The lockdown then came legally into force on the 26th March. In June, there was a phased reopening of schools, non-essential shops reopened and a further relaxing of restrictions including a "2m distancing rule". During early July, more restrictions were eased leading to the reopening of pubs, restaurants and hairdressers. Whilst the restrictions were not fully eased until the following year, we assume that the first lockdown lasted from 26th March until early July: a period of roughly 14 weeks.
+
+During lockdown, we assume that overall contacts declined by a factor of 2, which is similar to the ranges considered in Imperial College's Report 9 [@ferguson2020report]. 
 
 We first load the relevant contact matrices, country-level demographics from the UN for the UK.
-
 ```{r}
 # get contact matrices for the UK
 ages <- seq(0, 80, 5)
@@ -121,7 +121,7 @@ load(file = "../data/population.rda")
 pops = population[population$country == 'United Kingdom', ]$pop
 pop_fraction = pops/sum(pops)
 
-## the contact matrix has an upper group of 80+, so we sum the remaining fractions beyond this point
+# the contact matrix has an upper group of 80+, so we sum the remaining fractions beyond this point
 pop_fraction[16] = sum(pop_fraction[16:21])
 pop_fraction = pop_fraction[1:16]
 
@@ -131,31 +131,28 @@ c_combined_wider <- combined_contact_matrices_wider(c_combined)
 n_ages <- 16
 ```
 
-
-In model initiance, the parameters `n_ages` and `n_npi` represent the number of age classes and the number of NPI intervals, respectively; `contact_matrix` is a single matrix that represents the original contact matrix when no intervention is applied, whereas `contact_matrix_npi` defines a list of matrices corresponding to the contact matrices of each intervention period. The last parameter `age_ranges` gives the names for each age group.
-
-Here we demonstrate a simple scenario: a single intervention period that introduces a reduced rate in the connections between all age classes and a reduced infectious transmission rate:
+We next create a model with the appropriate contact matrices: `contact_matrix` is a single matrix that represents the original contact matrix when no intervention is applied, whereas `contact_matrix_npi` defines a list of matrices corresponding to the contact matrices of each intervention period. `n_npi` represents the the number of non-overlapping NPI intervention periods: here, this is 1.
 
 ```{r}
 # create model
 n_npi = 1 # only one intervention
+lockdown_reduced_contacts_factor <- 2
 model <- SEIRDNPIAge(n_age_categories = n_ages,
                       n_npi = n_npi,
                       contact_matrix = c_combined_wider,
-                      contact_matrix_npi = list(c_combined_wider*0.5),
+                      contact_matrix_npi = list(c_combined_wider / lockdown_reduced_contacts_factor),
                       age_ranges = as.list(age_names)
                       )
 ```
 
-We now need to set the initial conditions for the model, which defines the initial fraction of each population group
-before the simulation starts. Here we assume a uniform initial infected population of 0.1% across all age groups. The remaining 99.9% of the population starts as susceptibles. 
+We now need to set the initial conditions for the model. Here, we assume a uniform initial infected population of 0.1% across all age groups. The remaining 99.9% of the population starts as susceptibles. 
 ```{r}
-initial_conditions(model) <- list(S0=pop_fraction*0.999,
-                                  E0=rep(0, n_ages),
-                                  I0=pop_fraction*0.001,
-                                  R0=rep(0, n_ages),
-                                  D0=rep(0, n_ages)
-                                 )
+inits <- list(S0=pop_fraction * 0.999,
+              E0=rep(0, n_ages),
+              I0=pop_fraction * 0.001,
+              R0=rep(0, n_ages),
+              D0=rep(0, n_ages))
+initial_conditions(model) <- inits
 ```
 
 Next, we need to set the transmission parameter values $\beta$, $\kappa$, $\gamma$ and $\mu$. 
@@ -174,12 +171,9 @@ $$
 \mu_i = \eta \text{IFR}_i.
 $$
 
-At this point, $\kappa$ is defined; $\gamma_i$ and $\mu_i$ can be derived; $\beta(t)$ needs to be set. In the setter function `transmission_parameters` for `SEIRDNPIAge`, the parameter `beta` defines the transmission rate for each age group
-when no invervention is applied; whereas `beta_npi` defines a list of age-dependent transmission rates that
-corresponds to each inverntion period, or a single vector or a value if there's only a single invervention period. Consistent with the examples presented in `SEIRDAge` class, here we choose a value for $\beta$ to be the same across all age groups to result in the same $R_0$ value ($R_0=2.4$) as reported in "Report 9" by Imperial College London (Ferguson et al. 2020), and we set `beta_npi` to be $0.65\beta$ for all age groups.
+At this point, $\kappa$ is defined; $\gamma_i$ and $\mu_i$ can be derived; and $\beta(t)$ needs to be set. In the setter function `transmission_parameters` for `SEIRDNPIAge`, the parameter `beta` defines the transmission rate for each age group when no intervention is applied; whereas `beta_npi` defines a list of age-dependent transmission rates that corresponds to each intervention period, or a single vector or a value if there's only a single intervention period. Consistent with the examples presented in `SEIRDAge` class, here we choose a value for $\beta$ to be the same across all age groups to result in the same $R_0$ value ($R_0=2.4$) as reported in "Report 9" by Imperial College London [@ferguson2020report], and we set `beta_npi` to be $\beta$: i.e. it is assumed that there is no change in the probability of infection if an infectious and susceptible individual do meet -- note, this would be violated if, during the lockdown, people were more likely to wear masks.
 
 ```{r}
-
 # IFR for each age group
 # (for 80+ group we pick upper age to be 110)
 df <- tribble(
@@ -229,7 +223,7 @@ gamma_vals <- eta * (1 - IFR_vals)
 mu_vals <- eta * IFR_vals
 
 # setting up transmission parameters
-params <- list(beta_npi = 0.65*beta, beta = beta,
+params <- list(beta_npi = beta, beta = beta,
                kappa = kappa, gamma = gamma_vals, mu = mu_vals)
 transmission_parameters(model) <- params
 ```
@@ -239,29 +233,26 @@ We can check if the basic reproduction number is as we expected:
 print(paste0("R_0 = ", round(R0(model), 2)))
 ```
 
-
-
-Now we simulate the system from $t=0$ days to $t=250$ days, with a single intervention between $t=20$ and $t=40$.
+Now we simulate the system assuming a single intervention between $t=20$ and $t=98$ days.
 ```{r}
-interven <- list(list("starts"=20, "stops"=40, "coverages"=1))
+interven <- list(list("starts"=20, "stops"=98, "coverages"=1))
 
 interventions(model) <- interven
-times <- seq(0, 250, by = 1)
+
+# simulate for a year
+times <- seq(0, 365, by = 1)
 out_df <- run(model, times)
 ```
-
 
 Let us plot the population size for each epidemiological group and each age group.
 ```{r, fig.width=10, fig.height=5}
 states = out_df$states
-states %>% ggplot_results_by_compartment() +
+states %>%
+  ggplot_results_by_compartment() +
   facet_wrap(~compartment)
 ```
 
-We see that the intervention prevents the epidemic peak at the start. As the intervention stops, the epidemic re-started.
-
-
-Zooming in on the infected population, we see that the younger age groups have the highest peak infected population levels.
+It is hard to make out clear patterns when we examine all the compartments, so, in the next plot, we zoom in on the infectious population. 
 ```{r, fig.width=8, fig.height=5}
 states %>%
   filter(compartment=="I") %>% 
@@ -269,25 +260,77 @@ states %>%
   facet_wrap(~compartment)
 ```
 
+From this, the older age groups have the lowest peak infectious levels. This makes intuitive sense, since this age group have generally the lowest number of daily contacts. This is evident if we plot the overall number of daily contacts by age group, which peaks in the 15-20 age group.
 
-The simulation also outputs incidence and deaths. These are derived from the state variables. Incidence is just the difference between the cumulative number of cases between two time points,
+```{r, fig.height = 5, fig.width = 7}
+c_combined %>% 
+  group_by(age_infectee) %>% 
+  summarise(value=sum(value)) %>% 
+  ggplot(aes(x=age_infectee, y=value)) +
+  geom_col() +
+  xlab("Age group") +
+  ylab("Average number of daily contacts") +
+  coord_flip()
+```
 
-$$ \text{incidence(t)} = C(t) - C(t - 1),$$
-
-since this shows the number of cases which have arisen between these time  points. Deaths are also given by a difference, but, in this instance, between the cumulative number of deaths at two consecutive time points:
-
-$$ \text{deaths(t)} = D(t) - D(t - 1).$$
+The number of cases mirrors the same patterns. From this plot, the impact of the lockdown period on cases is evident, causing a discontinuous change in cases at $t=20$ days. When the lockdown is lifted, the epidemic quickly resumes.
 
 ```{r fig2, fig.height = 5, fig.width = 7}
 changes <- out_df$changes
 changes %>%
   filter(compartment=="Incidence") %>% 
-  ggplot_results_by_compartment(labs_y = "fraction of the population \n that is newly infected per day")
+  ggplot_results_by_compartment(labs_y = "case fraction")
+```
+
+If we focus on deaths, the picture is quite different. Deaths have the highest peak in the oldest age groups because the IFR for these groups is disproportionately high. 
+
+```{r, fig.height = 5, fig.width = 7}
 changes %>%
   filter(compartment=="Deaths") %>% 
-  ggplot_results_by_compartment(labs_y = "fraction of the population \n that died per day")
-
+  ggplot_results_by_compartment(labs_y = "deaths fraction")
 ```
+
+### Comparison with the no lockdown scenario
+To evaluate the effectiveness of the lockdown intervention, we can compare this with a "baseline" scenario where we do nothing. Note, this baseline may be fairly unlikely because, even if a government chose not to implement a lockdown, the populace would likely change their behaviour in response to rising cases. For this baseline, we simulate from the `SEIRDAge` model using the same non-intervention parameters.
+```{r}
+# parameterise model
+model_baseline <- SEIRDAge(
+  n_age_categories = n_ages,
+  contact_matrix = c_combined_wider,
+  age_ranges = as.list(age_names)
+)
+params <- list(beta = beta,
+               kappa = kappa,
+               gamma = gamma_vals,
+               mu = mu_vals)
+transmission_parameters(model_baseline) <- params
+initial_conditions(model_baseline) <- inits
+
+# run simulation
+out_baseline <- run(model_baseline, times)
+```
+
+With these simulations run, we can compare the daily cases across the lockdown and baseline scenarios.
+```{r, fig.height = 5, fig.width = 7}
+# combine dataframes
+changes_baseline <- out_baseline$changes %>% 
+  mutate(scenario="baseline")
+changes_lockdown <- changes %>% 
+  mutate(scenario="lockdown")
+changes_both <- changes_baseline %>% 
+  bind_rows(changes_lockdown)
+
+# plot
+changes_both %>%
+  filter(compartment=="Incidence") %>%
+  ggplot(aes(x=time, y=value)) +
+  geom_line(aes(colour=scenario)) +
+  facet_wrap(~age_range) +
+  xlab("time (days)") +
+  ylab("case fraction") +
+  scale_color_brewer(palette = "Dark2")
+```
+This illustrates a common trend across all age groups: the intervention decreases the peak case load and lengthens the epidemic. This is an example of what has colloquially been referred to as "flattening the [epidemic] curve". This flattening is particularly important as it can reduce the peak burden on the health services, which could prevent it from being overwhelmed with demand.
 
 ## References
 
