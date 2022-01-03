@@ -68,11 +68,37 @@ combined_contact_matrices_wider <- function(c_combined){
 ```
 
 ## The SEIRDNPIAge Model
-Consistent with the [SEIRDAge model](https://github.com/Como-DTC-Collaboration/como-models/blob/main/vignettes/SEIRD_age_structured.Rmd), in the `SEIRDNPIAge` model describes how populations of susceptible, exposed, infectious, recovered and dead individuals evolve over time. Intermixing between age groups is accounted for via social contact matrices $C$, where the elements $C_{ij}$ indicate the expected number of contacts an individual of age class $i$ experiences with age class $j$ per day. In this package, we provide country-level estimates of contact matrices [@prem2017projecting], which are broken down according to whether contacts occurred at home, work, school and "other" places.
+The `SEIRDNPIAge` model consists of five ODEs describing five populations of susceptible, recovered, infectious, recovered and dead individuals. Susceptible individuals ($S$) have not been exposed to the virus. Exposed individuals ($E$) have been exposed to the virus and have been infected but are not yet infectious to others; they are in the incubation period. Infectious individuals ($I$) can spread the virus to others. Recovered individuals ($R$) are no longer
+infectious and are protected from reinfection. Here, we assume that there is no waning natural immunity, so once individuals are recovered from infection they never become susceptible again. Births and natural deaths (i.e. those unrelated to COVID-19 infection) are not considered in this model. Those infected individuals who have died due to infection form the "dead" ($D$) compartment.
 
-To provide an example, we first visualise the contact matrices for India.
-```{r, fig.width=8, fig.height=6}
-# reformat matrices for plotting
+The ODEs describing how the five populations evolve over time are:
+
+$$\frac{\text{d}S_i}{\text{d}t} = -\beta(t) S_i \Sigma_{j}C_{ij}(t) I_j,$$
+$$\frac{\text{d}E_i}{\text{d}t} = \beta(t) S_i \Sigma_{j}C_{ij}(t) I_j-\kappa E_i,$$
+$$\frac{\text{d}I_i}{\text{d}t} = \kappa E_i - (\gamma_i + \mu_i) I_i,$$
+$$\frac{\text{d}R_i}{\text{d}t} = \gamma_i I_i,$$
+$$\frac{\text{d}D_i}{\text{d}t} = \mu_i I_i,$$
+
+where $i$ represents a particular age class, and $t$ represents a time point. $\kappa$, $\gamma_i$, $\mu_i$, $\nu$ are
+positive parameters as described in the [SEIRDAge model vignette](https://github.com/Como-DTC-Collaboration/como-models/blob/main/vignettes/SEIRD_age_structured.Rmd).
+
+The key parameters of the `SEIRDNPIAge` model are: $\beta(t)$ and $C_{ij}(t)$ representing time-dependent rates of infection and contact matrix elements, respectively. This model allows for discontinuous changes in either the rate parameter and / or the contact matrix over time in one or a number of intervention blocks.
+
+What might those changes in these parameters represent? A change in $\beta$ represents a change in the probability that a transmission occurs upon an infectious and susceptible individual meeting. If $\beta$ declined, this could represent, for instance, a government imposition of a rule that requires individuals to wear masks when in public spaces. A change in the contact matrix could represent a number of NPIs: in the event of a lockdown, the number of daily contacts outside the home would likely decline; if a decision was taken to shield the elderly, this would result in a decline in the relevant elements of the contact matrix pertaining to this group.
+
+The system is closed by specifying the initial conditions
+$$S(0) = S_0,\ E(0) = E_0,\ I(0) = I_0,\ R(0) = R_0, \ D(0) = 0.$$
+In the implementation of the model in this package, the variables are normalized so 
+$S(t) + E(t) + I(t) + R(t) + D(t) \equiv 1$ for any given $t$. This means that each of these state variables represents the fraction of the population in each of these states at a given point in time.
+
+The calculation of the basic reproduction number follows the same next-generation matrix approach as in the [SEIRDAge model](https://github.com/Como-DTC-Collaboration/como-models/blob/main/vignettes/SEIRD_age_structured.Rmd).
+
+## Simulation examples
+
+We first load the country-level demographics from UN and set the number of age classes to be the same in the contact matrices, which is 16 in this instance.
+
+```{r}
+# get contact matrices for India
 ages <- seq(0, 80, 5)
 age_names <- vector(length = 16)
 for(i in seq_along(age_names)) {
@@ -89,54 +115,8 @@ c_all <- c_home %>%
   bind_rows(c_school) %>% 
   bind_rows(c_other)
 
-# plot all
-c_all %>%
-  ggplot(aes(x=age_infector, y=age_infectee, fill=value)) +
-  geom_tile() +
-  scale_fill_viridis_c() +
-  facet_wrap(~type)
-```
-
-We can see that the majority of contacts fall between younger individuals, occurring at home or "other" locations. At home, however, there is more substantial intergenerational mixing than in other settings.
-
-We make an overall contact matrix by summming contributions from social settings together.
-```{r, fig.width=8, fig.height=5}
 c_combined <- combine_contact_matrices(c_all)
 
-c_combined %>% 
-  ggplot(aes(x=age_infector, y=age_infectee, fill=value)) +
-  geom_tile() +
-  scale_fill_viridis_c()
-```
-
-The `SEIRDNPIAge` model consists of five ODEs describing five populations of susceptible, recovered, infectious, recovered and dead individuals. Susceptible individuals ($S$) have not been exposed to the virus. Exposed individuals ($E$) have been exposed to the virus and have been infected but are not yet infectious to others; they are in the incubation period. Infectious individuals ($I$) can spread the virus to others. Recovered individuals ($R$) are no longer
-infectious and are protected from reinfection. Here, we assume that there is no waning natural immunity, so once individuals are recovered from infection they never become susceptible again. Births and natural deaths (i.e. those unrelated to COVID-19 infection) are not considered in this model. 
-
-The ODEs describing how the five populations evolve over time are:
-
-$$\frac{\text{d}S_i}{\text{d}t} = -\beta_i(t) S_i \Sigma_{j}C_{ij}(t) I_j,$$
-$$\frac{\text{d}E_i}{\text{d}t} = \beta_i(t) S_i \Sigma_{j}C_{ij}(t) I_j-\kappa E_i,$$
-$$\frac{\text{d}I_i}{\text{d}t} = \kappa E_i - (\gamma_i + \mu_i) I_i,$$
-$$\frac{\text{d}R_i}{\text{d}t} = \gamma_i I_i,$$
-$$\frac{\text{d}D_i}{\text{d}t} = \mu_i I_i,$$
-
-where $i$ represents a particular age class, and $t$ represents a time point. $\kappa$, $\gamma_i$, $\mu_i$, $\nu$ are
-positive parameters as described in the [SEIRDAge model vignette](https://github.com/Como-DTC-Collaboration/como-models/blob/main/vignettes/SEIRD_age_structured.Rmd).
-
-The key parameters of the `SEIRDNPIAge` model are: $\beta_i(t)$ and $C_{ij}(t)$ representing time-dependent rates of infection and contact matrix elements, respectively. This model allows for discontinuous changes in either the rate parameter and / or the contact matrix over time in one or a number of intervention blocks.
-
-The system is closed by specifying the initial conditions
-$$S(0) = S_0,\ E(0) = E_0,\ I(0) = I_0,\ R(0) = R_0, \ D(0) = 0.$$
-In the implementation of the model in this package, the variables are normalized so 
-$S(t) + E(t) + I(t) + R(t) + D(t) \equiv 1$ for any given $t$. This means that each of these state variables represents the fraction of the population in each of these states at a given point in time.
-
-The calculation of the basic reproduction number follows the same next-generation matrix approach as in the [SEIRDAge model](https://github.com/Como-DTC-Collaboration/como-models/blob/main/vignettes/SEIRD_age_structured.Rmd).
-
-## Simulation examples
-
-We first load the country-level demographics from UN and set the number of age classes to be the same in the contact matrices, which is 16 in this instance.
-
-```{r}
 load(file = "../data/population.rda")
 # use demographic data to create normalised population fractions
 pops = population[population$country == 'India', ]$pop
@@ -180,9 +160,9 @@ initial_conditions(model) <- list(S0=pop_fraction*0.999,
 
 Next, we need to set the transmission parameter values $\beta$, $\kappa$, $\gamma$ and $\mu$. 
 
-To set age-dependent values for $\gamma$ and $\mu$, we adopted the age-dependent Case Fatality Ratio (CFR, the fraction of infectious individuals who die) according to [@verity2020estimates], as CFR is only dependent on $\gamma$ and $\mu$:
+To set age-dependent values for $\gamma$ and $\mu$, we adopted the age-dependent Infection Fatality Ratio (IFR, the fraction of infected individuals who go on to die) according to [@verity2020estimates], as IFR is only dependent on $\gamma$ and $\mu$:
 
-$$ \text{CFR}_i = \frac{\text{rate of death of age class }i}{\text{rate of death of age class }i + \text{rate of recovery of age class }i} = \frac{\mu_i}{\mu_i + \gamma_i} $$
+$$ \text{IFR}_i = \frac{\text{rate of death of age class }i}{\text{rate of death of age class }i + \text{rate of recovery of age class }i} = \frac{\mu_i}{\mu_i + \gamma_i} $$
 
 We assume an average latency period ($1/\kappa$) of 5.5 days (as has been estimated for COVID-19; @xin2021estimating) and an average duration of infectiousness ($1/\eta$) of 2 days (which indicates that, after 10 days, $<1\%$ would be infectious, which is in line with UK policy which assumes individuals cannot pass on infection after 10 days; @stayathome2021). For simplicity, we assume that symptom onset occurs at the time an individual becomes infectious (although evidence suggests there is presymptomatic transmission; @stayathome2021).
 
@@ -190,8 +170,8 @@ We assume the following parameterisation:
 
 $$
 \eta = 1/{\text{av. time until noninfectious}}=1/2 \\
-\gamma_i = \eta (1-\text{CFR}_i) \\
-\mu_i = \eta \text{CFR}_i.
+\gamma_i = \eta (1-\text{IFR}_i) \\
+\mu_i = \eta \text{IFR}_i.
 $$
 
 At this point, $\kappa$ is defined; $\gamma_i$ and $\mu_i$ can be derived; $\beta_i(t)$ needs to be set. In the setter function `transmission_parameters` for `SEIRDNPIAge`, the parameter `beta` defines the transmission rate for each age group
@@ -201,20 +181,20 @@ across all age groups to result in the same $R_0$ value ($R_0=2.4$) as reported 
 
 ```{r}
 
-# CFR for each age group
+# IFR for each age group
 # (for 80+ group we pick upper age to be 110)
 df <- tribble(
-  ~lower_age, ~upper_age, ~cfr,
-  0, 9, 0.00260,
-  10, 19, 0.0148,
-  20, 29, 0.0600,
-  30, 39, 0.146,
-  40, 49, 0.295,
-  50, 59, 1.25,
-  60, 69, 3.99,
-  70, 79, 8.61,
-  80, 110, 13.4) %>% 
-  mutate(cfr = cfr / 100) %>% 
+  ~lower_age, ~upper_age, ~IFR,
+  0, 9, 0.00161,
+  10, 19, 0.00695,
+  20, 29, 0.0309,
+  30, 39, 0.0844,
+  40, 49, 0.161,
+  50, 59, 0.595,
+  60, 69, 1.93,
+  70, 79, 4.28,
+  80, 110, 7.80) %>% 
+  mutate(IFR = IFR / 100) %>% 
   mutate(age_range=paste0(lower_age, "-", upper_age)) %>% 
   mutate(age_range=as.factor(age_range)) %>% 
   mutate(age_range=fct_reorder(age_range, lower_age))
@@ -224,7 +204,7 @@ kappa <- 1 / 5.5
 eta <- 1 / 2
 beta <- 0.707
 
-# assume cfr constant within age ranges of contact matrix bands
+# assume IFR constant within age ranges of contact matrix bands
 get_lower_age <- function(x) {
   as.numeric(substr(x, 1, regexpr("-", x) - 1))
 }
@@ -235,19 +215,19 @@ lower_age <- map_dbl(age_names, get_lower_age)
 upper_age <- map_dbl(age_names, get_upper_age)
 middle_age <- (lower_age + upper_age) / 2
 
-# assume CFR is constant within age hands
-cfr_vals <- vector(length = length(middle_age))
-cfr_getter <- function(age, df) {
+# assume IFR is constant within age hands
+IFR_vals <- vector(length = length(middle_age))
+IFR_getter <- function(age, df) {
   for(j in 1:nrow(df)) {
     if(age > df$lower_age[j] & age <= df$upper_age[j])
-      return(df$cfr[j])
+      return(df$IFR[j])
   }
 }
-cfr_vals <- map_dbl(middle_age, ~cfr_getter(., df))
+IFR_vals <- map_dbl(middle_age, ~IFR_getter(., df))
 
 # defive age-dependent gamma and mu
-gamma_vals <- eta * (1 - cfr_vals)
-mu_vals <- eta * cfr_vals
+gamma_vals <- eta * (1 - IFR_vals)
+mu_vals <- eta * IFR_vals
 
 # setting up transmission parameters
 params <- list(beta_npi = 0.65*beta, beta = beta,
@@ -339,9 +319,9 @@ run_SEIRDNPIAge_single_intv <- function(beta_npi_frac, contact_matrix_npi) {
   kappa <- 1 / 5.5
   eta <- 1 / 2
   beta <- 0.707
-  cfr_vals <- map_dbl(middle_age, ~cfr_getter(., df))
-  gamma_vals <- eta * (1 - cfr_vals)
-  mu_vals <- eta * cfr_vals
+  IFR_vals <- map_dbl(middle_age, ~IFR_getter(., df))
+  gamma_vals <- eta * (1 - IFR_vals)
+  mu_vals <- eta * IFR_vals
   
   params <- list(beta_npi = beta_npi_frac * beta, beta = beta,
                kappa = kappa, gamma = gamma_vals, mu = mu_vals)
@@ -511,9 +491,9 @@ run_SEIRDNPIAge_mult_intv <- function(beta_npi_frac, contact_matrix_npi, n_npi) 
   kappa <- 1 / 5.5
   eta <- 1 / 2
   beta <- 0.707
-  cfr_vals <- map_dbl(middle_age, ~cfr_getter(., df))
-  gamma_vals <- eta * (1 - cfr_vals)
-  mu_vals <- eta * cfr_vals
+  IFR_vals <- map_dbl(middle_age, ~IFR_getter(., df))
+  gamma_vals <- eta * (1 - IFR_vals)
+  mu_vals <- eta * IFR_vals
   params <- list(beta_npi = beta_npi_frac*beta, beta = beta,
                kappa = kappa, gamma = gamma_vals, mu = mu_vals)
   model <- SEIRDNPIAge(
