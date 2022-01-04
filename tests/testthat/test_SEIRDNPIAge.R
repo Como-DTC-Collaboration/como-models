@@ -311,9 +311,16 @@ test_that("Simulation runs correctly", {
                                         'compartment' = lapply(c("Deaths", "Incidence"), function(x)rep(x, length(times)*my_model@n_age_categories)) %>% unlist,
                                         'age_range' = rep(lapply(c('0-50', '50-100'), function(x)rep(x, length(times))) %>% unlist, 2)
   )
+  for (state in c("S", "E", "I", "R", "D")){
+    expect_equal(out_df$states[out_df$states$compartment==state, "value"],
+                 expected_output_states[expected_output_states$compartment==state, "value"])
+  }
   
-  #expect_equal(tibble(out_df$states), tibble(expected_output_states))
-  #expect_equal(tibble(out_df$changes), tibble(expected_output_changes))
+  for (state in c("Deaths", "Incidence")){
+    expect_equal(out_df$changes[out_df$changes$compartment==state, "value"],
+                 expected_output_changes[expected_output_changes$compartment==state, "value"])
+  }
+  
   
 })
 
@@ -346,6 +353,7 @@ test_that("Running model before setting parameters fails", {
                                             kappa = 0.5,
                                             gamma = 1,
                                             mu = 0.5)
+  interventions(my_model) <- list(list(starts=2, stops=4))
   expect_error(run(my_model, times), "Initial conditions must be set before running.")
   
   my_model <- SEIRDNPIAge(n_age_categories = 2,
@@ -366,7 +374,7 @@ test_that("Running model before setting parameters fails", {
                                      I0=c(0, 0),
                                      R0=c(0, 0), 
                                      D0 = c(0, 0))
-  #expect_error(run(my_model, times), "Interventions must be set before running.")
+  expect_error(run(my_model, times), "Interventions must be set before running.")
 })
 
 

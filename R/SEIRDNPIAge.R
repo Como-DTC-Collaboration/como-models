@@ -359,7 +359,7 @@ setMethod(
     if (is.null(unlist(object@initial_conditions)))
       stop("Initial conditions must be set before running.")
     if (is.null(unlist(object@interventions)))
-      stop("Intervention parameters must be set before running.")
+      stop("Interventions must be set before running.")
     if (is.null(unlist(object@contact_matrix)))
       stop("Contact matrix must be set before running.")
     if (is.null(unlist(object@contact_matrix_npi)))
