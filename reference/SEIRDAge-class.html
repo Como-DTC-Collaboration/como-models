@@ -29,6 +29,7 @@ numerical integration."><!-- mathjax --><script src="https://cdnjs.cloudflare.co
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/SEIRD.html">The SEIRD model</a>
+    <a class="dropdown-item" href="../articles/SEIRDNPIAge.html">SEIRDNPIAge</a>
     <a class="dropdown-item" href="../articles/SEIRDV.html">The SEIRDV model</a>
     <a class="dropdown-item" href="../articles/SEIRDVAge.html">The SEIRDVAge model</a>
     <a class="dropdown-item" href="../articles/SEIRD_age_structured.html">The age-structured SEIRD model</a>
@@ -72,7 +73,7 @@ numerical integration.</p>
 <span class="fu"><a href="transmission_parameters.html">transmission_parameters</a></span><span class="op">(</span><span class="va">object</span><span class="op">)</span> <span class="op">&lt;-</span> <span class="va">value</span>
 
 <span class="co"># S4 method for SEIRDAge</span>
-<span class="fu"><a href="run.html">run</a></span><span class="op">(</span><span class="va">object</span>, times <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">100</span>, by <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>, solve_method <span class="op">=</span> <span class="st">"lsoda"</span><span class="op">)</span>
+<span class="fu"><a href="run.html">run</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">times</span>, solve_method <span class="op">=</span> <span class="st">"lsoda"</span><span class="op">)</span>
 
 <span class="co"># S4 method for SEIRDAge</span>
 <span class="fu"><a href="R0.html">R0</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">population_fractions</span><span class="op">)</span></code></pre></div>

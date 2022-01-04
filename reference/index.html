@@ -25,6 +25,7 @@
   <a href="#" class="nav-link dropdown-toggle" data-bs-toggle="dropdown" role="button" aria-expanded="false" aria-haspopup="true" id="dropdown-articles">Articles</a>
   <div class="dropdown-menu" aria-labelledby="dropdown-articles">
     <a class="dropdown-item" href="../articles/SEIRD.html">The SEIRD model</a>
+    <a class="dropdown-item" href="../articles/SEIRDNPIAge.html">SEIRDNPIAge</a>
     <a class="dropdown-item" href="../articles/SEIRDV.html">The SEIRDV model</a>
     <a class="dropdown-item" href="../articles/SEIRDVAge.html">The SEIRDVAge model</a>
     <a class="dropdown-item" href="../articles/SEIRD_age_structured.html">The age-structured SEIRD model</a>
@@ -76,6 +77,14 @@
           <code><a href="SEIRDAge-class.html">initial_conditions(<i>&lt;SEIRDAge&gt;</i>)</a></code> <code><a href="SEIRDAge-class.html">`initial_conditions&lt;-`(<i>&lt;SEIRDAge&gt;</i>)</a></code> <code><a href="SEIRDAge-class.html">transmission_parameters(<i>&lt;SEIRDAge&gt;</i>)</a></code> <code><a href="SEIRDAge-class.html">`transmission_parameters&lt;-`(<i>&lt;SEIRDAge&gt;</i>)</a></code> <code><a href="SEIRDAge-class.html">run(<i>&lt;SEIRDAge&gt;</i>)</a></code> <code><a href="SEIRDAge-class.html">R0(<i>&lt;SEIRDAge&gt;</i>)</a></code> 
         </dt>
         <dd>An S4 object representing the SEIRDAge.</dd>
+      </dl><dl><dt>
+          
+          <code><a href="SEIRDNPIAge-class.html">initial_conditions(<i>&lt;SEIRDNPIAge&gt;</i>)</a></code> <code><a href="SEIRDNPIAge-class.html">`initial_conditions&lt;-`(<i>&lt;SEIRDNPIAge&gt;</i>)</a></code> <code><a href="SEIRDNPIAge-class.html">transmission_parameters(<i>&lt;SEIRDNPIAge&gt;</i>)</a></code> <code><a href="SEIRDNPIAge-class.html">`transmission_parameters&lt;-`(<i>&lt;SEIRDNPIAge&gt;</i>)</a></code> <code><a href="SEIRDNPIAge-class.html">interventions(<i>&lt;SEIRDNPIAge&gt;</i>)</a></code> <code><a href="SEIRDNPIAge-class.html">`interventions&lt;-`(<i>&lt;SEIRDNPIAge&gt;</i>)</a></code> <code><a href="SEIRDNPIAge-class.html">run(<i>&lt;SEIRDNPIAge&gt;</i>)</a></code> <code><a href="SEIRDNPIAge-class.html">R0(<i>&lt;SEIRDNPIAge&gt;</i>)</a></code> 
+        </dt>
+        <dd>Defines an age-structured SEIR model with non-pharmaceutical interventions (NPIs)
+which influence social contact. Methods solve the set of
+ordinary differential equations of the model with a chosen method of
+numerical integration.</dd>
       </dl><dl><dt>
           
           <code><a href="SEIRDV-class.html">initial_conditions(<i>&lt;SEIRDV&gt;</i>)</a></code> <code><a href="SEIRDV-class.html">transmission_parameters(<i>&lt;SEIRDV&gt;</i>)</a></code> <code><a href="SEIRDV-class.html">`initial_conditions&lt;-`(<i>&lt;SEIRDV&gt;</i>)</a></code> <code><a href="SEIRDV-class.html">`transmission_parameters&lt;-`(<i>&lt;SEIRDV&gt;</i>)</a></code> <code><a href="SEIRDV-class.html">intervention_parameters(<i>&lt;SEIRDV&gt;</i>)</a></code> <code><a href="SEIRDV-class.html">`intervention_parameters&lt;-`(<i>&lt;SEIRDV&gt;</i>)</a></code> <code><a href="SEIRDV-class.html">run(<i>&lt;SEIRDV&gt;</i>)</a></code> 
@@ -199,12 +208,12 @@ of SEIR model.</dd>
           
           <code><a href="intervention_parameters-set.html">`intervention_parameters&lt;-`()</a></code> 
         </dt>
-        <dd>Set intervention parameters of the SEIRV model.</dd>
+        <dd>Set intervention parameters of the SEIRV or SEIRDAge model.</dd>
       </dl><dl><dt>
           
           <code><a href="intervention_parameters.html">intervention_parameters()</a></code> 
         </dt>
-        <dd>Retrieves intervention parameters of SEIRDV model.</dd>
+        <dd>Retrieves intervention parameters of SEIRDV or SEIRDAge_interventions model.</dd>
       </dl><dl><dt>
           
           <code><a href="intervention_protocol.html">intervention_protocol()</a></code> 

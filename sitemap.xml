@@ -10,6 +10,9 @@
     <loc>https://como-dtc-collaboration.github.io/como-models/articles/SEIRD.html</loc>
   </url>
   <url>
+    <loc>https://como-dtc-collaboration.github.io/como-models/articles/SEIRDNPIAge.html</loc>
+  </url>
+  <url>
     <loc>https://como-dtc-collaboration.github.io/como-models/articles/SEIRDV.html</loc>
   </url>
   <url>
@@ -47,6 +50,9 @@
   </url>
   <url>
     <loc>https://como-dtc-collaboration.github.io/como-models/reference/SEIRDAge-class.html</loc>
+  </url>
+  <url>
+    <loc>https://como-dtc-collaboration.github.io/como-models/reference/SEIRDNPIAge-class.html</loc>
   </url>
   <url>
     <loc>https://como-dtc-collaboration.github.io/como-models/reference/SEIRDV-class.html</loc>
