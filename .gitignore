@@ -43,3 +43,4 @@ vignettes/*.pdf
 
 check/*
 inst/doc
+docs
