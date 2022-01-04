@@ -200,17 +200,27 @@ setMethod(
     # add names to each value
     names(trans_params) = object@transmission_parameter_names
     
-    # check format of parameters: should be either a single 
-    # positive real value or a list of positive real values with
-    # the length equal to the number of age groups
+    # check the length of each parameter: 
+    ## beta_npi, beta, gamma - should be a single value
+    ## gamma, mu - should be either a single 
+    ## positive real value or a list of positive real values with
+    ## the length equal to the number of age groups
     for(i in seq_along(trans_params)){
       param_vals = trans_params[[i]]
       param_name = names(trans_params[i])
-      if((length(param_vals) != 1) & (length(param_vals)!=object@n_age_categories)){
+      if(param_name %in% c("beta_npi", "beta", "kappa")){
+        if(length(param_vals) != 1){
+          stop(paste0("The parameter value(s) of ", param_name, " should be of length 1"))
+          } 
+        }
+      else{
+        if((length(param_vals) != 1) & (length(param_vals)!=object@n_age_categories)){
         stop(paste0("The parameter value(s) of ", param_name, " should be of length 1 or
-            the number of age classes (i.e. object@n_age_categories)"))
+                    the number of age classes (i.e. object@n_age_categories)"))
+        }
       }
     }
+    
     # if all above tests are passed, assign the trans_params namelist to the
     # object
     object@transmission_parameters <- trans_params
@@ -269,6 +279,9 @@ setMethod(
       # check that the NPI parameters are all of the same size
       if (length(value[[i]]$starts) != length(value[[i]]$stops)) {
         stop("Invalid intervention parameters. Must have same size.")
+      }
+      if ((length(value[[i]]$starts) != 1) | (length(value[[i]]$stops) != 1)) {
+        stop("Invalid intervention parameters. Each 'start' and 'stop' parameter must be a single value.")
       }
     }
     
