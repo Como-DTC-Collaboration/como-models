@@ -11,7 +11,7 @@ NULL
 #' @slot output_names list of compartments name which are used by the model and
 #'       incidence.
 #' @slot initial_condition_names list of names of initial conditions
-#'       (characters). Default is list("S0", "E10", "E20", "E30", "I0", R0").
+#'       (characters). Default is list("S0", "E10", "E20", "E30", "E40", "E50", "I0", R0").
 #' @slot transmission_parameter_names list of names of transmission parameters
 #'       (characters). Default is list("beta", "kappa", "gamma", "mu").
 #' @slot initial_conditions list of values for initial conditions (double).
@@ -35,8 +35,8 @@ SEmIRD <- setClass("SEmIRD",
                   # prototypes for the slots, automatically set parameter names and
                   # its data type
                   prototype = list(
-                    output_names = list("S", "E1", "E2", "E3", "I", "R", "D", "Incidence", "Deaths"),
-                    initial_condition_names = list("S0", "E10", "E20", "E30", "I0", "R0"),
+                    output_names = list("S", "E1", "E2", "E3", "E4", "E5", "I", "R", "D", "Incidence", "Deaths"),
+                    initial_condition_names = list("S0", "E10", "E20", "E30", "E40", "E50", "I0", "R0"),
                     transmission_parameter_names = list("beta", "kappa", "gamma", "mu"),
                     initial_conditions = vector(mode = "list", length = 6),
                     transmission_parameters = vector(mode = "list", length = 4)
@@ -85,7 +85,7 @@ setMethod(
     init_cond <- value
     
     # check inits are numeric
-    for (p in list("S0", "E10", "E20", "E30", "I0", "R0")) {
+    for (p in list("S0", "E10", "E20", "E30", "E40", "E50", "I0", "R0")) {
       if (!is.numeric(init_cond[[p]])) {
         stop(glue("{p} format must be numeric"))
       }
@@ -149,7 +149,9 @@ setMethod(
 #' \deqn{\frac{dE1(t)}{dt} =  beta S(t) I(t) - kappa E1(t)}
 #' \deqn{\frac{dE2(t)}{dt} =  kappa E1(t) - kappa E2(t)}
 #' \deqn{\frac{dE3(t)}{dt} =  kappa E2(t) - kappa E3(t)}
-#' \deqn{\frac{dI(t)}{dt} = kappa E3(t) - (gamma + mu) I(t)}
+#' \deqn{\frac{dE4(t)}{dt} =  kappa E3(t) - kappa E4(t)}
+#' \deqn{\frac{dE5(t)}{dt} =  kappa E4(t) - kappa E5(t)}
+#' \deqn{\frac{dI(t)}{dt} = kappa E5(t) - (gamma + mu) I(t)}
 #' \deqn{\frac{dR(t)}{dt} = gamma I(t)}
 #' \deqn{\frac{dC(t)}{dt} = beta S(t) I(t)}
 #' \deqn{\frac{dD(t)}{dt} = mu I(t)}
@@ -165,7 +167,7 @@ setMethod(
 #' the ode function in the deSolve package used in this function.
 #'
 #' @return two dataframes: one with the time steps, age range, time series of S,
-#' E1, E2, E3, I and R population fractions, and one with the time steps, age range,
+#' E1, E2, E3, E4, E5, I and R population fractions, and one with the time steps, age range,
 #' time series of incidences and deaths population fraction.
 #' 
 #' @export
@@ -186,6 +188,8 @@ setMethod(
                E1 = initial_conditions(object)$E10,
                E2 = initial_conditions(object)$E20,
                E3 = initial_conditions(object)$E30,
+               E4 = initial_conditions(object)$E40,
+               E5 = initial_conditions(object)$E50,
                I = initial_conditions(object)$I0,
                R = initial_conditions(object)$R0,
                C = 0,
@@ -203,21 +207,25 @@ setMethod(
           e1 <- state[2]
           e2 <- state[3]
           e3 <- state[4]
-          i <- state[5]
-          r <- state[6]
-          c <- state[7]
-          d <- state[8]
+          e4 <- state[5]
+          e5 <- state[6]
+          i <- state[7]
+          r <- state[8]
+          c <- state[9]
+          d <- state[10]
           # rate of change
           ds <- -b * s * i
           de1 <- b * s * i - k * e1
           de2 <- k * e1 - k * e2
           de3 <- k * e2 - k * e3
-          di <- k * e3 - (g + m) * i
+          de4 <- k * e3 - k * e4
+          de5 <- k * e4 - k * e5
+          di <- k * e5 - (g + m) * i
           dr <- g * i
           dc <- b * s * i
           d_death <- m * i
           # return the rate of change
-          list(c(ds, de1, de2, de3, di, dr, dc, d_death))
+          list(c(ds, de1, de2, de3, de4, de5, di, dr, dc, d_death))
         })
     }
     
@@ -243,7 +251,7 @@ setMethod(
     # Added for consistency of output format across models
     output$age_range <- rep("0-150", length(output$time))
     
-    # Split output into 2 dataframes: one with S, E1, E2, E3, I, R, D and one with
+    # Split output into 2 dataframes: one with S, E1, E2, E3, E4, E5, I, R, D and one with
     # incidence and deaths
     states <- subset(output, !output$compartment %in% c("Incidence", "Deaths"))
     states <- droplevels(states)

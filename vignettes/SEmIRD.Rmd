@@ -1,5 +1,6 @@
 ---
-title: "SEmIRD"
+title: "SEmIRD: multiple exposed compartments"
+author: "Ben Lambert"
 output: rmarkdown::html_vignette
 bibliography: references.bib
 vignette: >
@@ -11,19 +12,20 @@ vignette: >
 ```{r, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
+  message = FALSE,
   comment = "#>"
 )
 ```
 
 ## Introduction
-This vignette introduces the `SEmIRD` model. This model is an extension of the [SEIRD model](https://github.com/Como-DTC-Collaboration/como-models/blob/main/vignettes/SEIRD.Rmd). The SEIRD model is described by the following ODEs:
+This vignette introduces the `SEmIRD` model. This model is an extension of the [SEIRD model](https://github.com/Como-DTC-Collaboration/como-models/blob/main/vignettes/SEIRD.Rmd), which is described by the following ODEs:
 
 $$\frac{\text{d}S}{\text{d}t} = -\beta S I,$$
 $$\frac{\text{d}E}{\text{d}t} = \beta S I -\kappa E,$$
 $$\frac{\text{d}I}{\text{d}t} =\kappa E - (\gamma + \mu) I,$$
 $$\frac{\text{d}R}{\text{d}t} = \gamma I,$$
 $$\frac{\text{d}D}{\text{d}t} = \mu I.$$
-In this vignette, we are going to focus on the time period that individuals spend, on average, in the latency period -- the time when individuals have been infected with the virus but are not yet infectious.
+In this vignette, we are going to focus on the time period that individuals spend, on average, in the exposed compartment. This time period is known as the latent period.
 
 As such, we can gain insight into how the flow out of the $E$ compartment works by imagining that we exhaust the infected individuals at a given time: $t=0$. The new equation then becomes:
 
@@ -68,8 +70,8 @@ tibble(t, E=E_1, kappa=kappa_1) %>%
   xlab("time (days)")
 ```
 
-## Stochastic individual models and their means
-An alternative way to view these exponential decay curves is as probability distributions governing the time taken for an exposed individual to become infectious. This period is referred to as the latency period.
+## Stochastic models and their means
+An alternative way to view these exponential decay curves is as probability distributions governing the time taken for an exposed individual to become infectious. This period is referred to as the latent period.
 
 In our ODE, we treat the population as a continuum, and there is thus no concept of a single discrete individual. It is, however, possible to formulate discrete stochastic versions of this model which consider individual dynamics using a reaction-equation type model. Considering again the ODE:
 
@@ -102,7 +104,7 @@ This equation holds for $E=0,1,2,...,E_0-1$. Considering $E=E_0$, there is only 
 
 which has solution $p_{E_0}(t) = \exp (-\kappa E_0 t)$.
 
-(So, considering a system of a single exposed individual, the probability they remain exposed is given by an exponential distribution with rate parameter $\kappa$ meaning the average duration of their latency period is $1/\kappa$.)
+(So, considering a system of a single exposed individual, the probability they remain exposed is given by an exponential distribution with rate parameter $\kappa$ meaning the average duration of their latent period is $1/\kappa$.)
 
 The equation for $E_0$ above can then be used to solve the equation for $p_{E_0-1}(t)$ and iteratively (see @erban2007practical section 2.1), this leads to a solution for any integer $0\leq E \leq E_0$:
 
@@ -121,10 +123,10 @@ The mean number of exposed individuals at time $t$ is then given by:
 
 where the third line is obtained by using $\binom{E_0}{E} = \frac{E_0}{E}\binom{E_0-1}{E-1}$; the last line is obtained since the sum extends over all possible values of $E$ for a distribution starting at $E_0-1$, which must equal 1.
 
-The most notable aspect of $\bar{E}(t)$ is that it matches the solution of the deterministic system. This shows that, for this system, there is an equivalence between the deterministic model and the stochastic model. This is nice because it allows us to ascribe "individual meaning" to parameters in the ODE: here, $1/\kappa$ is the mean duration spent in the infected state for an analogous stochastic model.
+The most notable aspect of $\bar{E}(t)$ is that it matches the solution of the deterministic system. This shows that, for this system, there is an equivalence between the deterministic model and the stochastic model, where the former is a mean-field solution of the latter. This is nice because it allows us to ascribe "individual meaning" to parameters in the ODE: here, $1/\kappa$ is the mean duration spent in the infected state for an analogous stochastic model.
 
-## The latency period for COVID-19
-But what does the distribution governing the latency period actually look like? Using repeatedly sampled PCR test data from close contacts of confirmed cases in mainland China, a recent study estimated the latency period of COVID-19 as 5.5 days and a log-normal probability distribution was found to represent that waiting period [@xin2021estimating]. Below we compare the waiting period for the log-normal distribution fit in [@xin2021estimating] with an exponential distribution with the same latency period.
+## The latent period for COVID-19
+But what does the distribution governing the latent period actually look like? Using repeatedly sampled PCR test data from close contacts of confirmed cases in mainland China, a recent study estimated the latent period of COVID-19 as 5.5 days and a log-normal probability distribution was found to represent that waiting period [@xin2021estimating]. Below we compare the waiting period for the log-normal distribution fit in [@xin2021estimating] with an exponential distribution with the same latent period.
 
 ```{r, fig.height = 5, fig.width = 7}
 # values derived from Xi et al., Table S2 
@@ -165,27 +167,146 @@ tibble(t, value=lnorm_vals, model="log-normal") %>%
 
 For example, the exponential curve predicts that approximately `r round(pexp(2.5, kappa), 2) * 100`% individuals will have become infectious after 2.5 days versus `r round(plnorm(2.5, mu, sigma),2) * 100`% for the log-normal one.
 
-Whether these differences matter depends on the form and parameters of the model. In COVID-19, the latency period is relatively short, so, for an SEIRD model, the difference between the assumed exponential distribution on waiting time versus a more realistic modal one are unlikely to substantially affect the dynamics. However, for a disease with a longer latency period, this may not be the case. Similarly, if, instead of an SEIRD model, we assumed a structure where there was a presymptomatic compartment of infectious individuals, then the characteristics of the time interval spent in this state could be important.
-
 ## The SEmIRD model
 To allow a non-exponential waiting period, a number of modelling approaches are possible and include a range of stochastic models, for instance renewal-type models and individual-based models. It is, however, possible to allow a Erlang-distributed  waiting time^[An Erlang distribution is a gamma distribution with an integer shape parameter.] in the stochastic analogue of an ODE model by splitting a stage into several substages. This is known as the "linear chain trick" (see @hurtado2019generalizations).
 
-In the `SEmIRD` model, we do just this: splitting the exposed compartment into three substages: $E_1, E_2, E_3$. The ODEs describing the dynamics are hence:
+In the `SEmIRD` model, we do just this: splitting the exposed compartment into five substages: $E_1, E_2, E_3, E_4, E_5$. The ODEs describing the dynamics are hence:
 
 $$\frac{\text{d}S}{\text{d}t} = -\beta S I,$$
 $$\frac{\text{d}E_1}{\text{d}t} = \beta S I -\kappa E_1,$$
 $$\frac{\text{d}E_2}{\text{d}t} = \kappa E_1 -\kappa E_2,$$
 $$\frac{\text{d}E_3}{\text{d}t} = \kappa E_2 -\kappa E_3,$$
-
-$$\frac{\text{d}I}{\text{d}t} =\kappa E_3 - (\gamma + \mu) I,$$
+$$\frac{\text{d}E_4}{\text{d}t} = \kappa E_3 -\kappa E_4,$$
+$$\frac{\text{d}E_5}{\text{d}t} = \kappa E_4 -\kappa E_5,$$
+$$\frac{\text{d}I}{\text{d}t} =\kappa E_5 - (\gamma + \mu) I,$$
 $$\frac{\text{d}R}{\text{d}t} = \gamma I,$$
 $$\frac{\text{d}D}{\text{d}t} = \mu I.$$
 
-To compare how this model behaves versus the SEIRD.
+## Comparing the SEmIRD and SEIRD models
+We now compare how this model behaves versus the SEIRD. In both cases, we assume that, at $t=0$, all individuals are in the first exposed compartment (note, for the SEIRD model, the first exposed compartment is the only exposed compartment). To make the differences stark, we assume that the average the latent period lasts 20 days. For the other parameters, we use the same set as were used in the SEIRD model vignette.
 
-```{r}
-kappa_s <- kappa / 3
+We first simulate the SEIRD model and plot the exposed and infectious compartments. In this plot, the fraction of infectious individuals grows at a fast rate right from the start and peaks somewhere near $t=5$ days.
+```{r, fig.height = 5, fig.width = 7}
+# parameterise model
+kappa <- 1 / 20
+IFR <- 0.0066
+zeta <- 1 / 2
+gamma <- zeta * (1 - IFR)
+mu <- zeta * IFR
+R0_target <- 2.4
+beta <- (mu + gamma) * R0_target
+
+model <- SEIRD()
+params <- list(beta=beta, kappa=kappa, gamma=gamma, mu=mu)
+transmission_parameters(model) <- params
+initial_conditions(model) <- list(S0=0, E0=1, I0=0, R0=0)
+
+# run model
+times <- seq(0, 50, 0.1)
+output <- run(model, times)
+states <- output$states
+
+# plot results
+states %>% 
+  filter(str_detect(compartment, "E|I")) %>% 
+  ggplot(aes(x=time, y=value)) +
+  geom_line(aes(colour=compartment)) +
+  xlab("time (days)")
+```
+We now repeat this exercise with the SEmIRD model. To ensure that we have the same mean duration of the latent period, we set $\kappa_s=5\kappa$, where $\kappa_s$ is the transit rate out of each of the $E_i$ compartments in the SEmIRD model.
+
+The plot of the exposed and infectious compartments shows the decline of initial exposed state ($E_1$) and the rise and fall of the intermediate states ($E_2$ through $E_5$). This procession of intermediate states through which individuals must pass to become infectious means that the infectious state fraction rises much later than for the SEIRD model: here, it peaks much nearer $t=20$ days. Effectively, allowing multiple exposed compartments induces a sort of delay between individuals becoming exposed and then transitioning to infected.
+```{r, fig.height = 5, fig.width = 7}
 model <- SEmIRD()
-transmission_parameters(model) <- 
+
+# change parameters
+kappa_s <- kappa * 5
+params <- list(beta=beta, kappa=kappa_s, gamma=gamma, mu=mu)
+transmission_parameters(model) <- params
+initial_conditions(model) <- list(S0=0, I0=0, R0=0,
+                                  E10=1, E20=0, E30=0, E40=0, E50=0)
+
+# run model
+output <- run(model, times)
+states <- output$states
+
+# plot results
+states %>% 
+  filter(str_detect(compartment, "E|I")) %>% 
+  ggplot(aes(x=time, y=value)) +
+  geom_line(aes(colour=compartment)) +
+  xlab("time (days)")
 ```
 
+## Comparing COVID-19 transmission dynamics
+Assuming now $\kappa=1/5.5$, which is more appropriate for COVID-19, we can compare the latent period distribution that was estimated by @xin2021estimating with the implied Erlang distribution of the SEmIRD model.
+
+We plot the probability density functions of the three delay periods. From this, it is clear that the Erlang distribution is a much closer approximation to the log-normal distribution than is the exponential. The SEmIRD model thus appears a more suitable distribution than the SEIRD model for describing COVID-19 transmission dynamics.
+```{r, fig.height = 5, fig.width = 7}
+# values derived from Xi et al., Table S2 
+m <- 1.61
+sigma <- 0.44
+
+# equivalent decay for exponential model
+kappa <- 1 / 5.5
+
+# generate densities across rate of time
+t <- seq(0, 20, 0.01)
+lnorm_vals <- dlnorm(t, m, sigma)
+exp_vals <- dexp(t, kappa)
+n_substates <- 5
+erlang_vals <- dgamma(t, n_substates, kappa * n_substates) # Erlang is gamma with integer rate
+
+tibble(t, value=lnorm_vals, model="log-normal") %>% 
+  bind_rows(tibble(t, value=exp_vals, model="exponential")) %>% 
+  bind_rows(tibble(t, value=erlang_vals, model="Erlang")) %>%
+  ggplot(aes(x=t, y=value, colour=model)) +
+  geom_line() +
+  scale_color_brewer("Model", palette = "Dark2") +
+  ylab("density") +
+  xlab("time (days)")
+```
+
+But how do the epidemics produced by two models differ? We now simulate each model and plot the number of daily cases for each. From this plot, it is clear that the waves of cases produced for each model are similar, although the SEmIRD model wave is shifted so that it occurs later. This makes intuitive sense since the impact of the multiple exposed compartment substages is to induce a delay between exposure and infectiousness -- effectively, resulting in a slightly delayed rise in cases.
+
+```{r, fig.height = 5, fig.width = 7}
+# parameterise model
+kappa <- 1 / 5.5
+
+# parameterise SEIRD model
+model_seird <- SEIRD()
+params <- list(beta=beta, kappa=kappa, gamma=gamma, mu=mu)
+transmission_parameters(model_seird) <- params
+initial_conditions(model_seird) <- list(S0=0.999, E0=0, I0=0.001, R0=0)
+
+# parameterise SEmIRD model
+model_semird <- SEmIRD()
+params <- list(beta=beta, kappa=kappa * 5, gamma=gamma, mu=mu)
+transmission_parameters(model_semird) <- params
+initial_conditions(model_semird) <- list(S0=0.999, I0=0.001, R0=0,
+                                        E10=0, E20=0, E30=0, E40=0, E50=0)
+
+# run both models and get cases
+times <- seq(0, 150, 1)
+output_seird <- run(model_seird, times)
+output_semird <- run(model_semird, times)
+changes_seird <- output_seird$changes %>%
+  filter(compartment=="Incidence") %>% 
+  mutate(model="SEIRD")
+changes_semird <- output_semird$changes %>%
+  filter(compartment=="Incidence") %>% 
+  mutate(model="SEmIRD")
+
+# compare cases
+changes_seird %>% 
+  bind_rows(changes_semird) %>% 
+  filter(time > 0) %>% 
+  ggplot(aes(x=time, y=value)) +
+  geom_line(aes(colour=model)) +
+  xlab("time (days)") +
+  scale_color_brewer(palette = "Dark2")
+```
+
+Including multiple substages is likely to be less important if variants of SARS-Cov-2 have shorter latent periods. This is likely the case for the Delta and Omicron variants which have been shown to have shorter incubation periods (near 4 days for Delta and approximately 3 days for Omicron versus more than 5 days for SARS-CoV-2; @grant2021impact; @cdcinvestigation2022) -- partly explaining their higher rate of spread.
+
+The difference between the results of a single versus multiple exposed state model could, however, be even greater if, instead of an SEIRD-type model, we assumed a structure where there was a presymptomatic compartment of infectious individuals. In this instance, the nature of the delay period distribution governing the time spent in this compartment could result in different responses to some non-pharmaceutical interventions: for example, an intervention involving early detection and isolation of infected individuals.
