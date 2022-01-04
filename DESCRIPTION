@@ -41,5 +41,6 @@ Collate:
     'SEIRDVAge.R'
     'SEIRD_RU.R'
     'SEIaImIsRD.R'
+    'SEmIRD.R'
     'data.R'
     'intervention.R'

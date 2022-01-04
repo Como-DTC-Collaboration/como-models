@@ -1,9 +1,10 @@
 ---
 title: "SEmIRD"
 output: rmarkdown::html_vignette
+bibliography: references.bib
 vignette: >
   %\VignetteIndexEntry{SEmIRD}
-  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEngine{knitr::knitr}
   %\VignetteEncoding{UTF-8}
 ---
 
@@ -15,7 +16,161 @@ knitr::opts_chunk$set(
 ```
 
 ## Introduction
-This vignette introduces the `SEmIRD` model. This model is an extension of the [SEIRD model](https://github.com/Como-DTC-Collaboration/como-models/blob/main/vignettes/SEIRD.Rmd) where there are three exposed compartments opposed to one. The ODEs describing the dynamics are hence:
+This vignette introduces the `SEmIRD` model. This model is an extension of the [SEIRD model](https://github.com/Como-DTC-Collaboration/como-models/blob/main/vignettes/SEIRD.Rmd). The SEIRD model is described by the following ODEs:
+
+$$\frac{\text{d}S}{\text{d}t} = -\beta S I,$$
+$$\frac{\text{d}E}{\text{d}t} = \beta S I -\kappa E,$$
+$$\frac{\text{d}I}{\text{d}t} =\kappa E - (\gamma + \mu) I,$$
+$$\frac{\text{d}R}{\text{d}t} = \gamma I,$$
+$$\frac{\text{d}D}{\text{d}t} = \mu I.$$
+In this vignette, we are going to focus on the time period that individuals spend, on average, in the latency period -- the time when individuals have been infected with the virus but are not yet infectious.
+
+As such, we can gain insight into how the flow out of the $E$ compartment works by imagining that we exhaust the infected individuals at a given time: $t=0$. The new equation then becomes:
+
+$$\frac{\text{d}E}{\text{d}t} = -\kappa E,$$
+Supposing there is a given number of infected individuals at $t=0$ represented by $E=E_0$, we can solve the above equation to yield an expression for the number of exposed over time:
+
+$$E(t) = E_0 \exp (- \kappa t)$$
+representing exponential decay, which we can plot assuming $E_0=1$ and $\kappa=0.5$:
+```{r, fig.height = 5, fig.width = 7, warning=FALSE}
+library(tidyverse)
+library(comomodels)
+
+# function to return exponential decay
+E <- function(E_0, kappa, t) {E_0 * exp(-kappa * t)}
+
+# make values to plot
+E_0 <- 1
+kappa <- 0.5
+t <- seq(0, 10, 0.01)
+E_vals <- E(E_0, kappa, t)
+
+tibble(t=t, E=E_vals) %>% 
+  ggplot(aes(x=t, y=E)) +
+  geom_line() +
+  xlab("time (days)")
+```
+
+We can also show the effect of changing $\kappa$: unsurprisingly, as $\kappa$ increases, the rate at which individuals become infectious increases and there is faster decay.
+```{r, fig.height = 5, fig.width = 7}
+kappa_1 <- 0.5
+kappa_2 <- 1
+kappa_3 <- 2
+E_1 <- E(E_0, kappa=kappa_1, t=t)
+E_2 <- E(E_0, kappa=kappa_2, t=t)
+E_3 <- E(E_0, kappa=kappa_3, t=t)
+tibble(t, E=E_1, kappa=kappa_1) %>% 
+  bind_rows(tibble(t, E=E_2, kappa=kappa_2)) %>% 
+  bind_rows(tibble(t, E=E_3, kappa=kappa_3)) %>% 
+  ggplot(aes(x=t, y=E, colour=as.factor(kappa))) +
+  geom_line() +
+  scale_color_brewer("kappa", palette = "Dark2") +
+  xlab("time (days)")
+```
+
+## Stochastic individual models and their means
+An alternative way to view these exponential decay curves is as probability distributions governing the time taken for an exposed individual to become infectious. This period is referred to as the latency period.
+
+In our ODE, we treat the population as a continuum, and there is thus no concept of a single discrete individual. It is, however, possible to formulate discrete stochastic versions of this model which consider individual dynamics using a reaction-equation type model. Considering again the ODE:
+
+$$\frac{\text{d}E}{\text{d}t} = -\kappa E,$$
+with initial condition $E(0) = E_0$. We can create a stochastic model which is analogue to this, where the probability that a particular exposed individual becomes infectious in time period $\delta t$ is given by $\kappa \delta t$. We now follow @erban2007practical to illustrate that the mean is the same as the solution of the above ODE.
+
+We let $p_E(t)$ denote the probability that there are $E$ exposed individuals at time $t$. We suppose that $\delta t$ is so small that the probability that two exposed individuals become infectious in the period $[t,t+\delta t)$ is negligible. There are two ways for there to be $E$ exposed individuals at time $t+\delta t$: either there were $E$ individuals at time $t$ and no individual became infectious in this period with probability $(1-\kappa E \delta t)$; or there were $E+1$ individuals at time $t$ and one individual became infectious with probability $\kappa (E+1) \delta t$. Therefore:
+
+\begin{equation}
+p_E(t+\delta t) = p_E(t) (1-\kappa E \delta t) + p_{E+1}(t) \kappa (E+1) \delta t,
+\end{equation}
+
+which can be rearranged to:
+
+\begin{equation}
+\frac{p_E(t+\delta t) - p_E(t)}{\delta t} = \kappa(E+1)p_{E+1}(t) - \kappa E p_E(t),
+\end{equation}
+
+taking the limit as $\delta t\rightarrow 0$, we obtain the so-called "chemical master equation" for the system:
+
+\begin{equation}
+\frac{dp_E}{\delta t} = \kappa(E+1)p_{E+1} - \kappa E p_E.
+\end{equation}
+
+This equation holds for $E=0,1,2,...,E_0-1$. Considering $E=E_0$, there is only one way for this to occur, which is: no exposed individual became infectious during this period so, we obtain an equation:
+
+\begin{equation}
+\frac{dp_{E_0}}{\delta t} = -\kappa E_0 p_{E_0},
+\end{equation}
+
+which has solution $p_{E_0}(t) = \exp (-\kappa E_0 t)$.
+
+(So, considering a system of a single exposed individual, the probability they remain exposed is given by an exponential distribution with rate parameter $\kappa$ meaning the average duration of their latency period is $1/\kappa$.)
+
+The equation for $E_0$ above can then be used to solve the equation for $p_{E_0-1}(t)$ and iteratively (see @erban2007practical section 2.1), this leads to a solution for any integer $0\leq E \leq E_0$:
+
+\begin{equation}
+p_E(t) = \exp(-\kappa E t) \binom{E_0}{E} (1 - \exp(-\kappa t))^{E_0-E}.
+\end{equation}
+
+The mean number of exposed individuals at time $t$ is then given by:
+
+\begin{align}
+\bar{E}(t) &= \sum_{E=0}^{E_0} E p_E(t)\\
+&= \sum_{E=0}^{E_0} E \exp(-\kappa E t) \binom{E_0}{E} (1 - \exp(-\kappa t))^{E_0-E}\\
+&= E_0 \exp(-\kappa t) \sum_{E=1}^{E_0} \exp(-\kappa (E-1) t) \binom{E_0-1}{E-1} (1 - \exp(-\kappa t))^{(E_0-1)-(E-1)}\\
+&= E_0 \exp(-\kappa t),
+\end{align}
+
+where the third line is obtained by using $\binom{E_0}{E} = \frac{E_0}{E}\binom{E_0-1}{E-1}$; the last line is obtained since the sum extends over all possible values of $E$ for a distribution starting at $E_0-1$, which must equal 1.
+
+The most notable aspect of $\bar{E}(t)$ is that it matches the solution of the deterministic system. This shows that, for this system, there is an equivalence between the deterministic model and the stochastic model. This is nice because it allows us to ascribe "individual meaning" to parameters in the ODE: here, $1/\kappa$ is the mean duration spent in the infected state for an analogous stochastic model.
+
+## The latency period for COVID-19
+But what does the distribution governing the latency period actually look like? Using repeatedly sampled PCR test data from close contacts of confirmed cases in mainland China, a recent study estimated the latency period of COVID-19 as 5.5 days and a log-normal probability distribution was found to represent that waiting period [@xin2021estimating]. Below we compare the waiting period for the log-normal distribution fit in [@xin2021estimating] with an exponential distribution with the same latency period.
+
+```{r, fig.height = 5, fig.width = 7}
+# values derived from Xi et al., Table S2 
+mu <- 1.61
+sigma <- 0.44
+
+# equivalent decay for exponential model
+kappa <- 1 / 5.5
+
+# generate densities across rate of time
+t <- seq(0, 20, 0.01)
+lnorm_vals <- dlnorm(t, mu, sigma)
+exp_vals <- dexp(t, kappa)
+
+tibble(t, value=lnorm_vals, model="log-normal") %>% 
+  bind_rows(tibble(t, value=exp_vals, model="exponential")) %>% 
+  ggplot(aes(x=t, y=value, colour=model)) +
+  geom_line() +
+  scale_color_brewer("Model", palette = "Dark2") +
+  ylab("density") +
+  xlab("time (days)")
+```
+
+Although these share a common mean waiting period, there are considerable differences between the curves that characterise the waiting period. An alternative way to view this is through the cumulative distribution functions:
+
+```{r, fig.height = 5, fig.width = 7}
+lnorm_vals <- plnorm(t, mu, sigma)
+exp_vals <- pexp(t, kappa)
+
+tibble(t, value=lnorm_vals, model="log-normal") %>% 
+  bind_rows(tibble(t, value=exp_vals, model="exponential")) %>% 
+  ggplot(aes(x=t, y=value, colour=model)) +
+  geom_line() +
+  scale_color_brewer("Model", palette = "Dark2") +
+  ylab("density") +
+  xlab("time (days)")
+```
+
+For example, the exponential curve predicts that approximately `r round(pexp(2.5, kappa), 2) * 100`% individuals will have become infectious after 2.5 days versus `r round(plnorm(2.5, mu, sigma),2) * 100`% for the log-normal one.
+
+Whether these differences matter depends on the form and parameters of the model. In COVID-19, the latency period is relatively short, so, for an SEIRD model, the difference between the assumed exponential distribution on waiting time versus a more realistic modal one are unlikely to substantially affect the dynamics. However, for a disease with a longer latency period, this may not be the case. Similarly, if, instead of an SEIRD model, we assumed a structure where there was a presymptomatic compartment of infectious individuals, then the characteristics of the time interval spent in this state could be important.
+
+## The SEmIRD model
+To allow a non-exponential waiting period, a number of modelling approaches are possible and include a range of stochastic models, for instance renewal-type models and individual-based models. It is, however, possible to allow a Erlang-distributed  waiting time^[An Erlang distribution is a gamma distribution with an integer shape parameter.] in the stochastic analogue of an ODE model by splitting a stage into several substages. This is known as the "linear chain trick" (see @hurtado2019generalizations).
+
+In the `SEmIRD` model, we do just this: splitting the exposed compartment into three substages: $E_1, E_2, E_3$. The ODEs describing the dynamics are hence:
 
 $$\frac{\text{d}S}{\text{d}t} = -\beta S I,$$
 $$\frac{\text{d}E_1}{\text{d}t} = \beta S I -\kappa E_1,$$
@@ -26,9 +181,11 @@ $$\frac{\text{d}I}{\text{d}t} =\kappa E_3 - (\gamma + \mu) I,$$
 $$\frac{\text{d}R}{\text{d}t} = \gamma I,$$
 $$\frac{\text{d}D}{\text{d}t} = \mu I.$$
 
-## Rationale
-The main reason for having multiple exposed compartments is to allow there to be a non-exponential delay period between an individual becoming infected and turning infectious.
+To compare how this model behaves versus the SEIRD.
 
-```{r setup}
-library(comomodels)
+```{r}
+kappa_s <- kappa / 3
+model <- SEmIRD()
+transmission_parameters(model) <- 
 ```
+
