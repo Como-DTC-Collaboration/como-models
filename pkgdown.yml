@@ -1,0 +1,15 @@
+pandoc: 2.7.3
+pkgdown: 2.0.1
+pkgdown_sha: ~
+articles:
+  SEIRD: SEIRD.html
+  SEIRDV: SEIRDV.html
+  SEIRDVAge: SEIRDVAge.html
+  SEIRD_age_structured: SEIRD_age_structured.html
+  SEIRD_rural_urban: SEIRD_rural_urban.html
+  SEIaImIsRD: SEIaImIsRD.html
+last_built: 2022-01-04T23:45Z
+urls:
+  reference: https://como-dtc-collaboration.github.io/como-models/reference
+  article: https://como-dtc-collaboration.github.io/como-models/articles
+
