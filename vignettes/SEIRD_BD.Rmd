@@ -22,16 +22,16 @@ library(tidyverse)
 ```
 
 ## Introduction
-Over longer timescales, births and natural deaths can affect the ability of an infectious disease to invade a population. If there is no maternal immunity inherited by newborns, we may assume they are susceptible to infection. This replenishment of the susceptible population can, over long periods, allow an infectious disease to re-invade a population, and an epidemic wave may reoccur.
+As the SARS-CoV-2 virus becomes endemic, focus shifts from short-term control of the current epidemic wave to learning to live with the virus long-term. Over longer timescales, births and natural deaths can affect the ability of an infectious disease to invade a population. If there is no maternal immunity inherited by newborns, we may assume they are susceptible to infection. This replenishment of the susceptible population can, over long periods, allow an infectious disease to re-invade a population, and an epidemic wave may reoccur.
 
 In the basic SEIRD model, an individual who has been exposed to a pathogen and "recovered" from infection is assumed to be immune to reinfection. Immunity to reinfection is known to wane in the time period following when individuals receive vaccinations [@goldberg2021waning]. Natural immunity resultant from previous infection with SARS-CoV-2 has been found to have a stronger and longer-lasting protection against the Delta version of the virus than the Pfizer BNT162b2 two-dose vaccine [@gazit2021comparing], although it is widely thought that the protection conferred by infection also wanes over time.
 
-Waning immunity has a similar impact on transmission dynamics as does including births in that it leads to replenishment of susceptible individuals. Though the rate at which it does so is different -- for COVID-19, it is much faster.
+Waning immunity and births have a similar impact on transmission dynamics as both processes lead to replenishment of susceptible individuals. Though the rate at which they do so is different -- for COVID-19, waning immunity has a much stronger effect than births.
 
-In this notebook, we investigate how the dynamics of infection throughout the population are affected by births and natural deaths and a waning natural immunity.
+In this notebook, we investigate first how the dynamics of infection throughout the population are affected by births and natural deaths. We then extend the model further with waning natural immunity.
 
 ## Births and natural death
-To begin, we ignore waning natural immunity and etend the basic SEIRD model to include births and natural death terms.
+To begin, we ignore waning natural immunity and extend the basic SEIRD model to include births and natural death terms.
 
 $$\frac{\text{d}S}{\text{d}t} = \lambda -\beta S I - \nu S,$$
 $$\frac{\text{d}E}{\text{d}t} = \beta S I - (\kappa + \nu) E,$$
@@ -83,7 +83,7 @@ Let's create an SEIRD_BD model.
 model <- SEIRD_BD()
 ```
 
-And we are going to start with 0.01\% infectious individuals and everyone else is susceptible.
+And we are going to start with 0.1\% infectious individuals and everyone else is susceptible.
 ```{r}
 initial_conditions(model) <- list(S0=0.999, E0=0, I0=0.001, R0=0)
 ```
@@ -240,7 +240,7 @@ $$\frac{\text{d}S}{\text{d}t} = \lambda + \delta R -\beta S I - \nu S,$$
 $$\frac{\text{d}R}{\text{d}t} = \gamma I - (\nu + \delta) R,$$
 where $\delta\geq 0$ is the rate at which recovered individuals become once again susceptible.
 
-Note, this model does not allow primary infection to affect the risk of severe disease upon reinfection, which may be unrealistic for COVID-19, where this risk may be lowered. But including this effect would not likely substantially affect dynamics of infections, which is our focus here.
+Note, this model does not allow primary infection to affect the risk of severe disease, and thus disease-related death, upon reinfection, which may be unrealistic for COVID-19, where this risk may be lowered. But including this effect would not likely substantially affect dynamics of infections, which is our focus here.
 
 To illustrate the impact of waning immunity to natural infection, we assume that the average duration of immunity to reinfection is 1.5 years. We then run simulations using the same parameters as above.
 
