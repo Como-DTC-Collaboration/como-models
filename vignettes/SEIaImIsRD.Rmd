@@ -1,5 +1,5 @@
 ---
-title: "The SEIaImIsRD model"
+title: "Asymptomatic, mild and severe symptom compartment model"
 author: "Liangti Dai, David Seiferth, Solveig A. van der Vegt and Ben Lambert"
 output: rmarkdown::html_vignette
 bibliography: references.bib

@@ -1,5 +1,5 @@
 ---
-title: "The SEIRD model with urban and rural communities"
+title: "Urban and rural metapopulations model"
 author: "Solveig A. van der Vegt"
 output: rmarkdown::html_vignette
 bibliography: references.bib

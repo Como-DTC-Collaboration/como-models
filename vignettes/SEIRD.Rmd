@@ -1,5 +1,5 @@
 ---
-title: "The SEIRD model"
+title: "SEIRD model"
 author: "Hui Jia Farm, Solveig A. van der Vegt and Ben Lambert"
 output: rmarkdown::html_vignette
 bibliography: references.bib
