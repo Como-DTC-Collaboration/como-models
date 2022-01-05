@@ -1,5 +1,5 @@
 ---
-title: "SEIRD_BD: including births and natural deaths and waning immunity"
+title: "Births and natural deaths and waning natural immunity"
 output: rmarkdown::html_vignette
 bibliography: references.bib
 vignette: >
@@ -59,12 +59,12 @@ N(t) = N^* - (N^* - N(0)) \exp(-\nu t).
 \end{equation}
 
 ### Basic reproduction number
-The basic reproduction number, $R_0$, is obtained in similar fashion to that of the basic SEIRD model. A slight difference here is that exposed individuals can die before they pass on infection. So, $R_0$ for the SEIRD_BD model is given by:
+In order to set COVID-19-relevant parameter ranges for this model, we use the basic reproduction number $R_0$, which can be derived in similar fashion to that for the basic SEIRD model. A slight difference here is that exposed individuals can die before they pass on infection. So, $R_0$ for the SEIRD_BD model is given by:
 
 \begin{align}
 \begin{split}
 R_0 = &\text{ # infected per unit time by an infectious indiv. } \times\\
-&\text{ prob. of surviving latency period } \times\\
+&\text{ prob. of surviving latent period } \times\\
 &\text{ av. duration of infectiousness},
 \end{split}
 \end{align}
@@ -72,8 +72,10 @@ R_0 = &\text{ # infected per unit time by an infectious indiv. } \times\\
 where we have assumed the entire population are susceptible, in line with the definition of the basic reproduction number [@diekmann1990definition]. This results in an expression:
 
 \begin{equation}
-R_0 = \beta \times \frac{\kappa}{\kappa + \nu} \times \frac{1}{\gamma + \mu + \nu}.
+R_0 = \beta \times \frac{\kappa}{\kappa + \nu} \times \frac{1}{\gamma + \mu + \nu},
 \end{equation}
+
+where $\kappa/(\kappa+\nu)$ is the probability of surviving the latent period and, since infectious individuals may recover (at rate $\gamma$), die due to COVID-19 infection (at rate $\mu$), or due to non-COVID-19 causes (at rate $\nu$), the average duration spent in this compartment is $1/(\gamma + \mu + \nu)$.
 
 Where we note that, if $\nu=0$, the basic reproduction reduces to that for the basic SEIRD model: $R_0 = \beta / (\gamma + \mu)$. Indeed, for COVID-19 transmission, the rate of natural death is much lower than the rate of becoming infectious or the COVID-19-induced death rate, so the reproduction numbers of the basic SEIRD model and that above will be virtually indistinguishable.
 
