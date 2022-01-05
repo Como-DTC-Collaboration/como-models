@@ -7,7 +7,7 @@ articles:
   navbar: ~
   contents:
   - SEIRD_age_structured
-  - SEIaImISRD
+  - SEIaImIsRD
   - SEIRDNPIAge
   - SEIRD
   - SEIRDV
