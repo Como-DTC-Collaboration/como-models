@@ -8,6 +8,7 @@ articles:
   contents:
   - SEIRD_age_structured
   - SEIaImIsRD
+  - SEIRD_BD
   - SEIRDNPIAge
   - SEIRD
   - SEIRDV
