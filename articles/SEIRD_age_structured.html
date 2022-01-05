@@ -90,16 +90,7 @@
 <div class="section level2">
 <h2 id="age-dependent-mortality">Age-dependent mortality<a class="anchor" aria-label="anchor" href="#age-dependent-mortality"></a>
 </h2>
-<p>For COVID-19 transmission, a key difference is that the death rate varies by age <span class="citation">(Verity et al. 2020)</span>. We can allow different rates of death by modifying the equation for infectious and dead compartments to:</p>
-<p><span class="math display">\[\begin{align}
-\frac{\text{d}I_i}{\text{d}t} &amp;= \kappa E_i - (\gamma + \mu_i) I_i\\
-\frac{\text{d}D_i}{\text{d}t} &amp;= \mu_i I_i.
-\end{align}\]</span></p>
-<p>where each compartment has its own death rate, <span class="math inline">\(\mu_i\)</span>. Since, in this model, there are only two fates for an infectious individual – death and recovery – the proportion of infectious individuals who die is given by:</p>
-<p><span class="math display">\[\begin{equation}
-\text{IFR} = \frac{\text{rate of death}}{\text{rate of death} + \text{rate of recovery}} = \frac{\mu}{\mu + \gamma},
-\end{equation}\]</span></p>
-<p>where <span class="math inline">\(\text{IFR}\)</span> denotes the infection fatality ratio. In <span class="citation">Verity et al. (2020)</span>, the IFR was shown to vary strongly with age using aggregate case and deaths data for mainland China extracted until March 2020. Here we graph their estimates.</p>
+<p>For COVID-19 transmission, a key difference is that the death rate varies by age. In <span class="citation">Verity et al. (2020)</span>, the infection fatality ratio – the proportion of infected individuals who die – was shown to vary strongly with age using aggregate case and deaths data for mainland China until March 2020. Here we graph their estimates. From this, we see the dramatic rise in the risk of death beginning at around the 50-59 age class.</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># for 80+ group we pick upper age to be 110</span>
 <span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://tibble.tidyverse.org/reference/tribble.html" class="external-link">tribble</a></span><span class="op">(</span>
@@ -124,13 +115,23 @@
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_continuous.html" class="external-link">scale_y_continuous</a></span><span class="op">(</span>labels<span class="op">=</span><span class="fu">scales</span><span class="fu">::</span><span class="fu"><a href="https://scales.r-lib.org/reference/label_percent.html" class="external-link">percent_format</a></span><span class="op">(</span>accuracy <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span>
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">xlab</a></span><span class="op">(</span><span class="st">"Age range"</span><span class="op">)</span> <span class="op">+</span>
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">ylab</a></span><span class="op">(</span><span class="st">"IFR"</span><span class="op">)</span></code></pre></div>
-<p><img src="SEIRD_age_structured_files/figure-html/unnamed-chunk-2-1.png" width="576"> From this, we see the dramatic rise in the risk of death beginning at around the 50-59 age class.</p>
+<p><img src="SEIRD_age_structured_files/figure-html/unnamed-chunk-2-1.png" width="576"></p>
+<p>We can allow different rates of death in the model by modifying the equation for infectious and dead compartments to:</p>
+<p><span class="math display">\[\begin{align}
+\frac{\text{d}I_i}{\text{d}t} &amp;= \kappa E_i - (\gamma_i + \mu_i) I_i\\
+\frac{\text{d}D_i}{\text{d}t} &amp;= \mu_i I_i.
+\end{align}\]</span></p>
+<p>where each compartment has its own death rate, <span class="math inline">\(\mu_i\)</span> and recovery rate, <span class="math inline">\(\gamma_i\)</span>. We allow different recovery rates across the age classes because of the flexibility it provides in parameterising the model – see below.</p>
+<p>Since, in this model, there are only two fates for an infectious individual – death and recovery – the proportion of infectious individuals who die is given by:</p>
+<p><span class="math display">\[\begin{equation}
+\text{IFR}_i = \frac{\text{rate of death}}{\text{rate of death} + \text{rate of recovery}} = \frac{\mu_i}{\mu_i + \gamma_i}.
+\end{equation}\]</span></p>
 </div>
 <div class="section level2">
 <h2 id="intermixing-between-age-groups">Intermixing between age groups<a class="anchor" aria-label="anchor" href="#intermixing-between-age-groups"></a>
 </h2>
-<p>The aforementioned system of ODEs does not, currently, allow individuals from different age classes to mix with one another. However, in reality, a susceptible individual from a given age class can become infected from any age class: to capture this aspect of the model, infected individuals of any age are supposed to inter-mix, with the mixing rate dictated by a so-called “contact matrix”, <span class="math inline">\(C\)</span>.</p>
-<p>The elements of contact matrices, <span class="math inline">\(C_{i,j}\)</span> indicate the expected number of contacts an individual of age class <span class="math inline">\(i\)</span> experiences with age class <span class="math inline">\(j\)</span> per day. In this package, we include country-level estimates of contact matrices (<span class="citation">Prem, Cook, and Jit (2017)</span>; for full details see data documentation). There are actually four types of contact matrix corresponding to daily numbers of contacts at home, work, school and all other settings. Here, we visualise these for India.</p>
+<p>The aforementioned system of ODEs does not, currently, allow individuals from different age classes to mix with one another. However, in reality, a susceptible individual from a given age class can become infected from any age class: to capture this aspect of the model, infected individuals of any age are supposed to intermix, with the mixing rate dictated by a so-called “contact matrix”, <span class="math inline">\(C\)</span>.</p>
+<p>The elements of contact matrices, <span class="math inline">\(C_{i,j}\)</span>, indicate the expected number of contacts an individual of age class <span class="math inline">\(i\)</span> experiences with age class <span class="math inline">\(j\)</span> per day. In this package, we include country-level estimates of contact matrices (<span class="citation">Prem, Cook, and Jit (2017)</span>; for full details see data documentation). There are actually four types of contact matrix corresponding to daily numbers of contacts at home, work, school and all other settings. Here, we visualise these for India.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="co"># reformat matrices for plotting</span>
 <span class="va">ages</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">80</span>, <span class="fl">5</span><span class="op">)</span>
@@ -165,7 +166,7 @@
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_fill_viridis_c</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span>
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">type</span><span class="op">)</span></code></pre></div>
 <p><img src="SEIRD_age_structured_files/figure-html/unnamed-chunk-4-1.png" width="768"></p>
-<p>We can see that the majority of contacts fall between younger individuals, occurring at home or “other” locations. At home, however, there is more substantial intergenerational mixing than in other settings.</p>
+<p>We can see that the majority of contacts fall between younger individuals, occurring at school or “other” locations. At home, however, there is more substantial intergenerational mixing than in other settings.</p>
 <p>The model we introduce here does not compartmentalise individuals according to location, so we make an overall contact matrix by summming these together.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span class="va">c_combined</span> <span class="op">&lt;-</span> <span class="va">c_all</span> <span class="op"><a href="https://magrittr.tidyverse.org/reference/pipe.html" class="external-link">%&gt;%</a></span> 
@@ -180,7 +181,7 @@
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_tile.html" class="external-link">geom_tile</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span>
   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/scale_viridis.html" class="external-link">scale_fill_viridis_c</a></span><span class="op">(</span><span class="op">)</span></code></pre></div>
 <p><img src="SEIRD_age_structured_files/figure-html/unnamed-chunk-5-1.png" width="768"></p>
-<p>We now use this contact matrix to allow infections to pass between age groups. To do so, we amend the governing equations for the susceptibles and exposed individuals within age class <span class="math inline">\(i\)</span>:</p>
+<p>We now use this contact matrix to allow infections to pass between age groups. To do so, we amend the governing equations for the susceptible and exposed individuals within age class <span class="math inline">\(i\)</span>:</p>
 <p><span class="math display">\[\begin{align}
 \frac{\text{d}S_i}{\text{d}t} &amp;= -\beta S_i \Sigma_{j}C_{ij} I_j\\
 \frac{\text{d}E_i}{\text{d}t} &amp;= \beta S_i \Sigma_{j}C_{ij} I_j -\kappa E_i\\
@@ -282,7 +283,7 @@ G = \left(\begin{array}{cc}
 <span class="va">upper_age</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://purrr.tidyverse.org/reference/map.html" class="external-link">map_dbl</a></span><span class="op">(</span><span class="va">age_names</span>, <span class="va">get_upper_age</span><span class="op">)</span>
 <span class="va">middle_age</span> <span class="op">&lt;-</span> <span class="op">(</span><span class="va">lower_age</span> <span class="op">+</span> <span class="va">upper_age</span><span class="op">)</span> <span class="op">/</span> <span class="fl">2</span>
 
-<span class="co"># assume IFR is constant within age hands</span>
+<span class="co"># assume IFR is constant within age bands</span>
 <span class="va">IFR_vals</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/vector.html" class="external-link">vector</a></span><span class="op">(</span>length <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">middle_age</span><span class="op">)</span><span class="op">)</span>
 <span class="va">IFR_getter</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">age</span>, <span class="va">df</span><span class="op">)</span> <span class="op">{</span>
   <span class="kw">for</span><span class="op">(</span><span class="va">j</span> <span class="kw">in</span> <span class="fl">1</span><span class="op">:</span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="va">df</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span>
