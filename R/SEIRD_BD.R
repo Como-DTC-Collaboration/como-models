@@ -39,7 +39,7 @@ SEIRD_BD <- setClass("SEIRD_BD",
            initial_condition_names = list("S0", "E0", "I0", "R0"),
            transmission_parameter_names = list("beta", "kappa", "gamma", "mu", "lambda", "nu", "delta"),
            initial_conditions = vector(mode = "list", length = 4),
-           transmission_parameters = vector(mode = "list", length = 4)
+           transmission_parameters = vector(mode = "list", length = 7)
          )
 )
 
@@ -133,7 +133,8 @@ setMethod(
         | length(trans_params$gamma) != 1
         | length(trans_params$mu) != 1
         | length(trans_params$lambda) != 1
-        | length(trans_params$nu) != 1) {
+        | length(trans_params$nu) != 1
+        | length(trans_params$delta) != 1) {
       stop("The parameter values should be 1-dimensional.")
     }
 
