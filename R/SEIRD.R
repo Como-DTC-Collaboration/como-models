@@ -52,7 +52,7 @@ setMethod("initial_conditions", "SEIRD",
           function(object) object@initial_conditions)
 
 
-#' @describeIn SEIRD Retrieves transmission parameters of SEIR model.
+#' @describeIn SEIRD Retrieves transmission parameters of SEIRD model.
 #'
 #' @param object An object of the class SEIRD.
 #' 
@@ -63,7 +63,7 @@ setMethod("transmission_parameters", "SEIRD",
 # SEIRD class specific functions
 
 #' @describeIn SEIRD Setter method for initial conditions (S0, E0, I0 and R0)
-#' of the SEIR model.
+#' of the SEIRD model.
 #'
 #' All initial conditions must sum up to 1.
 #' If the initial conditions provided to do not sum to 1, an error is thrown.

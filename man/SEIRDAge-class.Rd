@@ -20,7 +20,7 @@
 
 \S4method{transmission_parameters}{SEIRDAge}(object) <- value
 
-\S4method{run}{SEIRDAge}(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
+\S4method{run}{SEIRDAge}(object, times, solve_method = "lsoda")
 
 \S4method{R0}{SEIRDAge}(model, population_fractions)
 }

@@ -70,6 +70,7 @@ setGeneric(
 #' @param solve_method (string) a string specifying the chosen numerical integration method
 #' for solving the ode system. Default is "lsoda" which is also the default for
 #' the ode function in the deSolve package used in this function
+#' @param ... other parameters
 #'
 #' @return a named list of two dataframes: 'states' which describes the time evolution of
 #' compartment proportions; and 'changes' which describes the time evolution of daily quantities
@@ -79,7 +80,7 @@ setGeneric(
 #' @export
 setGeneric(name = "run",
            def = function(object, times = seq(0, 100, by = 1),
-                          solve_method = "lsoda") {
+                          solve_method = "lsoda", ...) {
              standardGeneric("run")})
 
 #' Calculates basic reproduction number
@@ -91,3 +92,55 @@ setGeneric("R0", def = function(model, ...) {
   standardGeneric("R0")
 })
 
+
+#' Retrieves interventions of age-structured SEIRDV model.
+#'
+#' @param object An object of the class SEIRDV.
+#' 
+#' @export
+setGeneric("interventions",
+           function(object) standardGeneric("interventions"))
+
+#' Setter method for intervention of the age-structured SEIRV model.
+#'
+#' Intervention parameters have same size. A tanh function is used to smooth interventions during simulation. This class is designed for interventions
+#' which last several days at least and have several days between them; interventions involving rapid fluctuations may be distorted.
+#'
+#' @param object an object of the class SEIRDVAge
+#' @param value (list) list of interventions. Each intervention has the following
+#'              parameters: starts, stops and coverages.
+#'
+#' @return object of class SEIRDVAge with intervention parameters assigned.
+#' 
+#' @export
+setGeneric(
+  "interventions<-",
+  function(object, value) {
+    standardGeneric("interventions<-")
+  })
+
+
+#' Retrieves intervention parameters of SEIRDV or SEIRDAge_interventions model.
+#'
+#' @param object An object of a model class within comomodels package (SEIRDV or SEIRDAge_interventions).
+#' 
+#' @export
+setGeneric("intervention_parameters",
+           function(object) standardGeneric("intervention_parameters"))
+
+
+#' Set intervention parameters of the SEIRV or SEIRDAge model.
+#'
+#' Intervention parameters have same size. This class is designed for interventions
+#' which last several days at least and have several days between them.
+#'
+#' @param object An object of a model class within comomodels package (SEIRDV or SEIRDAge_interventions).
+#' @param value (list) list of intervention parameters: starts, stops and coverages.
+#'
+#' @return object of class within comomodels package
+#' @export
+setGeneric(
+  "intervention_parameters<-",
+  function(object, value) {
+    standardGeneric("intervention_parameters<-")
+  })

@@ -156,14 +156,6 @@ setMethod(
 
 # SEIRDV class specific functions
 
-#' Retrieves intervention parameters of SEIRDV model.
-#'
-#' @param object An object of the class SEIRDV.
-#' 
-#' @export
-setGeneric("intervention_parameters",
-           function(object) standardGeneric("intervention_parameters"))
-
 
 #' @describeIn SEIRDV Retrieves intervention parameters of SEIRDV model.
 #'
@@ -173,23 +165,6 @@ setGeneric("intervention_parameters",
 setMethod("intervention_parameters", "SEIRDV",
           function(object) object@intervention_parameters)
 
-#' Set intervention parameters of the SEIRV model.
-#'
-#' Intervention parameters have same size. This class is designed for interventions
-#' which last several days at least and have several days between them.
-#'
-#' @param object an object of the class SEIRDV
-#' @param value (list) list of intervention parameters: starts, stops and
-#'              coverages.
-#'
-#' @return object of class SEIRDV with intervention parameters assigned.
-#' 
-#' @export
-setGeneric(
-  "intervention_parameters<-",
-  function(object, value) {
-    standardGeneric("intervention_parameters<-")
-  })
 
 #' @describeIn SEIRDV Setter method for intervention parameters of the SEIRV model.
 #'

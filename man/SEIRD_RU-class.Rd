@@ -38,7 +38,7 @@
 
 \S4method{country_demog}{SEIRD_RU}(object) <- value
 
-\S4method{run}{SEIRD_RU}(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
+\S4method{run}{SEIRD_RU}(object, times, solve_method = "lsoda")
 
 \S4method{R0}{SEIRD_RU}(model)
 }

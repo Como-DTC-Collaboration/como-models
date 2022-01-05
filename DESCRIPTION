@@ -2,9 +2,8 @@ Package: comomodels
 Title: A Suite of CoMo Models
 Version: 0.0.0.9000
 Authors@R: c(
-    person("Sumali", "Bajaj", email = "email", role = c("aut")),
-    person("Fergus", "Cooper", email = "fergus.cooper@cs.ox.ac.uk", role = c("aut", "cre")))
-Description: Suite of models building up in complexity to the full CoMo model.
+    person("The Como-DTC Development Team", email = "como-models@dtc.ox.ac.uk", role = c("aut", "cre")))
+Description: Pedagogical materials for learning COVID-19 transmission dynamics modelling
 License: MIT + file LICENSE
 Encoding: UTF-8
 LazyData: true
@@ -37,6 +36,7 @@ Collate:
     'generics.R'
     'SEIRD.R'
     'SEIRDAge.R'
+    'SEIRDNPIAge.R'
     'SEIRDV.R'
     'SEIRDVAge.R'
     'SEIRD_BD.R'

@@ -20,7 +20,7 @@
 
 \S4method{transmission_parameters}{SEIRD}(object) <- value
 
-\S4method{run}{SEIRD}(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
+\S4method{run}{SEIRD}(object, times, solve_method = "lsoda")
 
 \S4method{R0}{SEIRD}(model)
 }
@@ -59,10 +59,10 @@ exposed, infectious and recovered individuals evolve over time.
 \itemize{
 \item \code{initial_conditions}: Retrieves initial conditions of SEIRD model.
 
-\item \code{transmission_parameters}: Retrieves transmission parameters of SEIR model.
+\item \code{transmission_parameters}: Retrieves transmission parameters of SEIRD model.
 
 \item \code{initial_conditions<-}: Setter method for initial conditions (S0, E0, I0 and R0)
-of the SEIR model.
+of the SEIRD model.
 
 All initial conditions must sum up to 1.
 If the initial conditions provided to do not sum to 1, an error is thrown.
