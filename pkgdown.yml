@@ -6,10 +6,11 @@ articles:
   SEIRDNPIAge: SEIRDNPIAge.html
   SEIRDV: SEIRDV.html
   SEIRDVAge: SEIRDVAge.html
+  SEIRD_BD: SEIRD_BD.html
   SEIRD_age_structured: SEIRD_age_structured.html
   SEIRD_rural_urban: SEIRD_rural_urban.html
   SEIaImIsRD: SEIaImIsRD.html
-last_built: 2022-01-05T10:55Z
+last_built: 2022-01-05T17:21Z
 urls:
   reference: https://como-dtc-collaboration.github.io/como-models/reference
   article: https://como-dtc-collaboration.github.io/como-models/articles
