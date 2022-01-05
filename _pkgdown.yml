@@ -1,3 +1,15 @@
 url: https://como-dtc-collaboration.github.io/como-models/
 template:
   bootstrap: 5
+  
+articles:
+- title: SEIRD model
+  navbar: ~
+  contents:
+  - SEIRD_age_structured
+  - SEIaImISRD
+  - SEIRDNPIAge
+  - SEIRD
+  - SEIRDV
+  - SEIRDVAge
+  - SEIRD_rural_urban
