@@ -59,21 +59,21 @@
 #' @return a vector or matrix for each parameter: kappa, gamma, mu and R0.
 #' 
 #'
-covid_parameter_values <- function(variant = "base", agestructured = FALSE){
+covid_transmission_parameters <- function(variant = "base", is_age_structured = FALSE){
   # check if variant is valid
   if (!(variant %in% c("base","delta","omicron"))){
     return("ERROR: The specified variant is not valid. You must choose from base, delta and omicron.")
   }
   # check if agestructured is a boolean
-  if (!(is.logical(agestructured))){
+  if (!(is.logical(is_age_structured))){
     return("ERROR: The argument agestructured must be a boolean (TRUE or FALSE).")
   }
   
   load("data/infection_fatality_ratio.rda")
   
-  if (agestructured){
+  if (is_age_structured){
     # load ifr vector depending on age
-    ifr <- infection_fatality_ratio$age_structured
+    ifr <- infection_fatality_ratio$age_structured$fatality_ratio
     l <- 9
   }
   else{
@@ -89,27 +89,28 @@ covid_parameter_values <- function(variant = "base", agestructured = FALSE){
   
   if (variant=="base"){
     R0 <- 2.4
-    kappa <- rep(1 / 5.5, l)
+    kappa <- 1 / 5.5
   }
   
   if (variant=="delta"){
     R0 <- 5
-    kappa <- rep(1 / 3.7, l)
+    kappa <- 1 / 3.7
   }
   
   if (variant=="omicron"){
     R0 <- 10
-    kappa <-rep(1 / 2.4, l)
+    kappa <- 1 / 2.4
   }
   
-  final_list <- list(kappa = kappa, gamma = gamma, mu = mu, R0 = R0)
+  if(is_age_structured) {
+    base <- infection_fatality_ratio$age_structured %>% 
+      dplyr::select(-.data$fatality_ratio)
+    gamma <- base %>% 
+      dplyr::mutate(gamma=gamma)
+    mu <- base %>% 
+      dplyr::mutate(mu=mu)
+  }
+  
+  final_list <- list(R0 = R0, kappa = kappa, gamma = gamma, mu = mu)
   return(final_list)
 }
-
-
-
-
-
-
-
-
