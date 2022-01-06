@@ -5,7 +5,7 @@
 \alias{infection_fatality_ratio}
 \title{infection_fatality_ratio}
 \format{
-A tibble with dimensions 21x2.
+A list containg a tibble with dimensions 21x2 and a numeric.
 }
 \source{
 \url{https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(20)30243-7/fulltext}
@@ -14,8 +14,17 @@ A tibble with dimensions 21x2.
 data(infection_fatality_ratio)
 }
 \description{
-A tibble containing mortality rates due to infection with SARS-CoV-2
-split into 5 year age groups. These age groups range from 0-4 y.o.
-to 100+ y.o.
+A list of objects containg mortality rates due to infection with SARS-CoV-2.
+}
+\details{
+There are two regimes for considering moratlity:
+\itemize{
+\item age_structured: A tibble containing mortality rates split into 5 year age groups.
+These age groups range from 0-4 y.o. to 100+ y.o.
+\item overall: the overall probability of mortality.
+}
+
+The values for the mortality rates are according to "Estimates of the severity of coronavirus
+disease 2019: a model-based analysis" by Verity et al (2020).
 }
 \keyword{datasets}
