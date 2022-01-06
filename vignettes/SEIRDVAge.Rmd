@@ -1,5 +1,5 @@
 ---
-title: "The SEIRDVAge model"
+title: "Vaccinations: age-structured model"
 author: "Ioana Bouros"
 output: rmarkdown::html_vignette
 vignette: >

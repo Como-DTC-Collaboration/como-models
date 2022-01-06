@@ -25,7 +25,7 @@
 
 \S4method{intervention_parameters}{SEIRDV}(object) <- value
 
-\S4method{run}{SEIRDV}(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
+\S4method{run}{SEIRDV}(object, times, solve_method = "lsoda")
 }
 \arguments{
 \item{object}{an object of the class SEIRDV}
