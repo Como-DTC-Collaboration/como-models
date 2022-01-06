@@ -42,6 +42,6 @@ Collate:
     'SEIRD_BD.R'
     'SEIRD_RU.R'
     'SEIaImIsRD.R'
+    'covidparametervalues.R'
     'data.R'
     'intervention.R'
-    'covidparametervalues.R'
