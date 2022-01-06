@@ -182,3 +182,16 @@
 #' @usage data(percentrural_by_country)
 #' @source \url{https://data.worldbank.org/indicator/SP.RUR.TOTL.ZS?view=chart}
 "percentrural_by_country"
+
+#' infection_fatality_ratio
+#'
+#' A tibble containing mortality rates due to infection with SARS-CoV-2
+#' split into 5 year age groups. These age groups range from 0-4 y.o.
+#' to 100+ y.o.
+#'
+#' @format A tibble with dimensions 21x2.
+#' @docType data
+#' @name infection_fatality_ratio
+#' @usage data(infection_fatality_ratio)
+#' @source \url{https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(20)30243-7/fulltext}
+"infection_fatality_ratio"
