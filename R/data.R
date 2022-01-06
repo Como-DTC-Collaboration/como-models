@@ -182,3 +182,21 @@
 #' @usage data(percentrural_by_country)
 #' @source \url{https://data.worldbank.org/indicator/SP.RUR.TOTL.ZS?view=chart}
 "percentrural_by_country"
+
+#' infection_fatality_ratio
+#'
+#' A list of objects containg mortality rates due to infection with SARS-CoV-2.
+#' 
+#' There are two regimes for considering moratlity:
+#' \itemize{
+#'  \item age_structured: A tibble containing mortality rates split into 5 year age groups.
+#' These age groups range from 0-4 y.o. to 100+ y.o.
+#'  \item overall: probability of mortality across all ages.
+#' }
+#'
+#' @format A list containing a tibble with dimensions 21x2 and a numeric.
+#' @docType data
+#' @name infection_fatality_ratio
+#' @usage data(infection_fatality_ratio)
+#' @source Verity, Robert, et al. "Estimates of the severity of coronavirus disease 2019: a model-based analysis." The Lancet infectious diseases 20.6 (2020): 669-677. \url{https://www.thelancet.com/journals/laninf/article/PIIS1473-3099(20)30243-7/fulltext}
+"infection_fatality_ratio"

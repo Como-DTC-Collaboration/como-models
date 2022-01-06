@@ -20,7 +20,7 @@
 
 \S4method{transmission_parameters}{SEIRD_BD}(object) <- value
 
-\S4method{run}{SEIRD_BD}(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
+\S4method{run}{SEIRD_BD}(object, times, solve_method = "lsoda")
 
 \S4method{R0}{SEIRD_BD}(model)
 }
