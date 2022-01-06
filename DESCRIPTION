@@ -44,3 +44,4 @@ Collate:
     'SEIaImIsRD.R'
     'data.R'
     'intervention.R'
+    'covidparametervalues.R'
