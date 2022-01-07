@@ -11,7 +11,7 @@ NULL
 #' @slot initial_condition_names list of names of initial conditions
 #'       (characters). Default is list("S0", "E0", "P0", "A0", "I0", "Et0", "Pt0", "At0", "It0", "R0").
 #' @slot transmission_parameter_names list of names of transmission parameters
-#'       (characters). Default is list("beta", "beta_a", "gamma", "mu", "pi", "omega", "eta_a", "psi", "phi_t").
+#'       (characters). Default is list("beta", "beta_a", "gamma", "mu", "pi", "omega", "eta_a", "psi", "phi").
 #' @slot initial_conditions list of values for initial conditions (double).
 #' @slot transmission_parameters list of values for transmission parameters
 #'       (double).
@@ -35,7 +35,7 @@ SEIRD_CT <- setClass("SEIRD_CT",
          prototype = list(
            output_names = list("S", "E", "P", "A", "I", "Et", "Pt", "At", "It", "R", "D", "Incidence", "Deaths"),
            initial_condition_names = list("S0", "E0", "P0", "A0", "I0", "Et0", "Pt0", "At0", "It0", "R0"),
-           transmission_parameter_names = list("beta", "beta_a", "gamma", "mu", "pi", "omega", "eta_a", "psi", "phi_t"),
+           transmission_parameter_names = list("beta", "beta_a", "gamma", "mu", "pi", "omega", "eta_a", "psi", "phi"),
            initial_conditions = vector(mode = "list", length = 10),
            transmission_parameters = vector(mode = "list", length = 9)
          )
@@ -149,11 +149,11 @@ setMethod(
 #' \deqn{\frac{dE(t)}{dt} = beta (1 - pi) (P(t) + I(t)) S(t) + beta_a A(t) S(t) - omega E(t)}
 #' \deqn{\frac{dP(t)}{dt} = (1 - eta_a) omega E(t) - psi P(t)}
 #' \deqn{\frac{dA(t)}{dt} = eta_a omega E(t) - gamma A(t)}
-#' \deqn{\frac{dI(t)}{dt} = (1 - phi_t) psi P(t) - (gamma + mu) I(t)}
+#' \deqn{\frac{dI(t)}{dt} = (1 - phi) psi P(t) - (gamma + mu) I(t)}
 #' \deqn{\frac{dEt(t)}{dt} = beta pi (P(t) + I(t)) S(t) - omega E(t)}
 #' \deqn{\frac{dPt(t)}{dt} = (1 - eta_a) omega Et(t) - psi Pt(t)}
 #' \deqn{\frac{dAt(t)}{dt} = eta_a omega Et(t) - gamma At(t)}
-#' \deqn{\frac{dIt(t)}{dt} = psi Pt(t) - phi_t psi P(t) - (gamma + mu) It(t)}
+#' \deqn{\frac{dIt(t)}{dt} = psi Pt(t) - phi psi P(t) - (gamma + mu) It(t)}
 #' \deqn{\frac{dR(t)}{dt} = gamma (I(t) + It(t) + A(t) + At(t))}
 #' \deqn{\frac{dD(t)}{dt} = (gamma + mu)(I(t) + It(t))}
 #' \deqn{\frac{dC(t)}{dt} = (beta (P(t) + I(t)) + beta_a A(t)) S(t)}
@@ -207,7 +207,7 @@ setMethod(
                     omega=transmission_parameters(object)$omega,
                     eta_a=transmission_parameters(object)$eta_a,
                     psi=transmission_parameters(object)$psi,
-                    phi_t=transmission_parameters(object)$phi_t)
+                    phi=transmission_parameters(object)$phi)
 
     # function for RHS of ode system
     right_hand_side <- function(t, state, parameters) {
@@ -232,13 +232,13 @@ setMethod(
           de <- beta * (1 - pi) * (p + i) * s + beta_a * a * s - omega * e
           dp <- (1 - eta_a) * omega * e - psi * p
           da <- eta_a * omega * e - gamma * a
-          di <- (1 - phi_t) * psi * p - (gamma + mu) * i
+          di <- (1 - phi) * psi * p - (gamma + mu) * i
           
           # traced
           de_t <- beta * pi * (p + i) * s - omega * e_t
           dp_t <- (1 - eta_a) * omega * e_t - psi * p_t
           da_t <- eta_a * omega * e_t - gamma * a_t
-          di_t <- psi * p_t + phi_t * psi * p - (gamma + mu) * i_t
+          di_t <- psi * p_t + phi * psi * p - (gamma + mu) * i_t
           
           # other
           dr <- gamma * (i + i_t + a + a_t)
@@ -301,11 +301,11 @@ setMethod("R0", "SEIRD_CT", function(model) {
   omega=transmission_parameters(object)$omega
   eta_a=transmission_parameters(object)$eta_a
   psi=transmission_parameters(object)$psi
-  phi_t=transmission_parameters(object)$phi_t
+  phi=transmission_parameters(object)$phi
   
   infections_asymptomatics <- beta_a * eta_a / gamma
   infections_presymptomatics <- beta / psi
-  infections_infectious <- (1 - phi_t) * beta / (gamma + mu)
+  infections_infectious <- (1 - phi) * beta / (gamma + mu)
   
   infections_asymptomatics + (1 - pi) * (1 - eta_a) * (
     infections_presymptomatics + infections_infectious
