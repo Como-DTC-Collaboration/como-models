@@ -16,7 +16,7 @@
 #' variants: for base kappa = 1/5.5, for Delta kappa = 1/3.7, and for
 #' omicron kappa = 1/2.4.
 #' 
-#' We assume that on average 0.66\% of individuals infected with the virus die
+#' We assume that on average 0.66% of individuals infected with the virus die
 #' (Verity et al. 2020): this is termed an infection fatality ratio (IFR).
 #' For age-structured models, we use age-specific IFR estimates
 #' (Verity et al. 2020).
@@ -41,10 +41,13 @@
 #'   
 #'     1 / (zeta IFR + zeta (1-IFR)) = 1 / zeta
 #'     
-#' The duration of the infectious period is again difficult to estimate and
-#' likely varies over variants. We will assume this time period to be
-#' 9 days, which is based on the base variant
-#' (MacIntyre et al. 2021). So, we set zeta = 1/9.
+#' Viral load data from hospitalised patients with known infector-infectee pairs
+#' can be used to determine the probability that infection occurs at a given time
+#' after the infector is first infected (He et al. 2020): in so doing, determining
+#' a distribution representing the duration of infectiousness.
+#' It has been estimated that viral loads decline quickly within 7 days of being
+#' symptomatic (He et al. 2020). So, here, for models without asymptomatic transmission
+#' we assume an average infectious period of 7 days, resulting in zeta=1/7.
 #' 
 #' The R0 of the base variant is assumed to be 2.4 in Report 9  (Ferguson et al. 2020).
 #' Estimates of R0 for the delta variant range between
@@ -72,9 +75,8 @@
 #' Verity, Robert, et al. "Estimates of the severity of coronavirus disease 2019:
 #' a model-based analysis." The Lancet infectious diseases 20.6 (2020): 669-677.
 #' 
-#' MacIntyre, C. Raina, Valentina Costantino, and Mallory Trent. "Modelling of
-#' COVID-19 vaccination strategies and herd immunity, in scenarios of limited
-#' and full vaccine supply in NSW, Australia." Vaccine (2021).
+#' He, Xi, et al. "Temporal dynamics in viral shedding and transmissibility of
+#' COVID-19." Nature medicine 26.5 (2020): 672-675.
 #' 
 #' Ferguson, Neil, et al. "Report 9: Impact of non-pharmaceutical interventions
 #' (NPIs) to reduce COVID19 mortality and healthcare demand." (2020).
@@ -120,7 +122,7 @@ covid_transmission_parameters <- function(variant = "base", is_age_structured = 
   }
   
   # set zeta, which is the same for all variants
-  zeta <- 1 / 9
+  zeta <- 1 / 7
   gamma <- zeta * ( 1- ifr)
   mu <- zeta * ifr
   

@@ -32,6 +32,7 @@ The SEIRD model is an example of a compartmental model in mathematical epidemiol
 By assuming that individuals belong only to one of these states, the model effectively assumes that all other information outside of these states is unimportant for transmission. So, an individual's age, their location and any pre-existing medical conditions they may have are, for example, unnaccounted for in this model. In COVID-19 transmission, this assumption is unlikely to hold, since we know that individuals' age does, for instance, strongly influence their susceptibility to death [@verity2020estimates]. The SEIRD model can, however, still be used to approximate the aggregate dynamics of the population since it captures the dominant features of human-to-human epidemic dynamics.
 
 In compartmental models, individuals can move between these states following one of a predefined set of paths. In the SEIRD model, susceptible individuals can become infected with the virus after exposure to it from an infectious individual. In doing so, they can move from the susceptible compartment to the exposed, as is illustrated in the left-hand nodes of the below graph as indicated by the $S\rightarrow E$ transition.
+
 ```{r, echo=FALSE, warning=FALSE, out.width = "400px"}
 # library(DiagrammeR)
 # library(DiagrammeRsvg)
@@ -53,7 +54,7 @@ In compartmental models, individuals can move between these states following one
 knitr::include_graphics("images/seird.png")
 ```
 
-Exposed ($E$) individuals then become infectious ($I$) over time as they transition out of the latency period. For infectious individuals, there are two potential transitions: either an individual recovers and they enter the recovered state ($R$) where they remain forever; or they die, entering the dead state ($D$).
+Exposed ($E$) individuals then become infectious ($I$) over time as they transition out of the latent period. For infectious individuals, there are two potential transitions: either an individual recovers and they enter the recovered state ($R$) where they remain forever; or they die, entering the dead state ($D$).
 
 For all models in this package, it is assumed that the population size is sufficiently large that we can view the number of individuals in a given compartment on a continuous scale. We also assume that the process governing the dynamics is deterministic: that is, given the current state of the system (i.e. the numbers of individuals in the $S$, $E$, $I$, $R$ and $D$ compartments), we can perfectly forecast its future behaviour. In reality, this is unlikely to hold since our model neglects to consider a myriad of factors that can influence the resultant epidemic. Indeed, stochastic models try to account for these unobserved elements by assuming randomness plays a role in the underlying dynamics. Nevertheless, in many instances, particularly when a population size is large, assuming deterministic system dynamics may give a good approximation of the mean of equivalent stochastic systems [@erban2007practical].
 
@@ -129,7 +130,9 @@ Important though is that both approaches use data to determine parameters. And f
 
 Here, we follow the first approach to parameterising the SEIRD model, and show later how a sensitivity analysis can be performed.
 
-The SEIRD model has four transmission parameters: $\beta$, $\kappa$, $\gamma$ and $\mu$. We choose $\kappa=1/5.5$, implicitly assuming a latency period of 5.5 days. We assume that 0.66\% of individuals infected with the virus die [@verity2020estimates]: this is termed an infection fatality ratio (IFR). Changing either $\gamma$ or $\mu$ affects both the rate at which individuals recover or die and the proportions which recover or die. As such, the implications of the individual parameter values are hard to intuit without recourse to the other. Here, we choose a different parameterisation that makes it simpler to set these parameters to appropriate values:
+The SEIRD model has four transmission parameters: $\beta$, $\kappa$, $\gamma$ and $\mu$. In what follows, we assume we are parameterising transmission of the ancestral SARS-CoV-2 strain (opposed to say, the Delta or Omicron variants).
+
+We choose $\kappa=1/5.5$, implicitly assuming an average latent period of 5.5 days [@Xin21]. We assume that 0.66\% of individuals infected with the virus die [@verity2020estimates]: this is termed an infection fatality ratio (IFR). Changing either $\gamma$ or $\mu$ affects both the rate at which individuals recover or die and the proportions which recover or die. As such, the implications of the individual parameter values are hard to intuit without recourse to the other. Here, we choose a different parameterisation that makes it simpler to set these parameters to appropriate values:
 
 \begin{align}
 \gamma &= \zeta (1-\text{IFR})\\
@@ -148,27 +151,43 @@ The average duration spent in the infectious compartment is given by:
 \frac{1}{\zeta \text{IFR} + \zeta (1-\text{IFR})} = \frac{1}{\zeta}.
 \end{equation}
 
-We assume an average duration of infectiousness of 2 days, which indicates that, after 10 days, <1\% would be infectious -- in line with UK government policy that assumes individuals cannot pass on infection after 10 days [@stayathome2021]. As such, we set $\zeta = 1/2$.
+Viral load data from hospitalised patients with known infector-infectee pairs can be used to determine the probability that infection occurs at a given time after the infector is first infected [@he2020temporal]: in so doing, determining a distribution representing the duration of infectiousness. In this model, there is no presymptomatic transmission and it has been estimated that viral loads decline quickly within 7 days of being symptomatic [@he2020temporal]. So, here, we assume an average infectious period of 7 days, resulting in $\zeta=1/7$.
 
 The remaining parameter, $\beta$, is set to a value to produce the same basic reproduction number as was assumed in the influential "report 9" from Imperial College [@ferguson2020report]: $R_0=2.4$ (see explanation of $R_0$ below).
 
+All of the above parameter choices, which we regard as defaults for ancestral SARS-CoV-2 transmission are available through a convenience function.
+
 ```{r}
-kappa <- 1 / 5.5
-IFR <- 0.0066
-zeta <- 1 / 2
-gamma <- zeta * (1 - IFR)
-mu <- zeta * IFR
-R0_target <- 2.4
+# convenience function
+parameters <- covid_transmission_parameters()
+print(parameters)
+
+kappa <- parameters$kappa
+gamma <- parameters$gamma
+mu <- parameters$mu
+R0_target <- parameters$R0
 beta <- (mu + gamma) * R0_target
 
 params <- list(beta=beta, kappa=kappa, gamma=gamma, mu=mu)
 transmission_parameters(my_model) <- params
 ```
 
+
 To check that the parameters have been set as desired, we can call:
 ```{r}
 transmission_parameters(my_model)
 ```
+Note, that both overall and age-structured and "default" transmission parameters for other variants are also available through the same function. For example, the below outputs transmission parameters for an age-structured model for the Delta variant (see function documentation for more details).
+
+```{r}
+parameters <- covid_transmission_parameters(
+  variant = "delta",
+  is_age_structured = TRUE)
+
+# here mu is age structured
+print(parameters$mu)
+```
+
 An additional set of parameters dictate the initial conditions of the system. Since SARS-CoV-2 is a novel virus, at the very beginning of the pandemic, everyone was susceptible. Here, we imagine a small number of infectious individuals entered a new population, at the start, representing 0.0001\% of the population.
 
 ```{r}

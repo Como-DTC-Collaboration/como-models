@@ -3,7 +3,7 @@
 \name{covid_transmission_parameters}
 \alias{covid_transmission_parameters}
 \title{Returns transmission parameter values for gamma, mu, kappa and R0 given a specific
-variant.}
+variant}
 \source{
 The following are a list of sources used for parameter estimates:
 
@@ -54,7 +54,8 @@ or omicron.}
 age-structured}
 }
 \value{
-a vector or matrix for each parameter: kappa, gamma, mu and R0.
+lists of numbers or (for gamma and mu for age-structured models) dataframes
+representing transmission parameter values
 }
 \description{
 Parameters are returned in vector form for age-structured models, and
