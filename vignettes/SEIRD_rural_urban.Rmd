@@ -123,13 +123,17 @@ model <- SEIRD_RU()
 
 followed by setting the parameter values of the model that are not determined by the demographics or contact matrices.
 ```{r}
-b = 0.3 # probability of infection
-k = 0.2 # 1/(incubation period in days)
-g = 0.1# 1/(days between infection and recovery)
-m = 0.03 # probability of death, cases-fatality ratio.
+parameters <- covid_transmission_parameters() # base variant
+print(parameters)
+
+kappa <- parameters$kappa
+gamma <- parameters$gamma
+mu <- parameters$mu
+R0_target <- parameters$R0
+
 C = 1 # connectedness parameter
-transmission_parameters(model) <- list(b, k, g, m, C)
 ```
+Setting the value of $\beta$ in this model is a bit more complex, so we will come back to that in a little bit.
 
 Next we set the initial conditions of the model, where we specify separately what fraction of the population is infected in the urban community and what fraction is infected in the rural community. Note here that these are fractions of the total population across both communities! Because the populations are normalized, all initial conditions together must sum to one. In this example, we seed the epidemic in the urban community.
 ```{r}
@@ -157,14 +161,23 @@ contact_rates(model) <- list(contact_all_urban[[country]],contact_all_rural[[cou
 ```
 Instead of using the data sets you can also choose to set the contact rates and the fraction of the population that is rural yourself. This is done by assigning the fraction rural, a single number which between 0 and 1, directly to country_demog(model), and assigning a list of two values to contact_rates(model). Note that if you wish to use contact matrices, full age demographic data is required, but you are free to use age demographic data and set the contact rates manually.
 
+As noted above, we still need to set the value of $\beta$, and assign the parameter values to the model. In other vignettes, such as for the `SEIRD` model, we determined $\beta$ based on our target value of $R_0$. Here, a simple expression for $R_0$ cannot be derived due to the added complexity in the model. Instead, we approximate a value of $\beta$ given a value of $R_0$ by noting that for $C = 1$, this model is equivalent to the `SEIRD` model. We can thus use the $R_0$ expression for the `SEIRD` model to obtain an approximate value for $\beta$. The only thing to note here is that in the `SEIRD` model, the number of contacts that a person has is included in the value of $\beta$, whereas in this model, it is not. We thus need to divide through by the average number of contacts to obtain a value of $\beta$ for this model.
+
+```{r}
+beta_approx = (gamma+mu)*R0_target
+beta = beta_approx/(contact_rates(model)$urban * (1-frac_rural) + contact_rates(model)$rural *frac_rural)
+transmission_parameters(model) <- list(beta, kappa, gamma, mu, C)
+R0(model)
+```
+We can compute the basic reproduction number using the next generation matrix method explained by van den Driessche [-@vandenDriessche17]. The basic reproduction for the model can be displayed by simply calling `R0(model)`, as done above. As shown, this approximation of $\beta$ gives us the target value of $R_0$.
+
 The last thing to do is to set the time span over which to simulate the model, and then run it.
 ```{r}
-tend = 80
+tend = 200
 time = seq(0, tend, by = 1)
 
 # run simulation
 output <- run(model, time)
-dim(output)
 ```
 
 The output from the model can then be plotted such that all populations are plotted separately for both communities
@@ -223,11 +236,6 @@ incplot_total <- ggplot(CD_total, aes(x = time, y = value, fill = compartment)) 
 grid.arrange(SEIRplot_total,incplot_total,nrow = 2)
 ```
 
-### The basic reproduction number: R0
-We can compute the basic reproduction number using the next generation matrix method explained by van den Driessche [-@vandenDriessche17]. The basic reproduction for the model can be displayed by simply calling
-```{r}
-print(R0(model))
-```
 
 ## The effect of varying $C$
 The connectedness parameter $C$ indicates how connected the two communities are, i.e. how much the individuals in each are expected to interact with each other. At the extreme ends we have the communities completely connected and acting as one big community for $C=1$, and completely disconnected and acting as separate communities for $C=0$. We explore what happens for intermediate values by simulating the model for a range of values of $C$ and plotting the total infectious population over both communities for each simulation.
@@ -235,7 +243,7 @@ The connectedness parameter $C$ indicates how connected the two communities are,
 ```{r , fig.height = 4, fig.width = 7}
   for (i in c(0,0.001,0.005,0.01,0.05,0.1,0.5,1)) {
     C = i # connectedness parameter
-    transmission_parameters(model) <- list(b, k, g, m, C)
+    transmission_parameters(model) <- list(beta, kappa, gamma, mu, C)
     out_C <- run(model, time)
     temp_I <- data.frame(C = C, t = time,compartment = "U",value = out_C$value[out_C$compartment == "I_U"] + out_C$value[out_C$compartment == "I_Y"])
     #temp_IY <- data.frame(Cvalue = C, t = time,compartment = "Y",value = out_C$value[out_C$compartment == "I_Y"])
@@ -256,5 +264,8 @@ ggplot(result, aes(x = t, y = value)) +
 ```
 
 The above plot shows that up to approximately $C=0.1$, the value of $C$ has a significant impact on total number of infectious individuals across the communities. Varying the value of $C$ between 0.1 and one, however, barely makes a difference. As both communities are subject to the same parameter values and the average number of contacts that individuals in both communities have don't differ a lot in most countries, this result is not surprising. Above a certain level of interaction, the few infectious people in one community will quickly interact with individuals from the other community, spreading the infection. At that point, both communities develop their own epidemic under the same parameter values and the mixing between them further helps in synchronizing the waves of the epidemic in both communities. Only for very low levels of interaction does the initial difference in the number of infectious individuals have a lasting effect on epidemic dynamics. 
+
+Another thing to note is how the height and width of the peak varies with $C$. For $C=1$, there is not spatial effect. For all the intermediate values of $C$, there is a spatial effect as the communities are interacting but separate. Here we are seeing that the peaks of the epidemic wave are lower, and that, especially for $C = [0.001,0.005,0.01]$, the peaks are much wider, indicating that the epidemic spreads slower. If less interaction between communities leads to a slower spread of the disease, that implies that travel restrictions and work from home orders, both of which decrease travel, are good ideas if you want to control an epidemic!
+
 
 ## References

@@ -155,21 +155,7 @@ inits <- list(S0=pop_fraction * 0.999,
 initial_conditions(model) <- inits
 ```
 
-Next, we need to set the transmission parameter values $\beta$, $\kappa$, $\gamma$ and $\mu$. 
-
-To set age-dependent values for $\gamma$ and $\mu$, we adopted the age-dependent Infection Fatality Ratio (IFR, the fraction of infected individuals who go on to die) according to [@verity2020estimates], as IFR is only dependent on $\gamma$ and $\mu$:
-
-$$ \text{IFR}_i = \frac{\text{rate of death of age class }i}{\text{rate of death of age class }i + \text{rate of recovery of age class }i} = \frac{\mu_i}{\mu_i + \gamma_i} $$
-
-We assume an average latency period ($1/\kappa$) of 5.5 days (as has been estimated for COVID-19; @xin2021estimating) and an average duration of infectiousness ($1/\eta$) of 2 days (which indicates that, after 10 days, $<1\%$ would be infectious, which is in line with UK policy which assumes individuals cannot pass on infection after 10 days; @stayathome2021). For simplicity, we assume that symptom onset occurs at the time an individual becomes infectious (although evidence suggests there is presymptomatic transmission; @stayathome2021).
-
-We assume the following parameterisation: 
-
-$$
-\eta = 1/{\text{av. time until noninfectious}}=1/2 \\
-\gamma_i = \eta (1-\text{IFR}_i) \\
-\mu_i = \eta \text{IFR}_i.
-$$
+Next, we need to set the transmission parameter values $\beta$, $\kappa$, $\gamma$ and $\mu$. We again obtain COVID parameter values for $\kappa$, $\gamma$ and $\mu$from the function `covid_transmission_parameters`, the derivation of which has been set out in the vignettes of the `SEIRDAge` model for an age-structured model.
 
 At this point, $\kappa$ is defined; $\gamma_i$ and $\mu_i$ can be derived; and $\beta(t)$ needs to be set. In the setter function `transmission_parameters` for `SEIRDNPIAge`, the parameter `beta` defines the transmission rate for each age group when no intervention is applied; whereas `beta_npi` defines a list of age-dependent transmission rates that corresponds to each intervention period, or a single vector or a value if there's only a single intervention period. Consistent with the examples presented in `SEIRDAge` class, here we choose a value for $\beta$ to be the same across all age groups to result in the same $R_0$ value ($R_0=2.4$) as reported in "Report 9" by Imperial College London [@ferguson2020report], and we set `beta_npi` to be $\beta$: i.e. it is assumed that there is no change in the probability of infection if an infectious and susceptible individual do meet -- note, this would be violated if, during the lockdown, people were more likely to wear masks.
 
