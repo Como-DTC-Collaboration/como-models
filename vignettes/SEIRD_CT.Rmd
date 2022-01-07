@@ -1,0 +1,61 @@
+---
+title: "Contact trace and isolation"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{SEIRD_CT}
+  %\VignetteEngine{knitr::knitr}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+```{r setup}
+library(comomodels)
+```
+
+# Introduction
+Contact tracing, testing and isolation are key elements of many governments' responses to the COVID-19 pandemic. Some have suggested that well-executed programmes for testing and tracing and quarantining of affected individuals explains how some countries, noticeably some in East Asia, have successfully dealt with the pandemic [@cohen2020countries].
+
+In this article, we introduce a model that extends the SEIRD model (see `Vignette("SEIRD")`) which can be used to investigate the importance of this type of non-pharmaceutial intervention.
+
+Since a sizeable proportion of transmission is thought to happen before symptoms occur [@he2020temporal], we include a presymptomatic compartment, $P$, which contributes to infectious. Now the "infectious" compartment, $I$, represents the symptomatic and infectious individuals.
+
+Although estimates of the importance of asymptomatic individuals to transmission vary widely, there is consensus that they are important reservoirs of transmission [@byambasuren2020estimating]. Because of this, we also include an asymptomatic compartment, $A$, in this model.
+
+The model we assume without any interventions in place has the following structure.
+
+```{r, echo=FALSE, warning=FALSE, out.width = "400px"}
+# library(DiagrammeR)
+# library(DiagrammeRsvg)
+# library(webshot)
+# library(rsvg)
+# g <- grViz("
+# digraph PrimC{
+#   graph [rankdir = 'LR']
+#   node [shape = circle]
+#   S E P I A R
+#   S -> E [label = '&#946; * S * I']
+#   E -> P [label = '(1 - eta_a) * omega * E']
+#   E -> A [label = 'eta_a * omega * E']
+#   P -> I [label = 'psi * P']
+#   I -> R [label = 'gamma * I']
+#   A -> R [label = 'gamma * A']
+#   I -> D [label = 'mu * I']
+#   }")
+# tmp = DiagrammeRsvg::export_svg(g)
+# tmp = charToRaw(tmp)
+# rsvg::rsvg_png(tmp, "images/seird_ct.png", width = 1000)
+knitr::include_graphics("images/seird_ct.png")
+```
+In this model, the new parameters from the basic SEIRD are $0\leq \eta_a \leq 1$ is the proportion of asymptomatic cases; $1/\omega$ is the typical latent period; $1/\psi$ is the typical time spent transmitting presymptomatically.
+
+We now extend this model to include tracing and isolation. The model assumes that a proportion, $0\leq \phi \leq 1$ of symptomatic cases are successfully isolated before they can generate further cases: this could represent individuals self-isolating when their symptoms appear.
+
+spawning no further transmission. It also assumes that a proportion of infected individuals are also successfully quarantined.
+
+

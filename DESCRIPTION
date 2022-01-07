@@ -35,6 +35,7 @@ Depends:
 Collate: 
     'generics.R'
     'SEIRD.R'
+    'SEIRD_CT.R'
     'SEIRDAge.R'
     'SEIRDNPIAge.R'
     'SEIRDV.R'
