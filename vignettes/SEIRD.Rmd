@@ -27,7 +27,7 @@ library(dplyr)
 This document introduces the deterministic SEIRD model, which is the foundation around which many, more advanced models of COVID-19 transmission dynamics are based (including all the other models within this package). In this vignette, we explain what this model represents, and we show how it can be used to understand epidemic dynamics typical of the "waves" of infection seen during the COVID-19 pandemic.
 
 ## The SEIRD Model
-The SEIRD model is an example of a compartmental model in mathematical epidemiology [@anderson1992infectious]. In these types of models, individuals are assumed at a particular point in time to belong to only one of a number of "compartments": discrete containers where all individuals within them are assumed to be in the same state. In an SEIRD model, there are five such compartments / states: Susceptible, Exposed, Infectious, Recovered and Dead. Susceptible individuals ($S$) have not been exposed to the virus. Exposed individuals ($E$) have been exposed to the virus and have been infected but are not yet infectious to others -- they are in the incubation period. Infectious individuals ($I$) can spread the virus to others. Recovered individuals ($R$) are no longer infectious, and, in this model, have acquired immunity as they do not return to the susceptible population. Some individuals, however, unfortunately do not recover from infection and die as a result, falling into the dead state ($D$).
+The SEIRD model is an example of a compartmental model in mathematical epidemiology [@anderson1992infectious]. In these types of models, individuals are assumed at a particular point in time to belong to only one of a number of "compartments": discrete containers where all individuals within them are assumed to be in the same state. In an SEIRD model, there are five such compartments / states: Susceptible, Exposed, Infectious, Recovered and Dead. Susceptible individuals ($S$) have not been exposed to the virus. Exposed individuals ($E$) have been exposed to the virus and have been infected but are not yet infectious to others -- they are in the latent period. Infectious individuals ($I$) can spread the virus to others. Recovered individuals ($R$) are no longer infectious, and, in this model, have acquired immunity as they do not return to the susceptible population. Some individuals, however, unfortunately do not recover from infection and die as a result, falling into the dead state ($D$).
 
 By assuming that individuals belong only to one of these states, the model effectively assumes that all other information outside of these states is unimportant for transmission. So, an individual's age, their location and any pre-existing medical conditions they may have are, for example, unnaccounted for in this model. In COVID-19 transmission, this assumption is unlikely to hold, since we know that individuals' age does, for instance, strongly influence their susceptibility to death [@verity2020estimates]. The SEIRD model can, however, still be used to approximate the aggregate dynamics of the population since it captures the dominant features of human-to-human epidemic dynamics.
 
@@ -94,7 +94,7 @@ $$\frac{\text{d}I}{\text{d}t} =\kappa E - (\gamma + \mu) I,$$
 $$\frac{\text{d}R}{\text{d}t} = \gamma I,$$
 $$\frac{\text{d}D}{\text{d}t} = \mu I.$$
 
-Having specified the form of the growth rate for each of the compartments, we need to specialise the initial sizes of each of the compartments, which we do via the initial conditions:
+Having specified the form of the growth rate for each of the compartments, we need to specify the initial sizes of each of the compartments, which we do via the initial conditions:
 
 $$S(0) = S_\text{init},\ E(0) = E_\text{init},\ I(0) = I_\text{init},\ R(0) = R_\text{init},\ D(0) = D_\text{init}.$$
 
@@ -126,7 +126,7 @@ my_model <- SEIRD()
 
 The most crucial step in using compartmental models of transmission dynamics is their parameterisation because different parameter ranges allow both qualitatively and quantitatively different dynamics. There are two ways to estimate the parameters of such models: i) to use data collected in the laboratory or field to estimate individual parameters; or ii) to fit these models to field data and, in doing so, estimate potentially a collective of parameters. There are limitations to both approaches. The first does not account for how uncertainty in one parameter might influence our estimates of another: a higher value of $\beta$ can be offset by an increased value of $\mu$ to result in similar case counts, for instance. The second approach generally only allows a subset of parameters to be estimated, since the available data are sparse and insufficient to jointly determine all.
 
-Important though is that both approaches use data to determine parameters. And for practically all infectious diseases modelled, the available data do not pin down a model's parameters to a single set. It is thus important to determine whether the conclusions of modelling -- whether a new viral variant will lead a country's healthcare infrastructure to be overrun, for instance -- are sensitive to the parameter choices assumed. 
+The crucial thing, however, is that both approaches use data to determine parameters. And for practically all infectious diseases modelled, the available data do not pin down a model's parameters to a single set. It is thus important to determine whether the conclusions of modelling -- whether a new viral variant will lead a country's healthcare infrastructure to be overrun, for instance -- are sensitive to the parameter choices assumed. 
 
 Here, we follow the first approach to parameterising the SEIRD model, and show later how a sensitivity analysis can be performed.
 
@@ -192,17 +192,18 @@ An additional set of parameters dictate the initial conditions of the system. Si
 
 ```{r}
 I0 <- 1e-6
-initial_conditions(my_model) <- list(S0=1-I0, E0=0, I0=I0, R0=0)
+inits <- list(S0=1-I0, E0=0, I0=I0, R0=0)
+initial_conditions(my_model) <- inits
 ```
 
 
-Now we simulate the system from $t=0$ days to $t=200$ days.
+Now we simulate the system for one year.
 ```{r}
-times <- seq(0, 200, by = 1)
+times <- seq(0, 365, by = 1)
 out_df <- run(my_model, times)
 ```
 
-The simulation returns two objects: one is a data frame comprising the states over time. Here, we see that, over time, the proportion of susceptible individuals declines over time as the infection penetrates through the population. Initially, there are relatively few infected individuals but this then grows, reaching a peak between $t=75$ and $t=100$ days and then declining when there are relatively few susceptibles left. The number of recovered and dead individuals also grows over time.
+The simulation returns two objects: one is a data frame comprising the states over time. Here, we see that, over time, the proportion of susceptible individuals declines over time as the infection penetrates through the population. Initially, there are relatively few infected individuals but this then grows, reaching and then declining when there are relatively few susceptibles left. The number of recovered and dead individuals also grows over time.
 
 ```{r, fig.height = 5, fig.width = 7}
 states <- out_df$states
@@ -239,19 +240,24 @@ The SEIRD has four transmission parameters which influence the type of dynamics 
 
 In this section, we first investigate the sensitivity of the number of deaths to the transmission rate, $\beta$. To do so, we run the model across a range of different $\beta$ values and plot the proportions infectious.
 ```{r, fig.height = 5, fig.width = 7}
+parameters <- covid_transmission_parameters()
+
+
 # function to setup and run model for different beta values
 run_seird <- function(beta_val) {
-  inits <- list(S0=0.999, E0=0, I0=0.001, R0=0)
-  params <- list(beta=beta_val, kappa=0.9, gamma=0.5, mu=0.1)
+  params <- list(beta=beta_val,
+                 kappa=parameters$kappa,
+                 gamma=parameters$gamma,
+                 mu=parameters$mu)
   model <- SEIRD(initial_conditions = inits,
                 transmission_parameters=params)
-  times <- seq(0, 100, by = 0.1)
+  times <- seq(0, 365, by = 0.1)
   out_df <- run(model, times)
   out_df$states
 }
 
 # run model across different beta values
-beta_vals <- seq(0.1, 2, 0.1)
+beta_vals <- seq(0.01, 1, 0.1)
 for(i in seq_along(beta_vals)) {
   beta_temp <- beta_vals[i]
   temp <- run_seird(beta_temp) %>% mutate(beta=beta_temp)
@@ -285,8 +291,10 @@ We can now calculate $R_0$ for each of the curves using the inbuilt function in 
 ```{r, fig.height = 5, fig.width = 7}
 # convenience function to determine R_0
 find_R0 <- function(beta_val) {
-  inits <- list(S0=0.999, E0=0, I0=0.001, R0=0)
-  params <- list(beta=beta_val, kappa=0.9, gamma=0.5, mu=0.1)
+  params <- params <- list(beta=beta_val,
+                 kappa=parameters$kappa,
+                 gamma=parameters$gamma,
+                 mu=parameters$mu)
   model <- SEIRD(initial_conditions = inits,
                 transmission_parameters=params)
   R0(model)
@@ -348,6 +356,18 @@ states %>%
         text = element_text(size = 20))
 ```
 
-Here, we see that as $R_t\rightarrow 1$, we reach so-called "herd immunity", and there are no longer sufficient susceptibles in the population to continue epidemic growth. In other words, the infection has run out of fuel, and the epidemic declines.
+Here, we see that as $R_t\rightarrow 1$, we reach so-called "herd immunity", and there are no longer sufficient susceptibles in the population to fuel continued epidemic growth. This occurs when $R_t<1$, which indicates: 
+
+\begin{equation}
+S(t) < \frac{1}{R_0}.
+\end{equation}
+
+The critical proportion of the population that need to have been exposed to the virus to achieve herd immunity is then:
+
+\begin{equation}
+R^* = 1 - \frac{1}{R_0}.
+\end{equation}
+
+When a fraction exceeding $R^*$ have been exposed, the immunity of those who have recovered from the virus effectively protects those who haven't.
 
 ## References

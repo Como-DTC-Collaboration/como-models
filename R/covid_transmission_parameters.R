@@ -99,7 +99,7 @@
 #' 
 #' @return lists of numbers or (for gamma and mu for age-structured models) dataframes
 #' representing transmission parameter values
-#' 
+#' @export
 covid_transmission_parameters <- function(variant = "base", is_age_structured = FALSE){
   # check if variant is valid
   if (!(variant %in% c("base","delta","omicron"))){
