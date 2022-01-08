@@ -40,6 +40,7 @@ Collate:
     'SEIRDV.R'
     'SEIRDVAge.R'
     'SEIRD_BD.R'
+    'SEIRD_CT.R'
     'SEIRD_RU.R'
     'SEIaImIsRD.R'
     'covid_transmission_parameters.R'
