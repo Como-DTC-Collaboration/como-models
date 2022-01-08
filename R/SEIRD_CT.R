@@ -60,14 +60,14 @@ setMethod("transmission_parameters", "SEIRD_CT",
 
 # SEIRD_CT class specific functions
 
-#' @describeIn SEIRD_CT Setter method for initial conditions (S0, E0, I0 and R0)
+#' @describeIn SEIRD_CT Setter method for initial conditions (S0, E0, P0, A0, I0, Et0, Pt0, At0, It0, R0)
 #' of the SEIRD_CT model.
 #'
 #' All initial conditions must sum up to 1.
 #' If the initial conditions provided to do not sum to 1, an error is thrown.
 #'
 #' @param object an object of the class SEIRD_CT
-#' @param value (list) list of initial conditions S0, E0, I0, R0.
+#' @param value (list) list of initial conditions "S0", "E0", "P0", "A0", "I0", "Et0", "Pt0", "At0", "It0", "R0"
 #'
 #' @return object of class SEIRD_CT with initial conditions assigned.
 #' 
@@ -120,18 +120,10 @@ setMethod(
   function(object, value) {
 
     # create list of parameter values
-    if (mean(names(value) %in% object@transmission_parameter_names) != 1)
+    if (mean(object@transmission_parameter_names %in% names(value)) != 1)
       stop(paste0("Transmission parameters must contain: ",
                   object@transmission_parameter_names))
     trans_params <- value
-
-    # check format of parameters
-    if (length(trans_params$b) != 1
-        | length(trans_params$k) != 1
-        | length(trans_params$g) != 1
-        | length(trans_params$m) != 1) {
-      stop("The parameter values should be 1-dimensional.")
-    }
 
     # if all above tests are passed, assign the trans_params namelist to the
     # object
@@ -292,16 +284,16 @@ setMethod(
 #' 
 #' @export
 setMethod("R0", "SEIRD_CT", function(model) {
-  beta_a = transmission_parameters(object)$beta_a
-  beta = transmission_parameters(object)$beta
-  kappa = transmission_parameters(object)$kappa
-  gamma = transmission_parameters(object)$gamma
-  mu = transmission_parameters(object)$mu
-  pi=transmission_parameters(object)$pi
-  omega=transmission_parameters(object)$omega
-  eta_a=transmission_parameters(object)$eta_a
-  psi=transmission_parameters(object)$psi
-  phi=transmission_parameters(object)$phi
+  beta_a = transmission_parameters(model)$beta_a
+  beta = transmission_parameters(model)$beta
+  kappa = transmission_parameters(model)$kappa
+  gamma = transmission_parameters(model)$gamma
+  mu = transmission_parameters(model)$mu
+  pi=transmission_parameters(model)$pi
+  omega=transmission_parameters(model)$omega
+  eta_a=transmission_parameters(model)$eta_a
+  psi=transmission_parameters(model)$psi
+  phi=transmission_parameters(model)$phi
   
   infections_asymptomatics <- beta_a * eta_a / gamma
   infections_presymptomatics <- beta / psi

@@ -35,12 +35,12 @@ Depends:
 Collate: 
     'generics.R'
     'SEIRD.R'
-    'SEIRD_CT.R'
     'SEIRDAge.R'
     'SEIRDNPIAge.R'
     'SEIRDV.R'
     'SEIRDVAge.R'
     'SEIRD_BD.R'
+    'SEIRD_CT.R'
     'SEIRD_RU.R'
     'SEIaImIsRD.R'
     'covid_transmission_parameters.R'
