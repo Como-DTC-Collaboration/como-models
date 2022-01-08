@@ -91,9 +91,17 @@ my_model <- SEIRDV()
 ```
 
 Next, we set the parameter values for $\beta$, $\kappa$, $\gamma$, $\mu$, $\nu$,
-$\delta_V$, $\delta_R$ and $\delta_{VR}$:
+$\delta_V$, $\delta_R$ and $\delta_{VR}$. We take COVID parameters as in other vignettes where possible and estimated $\beta$ based on a scenarion without interventions.
 ```{r}
-params <- list(beta=1, kappa=0.9, gamma=0.5, mu=0.1, nu=0.4, delta_V=0.1,
+parameters <- covid_transmission_parameters()
+print(parameters)
+
+kappa <- parameters$kappa
+gamma <- parameters$gamma
+mu <- parameters$mu
+R0_target <- parameters$R0
+beta <- (gamma+mu)*R0_target
+params <- list(beta, kappa, gamma, mu, nu=0.4, delta_V=0.1,
                delta_R=0.05, delta_VR = 0.02)
 transmission_parameters(my_model) <- params
 ```
@@ -187,7 +195,7 @@ number of deaths per day over time.
 # function to setup and run model for different delta_V values
 run_seirdv <- function(delta_V_val) {
   inits <- list(S0=0.99, E0=0, I0=0.01, R0=0, V0=0, VR0=0)
-  params <- list(beta=1, kappa=0.9, gamma=0.5, mu=0.1, nu=0.4, delta_V=delta_V_val,
+  params <- list(beta, kappa, gamma, mu, nu=0.4, delta_V=delta_V_val,
                  delta_R=0.05, delta_VR = 0.02)
   interv<- list(starts=c(17, 110, 150),
                 stops=c(90, 139, 209),
@@ -231,7 +239,7 @@ number of deaths per day over time.
 # function to setup and run model for different nu values
 run_seirdv <- function(nu_val) {
   inits <- list(S0=0.99, E0=0, I0=0.01, R0=0, V0=0, VR0=0)
-  params <- list(beta=1, kappa=0.9, gamma=0.5, mu=0.1, nu=nu_val, delta_V=0.1,
+  params <- list(beta, kappa, gamma, mu, nu=nu_val, delta_V=0.1,
                  delta_R=0.05, delta_VR = 0.02)
   interv<- list(starts=c(17, 110, 150),
                 stops=c(90, 139, 209),
@@ -275,7 +283,7 @@ For this investigation, we are switching to a new intervention that starts at st
 # function to setup and run model for different start intervention values
 run_seirdv <- function(start_val) {
   inits <- list(S0=0.99, E0=0, I0=0.01, R0=0, V0=0, VR0=0)
-  params <- list(beta=1, kappa=0.9, gamma=0.5, mu=0.1, nu=0.4, delta_V=0.1,
+  params <- list(beta, kappa, gamma, mu, nu=0.4, delta_V=0.1,
                  delta_R=0.05, delta_VR = 0.02)
   interv<- list(starts=start_val,
                 stops=100,

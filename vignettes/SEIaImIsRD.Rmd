@@ -121,34 +121,36 @@ initial_conditions(model) <- list(S = S, E = E, I_asymptomatic = I_asymptomatic,
                                   I_mild = I_mild, I_severe = I_severe, R = R, D = D)
 ```
 
-We then set the parameter values. As with the other models, we set these parameters based on the COVID-19 pandemic. For a detailed derivation of the parameter values, see the `SEIRDAge` model vignette. We assume here that only individuals with severe symptoms die of the disease, i.e. $\mu_a = \mu_m = 0$. We also assume that asymptomatic and mildly symptomatic individuals recover at approximately the same rate, but severely symptomatic individuals recover at half the rate. Approximately 35% of infected individuals will never develop symptoms, and thus belong to the asymptomatic group [@Sahe21]. For the delta variant of the virus, it has been estimated that the hospitalisation rate is around 2\% [@twohig2021hospital]. The hospitalisation fatality rate is assumed to be 27\% [@gray2021variability]. Here, for simplicity, we assume that all infectious individuals are equally infectious which may not be unrealistic if more severe cases are more likely to be isolated from ongoing contact (either due to self isolation or entering clinical care). We set $\beta$ so that $R_0=2.4$ -- the same as the baseline reproduction number in report 9 [@ferguson2020report]. To do so, we rearrange our expression above assuming $\beta_a=\beta_m=\beta_s$:
+We then set the parameter values. As with the other models, we set these parameters based on the COVID-19 pandemic using the function `covid_transmission_parameters()`. For a detailed derivation of the parameter values, see the `SEIRDD` or `SEIRDAge` model vignette. We assume here that only individuals with severe symptoms die of the disease, i.e. $\mu_a = \mu_m = 0$. We also assume that asymptomatic and mildly symptomatic individuals recover at approximately the same rate, but severely symptomatic individuals recover at half the rate. Approximately 35% of infected individuals will never develop symptoms, and thus belong to the asymptomatic group [@Sahe21]. For the delta variant of the virus, it has been estimated that the hospitalisation rate is around 2\% [@twohig2021hospital]. The hospitalisation fatality rate is assumed to be 27\% [@gray2021variability]. Here, for simplicity, we assume that all infectious individuals are equally infectious which may not be unrealistic if more severe cases are more likely to be isolated from ongoing contact (either due to self isolation or entering clinical care). We set $\beta$ so that $R_0=2.4$ -- the same as the baseline reproduction number in report 9 [@ferguson2020report]. To do so, we rearrange our expression above assuming $\beta_a=\beta_m=\beta_s$:
 
 $$
 \beta = \frac{R_0}{\sum_i \eta_i / (\mu_i+\gamma_i)}.
 $$
 
 ```{r}
+# obtain variant specific values of kappa, gamma, mu and R0
+parameters <- covid_transmission_parameters() # base variant
+print(parameters)
+
+kappa <- parameters$kappa
+gamma_total <- parameters$gamma
+mu_total <- parameters$mu
+R0_target <- parameters$R0
+
 p_severe <- 0.02
 p_asymp <- 0.35
 p_mild <- 1 - p_severe - p_asymp
 eta_symptom <- list(mild = p_mild, severe=p_severe)
-zeta <- 1 / 2
-hfr <- 0.27
-severe_vs_mild_rate <- 0.5
 gamma <- list(
-  asymptomatic = zeta,
-  mild = zeta,
-  severe = zeta * severe_vs_mild_rate * (1 - hfr))
+  asymptomatic = gamma_total,
+  mild = gamma_total,
+  severe = 0.5*gamma_total)
 
 mu <- list(asymptomatic = 0,
            mild = 0,
-           severe = zeta * severe_vs_mild_rate * hfr)
-
-# incubation period of 5.5 days assumed
-kappa <- 1 / 5.5
+           severe = mu_total)
 
 # determine beta to hit target R0
-R0_target <- 2.4
 p_symptoms <- c(p_asymp, p_mild, p_severe)
 gamma_plus_mu <- unlist(gamma) + unlist(mu)
 beta_overall <- R0_target / (sum(p_symptoms / gamma_plus_mu))
@@ -237,25 +239,26 @@ sensitivity_run <- function(R0_target=2.4,
     R = R,
     D = D)
   
-  # transmission parameters
-  p_severe <- eta_s
+  # obtain variant specific values of kappa, gamma, mu and R0
+  parameters <- covid_transmission_parameters() # base variant
+  print(parameters)
+
+  kappa <- parameters$kappa
+  gamma_total <- parameters$gamma
+  mu_total <- parameters$mu
+
+  p_severe <- 0.02
   p_asymp <- 0.35
   p_mild <- 1 - p_severe - p_asymp
   eta_symptom <- list(mild = p_mild, severe=p_severe)
-  zeta <- 1 / 2
-  severe_vs_mild_rate <- 0.5
-  hfr <- 0.27
   gamma <- list(
-    asymptomatic = zeta,
-    mild = zeta,
-    severe = zeta * severe_vs_mild_rate * (1 - hfr))
-  
+    asymptomatic = gamma_total,
+    mild = gamma_total,
+    severe = 0.5*gamma_total)
+
   mu <- list(asymptomatic = 0,
-             mild = 0,
-             severe = zeta * severe_vs_mild_rate * hfr)
-  
-  # incubation period of 5.5 days assumed
-  kappa <- 1 / 5.5
+           mild = 0,
+           severe = mu_total)
   
   # determine beta to hit target R0
   p_symptoms <- c(p_asymp, p_mild, p_severe)

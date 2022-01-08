@@ -93,11 +93,15 @@ initial_conditions(model) <- list(S0=0.999, E0=0, I0=0.001, R0=0)
 We next give it transmission parameters. Here, we follow suit with the same parameter values as in `Vignette("SEIRD")` for $\mu$, $\kappa$ and $\gamma$. We start by allowing no natural death, by setting $\nu=0$. To illustrate an implication of replenishment of susceptibles, we include an unnaturally high birth rate where newborns account for 0.1\% of the population each day at beginning of simulations. Finally, we set $\beta$ so that $R_0=2.4$ as in report 9 by Imperial College [@ferguson2020report].
 
 ```{r}
-kappa <- 1 / 5.5
-zeta <- 1 / 2
-ifr <- 0.0066
-gamma <- zeta * (1 - ifr)
-mu <- zeta * ifr
+# obtain variant specific values of kappa, gamma, mu and R0
+parameters <- covid_transmission_parameters() # base variant
+print(parameters)
+
+kappa <- parameters$kappa
+gamma <- parameters$gamma
+mu <- parameters$mu
+R0_target <- parameters$R0
+
 nu <- 0
 lambda <- 0.001
 delta <- 0 # waning natural immunity term -- to explore later
