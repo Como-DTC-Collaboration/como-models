@@ -22,6 +22,9 @@
     <loc>https://como-dtc-collaboration.github.io/como-models/articles/SEIRD_BD.html</loc>
   </url>
   <url>
+    <loc>https://como-dtc-collaboration.github.io/como-models/articles/SEIRD_CT.html</loc>
+  </url>
+  <url>
     <loc>https://como-dtc-collaboration.github.io/como-models/articles/SEIRD_age_structured.html</loc>
   </url>
   <url>
@@ -65,6 +68,9 @@
   </url>
   <url>
     <loc>https://como-dtc-collaboration.github.io/como-models/reference/SEIRD_BD-class.html</loc>
+  </url>
+  <url>
+    <loc>https://como-dtc-collaboration.github.io/como-models/reference/SEIRD_CT-class.html</loc>
   </url>
   <url>
     <loc>https://como-dtc-collaboration.github.io/como-models/reference/SEIRD_RU-class.html</loc>
