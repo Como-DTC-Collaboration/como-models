@@ -147,7 +147,7 @@ setMethod(
 #' \deqn{\frac{dAt(t)}{dt} = eta_a omega Et(t) - gamma At(t)}
 #' \deqn{\frac{dIt(t)}{dt} = psi Pt(t) - phi psi P(t) - (gamma + mu) It(t)}
 #' \deqn{\frac{dR(t)}{dt} = gamma (I(t) + It(t) + A(t) + At(t))}
-#' \deqn{\frac{dD(t)}{dt} = (gamma + mu)(I(t) + It(t))}
+#' \deqn{\frac{dD(t)}{dt} = mu (I(t) + It(t))}
 #' \deqn{\frac{dC(t)}{dt} = (beta (P(t) + I(t)) + beta_a A(t)) S(t)}
 #'
 #' This function relies on the package deSolve.
@@ -235,7 +235,7 @@ setMethod(
           # other
           dr <- gamma * (i + i_t + a + a_t)
           dc <- (beta * (p + i) + beta_a * a) * s
-          d_death <- (gamma + mu) * (i + i_t)
+          d_death <- mu * (i + i_t)
 
           # return the rate of change
           list(c(ds, de, dp, da, di, de_t, dp_t, da_t, di_t, dr, dc, d_death))
