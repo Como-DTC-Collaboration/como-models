@@ -77,11 +77,11 @@ for the time points specified in times and integration method specified in
 solve_method.
 
 \deqn{\frac{dS(t)}{dt} = - (beta (P(t) + I(t)) + beta_a A(t)) S(t)}
-\deqn{\frac{dE(t)}{dt} = beta (1 - pi) (P(t) + I(t)) S(t) + beta_a A(t) S(t) - omega E(t)}
+\deqn{\frac{dE(t)}{dt} = beta (1 - chi) (P(t) + I(t)) S(t) + beta_a A(t) S(t) - omega E(t)}
 \deqn{\frac{dP(t)}{dt} = (1 - eta_a) omega E(t) - psi P(t)}
 \deqn{\frac{dA(t)}{dt} = eta_a omega E(t) - gamma A(t)}
 \deqn{\frac{dI(t)}{dt} = (1 - phi) psi P(t) - (gamma + mu) I(t)}
-\deqn{\frac{dEt(t)}{dt} = beta pi (P(t) + I(t)) S(t) - omega E(t)}
+\deqn{\frac{dEt(t)}{dt} = beta chi (P(t) + I(t)) S(t) - omega E(t)}
 \deqn{\frac{dPt(t)}{dt} = (1 - eta_a) omega Et(t) - psi Pt(t)}
 \deqn{\frac{dAt(t)}{dt} = eta_a omega Et(t) - gamma At(t)}
 \deqn{\frac{dIt(t)}{dt} = psi Pt(t) - phi psi P(t) - (gamma + mu) It(t)}
@@ -94,7 +94,7 @@ This function relies on the package deSolve.
 \item \code{R0}: Calculates basic reproduction number for SEIRD_CT model
 
 The R0 parameter is given by:
-\deqn{R_0 = \beta/(\gamma + \mu)}
+\deqn{R_0 = \eta_a\beta_a/\gamma + (1 - \eta_a)(1 - \chi) [\beta/\psi + (1-\phi) \beta/(\gamma+\mu)]}
 }}
 
 \section{Slots}{
@@ -107,7 +107,7 @@ incidence.}
 (characters). Default is list("S0", "E0", "P0", "A0", "I0", "Et0", "Pt0", "At0", "It0", "R0").}
 
 \item{\code{transmission_parameter_names}}{list of names of transmission parameters
-(characters). Default is list("beta", "beta_a", "gamma", "mu", "pi", "omega", "eta_a", "psi", "phi").}
+(characters). Default is list("beta", "beta_a", "gamma", "mu", "chi", "omega", "eta_a", "psi", "phi").}
 
 \item{\code{initial_conditions}}{list of values for initial conditions (double).}
 
