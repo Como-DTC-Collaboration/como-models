@@ -122,28 +122,18 @@ test_that("SEIR model runs correctly", {
   # Check output shape
   t <- seq(0, 10, by = 0.1)
   out_df <- run(my_model, t)
-  expect_identical(dim(out_df), as.integer(c(((10 - 0) / 0.1 + 1) * 12, 4)))
-  
-  # Check output value for rates equal 0s
-  expected_data <- data.frame(
-    S_U = 0.699, E_U = 0, I_U = 0.001, R_U = 0,
-    Incidences_U = 0, Deaths_U = 0,
-    S_Y = 0.3, E_Y = 0, I_Y= 0, R_Y = 0,
-    Incidences_Y = 0, Deaths_Y = 0)
-  out_df_temp <- dcast(out_df, time ~ compartment, value.var = "value")
-  test_data <- out_df_temp[101, 2:13]
-  row.names(test_data) <- NULL
-  expect_identical(test_data, expected_data)
+  expect_length(out_df, 2)
+  expect_identical(dim(out_df$s), as.integer(c(((10 - 0) / 0.1 + 1) * 10, 4)))
   
   # Check that sum of states is sufficiently close to one at all times
   transmission_parameters(my_model) <- list(b=0.9, k=0.2, g=0.01, m=0.1, C = 0.5)
   out_df <- run(my_model, seq(0, 10, by = 0.1))
-  out_df_temp <- dcast(out_df, time ~ compartment, value.var = "value")
-  out_df_temp$Deaths_U <- cumsum(out_df_temp$Deaths_U)
-  out_df_temp$Deaths_Y <- cumsum(out_df_temp$Deaths_Y)
-  test <- rowSums(out_df_temp[, c(2:5,8:11)]) + out_df_temp$Deaths_U + out_df_temp$Deaths_Y
-  expected <- as.double(rep(1, 101))
-  expect_equal(test,expected)
+  states <- out_df$states
+  states_aggregate <- states %>% 
+    dplyr::group_by(time) %>% 
+    dplyr::summarise(value=sum(value))
+  
+  expect_true(abs(mean(states_aggregate$value) - 1) < 0.0001)
   
   # Test input errors
   expect_error(run(my_model, "a"))
@@ -151,12 +141,12 @@ test_that("SEIR model runs correctly", {
 
 test_that("Running model before setting parameters fails", {
   t <- seq(0, 10, by = 0.1)
-  
+
   my_model <- SEIRD_RU()
   initial_conditions(my_model) <- list(S_U0 = 0.699, E_U0 = 0, I_U0 = 0.001, R_U0 = 0,
                                        S_Y0 = 0.3, E_Y0 = 0, I_Y0 = 0, R_Y0 = 0)
   expect_error(run(my_model, t))
-  
+
   my_model <- SEIRD_RU()
   transmission_parameters(my_model) <- list(b=0.9, k=0.2, g=0.01, m=0.1, C=0.5)
   expect_error(run(my_model, t))
@@ -166,11 +156,11 @@ test_that("R0 works for SEIRD model", {
   my_model <- SEIRD_RU()
   initial_conditions(my_model) <- list(S_U0 = 0.69244, E_U0 = 0, I_U0 = 0.0001, R_U0 = 0,
                                        S_Y0 = 0.30746, E_Y0 = 0, I_Y0 = 0, R_Y0 = 0)
-  b = 0.3 
-  k = 0.2 
+  b = 0.3
+  k = 0.2
   g = 0.1
-  m = 0.03 
-  C = 1 
+  m = 0.03
+  C = 1
   transmission_parameters(my_model) <- list(b=b, k=k,
                                             g=g, m=m, C=C)
   # load contact matrices
@@ -181,7 +171,7 @@ test_that("R0 works for SEIRD model", {
   contact_all_rural <- contact_all
   names_rural <- names(contact_all_rural)
   names_common <- intersect(names_urban,names_rural)
-  
+
   #import all demographic data
   # data on percentage of the population that is rural
   load("./testing_data/percentrural_by_country.rdata")
@@ -192,7 +182,7 @@ test_that("R0 works for SEIRD model", {
   # conversion table from 3 letter country codes to full names
   load("./testing_data/country_codetoname.rdata")
   code_to_country <- x
-  
+
   # specify country
   country <- "TUN"
   if (!(country %in% names_common)) {
@@ -208,7 +198,7 @@ test_that("R0 works for SEIRD model", {
   pop_byage_2019 <- country_pop_byage[(country_pop_byage$`Region, subregion, country or area *` == country_fullname & country_pop_byage$`Reference date (as of 1 July)` == 2019),9:29]
   pop_byage_2019 <- as.double(pop_byage_2019)
   # normalize to fractions of the total population
-  pop_byage_2019 <- pop_byage_2019/sum(pop_byage_2019) 
+  pop_byage_2019 <- pop_byage_2019/sum(pop_byage_2019)
   # must sum last five entries because contact matrices have an 80+ category instead of 100+
   pop_byage_2019 <- c(pop_byage_2019[1:15], sum(pop_byage_2019[16:20]))
   #set demographic data
@@ -216,6 +206,6 @@ test_that("R0 works for SEIRD model", {
   # set contact matrices
   contact_rates(my_model) <- list(contact_all_urban[[country]],contact_all_rural[[country]])
 
-  
+
   expect_equal(round(R0(my_model),digits = 5), 15.84567)
 })

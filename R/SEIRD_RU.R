@@ -61,10 +61,10 @@ SEIRD_RU <- setClass("SEIRD_RU",
          # prototypes for the slots, automatically set parameter names and
          # its data type
          prototype = list(
-           output_names = list("S_U", "E_U", "I_U", "R_U",
-                               "Incidences_U", "Deaths_U",
-                               "S_Y", "E_Y", "I_Y", "R_Y",
-                               "Incidences_Y", "Deaths_Y"),
+           output_names = list("S_U", "E_U", "I_U", "R_U", "D_U",
+                               "S_Y", "E_Y", "I_Y", "R_Y", "D_Y",
+                               "Incidence_U", "Deaths_U",
+                               "Incidence_Y", "Deaths_Y"),
            initial_condition_names = list("S_U0", "E_U0", "I_U0", "R_U0",
                                           "S_Y0", "E_Y0", "I_Y0", "R_Y0"),
            initial_cases_deaths_names = list("C_U0", "D_U0", "C_Y0", "D_Y0"),
@@ -468,7 +468,6 @@ setMethod(
 #' population fractions, and incidence numbers and deaths for both communities
 #' in the SEIRD_RU model.
 #' @export
-
 setMethod(
   "run", "SEIRD_RU",
   function(object, times, solve_method = "lsoda") {
@@ -477,18 +476,18 @@ setMethod(
     }
 
     # set initial state vector
-    state <- c(SU = initial_conditions(object)$S_U0,
-               EU = initial_conditions(object)$E_U0,
-               IU = initial_conditions(object)$I_U0,
-               RU = initial_conditions(object)$R_U0,
-               CU = initial_cases_deaths(object)$C_U0,
-               DU = initial_cases_deaths(object)$D_U0,
-               SY = initial_conditions(object)$S_Y0,
-               EY = initial_conditions(object)$E_Y0,
-               IY = initial_conditions(object)$I_Y0,
-               RY = initial_conditions(object)$R_Y0,
-               CY = initial_cases_deaths(object)$C_Y0,
-               DY = initial_cases_deaths(object)$D_Y0)
+    state <- c(S_U = initial_conditions(object)$S_U0,
+               E_U = initial_conditions(object)$E_U0,
+               I_U = initial_conditions(object)$I_U0,
+               R_U = initial_conditions(object)$R_U0,
+               C_U = initial_cases_deaths(object)$C_U0,
+               D_U = initial_cases_deaths(object)$D_U0,
+               S_Y = initial_conditions(object)$S_Y0,
+               E_Y = initial_conditions(object)$E_Y0,
+               I_Y = initial_conditions(object)$I_Y0,
+               R_Y = initial_conditions(object)$R_Y0,
+               C_Y = initial_cases_deaths(object)$C_Y0,
+               D_Y = initial_cases_deaths(object)$D_Y0)
 
     # set transmission parameters vector
     parameters <- c(b = transmission_parameters(object)$b,
@@ -549,21 +548,16 @@ setMethod(
 
     output <- as.data.frame.array(out)
 
-    # Compute incidences and deaths: urban
-    output$CU[2:length(output$CU)] <- output$CU[
-      2:length(output$CU)] - output$CU[1:(length(output$CU) - 1)]
-    output$CU[1] <- 0
-    output$DU[2:length(output$DU)] <- output$DU[
-      2:length(output$DU)] - output$DU[1:(length(output$DU) - 1)]
-
-    # Compute incidences and deaths: rural
-    output$CY[2:length(output$CY)] <- output$CY[
-      2:length(output$CY)] - output$CY[1:(length(output$CY) - 1)]
-    output$CY[1] <- 0
-    output$DY[2:length(output$DY)] <- output$DY[
-      2:length(output$DY)] - output$DY[1:(length(output$DY) - 1)]
-
-    colnames(output) <- c("time", object@output_names)
+    # Compute incidences and deaths
+    cases <- c(0, diff(output$C_U))
+    deaths <- c(0, diff(output$D_U))
+    output$Incidence_U <- cases
+    output$Deaths_U <- deaths
+    cases <- c(0, diff(output$C_Y))
+    deaths <- c(0, diff(output$D_Y))
+    output$Incidence_Y <- cases
+    output$Deaths_Y <- deaths
+    output <- output[, c("time", unlist(object@output_names))]
 
     # Create long format of output
     output <- melt(output, id.vars = "time")
@@ -571,8 +565,14 @@ setMethod(
 
     # Added for consistency of output format across models
     output$age_group <- rep("0-150", length(output$time))
+    
+    # Split output into 2 dataframes: one with S,E,I, and R and one with C and D
+    states <- subset(output, !stringr::str_detect(output$compartment, "Incidence|Deaths"))
+    states <- droplevels(states)
+    changes <- subset(output, stringr::str_detect(output$compartment, "Incidence|Deaths"))
+    changes <- droplevels(changes)
 
-    return(output)
+    list("states" = states, "changes" = changes)
   })
 
 #----------------------------------------------------------------------------

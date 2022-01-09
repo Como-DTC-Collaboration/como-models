@@ -16,18 +16,8 @@ knitr::opts_chunk$set(
 )
 ```
 
-```{r setup}
-library(comomodels)
-library(ggplot2)
-library(glue)
-library(deSolve)
-library(reshape2)
-library(gridExtra)
-library(viridis)
-```
-
 ## Introduction
-Here we consider an extension to the basic SEIRD model that considers multiple interacting communities. For simplicity, we consider only two interacting communities here. Each community consists of a susceptible, exposed, infectious and recovered population. Although one can consider two generic communities, in this implementation we consider specifically one urban and one rural community, and use data from the WHO and UN to specify contacts in each community. In the following sections, we will explain the equations of the model, the implementation in this package and how to use it, and discuss briefly how the connectedness level between communities affects the results.
+Here we consider an extension to the basic SEIRD model that considers multiple interacting communities. For simplicity, we consider only two interacting communities here. Each community consists of a susceptible, exposed, infectious and recovered population. Although one can consider two generic communities, in this implementation we consider specifically one urban and one rural community and use data from the WHO and UN to specify contacts in each community. In the following sections, we will explain the equations of the model, the implementation in this package and how to use it, and discuss briefly how the connectedness level between communities affects the results.
 
 ## The mathematical model
 ### The equations
@@ -65,6 +55,14 @@ In this section, we walk through how to use the model. First, we will show how t
 ### Loading and prepping country-specific data
 First, we load the contact matrices for the urban and rural communities. Because the two sets of contact matrices don't cover the exact same countries, we also make a list of countries for which we have both contact matrices, which we can use later to check if the choice of country is valid.
 ```{r}
+library(comomodels)
+library(tidyverse)
+library(glue)
+library(deSolve)
+library(reshape2)
+library(gridExtra)
+library(viridis)
+
 # load contact matrices
 load("../data/contact_all_urban.rda") # ROWS are age of person, COLUMNS are age of contact
 names_urban <- names(contact_all_urban)
@@ -121,7 +119,8 @@ We start by creating an instance of the model class,
 model <- SEIRD_RU()
 ```
 
-followed by setting the parameter values of the model that are not determined by the demographics or contact matrices.
+followed by setting the parameter values of the model that are not determined by the demographics or contact matrices. Here, we use transmission parameter values that correspond to ancestral SARS-CoV-2 (opposed to, say, the strains): for more information on these parameter values, consult the documentation for `covid_transmission_parameters`.
+
 ```{r}
 parameters <- covid_transmission_parameters() # base variant
 print(parameters)
@@ -131,141 +130,187 @@ gamma <- parameters$gamma
 mu <- parameters$mu
 R0_target <- parameters$R0
 
-C = 1 # connectedness parameter
+C <- 1 # connectedness parameter
 ```
 Setting the value of $\beta$ in this model is a bit more complex, so we will come back to that in a little bit.
 
-Next we set the initial conditions of the model, where we specify separately what fraction of the population is infected in the urban community and what fraction is infected in the rural community. Note here that these are fractions of the total population across both communities! Because the populations are normalized, all initial conditions together must sum to one. In this example, we seed the epidemic in the urban community.
+Next we set the initial conditions of the model, where we specify separately what fraction of the population is infected in the urban community and what fraction is infected in the rural community: here, we start with infection solely in the urban community. Note, here that these are fractions of the total population across both communities. Because the populations are normalized, all initial conditions together must sum to one. In this example, we seed the epidemic in the urban community.
+
 ```{r}
-start_infected_urban = 0.0001
-start_infected_rural = 0
-S0U = 1-frac_rural - start_infected_urban
-E0U = 0
-I0U = start_infected_urban
-R0U = 0
-S0Y = frac_rural - start_infected_rural
-E0Y = 0
-I0Y = start_infected_rural
-R0Y = 0
+start_infected_urban <- 0.0001
+start_infected_rural <- 0
+S0U <- 1 - frac_rural - start_infected_urban
+E0U <- 0
+I0U <- start_infected_urban
+R0U <- 0
+S0Y <- frac_rural - start_infected_rural
+E0Y <- 0
+I0Y <- start_infected_rural
+R0Y <- 0
 initial_conditions(model) <- list(S0U, E0U, I0U, R0U,
-                                        S0Y, E0Y, I0Y, R0Y)
+                                  S0Y, E0Y, I0Y, R0Y)
 ```
 
 In this implementation of the SEIRD model with two communities, there are several options for inputting data about the age demographics of the communities and the contacts they have. You can choose to use the data sets in this package that provide this information for specific countries. Note that is you want to do this, i.e. use contact matrices and demographic data, it is essential that you set the demographic data BEFORE entering the contact matrices. This is done via the code below. The number of contacts and fraction of the population that live in a rural environment are calculated for you.
+
 ```{r}
 #set demographic data
-country_demog(model) <- list(pop_byage_2019*(1-frac_rural),pop_byage_2019*frac_rural)
+country_demog(model) <- list(pop_byage_2019 * (1 - frac_rural), pop_byage_2019 * frac_rural)
 
 # set contact matrices
-contact_rates(model) <- list(contact_all_urban[[country]],contact_all_rural[[country]])
+contact_rates(model) <- list(contact_all_urban[[country]],  contact_all_rural[[country]])
 ```
-Instead of using the data sets you can also choose to set the contact rates and the fraction of the population that is rural yourself. This is done by assigning the fraction rural, a single number which between 0 and 1, directly to country_demog(model), and assigning a list of two values to contact_rates(model). Note that if you wish to use contact matrices, full age demographic data is required, but you are free to use age demographic data and set the contact rates manually.
 
-As noted above, we still need to set the value of $\beta$, and assign the parameter values to the model. In other vignettes, such as for the `SEIRD` model, we determined $\beta$ based on our target value of $R_0$. Here, a simple expression for $R_0$ cannot be derived due to the added complexity in the model. Instead, we approximate a value of $\beta$ given a value of $R_0$ by noting that for $C = 1$, this model is equivalent to the `SEIRD` model. We can thus use the $R_0$ expression for the `SEIRD` model to obtain an approximate value for $\beta$. The only thing to note here is that in the `SEIRD` model, the number of contacts that a person has is included in the value of $\beta$, whereas in this model, it is not. We thus need to divide through by the average number of contacts to obtain a value of $\beta$ for this model.
+Instead of using the data sets you can also choose to set the contact rates and the fraction of the population that is rural yourself. This is done by assigning the fraction rural, a single number which between 0 and 1, directly to the model. Note that if you wish to use contact matrices, full age demographic data is required, but you are free to use age demographic data and set the contact rates manually.
+
+As noted above, we still need to set the value of $\beta$ and to assign the parameter values to the model. In other vignettes, such as for the `SEIRD` model, we determined $\beta$ based on our target value of $R_0$. Here, a simple expression for $R_0$ cannot be derived due to the added complexity in the model. Instead, we approximate a value of $\beta$ given a value of $R_0$ by noting that for $C = 1$, this model is equivalent to the `SEIRD` model. We can thus use the $R_0$ expression for the `SEIRD` model to obtain an approximate value for $\beta$. The only thing to note here is that in the `SEIRD` model, the number of contacts that a person has is included in the value of $\beta$, whereas in this model, it is not. We thus need to divide through by the average number of contacts to obtain a value of $\beta$ for this model.
 
 ```{r}
-beta_approx = (gamma+mu)*R0_target
-beta = beta_approx/(contact_rates(model)$urban * (1-frac_rural) + contact_rates(model)$rural *frac_rural)
+beta_approx <- (gamma + mu) * R0_target
+beta <- beta_approx / (contact_rates(model)$urban * (1 - frac_rural) + contact_rates(model)$rural * frac_rural)
 transmission_parameters(model) <- list(beta, kappa, gamma, mu, C)
 R0(model)
 ```
-We can compute the basic reproduction number using the next generation matrix method explained by van den Driessche [-@vandenDriessche17]. The basic reproduction for the model can be displayed by simply calling `R0(model)`, as done above. As shown, this approximation of $\beta$ gives us the target value of $R_0$.
+
+We can compute the basic reproduction number using the next generation matrix method explained by van den Driessche [-@vandenDriessche17]. The basic reproduction number for the model can be calculated by calling `R0(model)`, as done above. As shown, this approximation of $\beta$ gives us the target value of $R_0$.
 
 The last thing to do is to set the time span over which to simulate the model, and then run it.
+
 ```{r}
-tend = 200
-time = seq(0, tend, by = 1)
+tend <- 200
+time <- seq(0, tend, by = 1)
 
 # run simulation
 output <- run(model, time)
 ```
 
-The output from the model can then be plotted such that all populations are plotted separately for both communities
-```{r, fig.height = 10, fig.width = 7}
-# Communities plotted separately
-i <- sapply(output, is.factor)
-output[i] <- lapply(output[i], as.character)
-SEIR_df <- subset(output, compartment != "Incidences_U" & compartment != "Deaths_U" & compartment != "Incidences_Y" & compartment != "Deaths_Y")
-SEIR_df$compartment <- factor(SEIR_df$compartment, levels = c("S_U", "E_U", "I_U", "R_U", "S_Y", "E_Y", "I_Y", "R_Y"))
-col <- c("S_U" = "blue", "E_U" = "green", "I_U" = "yellow", "R_U" = "red", "S_Y" = "lightskyblue1", "E_Y" = "lightgreen", "I_Y" = "lightyellow", "R_Y" = "indianred")
-SEIRplot <- ggplot(SEIR_df, aes(x = time, y = value)) +
-  geom_line(aes(color = compartment), size = 1.5) +
-  labs(x = "time (days)", y = "fraction of the population") +
-  theme(legend.position = "bottom", legend.title = element_blank(), text = element_text(size = 20)) +
-  scale_color_manual(values = col)
+The output from the model can then be plotted such that the populations are plotted separately for both communities. Here, we drop the underscore notation denoting the location for clarity.
 
-case_df <- subset(output, compartment == "Incidences_U" | compartment == "Deaths_U" | compartment == "Incidences_Y" | compartment == "Deaths_Y")
-case_df$compartment <- factor(case_df$compartment, levels = c("Incidences_U", "Deaths_U", "Incidences_Y", "Deaths_Y"))
-col <- c("Cases_U" = "grey28", "Deaths_U" = "black", "Cases_Y" = "lightgray", "Deaths_Y" = "darkgray")
-inc_plot <- ggplot(case_df, aes(x = time, y = value, fill = compartment)) +
-  geom_bar(stat="identity", position = position_dodge()) +
-  labs(x = "time (days)", y = "fraction of the population") +
-  theme(legend.position = "bottom", legend.title = element_blank(), text = element_text(size = 20)) +
-  scale_fill_discrete(labels = c("Cases_U","Deaths_U","Cases_Y","Deaths_Y"))
+```{r, fig.width=10, fig.height=5}
+# create location variable and remove subscripts
+states <- output$states %>% 
+  mutate(location=if_else(str_detect(compartment, "_U"), "urban", "rural")) %>% 
+  mutate(compartment=gsub("_U", "", compartment)) %>% 
+  mutate(compartment=gsub("_Y", "", compartment))
 
-grid.arrange(SEIRplot,inc_plot,nrow = 2)
-```
-or such that the populations are summed across the communities and we can observe the dynamics of the susceptible, exposed, infectious, recovered and dead individuals in the whole population.
-
-```{r , fig.height = 10, fig.width = 7}
-SEIR_total <- SEIR_df
-CD_total <- case_df
-
-SEIR_total$value[SEIR_total$compartment == "S_U"] <- SEIR_df$value[SEIR_df$compartment == "S_U"] + SEIR_df$value[SEIR_df$compartment == "S_Y"]
-SEIR_total$value[SEIR_total$compartment == "E_U"] <- SEIR_df$value[SEIR_df$compartment == "E_U"] + SEIR_df$value[SEIR_df$compartment == "E_Y"]
-SEIR_total$value[SEIR_total$compartment == "I_U"] <- SEIR_df$value[SEIR_df$compartment == "I_U"] + SEIR_df$value[SEIR_df$compartment == "I_Y"]
-SEIR_total$value[SEIR_total$compartment == "R_U"] <- SEIR_df$value[SEIR_df$compartment == "R_U"] + SEIR_df$value[SEIR_df$compartment == "R_Y"]
-CD_total$value[CD_total$compartment == "Incidences_U"] <- case_df$value[case_df$compartment == "Incidences_U"] + case_df$value[case_df$compartment == "Incidences_Y"]
-CD_total$value[CD_total$compartment == "Deaths_U"] <- case_df$value[case_df$compartment == "Deaths_U"] + case_df$value[case_df$compartment == "Deaths_Y"] 
-
-SEIR_total <- SEIR_total[SEIR_total$compartment != "S_Y" & SEIR_total$compartment != "E_Y" & SEIR_total$compartment != "I_Y" & SEIR_total$compartment != "R_Y",]
-CD_total <- CD_total[CD_total$compartment != "Incidences_Y" & CD_total$compartment != "Deaths_Y",]
-
-SEIRplot_total <- ggplot(NULL, aes(x = time, y = value)) +
-  geom_line(data = SEIR_total, aes(color = compartment), size = 1.5) +
-  labs(x = "time (days)", y = "fraction of the population") +
-  scale_colour_discrete(labels = c("Total S", " Total E","Total I","Total R")) +
-  theme(legend.position = "bottom", legend.title = element_blank(), text = element_text(size = 20))
-
-incplot_total <- ggplot(CD_total, aes(x = time, y = value, fill = compartment)) +
-  geom_bar(stat="identity", position = position_dodge()) +
-  labs(x = "time (days)", y = "fraction of the population") +
-  theme(legend.position = "bottom", legend.title = element_blank(), text = element_text(size = 20)) +
-  scale_fill_discrete(labels = c("Cases","Deaths"))
-
-grid.arrange(SEIRplot_total,incplot_total,nrow = 2)
+# plot
+states %>% 
+  ggplot(aes(x=time, y=value)) +
+  geom_line(aes(colour=compartment)) +
+  facet_wrap(~location) +
+  xlab("time (days)") +
+  ylab("fraction of the population") +
+  scale_color_brewer(palette = "Dark2")
 ```
 
+We next plot cases for each region. Because of the connectiveness between the two populations, the epidemics are perfectly in sync.
+
+```{r, fig.width=10, fig.height=5}
+# create location variable and remove subscripts
+changes <- output$changes %>% 
+  mutate(location=if_else(str_detect(compartment, "_U"), "urban", "rural")) %>% 
+  mutate(compartment=gsub("_U", "", compartment)) %>% 
+  mutate(compartment=gsub("_Y", "", compartment))
+
+# plot
+changes %>% 
+  filter(compartment=="Incidence") %>% 
+  ggplot(aes(x=time, y=value)) +
+  geom_line(aes(colour=location)) +
+  xlab("time (days)") +
+  ylab("fraction of the population") +
+  scale_color_brewer(palette = "Dark2")
+```
 
 ## The effect of varying $C$
-The connectedness parameter $C$ indicates how connected the two communities are, i.e. how much the individuals in each are expected to interact with each other. At the extreme ends we have the communities completely connected and acting as one big community for $C=1$, and completely disconnected and acting as separate communities for $C=0$. We explore what happens for intermediate values by simulating the model for a range of values of $C$ and plotting the total infectious population over both communities for each simulation.
+The connectedness parameter $C$ indicates how connected the two communities are, i.e. how much the individuals in each are expected to interact with each other. At the extreme ends we have the communities completely connected and acting as one big community for $C=1$, and completely disconnected and acting as separate communities for $C=0$.
 
-```{r , fig.height = 4, fig.width = 7}
-  for (i in c(0,0.001,0.005,0.01,0.05,0.1,0.5,1)) {
-    C = i # connectedness parameter
-    transmission_parameters(model) <- list(beta, kappa, gamma, mu, C)
-    out_C <- run(model, time)
-    temp_I <- data.frame(C = C, t = time,compartment = "U",value = out_C$value[out_C$compartment == "I_U"] + out_C$value[out_C$compartment == "I_Y"])
-    #temp_IY <- data.frame(Cvalue = C, t = time,compartment = "Y",value = out_C$value[out_C$compartment == "I_Y"])
-    if (i == 0){
-      result <- temp_I
-    } else {
-      result <- rbind(result,temp_I)
-    }
-  }
+Here, we explore what happens for intermediate values by simulating the model for a range of values of $C$. We then plot daily cases in the urban and rural populations (coloured lines) as we vary $C$ (panels). When the two populations are unconnected, the outbreak occurs only in the urban population, where it began. As $C$ increases, a secondary outbreak occurs in the rural population. For small, but positive $C$ values, the outbreak in the rural population occurs substantially later than the one in the urban population. This is because, due to low connectivity between the populations, the seeding of the rural population is at a lower rate and the epidemic wave hence takes longer to sweep through this community. For larger $C$ values, the communities are essentially entirely connected, and the outbreaks occur in concert.
 
-ggplot(result, aes(x = t, y = value)) +
-  geom_line(aes(color = as.factor(C)), size = 1) +
-  labs(x = "time (days)", y = "fraction of the population") +
-  scale_color_viridis(discrete = TRUE)+ 
-  labs(color = "C") + 
-  theme(text = element_text(size = 20))
+```{r , fig.width=10, fig.height=5}
+C_values <- c(0, 0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1)
+R0_vals <- vector(length = length(C_values))
 
+for (i in seq_along(C_values)) {
+  C <- C_values[i]
+  transmission_parameters(model) <- list(beta, kappa, gamma, mu, C)
+  out <- run(model, time)
+  R0_vals[i] <- R0(model)
+  result <- out$changes %>%
+    mutate(C=C)
+
+  if(i == 1)
+    big_df <- result
+  else
+    big_df <- big_df %>% bind_rows(result)
+}
+
+# create compartments
+big_df <- big_df %>% 
+  mutate(location=if_else(str_detect(compartment, "_U"), "urban", "rural")) %>% 
+  mutate(compartment=gsub("_U", "", compartment)) %>% 
+  mutate(compartment=gsub("_Y", "", compartment))
+
+# plot cases
+big_df %>% 
+  filter(compartment=="Incidence") %>% 
+  ggplot(aes(x=time, y=value)) +
+  geom_line(aes(colour=location)) +
+  xlab("time (days)") +
+  ylab("fraction of the population") +
+  scale_color_brewer(palette = "Dark2") +
+  facet_wrap(~C)
 ```
 
-The above plot shows that up to approximately $C=0.1$, the value of $C$ has a significant impact on total number of infectious individuals across the communities. Varying the value of $C$ between 0.1 and one, however, barely makes a difference. As both communities are subject to the same parameter values and the average number of contacts that individuals in both communities have don't differ a lot in most countries, this result is not surprising. Above a certain level of interaction, the few infectious people in one community will quickly interact with individuals from the other community, spreading the infection. At that point, both communities develop their own epidemic under the same parameter values and the mixing between them further helps in synchronizing the waves of the epidemic in both communities. Only for very low levels of interaction does the initial difference in the number of infectious individuals have a lasting effect on epidemic dynamics. 
+Below we plot the basic reproduction number as a function of $C$. This shows that the above result is not due to the impact that changes on $C$ have on $R_0$, since it only changes very modestly.
 
-Another thing to note is how the height and width of the peak varies with $C$. For $C=1$, there is not spatial effect. For all the intermediate values of $C$, there is a spatial effect as the communities are interacting but separate. Here we are seeing that the peaks of the epidemic wave are lower, and that, especially for $C = [0.001,0.005,0.01]$, the peaks are much wider, indicating that the epidemic spreads slower. If less interaction between communities leads to a slower spread of the disease, that implies that travel restrictions and work from home orders, both of which decrease travel, are good ideas if you want to control an epidemic!
+```{r , , fig.width=10, fig.height=5}
+tibble(C=C_values, R_0=R0_vals) %>% 
+  ggplot(aes(x=C, y=R_0)) +
+  geom_line() +
+  ylim(1, 3)
+```
+
+The above analysis shows that a population with low connectivity between subpopulations -- countries, regions, cities and so on -- can substantially slow the transit of infections when infections are seeded non-uniformly. This hints at the importance of travel restrictions, particularly during the early phase of epidemics when infections have not had the opportunity to spread across borders.
+
+## The impact of a fragmented population on rates of transmission
+Aside from reducing flow between subpopulations, fragmenting a population into smaller groups also slows spread for another reason: there are fewer contacts to infect. We now use a straightforward mathematical argument to illustrate this.
+
+For simplicity, suppose that the latent period is very short, so that we can neglect it. Also suppose that we consider also a fully mixed population where everyone interacts with everyone else. Our `SEIRD` model then becomes an `SIR` model, with the infectious compartment dynamics determined by:
+
+\begin{equation}
+\frac{\text{d}I}{\text{d}t} = \beta S I - (\gamma + \mu ) I.
+\end{equation}
+
+Early on, $I$ is small, and we can ignore the rates of recovery or death, and we assume that the susceptible population is of roughly constant size $S=1$, meaning that the infected population grows exponentially:
+
+\begin{equation}
+I^{\text{mixed}}(t) = I(0) \exp(\beta t).
+\end{equation}
+
+Instead, now we take the above population and divide it up into two subpopulations of equal size and assume that each has half the starting number of infected individuals. Assume that each of these communities are epidemic islands and are isolated from one another. Then, the early growth rate of the epidemic in each will also be exponential, albeit with half the rate parameters:
+
+\begin{equation}
+I_j(t) = I(0)/2 \exp(\beta t/2),
+\end{equation}
+
+where $j\in (1, 2)$ indicates a subcommunity. If we calculate aggregate growth across both communities, we obtain:
+
+\begin{equation}
+I^{\text{both}}(t) = I(0) \exp(\beta t/2).
+\end{equation}
+
+Comparing $I^{\text{both}}$ with $I^{\text{mixed}}$ above, the rate of growth of the infected population is exponentially faster in the fully mixed population:
+
+\begin{equation}
+\frac{I^{\text{mixed}}(t)}{I^{\text{both}}(t)} = \exp(\beta t/2).
+\end{equation}
+
+In other words, fragmenting a population into isolated communities leads to an exponential decline in the rate of spread, even if all those communities receive a uniform initial seeding on infection which aggregates to the total in an unfragmented population. And increasing the number of subcommunities leads to an exponential decline in the rate of spread.
+
+Interactions between subpopulations tend to reduce the impact of fragmentation, although the way in which they interact matters: if members of one community tend to commute on a daily basis to work in another community, this will result in different transmission dynamics than for people who spend half the year fully mixed with the other community and half the year entirely separate (e.g. farming communities who migrate into cities to sell their produce). For larger 
+regions with more communities, the interactions between communities may be best considered as a network metapopulation model, where the patchwork of interactions are captured by a network graph: see @wang2014spatial for an introduction to such models.
+
 
 
 ## References
