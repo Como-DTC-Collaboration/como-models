@@ -1,5 +1,5 @@
 ---
-title: "The SEIRD model"
+title: "SEIRD model"
 author: "Hui Jia Farm, Solveig A. van der Vegt and Ben Lambert"
 output: rmarkdown::html_vignette
 bibliography: references.bib
@@ -24,14 +24,15 @@ library(dplyr)
 ```
 
 ## Introduction
-This document introduces the deterministic SEIRD model, which is the foundation around which many, more advanced models of COVID-19 transmission dynamics are based (for example, all the other models within this package). In this vignette, we explain what this model represents, and we show how it can be used to understand epidemic dynamics typical of the "waves" of infection seen during the COVID-19 pandemic.
+This document introduces the deterministic SEIRD model, which is the foundation around which many, more advanced models of COVID-19 transmission dynamics are based (including all the other models within this package). In this vignette, we explain what this model represents, and we show how it can be used to understand epidemic dynamics typical of the "waves" of infection seen during the COVID-19 pandemic.
 
 ## The SEIRD Model
-The SEIRD model is an example of a compartmental model in mathematical epidemiology [@anderson1992infectious]. In these types of models, individuals are assumed at a particular point in time to belong to only one of a number of "compartments": discrete containers where all individuals within them are assumed to be in the same state. In an SEIRD model, there are five such compartments / states: Susceptible, Exposed, Infectious, Recovered and Dead. Susceptible individuals ($S$) have not been exposed to the virus. Exposed individuals ($E$) have been exposed to the virus and have been infected but are not yet infectious to others -- they are in the incubation period. Infectious individuals ($I$) can spread the virus to others. Recovered individuals ($R$) are no longer infectious, and, in this model, have acquired immunity as they do not return to the susceptible population. Some individuals, however, unfortunately do not recover from infection and die as a result, falling into the dead state ($D$).
+The SEIRD model is an example of a compartmental model in mathematical epidemiology [@anderson1992infectious]. In these types of models, individuals are assumed at a particular point in time to belong to only one of a number of "compartments": discrete containers where all individuals within them are assumed to be in the same state. In an SEIRD model, there are five such compartments / states: Susceptible, Exposed, Infectious, Recovered and Dead. Susceptible individuals ($S$) have not been exposed to the virus. Exposed individuals ($E$) have been exposed to the virus and have been infected but are not yet infectious to others -- they are in the latent period. Infectious individuals ($I$) can spread the virus to others. Recovered individuals ($R$) are no longer infectious, and, in this model, have acquired immunity as they do not return to the susceptible population. Some individuals, however, unfortunately do not recover from infection and die as a result, falling into the dead state ($D$).
 
 By assuming that individuals belong only to one of these states, the model effectively assumes that all other information outside of these states is unimportant for transmission. So, an individual's age, their location and any pre-existing medical conditions they may have are, for example, unnaccounted for in this model. In COVID-19 transmission, this assumption is unlikely to hold, since we know that individuals' age does, for instance, strongly influence their susceptibility to death [@verity2020estimates]. The SEIRD model can, however, still be used to approximate the aggregate dynamics of the population since it captures the dominant features of human-to-human epidemic dynamics.
 
 In compartmental models, individuals can move between these states following one of a predefined set of paths. In the SEIRD model, susceptible individuals can become infected with the virus after exposure to it from an infectious individual. In doing so, they can move from the susceptible compartment to the exposed, as is illustrated in the left-hand nodes of the below graph as indicated by the $S\rightarrow E$ transition.
+
 ```{r, echo=FALSE, warning=FALSE, out.width = "400px"}
 # library(DiagrammeR)
 # library(DiagrammeRsvg)
@@ -53,7 +54,7 @@ In compartmental models, individuals can move between these states following one
 knitr::include_graphics("images/seird.png")
 ```
 
-Exposed ($E$) individuals then become infectious ($I$) over time as they transition out of the latency period. For infectious individuals, there are two potential transitions: either an individual recovers and they enter the recovered state ($R$) where they remain forever; or they die, entering the dead state ($D$).
+Exposed ($E$) individuals then become infectious ($I$) over time as they transition out of the latent period. For infectious individuals, there are two potential transitions: either an individual recovers and they enter the recovered state ($R$) where they remain forever; or they die, entering the dead state ($D$).
 
 For all models in this package, it is assumed that the population size is sufficiently large that we can view the number of individuals in a given compartment on a continuous scale. We also assume that the process governing the dynamics is deterministic: that is, given the current state of the system (i.e. the numbers of individuals in the $S$, $E$, $I$, $R$ and $D$ compartments), we can perfectly forecast its future behaviour. In reality, this is unlikely to hold since our model neglects to consider a myriad of factors that can influence the resultant epidemic. Indeed, stochastic models try to account for these unobserved elements by assuming randomness plays a role in the underlying dynamics. Nevertheless, in many instances, particularly when a population size is large, assuming deterministic system dynamics may give a good approximation of the mean of equivalent stochastic systems [@erban2007practical].
 
@@ -69,92 +70,6 @@ The full SEIRD model consists of four ODEs that are coupled together: the first 
 
 $$\frac{\text{d}E}{\text{d}t} = \text{newly exposed} - \text{newly infectious} = \beta S I -\kappa E,$$
 where the rate of change is given by the difference between the flow into this compartment due to those individuals who have been newly exposed and the flow out of it, through those who have newly become infectious. (These represent the two arrows going into and out of the $E$ compartment in the arrow graph above.)
-
-We can gain insight into how the flow out of the $E$ compartment works by imagining that we exhaust the infected individuals at a given time: $t=0$. The new equation then becomes:
-
-$$\frac{\text{d}E}{\text{d}t} = -\kappa E,$$
-Supposing there is a given number of infected individuals at $t=0$ represented by $E=E_0$, we can solve the above equation to yield an expression for the number of exposed over time:
-
-$$E(t) = E_0 \exp (- \kappa t)$$
-representing exponential decay, which we can plot assuming $E_0=1$ and $\kappa=0.5$:
-```{r, fig.height = 5, fig.width = 7}
-# function to return exponential decay
-E <- function(E_0, kappa, t) {E_0 * exp(-kappa * t)}
-
-# make values to plot
-E_0 <- 1
-kappa <- 0.5
-t <- seq(0, 10, 0.01)
-E_vals <- E(E_0, kappa, t)
-
-tibble(t=t, E=E_vals) %>% 
-  ggplot(aes(x=t, y=E)) +
-  geom_line() +
-  xlab("time (days)")
-```
-
-We can also show the effect of changing $\kappa$: unsurprisingly, as $\kappa$ increases, the rate at which individuals become infectious increases and there is faster decay.
-```{r, fig.height = 5, fig.width = 7}
-kappa_1 <- 0.5
-kappa_2 <- 1
-kappa_3 <- 2
-E_1 <- E(E_0, kappa=kappa_1, t=t)
-E_2 <- E(E_0, kappa=kappa_2, t=t)
-E_3 <- E(E_0, kappa=kappa_3, t=t)
-tibble(t, E=E_1, kappa=kappa_1) %>% 
-  bind_rows(tibble(t, E=E_2, kappa=kappa_2)) %>% 
-  bind_rows(tibble(t, E=E_3, kappa=kappa_3)) %>% 
-  ggplot(aes(x=t, y=E, colour=as.factor(kappa))) +
-  geom_line() +
-  scale_color_brewer("kappa", palette = "Dark2") +
-  xlab("time (days)")
-```
-
-An alternative way to view these exponential decay curves is as probability distributions governing the time taken for an exposed individual to become infectious. This period is referred to as the latency period.
-
-In our ODE, we treat the population as a continuum, and there is thus no concept of a single discrete individual. It is possible to formulate discrete stochastic versions of this model which consider individual dynamics using a reaction-equation type model (@erban2007practical). For these stochastic models, the behaviour of the system is dictated by evolving probability distributions. It is possible to show that the probability of an individual being in the $E$ state for the equivalent stochastic model has the same mean as the deterministic model. This indicates that the probability an individual is in this state decays exponentially over time, and the mean time that individuals spend in this state is $1/\kappa$.
-
-Using repeatedly sampled PCR test data from close contacts of confirmed cases in mainland China, a recent study estimated the latency period of COVID-19 as 5.51 days and a log-normal probability distribution was found to represent that waiting period [@xin2021estimating]. Below we compare the waiting period for the log-normal distribution fit in [@xin2021estimating] with an exponential distribution with the same latency period.
-
-```{r, fig.height = 5, fig.width = 7}
-# values derived from Xi et al., Table S2 
-mu <- 1.61
-sigma <- 0.44
-
-# equivalent decay for exponential model
-kappa <- 1 / 5.51
-
-# generate densities across rate of time
-t <- seq(0, 20, 0.01)
-lnorm_vals <- dlnorm(t, mu, sigma)
-exp_vals <- dexp(t, kappa)
-
-tibble(t, value=lnorm_vals, model="log-normal") %>% 
-  bind_rows(tibble(t, value=exp_vals, model="exponential")) %>% 
-  ggplot(aes(x=t, y=value, colour=model)) +
-  geom_line() +
-  scale_color_brewer("Model", palette = "Dark2") +
-  ylab("density") +
-  xlab("time (days)")
-```
-
-Although these share a common mean waiting period, there are considerable differences between the curves that characterise the waiting period. An alternative way to view this is through the cumulative distribution functions:
-```{r, fig.height = 5, fig.width = 7}
-lnorm_vals <- plnorm(t, mu, sigma)
-exp_vals <- pexp(t, kappa)
-
-tibble(t, value=lnorm_vals, model="log-normal") %>% 
-  bind_rows(tibble(t, value=exp_vals, model="exponential")) %>% 
-  ggplot(aes(x=t, y=value, colour=model)) +
-  geom_line() +
-  scale_color_brewer("Model", palette = "Dark2") +
-  ylab("density") +
-  xlab("time (days)")
-```
-
-For example, the exponential curve predicts that approximately `r round(pexp(2.5, kappa), 2) * 100`% individuals will have become infectious after 2.5 days versus `r round(plnorm(2.5, mu, sigma),2) * 100`% for the log-normal one.
-
-Whether these differences matter depends on the form and parameters of the model. In COVID-19, the latency period is relatively short, so, for an SEIRD model, the difference between the assumed exponential distribution on waiting time versus a more realistic modal one are unlikely to substantially affect the dynamics. However, for a disease with a longer latency period, this may not be the case. Similarly, if, instead of an SEIRD model, we assumed a structure where there was a presymptomatic compartment of infectious individuals, then the characteristics of the time interval spent in this state could be important.
 
 The next compartment we consider is the infectious. This compartment grows in size as newly infectious individuals flow into it; over time, some infectious recover and, unfortunately, others die, both of which reduce the growth rate:
 
@@ -179,7 +94,7 @@ $$\frac{\text{d}I}{\text{d}t} =\kappa E - (\gamma + \mu) I,$$
 $$\frac{\text{d}R}{\text{d}t} = \gamma I,$$
 $$\frac{\text{d}D}{\text{d}t} = \mu I.$$
 
-Having specified the form of the growth rate for each of the compartments, we need to specialise the initial sizes of each of the compartments, which we do via the initial conditions:
+Having specified the form of the growth rate for each of the compartments, we need to specify the initial sizes of each of the compartments, which we do via the initial conditions:
 
 $$S(0) = S_\text{init},\ E(0) = E_\text{init},\ I(0) = I_\text{init},\ R(0) = R_\text{init},\ D(0) = D_\text{init}.$$
 
@@ -187,7 +102,7 @@ With both the system of ODEs and initial conditions specified, we can solve for 
 
 In the implementation of the model in this package, the variables are normalized  so$S(t) + E(t) + I(t) + R(t) + D(t) \equiv 1$ for any given $t$. This means that  each of these state variables represents the fraction of the population in each  of these states at a given point in time.
 
-Typical epidemic data includes the number of new cases or new deaths occurring over a time interval. To calculate the number of cases arising over a time period, we track the cumulative number of cases through the following equation:
+Typical epidemic data includes the number of new cases or new deaths occurring over a time interval. Here, we define "cases" to mean someone infected with the virus^[Note, that other definitions of cases are possible, however. For example, a "case" can refer to a clinical case -- i.e. someone presenting with symptoms.]. To calculate the number of cases arising over a time period, we track the cumulative number of cases through the following equation:
 
 $$\frac{\text{d}C}{\text{d}t} = \text{newly exposed} = \beta S I,$$
 where we assume $C(0) = 0$. The number of new infections arising between two time intervals $t_1$ and $t_2$ is then: $C(t_2) - C(t_1)$. Similarly, the number of deaths occuring over the same interval is the difference in the cumulative deaths: $D(t_2) - D(t_1)$.
@@ -201,39 +116,94 @@ $$\frac{\text{d}S}{\text{d}t} = -\beta S I = 0.$$
 This only has solutions if either $S=0$, in which case there are no individuals left to infect; or $I=0$, in which case there are no infectious individuals: in other words, an infection has not been imported into the population. Considering all four ODEs, $I=0$ implies that $\frac{\text{d}R}{\text{d}t} = 0$ and $\frac{\text{d}D}{\text{d}t} = 0$. Additionally, so long as there are no exposed individuals, $\frac{\text{d}E}{\text{d}t}= 0$ and $\frac{\text{d}I}{\text{d}t}= 0$ and 
 So the equilibria are given by $S=S'$, $E=0$, and $I=0$ which corresponds to a situation when there are no infected or infectious individuals in the population. In other words, in this model, there is no endemic equilibrium when the infection remains present throughout the population; only epidemic dynamics are possible.
 
-## The `SEIRD` class
-We now show how `comomodels` can be used to create and simulate from an SEIRD model.
+## Using an SEIRD model to simulate COVID-19 dynamics
+We now show how `comomodels` can be used to create an SEIRD which captures the dominant characteristics of an unmitigated COVID-19 epidemic.
 
 We first create an `SEIRD` object that we will use to run simulations.
 ```{r}
 my_model <- SEIRD()
 ```
 
-Next, we set parameter values for $\beta$, $\kappa$, $\gamma$ and $\mu$. Here, these are arbitrary values that we use to illustrate simulations.
+The most crucial step in using compartmental models of transmission dynamics is their parameterisation because different parameter ranges allow both qualitatively and quantitatively different dynamics. There are two ways to estimate the parameters of such models: i) to use data collected in the laboratory or field to estimate individual parameters; or ii) to fit these models to field data and, in doing so, estimate potentially a collective of parameters. There are limitations to both approaches. The first does not account for how uncertainty in one parameter might influence our estimates of another: a higher value of $\beta$ can be offset by an increased value of $\mu$ to result in similar case counts, for instance. The second approach generally only allows a subset of parameters to be estimated, since the available data are sparse and insufficient to jointly determine all.
+
+The crucial thing, however, is that both approaches use data to determine parameters. And for practically all infectious diseases modelled, the available data do not pin down a model's parameters to a single set. It is thus important to determine whether the conclusions of modelling -- whether a new viral variant will lead a country's healthcare infrastructure to be overrun, for instance -- are sensitive to the parameter choices assumed. 
+
+Here, we follow the first approach to parameterising the SEIRD model, and show later how a sensitivity analysis can be performed.
+
+The SEIRD model has four transmission parameters: $\beta$, $\kappa$, $\gamma$ and $\mu$. In what follows, we assume we are parameterising transmission of the ancestral SARS-CoV-2 strain (opposed to say, the Delta or Omicron variants).
+
+We choose $\kappa=1/5.5$, implicitly assuming an average latent period of 5.5 days [@Xin21]. We assume that 0.66\% of individuals infected with the virus die [@verity2020estimates]: this is termed an infection fatality ratio (IFR). Changing either $\gamma$ or $\mu$ affects both the rate at which individuals recover or die and the proportions which recover or die. As such, the implications of the individual parameter values are hard to intuit without recourse to the other. Here, we choose a different parameterisation that makes it simpler to set these parameters to appropriate values:
+
+\begin{align}
+\gamma &= \zeta (1-\text{IFR})\\
+\mu &= \zeta \text{IFR}.
+\end{align}
+
+The proportion of infecteds who go on to die due to infection is given by the ratio of the rate of death to the overall rate out from the infectious compartment, which is the definition of the IFR:
+
+\begin{equation}
+\frac{\zeta \text{IFR}}{\zeta \text{IFR} + \zeta (1-\text{IFR})} = \text{IFR}.
+\end{equation}
+
+The average duration spent in the infectious compartment is given by:
+
+\begin{equation}
+\frac{1}{\zeta \text{IFR} + \zeta (1-\text{IFR})} = \frac{1}{\zeta}.
+\end{equation}
+
+Viral load data from hospitalised patients with known infector-infectee pairs can be used to determine the probability that infection occurs at a given time after the infector is first infected [@he2020temporal]: in so doing, determining a distribution representing the duration of infectiousness. In this model, there is no presymptomatic transmission and it has been estimated that viral loads decline quickly within 7 days of being symptomatic [@he2020temporal]. So, here, we assume an average infectious period of 7 days, resulting in $\zeta=1/7$.
+
+The remaining parameter, $\beta$, is set to a value to produce the same basic reproduction number as was assumed in the influential "report 9" from Imperial College [@ferguson2020report]: $R_0=2.4$ (see explanation of $R_0$ below).
+
+All of the above parameter choices, which we regard as defaults for ancestral SARS-CoV-2 transmission are available through a convenience function.
+
 ```{r}
-params <- list(beta=1, kappa=0.9, gamma=0.5, mu=0.1)
+# convenience function
+parameters <- covid_transmission_parameters()
+print(parameters)
+
+kappa <- parameters$kappa
+gamma <- parameters$gamma
+mu <- parameters$mu
+R0_target <- parameters$R0
+beta <- (mu + gamma) * R0_target
+
+params <- list(beta=beta, kappa=kappa, gamma=gamma, mu=mu)
 transmission_parameters(my_model) <- params
 ```
 
-To check that the parameters have been set correctly, we call
+
+To check that the parameters have been set as desired, we can call:
 ```{r}
 transmission_parameters(my_model)
 ```
+Note, that both overall and age-structured and "default" transmission parameters for other variants are also available through the same function. For example, the below outputs transmission parameters for an age-structured model for the Delta variant (see function documentation for more details).
 
-We now need to set the initial conditions for the model. We only set the initial 
-conditions $S(0)$, $E(0)$, $I(0)$ and $R(0)$.
 ```{r}
-initial_conditions(my_model) <- list(S0=0.99, E0=0, I0=0.01, R0=0)
+parameters <- covid_transmission_parameters(
+  variant = "delta",
+  is_age_structured = TRUE)
+
+# here mu is age structured
+print(parameters$mu)
 ```
-The initial conditions must sum to one. If they do not, an error is thrown.
 
-Now we simulate the system from $t=0$ days to $t=50$ days.
+An additional set of parameters dictate the initial conditions of the system. Since SARS-CoV-2 is a novel virus, at the very beginning of the pandemic, everyone was susceptible. Here, we imagine a small number of infectious individuals entered a new population, at the start, representing 0.0001\% of the population.
+
 ```{r}
-times <- seq(0, 50, by = 1)
+I0 <- 1e-6
+inits <- list(S0=1-I0, E0=0, I0=I0, R0=0)
+initial_conditions(my_model) <- inits
+```
+
+
+Now we simulate the system for one year.
+```{r}
+times <- seq(0, 365, by = 1)
 out_df <- run(my_model, times)
 ```
 
-The simulation returns two objects: one is a data frame comprising the states over time. Here, we see that, over time, the proportion of susceptible individuals declines over time as the infection penetrates through the population. Initially, there are relatively few infected individuals but this then grows, reaching a peak between $t=15$ and $t=20$ and then declining when there are relatively few susceptibles left. The number of recovered and dead individuals also grows over time.
+The simulation returns two objects: one is a data frame comprising the states over time. Here, we see that, over time, the proportion of susceptible individuals declines over time as the infection penetrates through the population. Initially, there are relatively few infected individuals but this then grows, reaching and then declining when there are relatively few susceptibles left. The number of recovered and dead individuals also grows over time.
 
 ```{r, fig.height = 5, fig.width = 7}
 states <- out_df$states
@@ -259,7 +229,7 @@ changes <- out_df$changes
 
 ggplot(changes, aes(x = time, y = value * 1000, fill = compartment)) +
   geom_bar(stat="identity", position = position_dodge()) +
-  labs(x = "time (days)", y = "cases per 1000 of the \n population per day") +
+  labs(x = "time (days)", y = "rate per 1000 of the \n population per day") +
   theme(legend.position = "bottom", legend.title = element_blank(),
         text = element_text(size = 20)) +
   scale_fill_brewer(palette = "Dark2")
@@ -270,19 +240,24 @@ The SEIRD has four transmission parameters which influence the type of dynamics 
 
 In this section, we first investigate the sensitivity of the number of deaths to the transmission rate, $\beta$. To do so, we run the model across a range of different $\beta$ values and plot the proportions infectious.
 ```{r, fig.height = 5, fig.width = 7}
+parameters <- covid_transmission_parameters()
+
+
 # function to setup and run model for different beta values
 run_seird <- function(beta_val) {
-  inits <- list(S0=0.999, E0=0, I0=0.001, R0=0)
-  params <- list(beta=beta_val, kappa=0.9, gamma=0.5, mu=0.1)
+  params <- list(beta=beta_val,
+                 kappa=parameters$kappa,
+                 gamma=parameters$gamma,
+                 mu=parameters$mu)
   model <- SEIRD(initial_conditions = inits,
                 transmission_parameters=params)
-  times <- seq(0, 100, by = 0.1)
+  times <- seq(0, 365, by = 0.1)
   out_df <- run(model, times)
   out_df$states
 }
 
 # run model across different beta values
-beta_vals <- seq(0.1, 2, 0.1)
+beta_vals <- seq(0.01, 1, 0.1)
 for(i in seq_along(beta_vals)) {
   beta_temp <- beta_vals[i]
   temp <- run_seird(beta_temp) %>% mutate(beta=beta_temp)
@@ -316,8 +291,10 @@ We can now calculate $R_0$ for each of the curves using the inbuilt function in 
 ```{r, fig.height = 5, fig.width = 7}
 # convenience function to determine R_0
 find_R0 <- function(beta_val) {
-  inits <- list(S0=0.999, E0=0, I0=0.001, R0=0)
-  params <- list(beta=beta_val, kappa=0.9, gamma=0.5, mu=0.1)
+  params <- params <- list(beta=beta_val,
+                 kappa=parameters$kappa,
+                 gamma=parameters$gamma,
+                 mu=parameters$mu)
   model <- SEIRD(initial_conditions = inits,
                 transmission_parameters=params)
   R0(model)
@@ -379,6 +356,18 @@ states %>%
         text = element_text(size = 20))
 ```
 
-Here, we see that as $R_t\rightarrow 1$, we reach so-called "herd immunity", and there are no longer sufficient susceptibles in the population to continue epidemic growth. In other words, the infection has run out of fuel, and the epidemic declines.
+Here, we see that as $R_t\rightarrow 1$, we reach so-called "herd immunity", and there are no longer sufficient susceptibles in the population to fuel continued epidemic growth. This occurs when $R_t<1$, which indicates: 
+
+\begin{equation}
+S(t) < \frac{1}{R_0}.
+\end{equation}
+
+The critical proportion of the population that need to have been exposed to the virus to achieve herd immunity is then:
+
+\begin{equation}
+R^* = 1 - \frac{1}{R_0}.
+\end{equation}
+
+When a fraction exceeding $R^*$ have been exposed, the immunity of those who have recovered from the virus effectively protects those who haven't.
 
 ## References

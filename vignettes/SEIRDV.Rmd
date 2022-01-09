@@ -1,5 +1,5 @@
 ---
-title: "The SEIRDV model"
+title: "Vaccinations model"
 author: "Ioana Bouros"
 output: rmarkdown::html_vignette
 vignette: >

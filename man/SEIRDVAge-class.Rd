@@ -25,7 +25,7 @@
 
 \S4method{interventions}{SEIRDVAge}(object) <- value
 
-\S4method{run}{SEIRDVAge}(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
+\S4method{run}{SEIRDVAge}(object, times, solve_method = "lsoda")
 }
 \arguments{
 \item{object}{An object of the class SEIRDVAge.}

@@ -1,5 +1,5 @@
 ---
-title: "The age-structured SEIRD model"
+title: "Age-structured model"
 author: "Oscar Dimdore-Miles, Ioana Bouros and Ben Lambert"
 output: rmarkdown::html_vignette
 bibliography: references.bib
@@ -37,20 +37,8 @@ Models which allow varying transmission dynamics for different age groups can ca
 This system of ODEs could then be solved independently for each age group $i$, and each of their dynamics would be the same as for the non-age-structured SEIRD model. Additionally, infection transmission through each of the age classes would be identical, aside from any differences in the initial conditions of each compartment.
 
 ## Age-dependent mortality
-For COVID-19 transmission, a key difference is that the death rate varies by age [@verity2020estimates]. We can allow different rates of death by modifying the equation for infectious and dead compartments to:
+For COVID-19 transmission, a key difference is that the death rate varies by age. In @verity2020estimates, the infection fatality ratio -- the proportion of infected individuals who die -- was shown to vary strongly with age using aggregate case and deaths data for mainland China until March 2020. Here we graph their estimates. From this, we see the dramatic rise in the risk of death beginning at around the 50-59 age class.
 
-\begin{align}
-\frac{\text{d}I_i}{\text{d}t} &= \kappa E_i - (\gamma + \mu_i) I_i\\
-\frac{\text{d}D_i}{\text{d}t} &= \mu_i I_i.
-\end{align}
-
-where each compartment has its own death rate, $\mu_i$. Since, in this model, there are only two fates for an infectious individual -- death and recovery -- the proportion of infectious individuals who die is given by:
-
-\begin{equation}
-\text{IFR} = \frac{\text{rate of death}}{\text{rate of death} + \text{rate of recovery}} = \frac{\mu}{\mu + \gamma},
-\end{equation}
-
-where $\text{IFR}$ denotes the infection fatality ratio. In @verity2020estimates, the IFR was shown to vary strongly with age using aggregate case and deaths data for mainland China extracted until March 2020. Here we graph their estimates.
 ```{r, fig.width=6, fig.height=4}
 # for 80+ group we pick upper age to be 110
 df <- tribble(
@@ -76,13 +64,28 @@ df %>%
   xlab("Age range") +
   ylab("IFR")
 ```
-From this, we see the dramatic rise in the risk of death beginning at around the 50-59 age class.
+
+We can allow different rates of death in the model by modifying the equation for infectious and dead compartments to:
+
+\begin{align}
+\frac{\text{d}I_i}{\text{d}t} &= \kappa E_i - (\gamma_i + \mu_i) I_i\\
+\frac{\text{d}D_i}{\text{d}t} &= \mu_i I_i.
+\end{align}
+
+where each compartment has its own death rate, $\mu_i$ and recovery rate, $\gamma_i$. We allow different recovery rates across the age classes because of the flexibility it provides in parameterising the model -- see below.
+
+Since, in this model, there are only two fates for an infectious individual -- death and recovery -- the proportion of infectious individuals who die is given by:
+
+\begin{equation}
+\text{IFR}_i = \frac{\text{rate of death}}{\text{rate of death} + \text{rate of recovery}} = \frac{\mu_i}{\mu_i + \gamma_i}.
+\end{equation}
+
 
 ## Intermixing between age groups
 The aforementioned system of ODEs does not, currently, allow individuals from different age classes to mix with one another. However, in reality, a susceptible individual from a given age class can become infected from any age class: to capture this aspect of the model, infected individuals of any
-age are supposed to inter-mix, with the mixing rate dictated by a so-called "contact matrix", $C$.
+age are supposed to intermix, with the mixing rate dictated by a so-called "contact matrix", $C$.
 
-The elements of contact matrices, $C_{i,j}$ indicate the expected number of contacts an individual of age class $i$ experiences with age class $j$ per day. In this package, we include country-level estimates of contact matrices (@prem2017projecting; for full details see data documentation). There are actually four types of contact matrix corresponding to daily numbers of contacts at home, work, school and all other settings. Here, we visualise these for India.
+The elements of contact matrices, $C_{i,j}$, indicate the expected number of contacts an individual of age class $i$ experiences with age class $j$ per day. In this package, we include country-level estimates of contact matrices (@prem2017projecting; for full details see data documentation). There are actually four types of contact matrix corresponding to daily numbers of contacts at home, work, school and all other settings. Here, we visualise these for India.
 
 ```{r, include = FALSE}
 load(file = "../data/contact_home.rda")
@@ -126,7 +129,7 @@ c_all %>%
   facet_wrap(~type)
 ```
 
-We can see that the majority of contacts fall between younger individuals, occurring at home or "other" locations. At home, however, there is more substantial intergenerational mixing than in other settings.
+We can see that the majority of contacts fall between younger individuals, occurring at school or "other" locations. At home, however, there is more substantial intergenerational mixing than in other settings.
 
 The model we introduce here does not compartmentalise individuals according to location, so we make an overall contact matrix by summming these together.
 ```{r, fig.width=8, fig.height=5}
@@ -142,7 +145,7 @@ c_combined %>%
   scale_fill_viridis_c()
 ```
 
-We now use this contact matrix to allow infections to pass between age groups. To do so, we amend the governing equations for the susceptibles and exposed individuals within age class $i$:
+We now use this contact matrix to allow infections to pass between age groups. To do so, we amend the governing equations for the susceptible and exposed individuals within age class $i$:
 
 \begin{align}
 \frac{\text{d}S_i}{\text{d}t} &= -\beta S_i \Sigma_{j}C_{ij} I_j\\
@@ -261,7 +264,7 @@ lower_age <- map_dbl(age_names, get_lower_age)
 upper_age <- map_dbl(age_names, get_upper_age)
 middle_age <- (lower_age + upper_age) / 2
 
-# assume IFR is constant within age hands
+# assume IFR is constant within age bands
 IFR_vals <- vector(length = length(middle_age))
 IFR_getter <- function(age, df) {
   for(j in 1:nrow(df)) {
