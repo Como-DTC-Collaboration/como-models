@@ -1,6 +1,6 @@
 ---
 title: "SEmIRD: multiple exposed compartments"
-author: "Ben Lambert"
+author: "Ben Lambert and Liangti Dai"
 output: rmarkdown::html_vignette
 bibliography: references.bib
 vignette: >
@@ -184,7 +184,7 @@ $$\frac{\text{d}D}{\text{d}t} = \mu I.$$
 Thus a newly exposed individual (entering $E_1$) only becomes infectious (entering $I$) after they have passed through a host of intermediate states: $E_1\rightarrow E_2 \rightarrow E_3 \rightarrow E_4 \rightarrow E_5$. In the stochastic analogue of this ODE system, the average time taken to go from $E_1\rightarrow I$ is given by a $\text{Erlang}(5,\kappa)$ distribution, which has a mean of $5/\kappa$. Thus to match the same mean as the exponential distribution we need to multiply $\kappa$ by 5.
 
 ## Comparing the SEmIRD and SEIRD models
-We now compare how this model behaves versus the SEIRD. In both cases, we assume that, at $t=0$, all individuals are in the first exposed compartment (note, for the SEIRD model, the first exposed compartment is the only exposed compartment). To make the differences stark, we assume that the average the latent period lasts 20 days. For the other parameters, we use the same set as were used in the SEIRD model vignette.
+We now compare how this model behaves versus the SEIRD. In both cases, we assume that, at $t=0$, all individuals are in the first exposed compartment (note, for the SEIRD model, the first exposed compartment is the only exposed compartment). To make the differences stark, we assume that the average latent period lasts 20 days. For the other parameters, we use the same set as were used in the SEIRD model vignette.
 
 We first simulate the SEIRD model and plot the exposed and infectious compartments. In this plot, the fraction of infectious individuals grows at a fast rate right from the start and peaks somewhere near $t=5$ days.
 ```{r, fig.height = 5, fig.width = 7}
@@ -240,6 +240,35 @@ states %>%
   xlab("time (days)")
 ```
 
+
+If initially we have a small number of exposed individuals in e.g. $E_1$, The waves of $E$ and $I$ will be right-shifted and the epidemic lasts longer. We can observe oscillatory dynamics of the epidemic that can be deduced from the ODE system, where within the time prior to the peaks, we have stationary points of $E_i(t)$ at time points when $E_i(t)=E_{i-1}(t), (2\leq i \leq 5)$ hold, which sequencially introduces oscillations in $E_2, E_3, E_4, E_5$, and also for $E_1$ and $I$. 
+
+In the next section, we can observe that when the number of exposed compartments increases, the frequency of the oscillatory dynamics will increase; when $\kappa$ decreases, the amplitude of the oscillatory dynamics will increase while the overall epidemic waves will be right-shifted with later-arriving peaks in cases and deaths.
+
+```{r, fig.height = 5, fig.width = 7}
+model <- SEmIRD()
+
+# change parameters
+kappa_s <- 1/25 * 5
+params <- list(beta=beta, kappa=kappa_s, gamma=gamma, mu=mu)
+transmission_parameters(model) <- params
+initial_conditions(model) <- list(S0=0.95, I0=0, R0=0, E0 = as.list(c(0.05, rep(0, 4))))
+
+# run model
+times <- seq(0, 300, 0.1)
+output <- run(model, times)
+states <- output$states
+
+# plot results
+states %>% 
+  filter(str_detect(compartment, "E|I")) %>% 
+  ggplot(aes(x=time, y=value)) +
+  geom_line(aes(colour=compartment)) +
+  xlab("time (days)")
+```
+
+
+
 ## Comparing COVID-19 transmission dynamics
 Assuming now $\kappa=1/5.5$, which is more appropriate for COVID-19, we can compare the latent period distribution that was estimated by @xin2021estimating with the implied Erlang distribution of the SEmIRD model.
 
@@ -269,15 +298,19 @@ tibble(t, value=lnorm_vals, model="log-normal") %>%
   xlab("time (days)")
 ```
 
-But how do the epidemics produced by two models differ? We now simulate each model and plot the number of daily cases for each. From this plot, it is clear that the waves of cases produced for each model are similar, although the SEmIRD model wave is shifted so that it occurs later. This makes intuitive sense since the impact of the multiple exposed compartment substages is to induce a delay between exposure and infectiousness -- effectively, resulting in a slightly delayed rise in cases.
+But how do the epidemics produced by two models differ? Does the number of exposed compartments have an effect on the dynamics? We now simulate each model and plot the number of daily cases and deaths for each with varying number of exposed compartments in the `SEmIRD` model. We also perform analysis on different values of $\kappa$ as a comparison.
+
+Under $\kappa=1/5.5$ which is COVID-19 appropriate, it is clear that the waves of cases and deaths produced for each `SEmIRD` model are right-shifted in comparison with `SEIRD` so that the peaks arrive later. This makes intuitive sense since the impact of the multiple exposed compartment substages is to induce a delay between exposure and infectiousness -- effectively, resulting in a slightly delayed rise in cases. Among `SEmIRD` models with different number of exposed compartments $n$, as $n$ increases, the shift becomes narrow but the peaks of both cases and deaths are higher. While the number of cases of all `SEmIRD` models are less than that in `SEIRD`, the number of deaths of `SEmIRD` models under $n=50, 100$ become slightly larger than that in `SEIRD`.
+
+We can observe similar senarios under other values of $\kappa$ ($\kappa = 1/10, 1/20$). As $\kappa$ and $n$ increase, the pre-peak waves of cases and deaths present increased frequency and amptitude of oscillatory dynamics while the overall epidemic waves will be right-shifted with later-arriving peaks.
+
 
 ```{r, fig.height = 5, fig.width = 7}
-# helper function for running models with parameterisation on kappa and the number of compartments
-run_seird_semird <- function(kappa, n){
+# helper function for running models with parameterisation on kappa a, the number of exposed compartments and time
+run_seird_semird <- function(kappa, n, times){
   
   S0 = 0.999
   E0 = 0.001
-  times = seq(0, 350, 1)
   
   # run both models and get cases and deaths
   # SEIRD
@@ -311,13 +344,13 @@ run_seird_semird <- function(kappa, n){
     changes_seird <- changes_seird %>% bind_rows(changes_semird[[ni]])
   }
 
+  # plot
   p_changes <-
     ggplot(changes_seird %>% filter(time > 0), aes(x=time, y=value)) +
     geom_line(aes(colour=model)) +
     xlab("time (days)") +
     scale_color_brewer(palette = "Dark2") +
-    #ylab("case fraction") +
-    ggtitle(paste0("kappa=", kappa)) +
+    ggtitle(paste0("kappa=", round(kappa, 2))) +
     facet_wrap( ~ compartment, nrow = 1, scales = "free")
 
   return(p_changes)
@@ -326,21 +359,22 @@ run_seird_semird <- function(kappa, n){
 ########################################
 
 # run on different kappa & different number of exposed components
-kappa <- c(1 / 5.5, 1/10, 1/20)
+kappa <- c(1/5.5, 1/10, 1/20)
 n = c(5, 20, 50, 100)
 
-
-p1 <- run_seird_semird(kappa[1], n)
-p2 <- run_seird_semird(kappa[2], n)
-p3 <- run_seird_semird(kappa[3], n)
+# plot
+p1 <- run_seird_semird(kappa[1], n, seq(0, 200, 1))
+p2 <- run_seird_semird(kappa[2], n, seq(0, 250, 1))
+p3 <- run_seird_semird(kappa[3], n, seq(0, 350, 1))
 
 p1
 p2
 p3
-
-
-
+  
 ```
+
+
+
 
 Including multiple substages is likely to be less important if variants of SARS-Cov-2 have shorter latent periods. This is likely the case for the Delta and Omicron variants which have been shown to have shorter incubation periods (near 4 days for Delta and approximately 3 days for Omicron versus more than 5 days for SARS-CoV-2; @grant2021impact; @cdcinvestigation2022) -- partly explaining their higher rate of spread.
 
