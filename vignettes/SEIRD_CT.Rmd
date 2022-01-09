@@ -1,5 +1,6 @@
 ---
 title: "NPIs: contact tracing and quarantining"
+author: "Ben Lambert"
 output: rmarkdown::html_vignette
 bibliography: references.bib
 vignette: >

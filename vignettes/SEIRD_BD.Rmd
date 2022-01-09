@@ -1,5 +1,6 @@
 ---
 title: "Births and natural deaths and waning natural immunity"
+author: "Idil Cazimoglu and Ben Lambert"
 output: rmarkdown::html_vignette
 bibliography: references.bib
 vignette: >

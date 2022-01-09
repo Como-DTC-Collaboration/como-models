@@ -1,7 +1,6 @@
 ---
 title: "NPIs: age-structured model"
 author: "Oscar Dimdore-Miles, Idil Cazimoglu and Liangti Dai"
-date: "28/10/2021"
 output: rmarkdown::html_vignette
 bibliography: references.bib
 vignette: >
