@@ -258,7 +258,7 @@ setMethod(
     # Added for consistency of output format across models
     output$age_range <- rep("0-150", length(output$time))
     
-    # Split output into 2 dataframes: one with S, E1, E2, E3, E4, E5, I, R, D and one with
+    # Split output into 2 dataframes: one with S, E1, E2, ..., En, I, R, D and one with
     # incidence and deaths
     states <- subset(output, !output$compartment %in% c("Incidence", "Deaths"))
     states <- droplevels(states)

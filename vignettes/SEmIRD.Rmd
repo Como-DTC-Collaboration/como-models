@@ -356,8 +356,6 @@ run_seird_semird <- function(kappa, n, times){
   return(p_changes)
 }
 
-########################################
-
 # run on different kappa & different number of exposed components
 kappa <- c(1/5.5, 1/10, 1/20)
 n = c(5, 20, 50, 100)
@@ -376,7 +374,7 @@ p3
 
 
 
-Including multiple substages is likely to be less important if variants of SARS-Cov-2 have shorter latent periods. This is likely the case for the Delta and Omicron variants which have been shown to have shorter incubation periods (near 4 days for Delta and approximately 3 days for Omicron versus more than 5 days for SARS-CoV-2; @grant2021impact; @cdcinvestigation2022) -- partly explaining their higher rate of spread.
+Including multiple substages is likely to be less important if variants of SARS-Cov-2 have shorter latent periods. This is likely the case for the Delta and Omicron variants which have been shown to have shorter incubation periods (near 4 days for Delta and approximately 3 days for Omicron versus more than 5 days for SARS-CoV-2; @Grant21; @CDC21) -- partly explaining their higher rate of spread.
 
 The difference between the results of a single versus multiple exposed state model could, however, be even greater if, instead of an SEIRD-type model, we assumed a structure where there was a presymptomatic compartment of infectious individuals. In this instance, the nature of the delay period distribution governing the time spent in this compartment could result in different responses to some non-pharmaceutical interventions: for example, an intervention involving early detection and isolation of infected individuals.
 
