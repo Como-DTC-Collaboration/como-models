@@ -1,26 +1,26 @@
 test_that("SEmIRD model is instantiated correctly", {
   my_model <- SEmIRD()
   
-  expect_length(my_model@initial_conditions, 6)
+  expect_length(my_model@initial_conditions, 4)
   expect_length(my_model@transmission_parameters, 4)
 })
 
 test_that("Initial conditions can be set and retrieved", {
   my_model <- SEmIRD()
-  initial_conditions(my_model) <- list(S0=0.9, E10=0, E20=0, E30=0, E40=0, E50=0, I0=0.1, R0=0)
+  initial_conditions(my_model) <- list(S0=0.9, E0=as.list(rep(0, 5)), I0=0.1, R0=0)
   
   # Test output is correct
   expect_equal(initial_conditions(my_model),
-               list("S0" = 0.9, "E10" = 0, "E20" = 0, "E30" = 0, "E40" = 0, "E50" = 0, "I0" = 0.1, "R0" = 0))
+               list("S0" = 0.9, "E0"= as.list(rep(0, 5)), "I0" = 0.1, "R0" = 0))
   
   # Check error is raised when initial states are not doubles
   expect_error(
-    initial_conditions(my_model) <- list(S0=0.6, E10=0.2, E20=0, E30=0, E40=0, E50=0, I0=list(0.1, 0.1), R0=0))
+    initial_conditions(my_model) <- list(S0=0.6, E0=as.list(c(0.2, rep(0, 4))), I0=list(0.1, 0.1), R0=0))
   expect_error(
     initial_conditions(my_model) <- list(S0="a", E0=0.9, I0=0.1, R0=0))
   
   # Check error is raised when sum of initial conditions is not 1
-  expect_error(initial_conditions(my_model) <- list(S0=0.6, E10=0.2, E20=0, E30=0, E40=0, E50=0, I0=0, R0=0))
+  expect_error(initial_conditions(my_model) <- list(S0=0.6, as.list(c(0.2, rep(0, 4))), I0=0, R0=0))
 })
 
 test_that("Transmission parameters can be set and retrieved", {
@@ -40,7 +40,7 @@ test_that("Transmission parameters can be set and retrieved", {
 
 test_that("SEmIRD model runs correctly", {
   my_model <- SEmIRD()
-  initial_conditions(my_model) <- list(S0=0.9, E10=0, E20=0, E30=0, E40=0, E50=0, I0=0.1, R0=0)
+  initial_conditions(my_model) <- list(S0=0.9, E0=as.list(rep(0, 5)), I0=0.1, R0=0)
   transmission_parameters(my_model) <- list(beta=1, kappa=1, gamma=1, mu=1)
   
   # Check output shape
@@ -64,7 +64,7 @@ test_that("SEmIRD model runs correctly", {
 test_that("Running model before setting parameters fails", {
   t <- seq(0, 10, by = 0.1)
   my_model <- SEmIRD()
-  initial_conditions(my_model) <- list(S0=0.9, E10=0, E20=0, E30=0, E40=0, E50=0, I0=0.1, R0=0)
+  initial_conditions(my_model) <- list(S0=0.9, E0=as.list(rep(0, 5)), I0=0.1, R0=0)
   expect_error(run(my_model, t), "Transmission parameters must be set before running.")
   my_model <- SEmIRD()
   transmission_parameters(my_model) <- list(beta=0.9, kappa=0.2, gamma=0.01, mu=0.1)
@@ -73,7 +73,7 @@ test_that("Running model before setting parameters fails", {
 
 test_that("R0 works for SEmIRD model", {
   my_model <- SEmIRD()
-  initial_conditions(my_model) <- list(S0=0.9, E10=0, E20=0, E30=0, E40=0, E50=0, I0=0.1, R0=0)
+  initial_conditions(my_model) <- list(S0=0.9, E0=as.list(rep(0, 5)), I0=0.1, R0=0)
   beta <- 1.1
   gamma <- 0.4
   mu <- 0.2

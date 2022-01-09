@@ -170,15 +170,15 @@ For example, the exponential curve predicts that approximately `r round(pexp(2.5
 ## The SEmIRD model
 To allow a non-exponential waiting period, a number of modelling approaches are possible and include a range of stochastic models, for instance renewal-type models and individual-based models. It is, however, possible to allow a Erlang-distributed  waiting time^[An Erlang distribution is a gamma distribution with an integer shape parameter.] in the stochastic analogue of an ODE model by splitting a stage into several substages. This is known as the "linear chain trick" (see @hurtado2019generalizations).
 
-In the `SEmIRD` model, we do just this: splitting the exposed compartment into five substages: $E_1, E_2, E_3, E_4, E_5$. The ODEs describing the dynamics are hence:
+In the `SEmIRD` model, we split the exposed compartment into $n$ substages: $E_1, E_2, ..., E_n$. The ODEs describing the dynamics are hence:
 
 $$\frac{\text{d}S}{\text{d}t} = -\beta S I,$$
-$$\frac{\text{d}E_1}{\text{d}t} = \beta S I -\kappa E_1,$$
-$$\frac{\text{d}E_2}{\text{d}t} = \kappa E_1 -\kappa E_2,$$
-$$\frac{\text{d}E_3}{\text{d}t} = \kappa E_2 -\kappa E_3,$$
-$$\frac{\text{d}E_4}{\text{d}t} = \kappa E_3 -\kappa E_4,$$
-$$\frac{\text{d}E_5}{\text{d}t} = \kappa E_4 -\kappa E_5,$$
-$$\frac{\text{d}I}{\text{d}t} =\kappa E_5 - (\gamma + \mu) I,$$
+$$\frac{\text{d}E_i}{\text{d}t} = \begin{cases}
+                                    \beta S I -\kappa E_i,      & \text{if } x = 1\\
+                                    \kappa E_{i-1} -\kappa E_i, & \text{otherwise}
+                                  \end{cases}$$
+
+$$\frac{\text{d}I}{\text{d}t} =\kappa E_n - (\gamma + \mu) I,$$
 $$\frac{\text{d}R}{\text{d}t} = \gamma I,$$
 $$\frac{\text{d}D}{\text{d}t} = \mu I.$$
 Thus a newly exposed individual (entering $E_1$) only becomes infectious (entering $I$) after they have passed through a host of intermediate states: $E_1\rightarrow E_2 \rightarrow E_3 \rightarrow E_4 \rightarrow E_5$. In the stochastic analogue of this ODE system, the average time taken to go from $E_1\rightarrow I$ is given by a $\text{Erlang}(5,\kappa)$ distribution, which has a mean of $5/\kappa$. Thus to match the same mean as the exponential distribution we need to multiply $\kappa$ by 5.
@@ -214,9 +214,11 @@ states %>%
   geom_line(aes(colour=compartment)) +
   xlab("time (days)")
 ```
-We now repeat this exercise with the SEmIRD model. To ensure that we have the same mean duration of the latent period, we set $\kappa_s=5\kappa$, where $\kappa_s$ is the transit rate out of each of the $E_i$ compartments in the SEmIRD model.
+We now repeat this exercise with the SEmIRD model. To ensure that we have the same mean duration of the latent period, we set $\kappa_s=5\kappa$, where $\kappa_s$ is the transit rate out of each of the $E_i$ compartments in the SEmIRD model. 
 
-The plot of the exposed and infectious compartments shows the decline of initial exposed state ($E_1$) and the rise and fall of the intermediate states ($E_2$ through $E_5$). This procession of intermediate states through which individuals must pass to become infectious means that the infectious state fraction rises much later than for the SEIRD model: here, it peaks much nearer $t=20$ days. Effectively, allowing multiple exposed compartments induces a sort of delay between individuals becoming exposed and then transitioning to infected.
+We initialise the values for the $E_i$ compartments as a list of values, in which the size of the list will be taken as the number of exposed compartments ($n$), whose order corresponds to $E_1$, $E_2$, ..., $E_n$.
+
+In a model with $n=5$ exposed compartments, the plot of the exposed and infectious compartments shows the decline of initial exposed state ($E_1$) and the rise and fall of the intermediate states ($E_2$ through $E_5$). This procession of intermediate states through which individuals must pass to become infectious means that the infectious state fraction rises much later than for the SEIRD model: here, it peaks much nearer $t=20$ days. Effectively, allowing multiple exposed compartments induces a sort of delay between individuals becoming exposed and then transitioning to infected.
 ```{r, fig.height = 5, fig.width = 7}
 model <- SEmIRD()
 
@@ -224,8 +226,7 @@ model <- SEmIRD()
 kappa_s <- kappa * 5
 params <- list(beta=beta, kappa=kappa_s, gamma=gamma, mu=mu)
 transmission_parameters(model) <- params
-initial_conditions(model) <- list(S0=0, I0=0, R0=0,
-                                  E10=1, E20=0, E30=0, E40=0, E50=0)
+initial_conditions(model) <- list(S0=0, I0=0, R0=0, E0 = as.list(c(1, rep(0, 4))))
 
 # run model
 output <- run(model, times)
@@ -271,42 +272,74 @@ tibble(t, value=lnorm_vals, model="log-normal") %>%
 But how do the epidemics produced by two models differ? We now simulate each model and plot the number of daily cases for each. From this plot, it is clear that the waves of cases produced for each model are similar, although the SEmIRD model wave is shifted so that it occurs later. This makes intuitive sense since the impact of the multiple exposed compartment substages is to induce a delay between exposure and infectiousness -- effectively, resulting in a slightly delayed rise in cases.
 
 ```{r, fig.height = 5, fig.width = 7}
-# parameterise model
-kappa <- 1 / 5.5
+# helper function for running models with parameterisation on kappa and the number of compartments
+run_seird_semird <- function(kappa, n){
+  
+  S0 = 0.999
+  E0 = 0.001
+  times = seq(0, 350, 1)
+  
+  # run both models and get cases and deaths
+  # SEIRD
+  model_seird <- SEIRD()
+  params <- list(beta=beta, kappa=kappa, gamma=gamma, mu=mu)
+  transmission_parameters(model_seird) <- params
+  initial_conditions(model_seird) <- list(S0=S0, E0=E0, I0=0, R0=0)
+  
+  output_seird <- run(model_seird, times)
+  changes_seird <- output_seird$changes %>%
+    #filter(compartment=="Incidence") %>% 
+    mutate(model="SEIRD")
+  
+  # SEmIRD
+  output_semird <- list()
+  changes_semird <- list()
+  
+  for(ni in seq_along(n)){
+    model_semird <- SEmIRD()
+    params <- list(beta=beta, kappa=kappa*n[ni], gamma=gamma, mu=mu)
+    transmission_parameters(model_semird) <- params
+    initial_conditions(model_semird) <- list(S0=S0, E0 = as.list(c(E0, rep(0,n[ni]))), I0=0, R0=0)
+    output_semird[[ni]] <- run(model_semird, times)
+    changes_semird[[ni]] <- output_semird[[ni]]$changes %>%
+      #filter(compartment=="Incidence") %>% 
+      mutate(model=paste0("SEmIRD (n=", n[ni], ")"))
+  }
+  
+  # combine data frames
+  for (ni in seq_along(n)){
+    changes_seird <- changes_seird %>% bind_rows(changes_semird[[ni]])
+  }
 
-# parameterise SEIRD model
-model_seird <- SEIRD()
-params <- list(beta=beta, kappa=kappa, gamma=gamma, mu=mu)
-transmission_parameters(model_seird) <- params
-initial_conditions(model_seird) <- list(S0=0.999, E0=0, I0=0.001, R0=0)
+  p_changes <-
+    ggplot(changes_seird %>% filter(time > 0), aes(x=time, y=value)) +
+    geom_line(aes(colour=model)) +
+    xlab("time (days)") +
+    scale_color_brewer(palette = "Dark2") +
+    #ylab("case fraction") +
+    ggtitle(paste0("kappa=", kappa)) +
+    facet_wrap( ~ compartment, nrow = 1, scales = "free")
 
-# parameterise SEmIRD model
-model_semird <- SEmIRD()
-params <- list(beta=beta, kappa=kappa * 5, gamma=gamma, mu=mu)
-transmission_parameters(model_semird) <- params
-initial_conditions(model_semird) <- list(S0=0.999, I0=0.001, R0=0,
-                                        E10=0, E20=0, E30=0, E40=0, E50=0)
+  return(p_changes)
+}
 
-# run both models and get cases
-times <- seq(0, 150, 1)
-output_seird <- run(model_seird, times)
-output_semird <- run(model_semird, times)
-changes_seird <- output_seird$changes %>%
-  filter(compartment=="Incidence") %>% 
-  mutate(model="SEIRD")
-changes_semird <- output_semird$changes %>%
-  filter(compartment=="Incidence") %>% 
-  mutate(model="SEmIRD")
+########################################
 
-# compare cases
-changes_seird %>% 
-  bind_rows(changes_semird) %>% 
-  filter(time > 0) %>% 
-  ggplot(aes(x=time, y=value)) +
-  geom_line(aes(colour=model)) +
-  xlab("time (days)") +
-  scale_color_brewer(palette = "Dark2") +
-  ylab("case fraction")
+# run on different kappa & different number of exposed components
+kappa <- c(1 / 5.5, 1/10, 1/20)
+n = c(5, 20, 50, 100)
+
+
+p1 <- run_seird_semird(kappa[1], n)
+p2 <- run_seird_semird(kappa[2], n)
+p3 <- run_seird_semird(kappa[3], n)
+
+p1
+p2
+p3
+
+
+
 ```
 
 Including multiple substages is likely to be less important if variants of SARS-Cov-2 have shorter latent periods. This is likely the case for the Delta and Omicron variants which have been shown to have shorter incubation periods (near 4 days for Delta and approximately 3 days for Omicron versus more than 5 days for SARS-CoV-2; @grant2021impact; @cdcinvestigation2022) -- partly explaining their higher rate of spread.

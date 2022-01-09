@@ -79,12 +79,9 @@ for the time points specified in times and integration method specified in
 solve_method.
 
 \deqn{\frac{dS(t)}{dt} = - beta S(t) I(t)}
-\deqn{\frac{dE1(t)}{dt} =  beta S(t) I(t) - kappa E1(t)}
-\deqn{\frac{dE2(t)}{dt} =  kappa E1(t) - kappa E2(t)}
-\deqn{\frac{dE3(t)}{dt} =  kappa E2(t) - kappa E3(t)}
-\deqn{\frac{dE4(t)}{dt} =  kappa E3(t) - kappa E4(t)}
-\deqn{\frac{dE5(t)}{dt} =  kappa E4(t) - kappa E5(t)}
-\deqn{\frac{dI(t)}{dt} = kappa E5(t) - (gamma + mu) I(t)}
+\deqn{\frac{dE_i(t)}{dt} =  beta S(t) I(t) - kappa E_i(t), (if i=1)}
+\deqn{\frac{dEi(t)}{dt} =  kappa E_{i-1}(t) - kappa E_i(t), (if i>1)}
+\deqn{\frac{dI(t)}{dt} = kappa E_n(t) - (gamma + mu) I(t)}
 \deqn{\frac{dR(t)}{dt} = gamma I(t)}
 \deqn{\frac{dC(t)}{dt} = beta S(t) I(t)}
 \deqn{\frac{dD(t)}{dt} = mu I(t)}
@@ -104,7 +101,7 @@ The R0 parameter is given by:
 incidence.}
 
 \item{\code{initial_condition_names}}{list of names of initial conditions
-(characters). Default is list("S0", "E10", "E20", "E30", "E40", "E50", "I0", R0").}
+(characters). Default is list("S0", "E0", "I0", R0").}
 
 \item{\code{transmission_parameter_names}}{list of names of transmission parameters
 (characters). Default is list("beta", "kappa", "gamma", "mu").}

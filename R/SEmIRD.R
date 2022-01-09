@@ -11,7 +11,7 @@ NULL
 #' @slot output_names list of compartments name which are used by the model and
 #'       incidence.
 #' @slot initial_condition_names list of names of initial conditions
-#'       (characters). Default is list("S0", "E10", "E20", "E30", "E40", "E50", "I0", R0").
+#'       (characters). Default is list("S0", "E0", "I0", R0").
 #' @slot transmission_parameter_names list of names of transmission parameters
 #'       (characters). Default is list("beta", "kappa", "gamma", "mu").
 #' @slot initial_conditions list of values for initial conditions (double).
@@ -35,10 +35,10 @@ SEmIRD <- setClass("SEmIRD",
                   # prototypes for the slots, automatically set parameter names and
                   # its data type
                   prototype = list(
-                    output_names = list("S", "E1", "E2", "E3", "E4", "E5", "I", "R", "D", "Incidence", "Deaths"),
-                    initial_condition_names = list("S0", "E10", "E20", "E30", "E40", "E50", "I0", "R0"),
+                    output_names = list("S", "E", "I", "R", "D", "Incidence", "Deaths"),
+                    initial_condition_names = list("S0", "E0", "I0", "R0"),
                     transmission_parameter_names = list("beta", "kappa", "gamma", "mu"),
-                    initial_conditions = vector(mode = "list", length = 6),
+                    initial_conditions = vector(mode = "list", length = 4),
                     transmission_parameters = vector(mode = "list", length = 4)
                   )
 )
@@ -70,7 +70,7 @@ setMethod("transmission_parameters", "SEmIRD",
 #' If the initial conditions provided to do not sum to 1, an error is thrown.
 #'
 #' @param object an object of the class SEmIRD
-#' @param value (list) list of initial conditions S0, E10, E20, E30, I0, R0.
+#' @param value (list) list of initial conditions S0, list(E10, E20, E30, ..., En0), I0, R0.
 #'
 #' @return object of class SEmIRD with initial conditions assigned.
 #' 
@@ -79,24 +79,30 @@ setMethod(
   "initial_conditions<-", "SEmIRD",
   function(object, value) {
     
-    if (mean(names(value) %in% object@initial_condition_names) != 1)
-      stop(paste0("Initial conditions must contain: ",
-                  object@initial_condition_names))
+    # if (mean(names(value) %in% object@initial_condition_names) != 1)
+    #   stop(paste0("Initial conditions must contain: ",
+    #               object@initial_condition_names))
     init_cond <- value
-    
     # check inits are numeric
-    for (p in list("S0", "E10", "E20", "E30", "E40", "E50", "I0", "R0")) {
+    for (p in list("S0", "I0", "R0")) {
       if (!is.numeric(init_cond[[p]])) {
         stop(glue("{p} format must be numeric"))
       }
     }
-    
+    for(v in init_cond[["E0"]]){
+      if (!is.numeric(v)) {
+        stop("each component in E must be numeric")
+      }
+    }
     # check that the initial conditions are properly normalized
-    if (init_cond$S0 + init_cond$E10 + init_cond$E20 + init_cond$E30 + init_cond$I0 + init_cond$R0 != 1) {
+    if (init_cond$S0 + sum(unlist(init_cond$E0)) + init_cond$I0 + init_cond$R0 != 1) {
       stop("Invalid initial conditions. Must add up to 1.")
     }
     
     object@initial_conditions <- init_cond
+    # update output names for the exposed compartments: E1, E2, ... E{n_exposed_comp}
+    n_exposed_comp <- length(init_cond[["E0"]])
+    object@output_names <- list("S", paste0("E", seq(n_exposed_comp)), "I", "R", "D", "Incidence", "Deaths")
     
     object
   })
@@ -146,12 +152,9 @@ setMethod(
 #' solve_method.
 #'
 #' \deqn{\frac{dS(t)}{dt} = - beta S(t) I(t)}
-#' \deqn{\frac{dE1(t)}{dt} =  beta S(t) I(t) - kappa E1(t)}
-#' \deqn{\frac{dE2(t)}{dt} =  kappa E1(t) - kappa E2(t)}
-#' \deqn{\frac{dE3(t)}{dt} =  kappa E2(t) - kappa E3(t)}
-#' \deqn{\frac{dE4(t)}{dt} =  kappa E3(t) - kappa E4(t)}
-#' \deqn{\frac{dE5(t)}{dt} =  kappa E4(t) - kappa E5(t)}
-#' \deqn{\frac{dI(t)}{dt} = kappa E5(t) - (gamma + mu) I(t)}
+#' \deqn{\frac{dE_i(t)}{dt} =  beta S(t) I(t) - kappa E_i(t), (if i=1)}
+#' \deqn{\frac{dEi(t)}{dt} =  kappa E_{i-1}(t) - kappa E_i(t), (if i>1)}
+#' \deqn{\frac{dI(t)}{dt} = kappa E_n(t) - (gamma + mu) I(t)}
 #' \deqn{\frac{dR(t)}{dt} = gamma I(t)}
 #' \deqn{\frac{dC(t)}{dt} = beta S(t) I(t)}
 #' \deqn{\frac{dD(t)}{dt} = mu I(t)}
@@ -182,50 +185,54 @@ setMethod(
       stop("Transmission parameters must be set before running.")
     if (is.null(unlist(object@initial_conditions)))
       stop("Initial conditions must be set before running.")
-    
     # set initial state vector
-    state <- c(S = initial_conditions(object)$S0,
-               E1 = initial_conditions(object)$E10,
-               E2 = initial_conditions(object)$E20,
-               E3 = initial_conditions(object)$E30,
-               E4 = initial_conditions(object)$E40,
-               E5 = initial_conditions(object)$E50,
-               I = initial_conditions(object)$I0,
-               R = initial_conditions(object)$R0,
-               C = 0,
-               D = 0)
+    state <- c(initial_conditions(object)$S0,
+               unlist(initial_conditions(object)$E0),
+               initial_conditions(object)$I0,
+               initial_conditions(object)$R0,
+               0,
+               0)
+    n_exposed_comp = length(initial_conditions(object)$E0)
+    names(state) <- c("S", paste0("E", seq(n_exposed_comp)), "I", "R", "C", "D")
     # set transmission parameters vector
     parameters <- c(b = transmission_parameters(object)$beta,
                     k = transmission_parameters(object)$kappa,
                     g = transmission_parameters(object)$gamma,
-                    m = transmission_parameters(object)$mu)
+                    m = transmission_parameters(object)$mu,
+                    n_exposed_comp = length(initial_conditions(object)$E0))
     # function for RHS of ode system
     right_hand_side <- function(t, state, parameters) {
       with(
         as.list(c(state, parameters)), {
           s <- state[1]
-          e1 <- state[2]
-          e2 <- state[3]
-          e3 <- state[4]
-          e4 <- state[5]
-          e5 <- state[6]
-          i <- state[7]
-          r <- state[8]
-          c <- state[9]
-          d <- state[10]
+          e <- state[2:(n_exposed_comp+1)]
+          i <- state[n_exposed_comp+2]
+          r <- state[n_exposed_comp+3]
+          c <- state[n_exposed_comp+4]
+          d <- state[n_exposed_comp+5]
+          de <- c()
           # rate of change
           ds <- -b * s * i
-          de1 <- b * s * i - k * e1
-          de2 <- k * e1 - k * e2
-          de3 <- k * e2 - k * e3
-          de4 <- k * e3 - k * e4
-          de5 <- k * e4 - k * e5
-          di <- k * e5 - (g + m) * i
+          for(idx in seq(n_exposed_comp)){
+            if(idx==1){
+              de[idx] <- - k * e[idx] + b * s * i
+            }
+            else{
+              de[idx] <- k * e[idx-1] - k * e[idx]
+            }
+          }
+          di <- k * e[n_exposed_comp] - (g + m) * i
           dr <- g * i
           dc <- b * s * i
           d_death <- m * i
+          # de1 <- b * s * i - k * e1
+          # de2 <- k * e1 - k * e2
+          # de3 <- k * e2 - k * e3
+          # de4 <- k * e3 - k * e4
+          # de5 <- k * e4 - k * e5
+          # di <- k * e5 - (g + m) * i
           # return the rate of change
-          list(c(ds, de1, de2, de3, de4, de5, di, dr, dc, d_death))
+          list(c(ds, unlist(de), di, dr, dc, d_death))
         })
     }
     
