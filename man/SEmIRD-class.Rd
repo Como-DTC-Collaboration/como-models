@@ -20,7 +20,7 @@
 
 \S4method{transmission_parameters}{SEmIRD}(object) <- value
 
-\S4method{run}{SEmIRD}(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
+\S4method{run}{SEmIRD}(object, times, solve_method = "lsoda")
 
 \S4method{R0}{SEmIRD}(model)
 }
