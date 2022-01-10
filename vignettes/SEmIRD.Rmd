@@ -221,6 +221,7 @@ We now repeat this exercise with the SEmIRD model. To ensure that we have the sa
 We initialise the values for the $E_i$ compartments as a list of values, in which the size of the list will be taken as the number of exposed compartments ($n$), whose order corresponds to $E_1$, $E_2$, ..., $E_n$.
 
 In a model with $n=5$ exposed compartments, the plot of the exposed and infectious compartments shows the decline of initial exposed state ($E_1$) and the rise and fall of the intermediate states ($E_2$ through $E_5$). This procession of intermediate states through which individuals must pass to become infectious means that the infectious state fraction rises much later than for the SEIRD model: here, it peaks much nearer $t=20$ days. Effectively, allowing multiple exposed compartments induces a sort of delay between individuals becoming exposed and then transitioning to infected.
+
 ```{r, fig.height = 5, fig.width = 7}
 model <- SEmIRD()
 
@@ -243,38 +244,11 @@ states %>%
 ```
 
 
-If initially we have a small number of exposed individuals in e.g. $E_1$, The waves of $E$ and $I$ will be right-shifted and the epidemic lasts longer. We can observe oscillatory dynamics of the epidemic that can be deduced from the ODE system, where within the time prior to the peaks, we have stationary points of $E_i(t)$ at time points when $E_i(t)=E_{i-1}(t), (2\leq i \leq 5)$ hold, which sequencially introduces oscillations in $E_2, E_3, E_4, E_5$, and also for $E_1$ and $I$. 
-
-In the next section, we can observe that when the number of exposed compartments increases, the frequency of the oscillatory dynamics will increase; when $\kappa$ decreases, the amplitude of the oscillatory dynamics will increase while the overall epidemic waves will be right-shifted with later-arriving peaks in cases and deaths.
-
-```{r, fig.height = 5, fig.width = 7}
-model <- SEmIRD()
-
-# change parameters
-kappa_s <- 1/25 * 5
-params <- list(beta=beta, kappa=kappa_s, gamma=gamma, mu=mu)
-transmission_parameters(model) <- params
-initial_conditions(model) <- list(S0=0.95, I0=0, R0=0, E0 = as.list(c(0.05, rep(0, 4))))
-
-# run model
-times <- seq(0, 300, 0.1)
-output <- run(model, times)
-states <- output$states
-
-# plot results
-states %>% 
-  filter(str_detect(compartment, "E|I")) %>% 
-  ggplot(aes(x=time, y=value)) +
-  geom_line(aes(colour=compartment)) +
-  xlab("time (days)")
-```
-
-
-
 ## Comparing COVID-19 transmission dynamics
 Assuming now $\kappa=1/5.5$, which is more appropriate for COVID-19, we can compare the latent period distribution that was estimated by @xin2021estimating with the implied Erlang distribution of the SEmIRD model.
 
 We plot the probability density functions of the three delay periods. From this, it is clear that the Erlang distribution is a much closer approximation to the log-normal distribution than is the exponential. The SEmIRD model thus appears a more suitable distribution than the SEIRD model for describing COVID-19 transmission dynamics.
+
 ```{r, fig.height = 5, fig.width = 7}
 # values derived from Xi et al., Table S2 
 m <- 1.61
