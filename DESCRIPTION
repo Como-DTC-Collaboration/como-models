@@ -43,6 +43,7 @@ Collate:
     'SEIRD_CT.R'
     'SEIRD_RU.R'
     'SEIaImIsRD.R'
+    'SEmIRD.R'
     'covid_transmission_parameters.R'
     'data.R'
     'intervention.R'
