@@ -96,7 +96,7 @@ taking the limit as $\delta t\rightarrow 0$, we obtain the so-called "chemical m
 \frac{dp_E}{\delta t} = \kappa(E+1)p_{E+1} - \kappa E p_E.
 \end{equation}
 
-This equation holds for $E=0,1,2,...,E_0-1$. Considering $E=E_0$, there is only one way for this to occur, which is: no exposed individual became infectious during this period so, we obtain an equation:
+This equation holds for $E=0,1,2,...,E_0-1$. Considering $E=E_0$, there is only one way for this to occur, which is if no exposed individual became infectious during this period so, we obtain an equation:
 
 \begin{equation}
 \frac{dp_{E_0}}{\delta t} = -\kappa E_0 p_{E_0},
@@ -165,7 +165,7 @@ tibble(t, value=lnorm_vals, model="log-normal") %>%
   xlab("time (days)")
 ```
 
-For example, the exponential curve predicts that approximately `r round(pexp(2.5, kappa), 2) * 100`% individuals will have become infectious after 2.5 days versus `r round(plnorm(2.5, mu, sigma),2) * 100`% for the log-normal one.
+These cumulative distribution functions show substantial differences. For example, the exponential curve predicts that approximately `r round(pexp(2.5, kappa), 2) * 100`% individuals will have become infectious after 2.5 days versus `r round(plnorm(2.5, mu, sigma),2) * 100`% for the log-normal one.
 
 ## The SEmIRD model
 To allow a non-exponential waiting period, a number of modelling approaches are possible and include a range of stochastic models, for instance renewal-type models and individual-based models. It is, however, possible to allow a Erlang-distributed  waiting time^[An Erlang distribution is a gamma distribution with an integer shape parameter.] in the stochastic analogue of an ODE model by splitting a stage into several substages. This is known as the "linear chain trick" (see @hurtado2019generalizations).
@@ -174,14 +174,14 @@ In the `SEmIRD` model, we split the exposed compartment into $n$ substages: $E_1
 
 $$\frac{\text{d}S}{\text{d}t} = -\beta S I,$$
 $$\frac{\text{d}E_i}{\text{d}t} = \begin{cases}
-                                    \beta S I -\kappa E_i,      & \text{if } x = 1\\
+                                    \beta S I -\kappa E_i,      & \text{if } i = 1\\
                                     \kappa E_{i-1} -\kappa E_i, & \text{otherwise}
                                   \end{cases}$$
 
 $$\frac{\text{d}I}{\text{d}t} =\kappa E_n - (\gamma + \mu) I,$$
 $$\frac{\text{d}R}{\text{d}t} = \gamma I,$$
 $$\frac{\text{d}D}{\text{d}t} = \mu I.$$
-Thus a newly exposed individual (entering $E_1$) only becomes infectious (entering $I$) after they have passed through a host of intermediate states: $E_1\rightarrow E_2 \rightarrow E_3 \rightarrow E_4 \rightarrow E_5$. In the stochastic analogue of this ODE system, the average time taken to go from $E_1\rightarrow I$ is given by a $\text{Erlang}(5,\kappa)$ distribution, which has a mean of $5/\kappa$. Thus to match the same mean as the exponential distribution we need to multiply $\kappa$ by 5.
+Thus a newly exposed individual (entering $E_1$) only becomes infectious (entering $I$) after they have passed through a host of intermediate states: $E_1\rightarrow E_2 ...\rightarrow E_{n-1} \rightarrow E_n$. In the stochastic analogue of this ODE system, the average time taken to go from $E_1\rightarrow I$ is given by a $\text{Erlang}(n,\kappa)$ distribution, which has a mean of $n/\kappa$. Thus to match the same mean as the exponential distribution we need to multiply $\kappa$ by n.
 
 ## Comparing the SEmIRD and SEIRD models
 We now compare how this model behaves versus the SEIRD. In both cases, we assume that, at $t=0$, all individuals are in the first exposed compartment (note, for the SEIRD model, the first exposed compartment is the only exposed compartment). To make the differences stark, we assume that the average latent period lasts 20 days. For the other parameters, we use the same set as were used in the SEIRD model vignette.
