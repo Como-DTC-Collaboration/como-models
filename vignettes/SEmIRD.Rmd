@@ -1,5 +1,5 @@
 ---
-title: "SEmIRD: multiple exposed compartments"
+title: "Multiple exposed compartments model"
 author: "Ben Lambert and Liangti Dai"
 output: rmarkdown::html_vignette
 bibliography: references.bib
