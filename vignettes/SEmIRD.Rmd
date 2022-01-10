@@ -93,13 +93,13 @@ which can be rearranged to:
 taking the limit as $\delta t\rightarrow 0$, we obtain the so-called "chemical master equation" for the system:
 
 \begin{equation}
-\frac{dp_E}{\delta t} = \kappa(E+1)p_{E+1} - \kappa E p_E.
+\frac{\text{d}p_E}{\text{d}t} = \kappa(E+1)p_{E+1} - \kappa E p_E.
 \end{equation}
 
 This equation holds for $E=0,1,2,...,E_0-1$. Considering $E=E_0$, there is only one way for this to occur, which is if no exposed individual became infectious during this period so, we obtain an equation:
 
 \begin{equation}
-\frac{dp_{E_0}}{\delta t} = -\kappa E_0 p_{E_0},
+\frac{\text{d}p_{E_0}}{\text{d}t} = -\kappa E_0 p_{E_0},
 \end{equation}
 
 which has solution $p_{E_0}(t) = \exp (-\kappa E_0 t)$.
@@ -246,7 +246,7 @@ states %>%
 ## Relating $n$ to an Erlang distribution
 As described above, the waiting period implied by breaking a state into a number of substates, each with equal rate parameter, $\kappa_s$, is an $\text{Erlang}(n,\kappa_s)$. In our epidemiological model, this Erlang distribution is used to represent the latent period distribution, which represents how long it takes, on average, for an individual to transit from $E\rightarrow I$.
 
-We now demonstrate that this waiting period is represented by an Erlang distribution by simulating our model, each time with a different $n$, assuming initially $E_1=1$. We select $\kappa_s = n\kappa$ so that the Erlang distribution representing the latent period distribution has a mean of $1/\kappa$. For each different value of $n$, we aggregate across all exposed compartments to yield the number of individuals remaining exposed at time $t$: $E(t)=\sum_i E_i(t)$. We then calculate the fraction of individuals who have transitioned out of the exposed compartments, via $O(t) = 1 - E(t)$ (note that $O$ contains individuals who are infectious or have previously been infectious).
+We now demonstrate that this waiting period is represented by an Erlang distribution by simulating our model, each time with a different $n$, assuming initially $E_1=1$, and comparing each simulation to a corresponding Erlang probability density function. We select $\kappa_s = n\kappa$ so that the Erlang distribution representing the latent period distribution has a mean of $1/\kappa$. For each different value of $n$, we aggregate across all exposed compartments to yield the number of individuals remaining exposed at time $t$: $E(t)=\sum_{i=1}^{n} E_i(t)$. We then calculate the fraction of individuals who have transitioned out of the exposed compartments, via $O(t) = 1 - E(t)$ (note that $O$ contains individuals who are infectious or have previously been infectious). We then plot $O(t)$ for each model.
 
 ```{r, fig.height = 5, fig.width = 7}
 # function to run model with varying number of compartments but same mean
@@ -281,7 +281,7 @@ for(i in seq_along(ns)) {
     big_df <- big_df %>% bind_rows(temp_df)
 }
 
-# plot
+# plot O(t)
 big_df %>% 
   ggplot(aes(x=time, y=value, group=as.factor(n))) +
   geom_line(aes(colour=n)) +
@@ -289,6 +289,7 @@ big_df %>%
                          breaks=c(1, 10, 100)) +
   xlab("time (days)")
 ```
+
 The plot above shows that, as $n$ increases, there tends be a narrower period when individuals transition to becoming infectious, which is centred around $t=20$ days. How does this relate to an Erlang distribution? To illustrate this, we transform the above into functions that behave as probability densities by finding the derivative at each time $t$ via a finite difference approximation. We then plot the corresponding Erlang probability densities alongside the ODE-derived ones. This plot shows the correspondence between the Erlang and ODE waiting times.
 
 ```{r, fig.height = 5, fig.width = 7}
@@ -328,9 +329,9 @@ big_df %>%
 ```
 
 ## Comparing COVID-19 transmission dynamics
-Assuming now $\kappa=1/5.5$, which is more appropriate for COVID-19, we can compare the latent period distribution that was estimated by @xin2021estimating with the implied Erlang distribution of the SEmIRD model. Here, we choose $n=5$ exposed compartments.
+Assuming now $\kappa=1/5.5$, which is more appropriate for COVID-19, we can compare the latent period distribution that was estimated by @xin2021estimating with the implied Erlang distribution of the SEmIRD model. Here, we choose $n=5$ exposed compartments since this choice provides a good visual fit to the empirical distribution.
 
-We plot the probability density functions of the three delay periods. From this, it is clear that the Erlang distribution (for $n=5$) is a much closer approximation to the log-normal distribution than is the exponential. The SEmIRD model thus appears a more suitable distribution than the SEIRD model for describing COVID-19 transmission dynamics.
+We plot the probability density functions of the three delay periods. From this, it is clear that the Erlang distribution is a much closer approximation to the log-normal distribution than is the exponential. The SEmIRD model thus appears a more suitable distribution than the SEIRD model for describing COVID-19 transmission dynamics.
 
 ```{r, fig.height = 5, fig.width = 7}
 # values derived from Xi et al., Table S2 
@@ -357,7 +358,7 @@ tibble(t, value=lnorm_vals, model="log-normal") %>%
   xlab("time (days)")
 ```
 
-But how do the epidemics produced by two models differ? We now simulate each model and plot the number of daily cases for each. From this plot, it is clear that the waves of cases produced for each model are similar, although the SEmIRD model wave is shifted so that it occurs later. This makes intuitive sense since the impact of the multiple exposed compartment substages is to induce a delay between exposure and infectiousness -- effectively, resulting in a slightly delayed rise in cases.
+But how do the epidemics produced by the SEIRD and SEmIRD models differ? We now simulate each model and plot the number of daily cases for each. From this plot, it is clear that the waves of cases produced for each model are similar, although the SEmIRD model wave is shifted so that it occurs later. This makes intuitive sense since the impact of the multiple exposed compartment substages is to induce a delay between exposure and infectiousness -- effectively, resulting in a slightly delayed rise in cases.
 
 ```{r, fig.height = 5, fig.width = 7}
 # parameterise model
