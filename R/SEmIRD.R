@@ -170,7 +170,7 @@ setMethod(
 #' the ode function in the deSolve package used in this function.
 #'
 #' @return two dataframes: one with the time steps, age range, time series of S,
-#' E1, E2, E3, E4, E5, I and R population fractions, and one with the time steps, age range,
+#' E1, E2, ..., En, I and R population fractions, and one with the time steps, age range,
 #' time series of incidences and deaths population fraction.
 #' 
 #' @export
@@ -214,24 +214,17 @@ setMethod(
           # rate of change
           ds <- -b * s * i
           for(idx in seq(n_exposed_comp)){
-            if(idx==1){
+            if(idx == 1){
               de[idx] <- - k * e[idx] + b * s * i
             }
             else{
-              de[idx] <- k * e[idx-1] - k * e[idx]
+              de[idx] <- k * e[idx - 1] - k * e[idx]
             }
           }
           di <- k * e[n_exposed_comp] - (g + m) * i
           dr <- g * i
           dc <- b * s * i
           d_death <- m * i
-          # de1 <- b * s * i - k * e1
-          # de2 <- k * e1 - k * e2
-          # de3 <- k * e2 - k * e3
-          # de4 <- k * e3 - k * e4
-          # de5 <- k * e4 - k * e5
-          # di <- k * e5 - (g + m) * i
-          # return the rate of change
           list(c(ds, unlist(de), di, dr, dc, d_death))
         })
     }
