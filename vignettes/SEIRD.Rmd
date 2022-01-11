@@ -35,7 +35,7 @@ In compartmental models, individuals can move between these states following one
 
 To help visualise this, we can print a compartmental model diagram below. This requires us first to instantiate an `SEIRD` model object. Later we will use this to run simulations, but, for now, we just print a model structure via `ode_structure_diagram`. The susceptible to exposed transition is illustrated in the left-hand nodes of the below graph as indicated by the $S\rightarrow E$ transition.
 
-```{r, out.width = "400px", error=TRUE}
+```{r, out.width = "400px"}
 # create model object
 my_model <- SEIRD()
 

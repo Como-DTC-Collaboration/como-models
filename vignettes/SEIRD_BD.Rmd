@@ -42,6 +42,16 @@ $$\frac{\text{d}D}{\text{d}t} = \mu I + \nu (S + E + I + R).$$
 
 Here, $\lambda\geq 0$ represents the rate of birth into the population. The effect of this term is to increase the population size over time. $\nu > 0$ represents the rate of death due to causes unrelated to COVID-19.
 
+We can represent the structure of this model via a compartmental diagram.
+```{r}
+# create model object
+model <- SEIRD_BD()
+
+# print structure
+ode_structure_diagram(model)
+```
+
+
 The system is closed by specifying the initial conditions
 $$S(0) = S_0,\ E(0) = E_0,\ I(0) = I_0,\ R(0) = r_0,\ D(0) = 0.$$
 
@@ -81,12 +91,7 @@ where $\kappa/(\kappa+\nu)$ is the probability of surviving the latent period an
 Where we note that, if $\nu=0$, the basic reproduction reduces to that for the basic SEIRD model: $R_0 = \beta / (\gamma + \mu)$. Indeed, for COVID-19 transmission, the rate of natural death is much lower than the rate of becoming infectious or the COVID-19-induced death rate, so the reproduction numbers of the basic SEIRD model and that above will be virtually indistinguishable.
 
 ### Multiple epidemic waves and an endemic steady state
-Let's create an SEIRD_BD model.
-```{r}
-model <- SEIRD_BD()
-```
-
-And we are going to start with 0.1\% infectious individuals and everyone else is susceptible.
+We are going to start with 0.1\% infectious individuals and everyone else is susceptible.
 ```{r}
 initial_conditions(model) <- list(S0=0.999, E0=0, I0=0.001, R0=0)
 ```

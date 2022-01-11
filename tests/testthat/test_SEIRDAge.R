@@ -271,5 +271,5 @@ test_that("R0 calculation works for SEIRDAge", {
 test_that("ode_model_structure works", {
   model <- SEIRDAge()
   g <- ode_structure_diagram(model)
-  expect_s3_class(g, "htmlwidget")
+  expect_s3_class(g, "html")
 })

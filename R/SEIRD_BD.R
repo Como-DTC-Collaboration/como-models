@@ -281,21 +281,5 @@ setMethod("R0", "SEIRD_BD", function(model) {
 #' 
 #' @export
 setMethod("ode_structure_diagram", "SEIRD_BD", function(model) {
-  g <- DiagrammeR::grViz("
-    digraph PrimC{
-    graph [rankdir = 'LR']
-    node [shape = circle]
-    S E I R D
-    nowhere [style=invis,shape=point]
-    nowhere -> S [label = '&lambda;']
-    S -> E [label = '&beta; S I']
-    S -> D [label = '&nu; S']
-    E -> I [label = '&kappa; E']
-    E -> D [label = '&nu; E']
-    I -> R [label = '&gamma; I']
-    I -> D [label = '(&nu; + &mu;) I']
-    R -> S [label = '&delta; R']
-    R -> D [label = '&nu; R']
-    }")
-  g
+  htmltools::HTML(comomodels:::seird_bd_structure)
 })

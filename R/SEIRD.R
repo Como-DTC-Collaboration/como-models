@@ -270,15 +270,5 @@ setMethod("R0", "SEIRD", function(model) {
 #' 
 #' @export
 setMethod("ode_structure_diagram", "SEIRD", function(model) {
-  g <- DiagrammeR::grViz("
-    digraph PrimC{
-    graph [rankdir = 'LR']
-    node [shape = circle]
-    S E I R D
-    S -> E [label = '&beta; S I']
-    E -> I [label = '&kappa; E']
-    I -> R [label = '&gamma; I']
-    I -> D [label = '&mu; I']
-    }")
-  g
+  htmltools::HTML(comomodels:::seird_structure)
 })
