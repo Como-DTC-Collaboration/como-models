@@ -260,3 +260,29 @@ setMethod("R0", "SEIRD", function(model) {
   mu <- model@transmission_parameters$mu
   beta / (gamma + mu)
 })
+
+#' @describeIn Retrieves ODE system equations of SEIRD model
+#'
+#' @param object An object of the class SEIRD
+#' 
+#' @export
+setMethod("ode_system_equation", "SEIRD",
+    function(model) {
+      eq <- paste("\\frac{dS}{dt} &= - \\beta S I,",
+                  "\\frac{dE}{dt} &= \\beta S I - \\kappa E,",
+                  "\\frac{dI}{dt} &= \\kappa E - (\\gamma + \\mu) I,",
+                  "\\frac{dR}{dt} &= \\gamma I,",
+                  "\\frac{dD}{dt} &= \\mu I.",
+                  collapse = "\\\\\n")
+      eq <- paste0(
+        "$$\n",
+        "\\begin{align}\n",
+        "\\begin{split}\n",
+        eq,
+        "\\end{split}\n",
+        "\\end{align}\n",
+        "$$",
+      sep="\n")
+      eq
+    }
+  )

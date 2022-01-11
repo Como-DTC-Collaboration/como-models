@@ -46,7 +46,7 @@ object of class SEmIRD with transmission parameter values
 assigned.
 
 two dataframes: one with the time steps, age range, time series of S,
-E1, E2, E3, E4, E5, I and R population fractions, and one with the time steps, age range,
+E1, E2, ..., En, I and R population fractions, and one with the time steps, age range,
 time series of incidences and deaths population fraction.
 
 an R0 value

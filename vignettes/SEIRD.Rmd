@@ -84,15 +84,26 @@ $$\frac{\text{d}D}{\text{d}t} = \text{deaths} = \mu I.$$
 
 We note that natural births and deaths -- in other words, those unrelated to infection -- are not considered in this model. Therefore, the SEIRD model is suitable only to diseases that span a short period of time, when natural births and deaths do not significantly affect the stock of susceptible individuals.
 
+We can access the overall system of equations in a markdown-renderable form through the `ode_system_equations` function. This requires us first to create an `SEIRD` model object.
 
-Overall, then, the system ODEs describing how the compartment populations  evolve over time is:
+```{r}
 
-$$\frac{\text{d}S}{\text{d}t} = -\beta S I,$$
-$$\frac{\text{d}E}{\text{d}t} = \beta S I -\kappa E,$$
-$$\frac{\text{d}I}{\text{d}t} =\kappa E - (\gamma + \mu) I,$$
+# create an object 
+my_model <- SEIRD()
 
-$$\frac{\text{d}R}{\text{d}t} = \gamma I,$$
-$$\frac{\text{d}D}{\text{d}t} = \mu I.$$
+# view equations
+ode_system_equation(my_model)
+
+f_tets <- function() {
+  eq <- paste0("\\begin{equation}\n",
+         "x + y\n",
+  "\\end{equation}")
+  
+  class(eq) <- c("equation", "character")
+  eq
+}
+f_tets()
+```
 
 Having specified the form of the growth rate for each of the compartments, we need to specify the initial sizes of each of the compartments, which we do via the initial conditions:
 
@@ -118,11 +129,6 @@ So the equilibria are given by $S=S'$, $E=0$, and $I=0$ which corresponds to a s
 
 ## Using an SEIRD model to simulate COVID-19 dynamics
 We now show how `comomodels` can be used to create an SEIRD which captures the dominant characteristics of an unmitigated COVID-19 epidemic.
-
-We first create an `SEIRD` object that we will use to run simulations.
-```{r}
-my_model <- SEIRD()
-```
 
 The most crucial step in using compartmental models of transmission dynamics is their parameterisation because different parameter ranges allow both qualitatively and quantitatively different dynamics. There are two ways to estimate the parameters of such models: i) to use data collected in the laboratory or field to estimate individual parameters; or ii) to fit these models to field data and, in doing so, estimate potentially a collective of parameters. There are limitations to both approaches. The first does not account for how uncertainty in one parameter might influence our estimates of another: a higher value of $\beta$ can be offset by an increased value of $\mu$ to result in similar case counts, for instance. The second approach generally only allows a subset of parameters to be estimated, since the available data are sparse and insufficient to jointly determine all.
 

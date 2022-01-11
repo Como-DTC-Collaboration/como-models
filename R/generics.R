@@ -143,4 +143,13 @@ setGeneric(
   "intervention_parameters<-",
   function(object, value) {
     standardGeneric("intervention_parameters<-")
-  })
+})
+
+#' Retrieves ODE system equations of a class within comomodels package
+#'
+#' @param object An object of the an S4 class within comomodels package
+#' 
+#' 
+#' @export
+setGeneric("ode_system_equation",
+           function(model) standardGeneric("ode_system_equation"))
