@@ -156,7 +156,7 @@ Specifically, the term $S_i \Sigma_{j}C_{ij} I_j$ effectively indicates the expe
 
 We can then visualise the full model structure for the situation with two age classes.
 
-```{r, out.width = "400px"}
+```{r, out.width = "400px", error=TRUE}
 # create model object
 my_model <- SEIRDAge()
 

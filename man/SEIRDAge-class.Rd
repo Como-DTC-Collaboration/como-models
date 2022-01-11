@@ -128,6 +128,8 @@ g_ij = beta N_i C_ij / (mu_i + gamma_i). R0 is then given by the dominant
 eigenvalue of the G matrix.
 
 \item \code{ode_structure_diagram}: Prints a compartmental diagram for the SEIRDAge model
+
+This plot supposes the model comprises two age classes only.
 }}
 
 \section{Slots}{
