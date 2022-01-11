@@ -10,6 +10,7 @@
 \alias{transmission_parameters<-,SEIRDAge-method}
 \alias{run,SEIRDAge-method}
 \alias{R0,SEIRDAge-method}
+\alias{ode_structure_diagram,SEIRDAge-method}
 \title{An S4 object representing the SEIRDAge.}
 \usage{
 \S4method{initial_conditions}{SEIRDAge}(object)
@@ -23,6 +24,8 @@
 \S4method{run}{SEIRDAge}(object, times, solve_method = "lsoda")
 
 \S4method{R0}{SEIRDAge}(model, population_fractions)
+
+\S4method{ode_structure_diagram}{SEIRDAge}(model)
 }
 \arguments{
 \item{object}{An object of the class SEIRDAge.}
@@ -63,6 +66,9 @@ D population fractions for each age group outputs with incidence numbers
 for each age group.
 
 an R0 value
+
+An ODE-compartmental structure diagram object of class htmlwidget that
+comes from running grViz
 }
 \description{
 Defines an age-structured SEIRD model and solves the set of
@@ -120,6 +126,8 @@ C_ij is the contact matrix element. The average duration of infection is
 secondary infections of type i caused by an infectious individual of type j is
 g_ij = beta N_i C_ij / (mu_i + gamma_i). R0 is then given by the dominant
 eigenvalue of the G matrix.
+
+\item \code{ode_structure_diagram}: Prints a compartmental diagram for the SEIRDAge model
 }}
 
 \section{Slots}{
