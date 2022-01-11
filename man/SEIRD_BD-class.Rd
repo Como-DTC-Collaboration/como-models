@@ -96,7 +96,7 @@ This function relies on the package deSolve.
 The R0 parameter is given by:
 \deqn{R_0 = \beta \kappa / (\kappa + \nu) * 1/(\gamma + \mu + \nu)}
 
-\item \code{ode_structure_diagram}: Prints a compartmental diagram for the SEIRD model
+\item \code{ode_structure_diagram}: Prints a compartmental diagram for the SEIRD_BD model
 }}
 
 \section{Slots}{

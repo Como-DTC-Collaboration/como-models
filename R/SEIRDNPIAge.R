@@ -3,7 +3,9 @@
 NULL
 
 #' Defines an age-structured SEIR model with non-pharmaceutical interventions (NPIs)
-#' which influence social contact. Methods solve the set of
+#' which influence social contact
+#' 
+#' Methods solve the set of
 #' ordinary differential equations of the model with a chosen method of
 #' numerical integration.
 #'

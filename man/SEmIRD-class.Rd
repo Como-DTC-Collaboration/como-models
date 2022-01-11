@@ -10,6 +10,7 @@
 \alias{transmission_parameters<-,SEmIRD-method}
 \alias{run,SEmIRD-method}
 \alias{R0,SEmIRD-method}
+\alias{ode_structure_diagram,SEmIRD-method}
 \title{An S4 object representing the SEmIRD.}
 \usage{
 \S4method{initial_conditions}{SEmIRD}(object)
@@ -23,6 +24,8 @@
 \S4method{run}{SEmIRD}(object, times, solve_method = "lsoda")
 
 \S4method{R0}{SEmIRD}(model)
+
+\S4method{ode_structure_diagram}{SEmIRD}(model)
 }
 \arguments{
 \item{object}{an object of the class SEmIRD}
@@ -50,6 +53,8 @@ E1, E2, ..., En, I and R population fractions, and one with the time steps, age 
 time series of incidences and deaths population fraction.
 
 an R0 value
+
+An ODE-compartmental structure diagram object of class html
 }
 \description{
 This class represents the SEmIRD model, showing how populations of susceptible,
@@ -92,6 +97,10 @@ This function relies on the package deSolve.
 
 The R0 parameter is given by:
 \deqn{R_0 = \beta/(\gamma + \mu)}
+
+\item \code{ode_structure_diagram}: Prints a compartmental diagram for the SEmIRD model
+
+The diagram is shown for the n=3 exposed compartments case
 }}
 
 \section{Slots}{

@@ -14,9 +14,7 @@
 \alias{R0,SEIRDNPIAge-method}
 \alias{ode_structure_diagram,SEIRDNPIAge-method}
 \title{Defines an age-structured SEIR model with non-pharmaceutical interventions (NPIs)
-which influence social contact. Methods solve the set of
-ordinary differential equations of the model with a chosen method of
-numerical integration.}
+which influence social contact}
 \usage{
 \S4method{initial_conditions}{SEIRDNPIAge}(object)
 
@@ -71,8 +69,7 @@ an R0 value
 An ODE-compartmental structure diagram object of class html
 }
 \description{
-Defines an age-structured SEIR model with non-pharmaceutical interventions (NPIs)
-which influence social contact. Methods solve the set of
+Methods solve the set of
 ordinary differential equations of the model with a chosen method of
 numerical integration.
 }

@@ -272,7 +272,7 @@ setMethod("R0", "SEIRD_BD", function(model) {
 })
 
 
-#' @describeIn SEIRD_BD Prints a compartmental diagram for the SEIRD model
+#' @describeIn SEIRD_BD Prints a compartmental diagram for the SEIRD_BD model
 #'
 #' @param model an SEIRD_BD model
 #'

@@ -10,6 +10,7 @@
 \alias{transmission_parameters<-,SEIRD_CT-method}
 \alias{run,SEIRD_CT-method}
 \alias{R0,SEIRD_CT-method}
+\alias{ode_structure_diagram,SEIRD_CT-method}
 \title{An S4 object representing the SEIRD_CT.}
 \usage{
 \S4method{initial_conditions}{SEIRD_CT}(object)
@@ -23,6 +24,8 @@
 \S4method{run}{SEIRD_CT}(object, times, solve_method = "lsoda")
 
 \S4method{R0}{SEIRD_CT}(model)
+
+\S4method{ode_structure_diagram}{SEIRD_CT}(model)
 }
 \arguments{
 \item{object}{an object of the class SEIRD_CT}
@@ -50,6 +53,8 @@ E, I and R population fractions, and one with the time steps, age range,
 time series of incidences and deaths population fraction.
 
 an R0 value
+
+An ODE-compartmental structure diagram object of class html
 }
 \description{
 This class represents the SEIRD_CT model, which provides a model of contact tracing.
@@ -95,6 +100,8 @@ This function relies on the package deSolve.
 
 The R0 parameter is given by:
 \deqn{R_0 = \eta_a\beta_a/\gamma + (1 - \eta_a)(1 - \chi) [\beta/\psi + (1-\phi) \beta/(\gamma+\mu)]}
+
+\item \code{ode_structure_diagram}: Prints a compartmental diagram for the SEIRD_CT model
 }}
 
 \section{Slots}{

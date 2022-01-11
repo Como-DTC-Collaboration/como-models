@@ -10,6 +10,7 @@
 \alias{transmission_parameters<-,SEIaImIsRD-method}
 \alias{run,SEIaImIsRD-method}
 \alias{R0,SEIaImIsRD-method}
+\alias{ode_structure_diagram,SEIaImIsRD-method}
 \title{An S4 object representing the SEIaImIsRD.}
 \usage{
 \S4method{initial_conditions}{SEIaImIsRD}(object)
@@ -23,6 +24,8 @@
 \S4method{run}{SEIaImIsRD}(object, times, solve_method = "lsoda")
 
 \S4method{R0}{SEIaImIsRD}(model)
+
+\S4method{ode_structure_diagram}{SEIaImIsRD}(model)
 }
 \arguments{
 \item{object}{An object of class SEIaImIsRD}
@@ -41,7 +44,7 @@ mu - a list of the rate of disease-caused mortality of each infected group, each
 
 \item{solve_method}{A string indicating which ode integrator to use. Default is set to 'lsoda'}
 
-\item{model}{A model of an SEIaImIsRD class object with initial_conditions and transmission_parameters set.}
+\item{model}{an SEIaImIsRD model}
 }
 \value{
 An object of class SEIaImIsRD with initial population and parameters
@@ -53,6 +56,8 @@ E, I_asymptomatic, I_mild, I_severe and R population fractions, and one with the
 time series of incidences and deaths population fraction
 
 An R0 value
+
+An ODE-compartmental structure diagram object of class html
 }
 \description{
 This class defines the SEIaImIsRD model, an extension of the SEIRD model.
@@ -90,6 +95,8 @@ of the SEIaImIsRD model.
 \deqn{\frac{dD(t)}{dt} =  \mu.asymptomatic I_{asymptomatic}(t) + \mu.mild I_{mild}(t) + \mu.severe I_{severe}(t)}
 
 \item \code{R0}: Calculate the basic reproduction number (\code{R_0}) of the system using the next generation matrix approach.
+
+\item \code{ode_structure_diagram}: Prints a compartmental diagram for the SEIaImIsRD model
 }}
 
 \section{Slots}{
