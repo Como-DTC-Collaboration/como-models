@@ -76,3 +76,10 @@ test_that("model error input", {
     transmission_parameters(model) <- list(kappa = kappa, p_symptom = list(mild=0.7, severe=0.8), gamma = gamma, mu = mu)
     })
 })
+
+test_that("ode_model_structure works", {
+  model <- SEIaImIsRD()
+  g <- ode_structure_diagram(model)
+  expect_s3_class(g, "html")
+})
+
