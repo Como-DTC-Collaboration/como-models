@@ -181,7 +181,18 @@ $$\frac{\text{d}E_i}{\text{d}t} = \begin{cases}
 $$\frac{\text{d}I}{\text{d}t} =\kappa E_n - (\gamma + \mu) I,$$
 $$\frac{\text{d}R}{\text{d}t} = \gamma I,$$
 $$\frac{\text{d}D}{\text{d}t} = \mu I.$$
-Thus a newly exposed individual (entering $E_1$) only becomes infectious (entering $I$) after they have passed through a host of intermediate states: $E_1\rightarrow E_2 ...\rightarrow E_{n-1} \rightarrow E_n$. In the stochastic analogue of this ODE system, the average time taken to go from $E_1\rightarrow I$ is given by a $\text{Erlang}(n,\kappa)$ distribution, which has a mean of $n/\kappa$. Thus to match the same mean as the exponential distribution we need to multiply $\kappa$ by n.
+Thus a newly exposed individual (entering $E_1$) only becomes infectious (entering $I$) after they have passed through a host of intermediate states: $E_1\rightarrow E_2 ...\rightarrow E_{n-1} \rightarrow E_n$.
+
+In the compartmental diagram below, we visualise the structure of this system for $n=3$ (a fixed example value chosen for the visualisation).
+```{r}
+# create model object
+model <- SEmIRD()
+
+# visualise structure
+ode_structure_diagram(model)
+```
+
+In the stochastic analogue of this ODE system, the average time taken to go from $E_1\rightarrow I$ is given by a $\text{Erlang}(n,\kappa)$ distribution, which has a mean of $n/\kappa$. Thus to match the same mean as the exponential distribution we need to multiply $\kappa$ by n.
 
 ## Comparing the SEmIRD and SEIRD models
 We now compare how this model with $n=5$ behaves versus the SEIRD. In both cases, we assume that, at $t=0$, all individuals are in the first exposed compartment (note, for the SEIRD model, the first exposed compartment is the only exposed compartment). To make the differences stark, we assume that the average latent period lasts 20 days. For the other parameters, we use the same set as were used in the SEIRD model vignette.

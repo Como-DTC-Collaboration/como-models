@@ -88,3 +88,10 @@ test_that("R0 works for SEmIRD model", {
                                             gamma=gamma, mu=mu)
   expect_equal(R0(my_model), beta/(gamma+mu))
 })
+
+test_that("ode_model_structure works", {
+  model <- SEmIRD()
+  g <- ode_structure_diagram(model)
+  expect_s3_class(g, "html")
+})
+

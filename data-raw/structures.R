@@ -135,6 +135,24 @@ g <- DiagrammeR::grViz("
   }")
 seiaimisrd_structure <- DiagrammeRsvg::export_svg(g)
 
+# seimrd --------
+g <- DiagrammeR::grViz("
+  digraph PrimC{
+  graph [rankdir = 'LR']
+  node [shape = circle]
+  S I R D
+  E_1[label = 'E&#x2081;']
+  E_2[label = 'E&#x2082;']
+  E_3[label = 'E&#x2083;']
+  S -> E_1 [label = '&beta; S I']
+  E_1 -> E_2 [label = 'k E&#x2081;']
+  E_2 -> E_3 [label = 'k E&#x2082;']
+  E_3 -> I [label = 'k E&#x2083;']
+  I -> R [label = '&gamma; I']
+  I -> D [label = '&mu; I']
+  }")
+semird_structure <- DiagrammeRsvg::export_svg(g)
+
 # make all available --------
 usethis::use_data(seird_structure,
                   seirdage_structure,
@@ -142,5 +160,6 @@ usethis::use_data(seird_structure,
                   seird_ru_structure,
                   seirdnpiage_structure,
                   seiaimisrd_structure,
+                  semird_structure,
                   overwrite = TRUE, internal = TRUE)
 

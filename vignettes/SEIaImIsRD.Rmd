@@ -45,6 +45,16 @@ $$\frac{\text{d}R}{\text{d}t} =  \gamma_a  I_a + \gamma_m I_m + \gamma_sI_s,$$
 $$\frac{\text{d}D}{\text{d}t} =  \mu_a  I_a + \mu_m I_m + \mu_sI_s,$$
 where, for $i\in\{a, m, s\}$, $\beta_i$ are the rates at which an infected individual of symptom group $i$ infects susceptible individuals; $\eta_i$ are the fractions of exposed individuals moving into each of the different infected groups $i$ with $\sum_i\eta_i=1$; $\gamma_i$ are the rates at which individuals of symptom group $i$ recover from the disease; and $\mu_i$, the rates at which individuals of symptom group $i$ die of the disease. The rate of becoming infectious when infected, $\kappa$, is the same for all groups of infectious individuals. All parameters are non-negative.
 
+The model structure can be visualised through a compartmental diagram.
+
+```{r}
+# create model object
+model <- SEIaImIsRD()
+
+# visualise
+ode_structure_diagram(model)
+```
+
 In addition to these seven main ODEs above, the model also keeps track of the total number of cases ($C$) over time. Here, we define a case to be anyone infected with COVID-19, and thus the rate of appearance of new cases is given by:
 
 $$\frac{\text{d}C}{\text{d}t} = S (\beta_aI_a + \beta_mI_m + \beta_aI_s).$$
@@ -102,12 +112,7 @@ $$
 ## Running simulations
 In this section, we walk through an example of how to use the `SEIaImIsRD` class, the implementation of the SEIaImIsRD model in the `comomodels` package. In doing so, we parameterise the model using transmission parameters meant to represent the epidemiology of COVID-19.
 
-To create a new `SEIaImIsRD` object, run:
-```{r}
-model <- SEIaImIsRD()
-```
-
-Next, we set the initial conditions. Because the populations are normalized, the populations must sum to one, or an error will be thrown.
+We set the initial conditions. Because the populations are normalized, the populations must sum to one, or an error will be thrown.
 ```{r}
 S <- 0.999
 E <- 0.001

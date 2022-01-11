@@ -277,3 +277,16 @@ setMethod("R0", "SEmIRD", function(model) {
   mu <- model@transmission_parameters$mu
   beta / (gamma + mu)
 })
+
+#' @describeIn SEmIRD Prints a compartmental diagram for the SEmIRD model
+#' 
+#' The diagram is shown for the n=3 exposed compartments case
+#'
+#' @param model an SEmIRD model
+#'
+#' @return An ODE-compartmental structure diagram object of class html
+#' 
+#' @export
+setMethod("ode_structure_diagram", "SEmIRD", function(model) {
+  htmltools::HTML(comomodels:::semird_structure)
+})
