@@ -144,3 +144,12 @@ setGeneric(
   function(object, value) {
     standardGeneric("intervention_parameters<-")
   })
+
+
+#' Plots model structure for a model object
+#'
+#' @param model An object of a model class within comomodels package
+#' 
+#' @export
+setGeneric("ode_structure_diagram",
+           function(model) standardGeneric("ode_structure_diagram"))

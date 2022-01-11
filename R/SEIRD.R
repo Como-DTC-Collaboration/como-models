@@ -260,3 +260,25 @@ setMethod("R0", "SEIRD", function(model) {
   mu <- model@transmission_parameters$mu
   beta / (gamma + mu)
 })
+
+#' @describeIn SEIRD Prints a compartmental diagram for the SEIRD model
+#'
+#' @param model an SEIRD model
+#'
+#' @return An ODE-compartmental structure diagram object of class htmlwidget that
+#' comes from running grViz
+#' 
+#' @export
+setMethod("ode_structure_diagram", "SEIRD", function(model) {
+  g <- DiagrammeR::grViz("
+    digraph PrimC{
+    graph [rankdir = 'LR']
+    node [shape = circle]
+    S E I R D
+    S -> E [label = '&beta; S I']
+    E -> I [label = '&kappa; E']
+    I -> R [label = '&gamma; I']
+    I -> D [label = '&mu; I']
+    }")
+  g
+})

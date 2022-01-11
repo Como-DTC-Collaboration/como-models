@@ -31,28 +31,18 @@ The SEIRD model is an example of a compartmental model in mathematical epidemiol
 
 By assuming that individuals belong only to one of these states, the model effectively assumes that all other information outside of these states is unimportant for transmission. So, an individual's age, their location and any pre-existing medical conditions they may have are, for example, unnaccounted for in this model. In COVID-19 transmission, this assumption is unlikely to hold, since we know that individuals' age does, for instance, strongly influence their susceptibility to death [@verity2020estimates]. The SEIRD model can, however, still be used to approximate the aggregate dynamics of the population since it captures the dominant features of human-to-human epidemic dynamics.
 
-In compartmental models, individuals can move between these states following one of a predefined set of paths. In the SEIRD model, susceptible individuals can become infected with the virus after exposure to it from an infectious individual. In doing so, they can move from the susceptible compartment to the exposed, as is illustrated in the left-hand nodes of the below graph as indicated by the $S\rightarrow E$ transition.
+In compartmental models, individuals can move between these states following one of a predefined set of paths. In the SEIRD model, susceptible individuals can become infected with the virus after exposure to it from an infectious individual. In doing so, they can move from the susceptible compartment to the exposed.
 
-```{r, echo=FALSE, warning=FALSE, out.width = "400px"}
-# library(DiagrammeR)
-# library(DiagrammeRsvg)
-# library(webshot)
-# library(rsvg)
-# g <- grViz("
-# digraph PrimC{
-#   graph [rankdir = 'LR']
-#   node [shape = circle]
-#   S E I R D
-#   S -> E [label = '&#946; * S * I']
-#   E -> I [label = 'kappa * E']
-#   I -> R [label = 'gamma * I']
-#   I -> D [label = 'mu * I']
-#   }")
-# tmp = DiagrammeRsvg::export_svg(g)
-# tmp = charToRaw(tmp)
-# rsvg::rsvg_png(tmp, "images/seird.png", width = 1000)
-knitr::include_graphics("images/seird.png")
+To help visualise this, we can print a compartmental model diagram below. This requires us first to instantiate an `SEIRD` model object. Later we will use this to run simulations, but, for now, we just print a model structure via `ode_structure_diagram`. The susceptible to exposed transition is illustrated in the left-hand nodes of the below graph as indicated by the $S\rightarrow E$ transition.
+
+```{r, out.width = "400px"}
+# create model object
+my_model <- SEIRD()
+
+# print structure
+ode_structure_diagram(my_model)
 ```
+
 
 Exposed ($E$) individuals then become infectious ($I$) over time as they transition out of the latent period. For infectious individuals, there are two potential transitions: either an individual recovers and they enter the recovered state ($R$) where they remain forever; or they die, entering the dead state ($D$).
 
@@ -118,11 +108,6 @@ So the equilibria are given by $S=S'$, $E=0$, and $I=0$ which corresponds to a s
 
 ## Using an SEIRD model to simulate COVID-19 dynamics
 We now show how `comomodels` can be used to create an SEIRD which captures the dominant characteristics of an unmitigated COVID-19 epidemic.
-
-We first create an `SEIRD` object that we will use to run simulations.
-```{r}
-my_model <- SEIRD()
-```
 
 The most crucial step in using compartmental models of transmission dynamics is their parameterisation because different parameter ranges allow both qualitatively and quantitatively different dynamics. There are two ways to estimate the parameters of such models: i) to use data collected in the laboratory or field to estimate individual parameters; or ii) to fit these models to field data and, in doing so, estimate potentially a collective of parameters. There are limitations to both approaches. The first does not account for how uncertainty in one parameter might influence our estimates of another: a higher value of $\beta$ can be offset by an increased value of $\mu$ to result in similar case counts, for instance. The second approach generally only allows a subset of parameters to be estimated, since the available data are sparse and insufficient to jointly determine all.
 
