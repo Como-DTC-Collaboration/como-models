@@ -12,6 +12,7 @@
 \alias{interventions<-,SEIRDNPIAge-method}
 \alias{run,SEIRDNPIAge-method}
 \alias{R0,SEIRDNPIAge-method}
+\alias{ode_structure_diagram,SEIRDNPIAge-method}
 \title{Defines an age-structured SEIR model with non-pharmaceutical interventions (NPIs)
 which influence social contact. Methods solve the set of
 ordinary differential equations of the model with a chosen method of
@@ -32,6 +33,8 @@ numerical integration.}
 \S4method{run}{SEIRDNPIAge}(object, times, solve_method = "lsoda")
 
 \S4method{R0}{SEIRDNPIAge}(model)
+
+\S4method{ode_structure_diagram}{SEIRDNPIAge}(model)
 }
 \arguments{
 \item{object}{An object of the class SEIRDNPIAge.}
@@ -64,6 +67,8 @@ D population fractions for each age group outputs with incidence numbers
 for each age group.
 
 an R0 value
+
+An ODE-compartmental structure diagram object of class html
 }
 \description{
 Defines an age-structured SEIR model with non-pharmaceutical interventions (NPIs)
@@ -138,6 +143,8 @@ matrix element. The average duration of infection is
 secondary infections of type i caused by an infectious individual of type j is
 g_ij = beta N_i C_ij / (mu_i + gamma_i). R0 is then given by the dominant
 eigenvalue of the G matrix.
+
+\item \code{ode_structure_diagram}: Prints a compartmental diagram for the SEIRDNPIAge model
 }}
 
 \section{Slots}{

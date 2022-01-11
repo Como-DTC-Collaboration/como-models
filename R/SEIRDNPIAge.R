@@ -511,3 +511,15 @@ setMethod("R0", "SEIRDNPIAge", function(model) {
   lambda_dominant <- eigen(G)$values[1]
   Re(lambda_dominant)
 })
+
+
+#' @describeIn SEIRDNPIAge Prints a compartmental diagram for the SEIRDNPIAge model
+#'
+#' @param model an SEIRDNPIAge model
+#'
+#' @return An ODE-compartmental structure diagram object of class html
+#' 
+#' @export
+setMethod("ode_structure_diagram", "SEIRDNPIAge", function(model) {
+  htmltools::HTML(comomodels:::seirdnpiage_structure)
+})

@@ -54,8 +54,7 @@ time series of incidences and deaths population fraction.
 
 an R0 value
 
-An ODE-compartmental structure diagram object of class htmlwidget that
-comes from running grViz
+An ODE-compartmental structure diagram object of class html
 }
 \description{
 This class represents the SEIRD_BD model, showing how populations of susceptible,

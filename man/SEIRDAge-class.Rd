@@ -67,8 +67,7 @@ for each age group.
 
 an R0 value
 
-An ODE-compartmental structure diagram object of class htmlwidget that
-comes from running grViz
+An ODE-compartmental structure diagram object of class html
 }
 \description{
 Defines an age-structured SEIRD model and solves the set of
