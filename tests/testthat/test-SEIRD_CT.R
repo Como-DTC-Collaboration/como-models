@@ -70,3 +70,10 @@ test_that("R0 works for SEIRD_CT model", {
   transmission_parameters(my_model) <- params
   expect_true(R0(my_model) > 0)
 })
+
+test_that("ode_model_structure works", {
+  model <- SEIRD_CT()
+  g <- ode_structure_diagram(model)
+  expect_s3_class(g, "html")
+})
+

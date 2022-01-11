@@ -72,36 +72,12 @@ We now extend this model to include tracing and isolation. The model assumes tha
 
 An alternative way of understanding this model structure is to visualise it.
 
-```{r, echo=FALSE, warning=FALSE, out.width = "800px"}
-# library(DiagrammeR)
-# library(DiagrammeRsvg)
-# library(webshot)
-# library(rsvg)
-# g <- grViz("
-# digraph PrimC{
-#   graph [rankdir = 'LR']
-#   node [shape = circle]
-#   S E P I A ET PT IT AT R
-#   S -> E [label = '((1 - chi) * beta * (P + I) + beta_a * A) * S']
-#   E -> P [label = '(1 - eta_a) * omega * E']
-#   E -> A [label = 'eta_a * omega * E']
-#   P -> I [label = '(1 - phi) * psi * P']
-#   I -> R [label = 'gamma * I']
-#   A -> R [label = 'gamma * A']
-#   S -> ET [label = 'chi * beta * S * (P + I)']
-#   ET -> PT [label = '(1 - eta_a) * omega * ET']
-#   PT -> IT [label = 'psi * PT']
-#   P -> IT [label = 'phi * psi * P']
-#   ET -> AT [label = 'eta_a * omega * ET']
-#   I -> D [label = 'mu * I']
-#   IT -> D [label = 'mu * IT']
-#   IT -> R [label = 'gamma * IT']
-#   AT -> R [label = 'gamma * AT']
-#   }")
-# tmp = DiagrammeRsvg::export_svg(g)
-# tmp = charToRaw(tmp)
-# rsvg::rsvg_png(tmp, "images/seird_ct_full.png", width = 1000)
-knitr::include_graphics("images/seird_ct_full.png")
+```{r, out.width = "800px"}
+# create model object
+model <- SEIRD_CT()
+
+# visualise structure
+ode_structure_diagram(model)
 ```
 
 Effectively, this model has two parallel tracts, which are copies of the first model in this vignette: one representing unisolated individuals (i.e. those compartments without the "T") and those representing quarantining individuals (with a "T"). There are two flows into the quarantined tract: susceptibles can be isolated upon infection $S\rightarrow E^T$ if they are known contacts of an individual who goes on to be symptomatic: i.e. either $P$ or $I$; or infected individuals can be quarantined once they become symptomatic $P\rightarrow I^T$.

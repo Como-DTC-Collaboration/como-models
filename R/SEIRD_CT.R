@@ -303,3 +303,14 @@ setMethod("R0", "SEIRD_CT", function(model) {
     infections_presymptomatics + infections_infectious
   )
 })
+
+#' @describeIn SEIRD_CT Prints a compartmental diagram for the SEIRD_CT model
+#'
+#' @param model an SEIRD_CT model
+#'
+#' @return An ODE-compartmental structure diagram object of class html
+#' 
+#' @export
+setMethod("ode_structure_diagram", "SEIRD_CT", function(model) {
+  htmltools::HTML(comomodels:::seird_ct_structure)
+})
