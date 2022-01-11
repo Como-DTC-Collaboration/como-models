@@ -265,8 +265,7 @@ setMethod("R0", "SEIRD", function(model) {
 #'
 #' @param model an SEIRD model
 #'
-#' @return An ODE-compartmental structure diagram object of class htmlwidget that
-#' comes from running grViz
+#' @return An ODE-compartmental structure diagram object of class html
 #' 
 #' @export
 setMethod("ode_structure_diagram", "SEIRD", function(model) {

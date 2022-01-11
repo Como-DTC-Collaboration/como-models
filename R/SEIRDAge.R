@@ -391,8 +391,7 @@ setMethod("R0", "SEIRDAge", function(model, population_fractions) {
 #'
 #' @param model an SEIRDAge model
 #'
-#' @return An ODE-compartmental structure diagram object of class htmlwidget that
-#' comes from running grViz
+#' @return An ODE-compartmental structure diagram object of class html
 #' 
 #' @export
 setMethod("ode_structure_diagram", "SEIRDAge", function(model) {

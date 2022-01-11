@@ -61,9 +61,36 @@ g <- DiagrammeR::grViz("
 }")
 seird_bd_structure <- DiagrammeRsvg::export_svg(g)
 
+# seird_ru
+g <- DiagrammeR::grViz("
+    digraph PrimC{
+    graph [rankdir = 'LR']
+    node [shape = circle]
+    S_U[label = 'S&#x1d64;']
+    E_U[label = 'E&#x1d64;']
+    I_U[label = 'I&#x1d64;']
+    R_U[label = 'R&#x1d64;']
+    D_U[label = 'D&#x1d64;']
+    S_Y[label = 'S&#x1d67;']
+    E_Y[label = 'E&#x1d67;']
+    I_Y[label = 'I&#x1d67;']
+    R_Y[label = 'R&#x1d67;']
+    D_Y[label = 'D&#x1d67;']
+    S_U -> E_U [label = '&beta; S&#x1d64; ((I&#x1d64; + I&#x1d67;)(φ&#x1d64; N&#x1d64; + )']
+    E_U -> I_U [label = '&kappa; E&#x2081;']
+    I_U -> R_U [label = '&gamma;&#x2081; I&#x2081;']
+    I_U -> D_U [label = '&mu;&#x2081; I&#x2081;']
+    S_Y -> E_Y [label = '&beta; S&#x2082; (C&#x2082;&#x2081; I&#x2081; + C&#x2082;&#x2082; I&#x2082;)']
+    E_Y -> I_Y [label = '&kappa; E&#x2082;']
+    I_Y -> R_Y [label = '&gamma;&#x2082; I&#x2082;']
+    I_Y -> D_Y [label = '&mu;&#x2082; I&#x2082;']
+}")
+seird_ru_structure <- DiagrammeRsvg::export_svg(g)
+
 # make all available
 usethis::use_data(seird_structure,
                   seirdage_structure,
                   seird_bd_structure,
+                  seird_ru_structure,
                   overwrite = TRUE, internal = TRUE)
 

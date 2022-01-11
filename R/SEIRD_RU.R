@@ -646,4 +646,15 @@ setMethod(
 
       R0 <- max(abs(eigen(matF %*% solve(matV))$values))
       return(R0)
-    })
+})
+
+#' @describeIn SEIRD_RU Prints a compartmental diagram for the SEIRD_RU model
+#'
+#' @param model an SEIRD_RU model
+#'
+#' @return An ODE-compartmental structure diagram object of class html
+#' 
+#' @export
+setMethod("ode_structure_diagram", "SEIRD", function(model) {
+  htmltools::HTML(comomodels:::seird_structure)
+})
