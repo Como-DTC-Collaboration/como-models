@@ -93,5 +93,5 @@ test_that("R0 works for SEIRD_BD model", {
 test_that("ode_model_structure works", {
   model <- SEIRD_BD()
   g <- ode_structure_diagram(model)
-  expect_s3_class(g, "htmlwidget")
+  expect_s3_class(g, "html")
 })
