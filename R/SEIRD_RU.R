@@ -650,11 +650,13 @@ setMethod(
 
 #' @describeIn SEIRD_RU Prints a compartmental diagram for the SEIRD_RU model
 #'
+#' Note that gamma is used in place of Y in subscripts for the rural model.
+#'
 #' @param model an SEIRD_RU model
 #'
 #' @return An ODE-compartmental structure diagram object of class html
 #' 
 #' @export
-setMethod("ode_structure_diagram", "SEIRD", function(model) {
-  htmltools::HTML(comomodels:::seird_structure)
+setMethod("ode_structure_diagram", "SEIRD_RU", function(model) {
+  htmltools::HTML(comomodels:::seird_ru_structure)
 })
