@@ -183,7 +183,7 @@ g <- DiagrammeR::grViz("
   Pt [label = 'P&#x1d40;', fillcolor=chocolate]
   At [label = 'A&#x1d40;', fillcolor=gold]
   It [label = 'I&#x1d40;', fillcolor=coral]
-  S -> E [label = '(1 - χ)&beta;(P + I)S + &beta;&#x2090; AS']
+  S -> E [label = '(1 - χ)&beta;(P + I)S + &beta;&#x2090;AS']
   E -> P [label = '(1 - η&#x2090;)ωE']
   E -> A [label = 'η&#x2090;ωE']
   P -> I [label = '(1 - φ)ψ P']

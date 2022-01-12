@@ -33,18 +33,24 @@ The model we assume without any interventions in place has the following structu
 # library(DiagrammeRsvg)
 # library(webshot)
 # library(rsvg)
-# g <- grViz("
-# digraph PrimC{
+# g <- DiagrammeR::grViz("
+#   digraph PrimC{
 #   graph [rankdir = 'LR']
-#   node [shape = circle]
-#   S E P I A R
-#   S -> E [label = '(beta * (P + I) + beta_a * A) * S']
-#   E -> P [label = '(1 - eta_a) * omega * E']
-#   E -> A [label = 'eta_a * omega * E']
-#   P -> I [label = 'psi * P']
-#   I -> R [label = 'gamma * I']
-#   A -> R [label = 'gamma * A']
-#   I -> D [label = 'mu * I']
+#   node [shape = circle, style=filled]
+#   R [label = '   R   ', fillcolor=turquoise]
+#   D [label = '   D   ', fillcolor=tomato]
+#   S [label = '   S   ', fillcolor=deepskyblue]
+#   E [label = '   E   ', fillcolor=orange]
+#   P [label = '   P   ', fillcolor=chocolate]
+#   A [label = '   A   ', fillcolor=gold]
+#   I [label = '   I   ', fillcolor=coral]
+#   S -> E [label = '&beta;(P + I)S + &beta;&#x2090;AS']
+#   E -> P [label = '(1 - η&#x2090;)ωE']
+#   E -> A [label = 'η&#x2090;ωE']
+#   P -> I [label = 'ψ P']
+#   A -> R [label = '&gamma; A']
+#   I -> R [label = '&gamma; I']
+#   I -> D [label = '&mu; I']
 #   }")
 # tmp = DiagrammeRsvg::export_svg(g)
 # tmp = charToRaw(tmp)
@@ -73,6 +79,8 @@ We now extend this model to include tracing and isolation. The model assumes tha
 An alternative way of understanding this model structure is to visualise it.
 
 ```{r, out.width = "800px"}
+library(comomodels)
+
 # create model object
 model <- SEIRD_CT()
 
@@ -130,7 +138,6 @@ We assume that 17% of cases are asymptomatic: meaning $\eta_a=0.17$ [@byambasure
 We first find transmission parameters across all variants assuming that no NPIs are in place. Note, this requires us to find beta values which match given $R_0$ values for each variant, which we do via optimisation (through `optim`).
 
 ```{r setup}
-library(comomodels)
 library(tidyverse)
 
 # helper functions
