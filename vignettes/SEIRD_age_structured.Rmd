@@ -125,8 +125,10 @@ c_all %>%
   theme(text = element_text(size=14),
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   geom_tile() +
-  scale_fill_viridis_c() +
-  facet_wrap(~type)
+  facet_wrap(~type) +
+  scale_fill_viridis_c("contacts",
+                       trans="sqrt",
+                       breaks=c(0, 1, 4, 7))
 ```
 
 We can see that the majority of contacts fall between younger individuals, occurring at school or "other" locations. At home, however, there is more substantial intergenerational mixing than in other settings.
@@ -142,7 +144,9 @@ c_combined %>%
   theme(text = element_text(size=20),
         axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1)) +
   geom_tile() +
-  scale_fill_viridis_c()
+  scale_fill_viridis_c("contacts",
+                       trans="sqrt",
+                       breaks=c(0, 1, 4, 10))
 ```
 
 We now use this contact matrix to allow infections to pass between age groups. To do so, we amend the governing equations for the susceptible and exposed individuals within age class $i$:
