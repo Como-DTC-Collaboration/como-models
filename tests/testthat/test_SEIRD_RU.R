@@ -219,3 +219,9 @@ test_that("R0 works for SEIRD model", {
   
   expect_equal(round(R0(my_model),digits = 5), 15.84567)
 })
+
+test_that("ode_model_structure works", {
+  model <- SEIRD_RU()
+  g <- ode_structure_diagram(model)
+  expect_s3_class(g, "html")
+})

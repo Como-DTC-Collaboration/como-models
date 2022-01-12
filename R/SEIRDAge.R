@@ -384,3 +384,16 @@ setMethod("R0", "SEIRDAge", function(model, population_fractions) {
   lambda_dominant <- eigen(G)$values[1]
   Re(lambda_dominant)
 })
+
+#' @describeIn SEIRDAge Prints a compartmental diagram for the SEIRDAge model
+#'
+#' This plot supposes the model comprises two age classes only.
+#'
+#' @param model an SEIRDAge model
+#'
+#' @return An ODE-compartmental structure diagram object of class html
+#' 
+#' @export
+setMethod("ode_structure_diagram", "SEIRDAge", function(model) {
+  htmltools::HTML(comomodels:::seirdage_structure)
+})

@@ -158,6 +158,17 @@ We now use this contact matrix to allow infections to pass between age groups. T
 
 Specifically, the term $S_i \Sigma_{j}C_{ij} I_j$ effectively indicates the expected number of contacts between susceptible individuals of age class $i$ with infected individuals across all classes.
 
+We can then visualise the full model structure for the situation with two age classes.
+
+```{r, out.width = "400px", error=TRUE}
+# create model object
+my_model <- SEIRDAge()
+
+# print structure
+ode_structure_diagram(my_model)
+```
+
+
 ## Simulating an epidemic characteristic of the first COVID-19 wave
 Now we create a model that includes this age-structured mixing. Since the contact matrices have 16 age classes, we instantiate a model with this number of classes. We use country-level demographics from the UN and, for this example, initialise the model with a uniform initial infected population of 0.1% across all age groups. The remaining 99.9% of the population starts as susceptible.
 ```{r}

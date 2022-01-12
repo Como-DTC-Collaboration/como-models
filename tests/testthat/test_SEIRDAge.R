@@ -267,3 +267,9 @@ test_that("R0 calculation works for SEIRDAge", {
   # if all individuals in one compartment then reduces to SEIRD
   expect_true(abs(R0(my_model, c(1, 0)) - beta / (gamma + mu)) < 0.0001)
 })
+
+test_that("ode_model_structure works", {
+  model <- SEIRDAge()
+  g <- ode_structure_diagram(model)
+  expect_s3_class(g, "html")
+})

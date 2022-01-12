@@ -377,4 +377,10 @@ test_that("Running model before setting parameters fails", {
   expect_error(run(my_model, times), "Interventions must be set before running.")
 })
 
+test_that("ode_model_structure works", {
+  model <- SEIRDNPIAge()
+  g <- ode_structure_diagram(model)
+  expect_s3_class(g, "html")
+})
+
 

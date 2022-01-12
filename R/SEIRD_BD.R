@@ -270,3 +270,15 @@ setMethod("R0", "SEIRD_BD", function(model) {
   nu <- model@transmission_parameters$nu
   beta * kappa / (kappa + nu) * 1 / (gamma + mu + nu)
 })
+
+
+#' @describeIn SEIRD_BD Prints a compartmental diagram for the SEIRD_BD model
+#'
+#' @param model an SEIRD_BD model
+#'
+#' @return An ODE-compartmental structure diagram object of class html
+#' 
+#' @export
+setMethod("ode_structure_diagram", "SEIRD_BD", function(model) {
+  htmltools::HTML(comomodels:::seird_bd_structure)
+})

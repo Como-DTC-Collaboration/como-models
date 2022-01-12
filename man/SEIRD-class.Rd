@@ -10,6 +10,7 @@
 \alias{transmission_parameters<-,SEIRD-method}
 \alias{run,SEIRD-method}
 \alias{R0,SEIRD-method}
+\alias{ode_structure_diagram,SEIRD-method}
 \title{An S4 object representing the SEIRD.}
 \usage{
 \S4method{initial_conditions}{SEIRD}(object)
@@ -23,6 +24,8 @@
 \S4method{run}{SEIRD}(object, times, solve_method = "lsoda")
 
 \S4method{R0}{SEIRD}(model)
+
+\S4method{ode_structure_diagram}{SEIRD}(model)
 }
 \arguments{
 \item{object}{an object of the class SEIRD}
@@ -50,6 +53,8 @@ E, I and R population fractions, and one with the time steps, age range,
 time series of incidences and deaths population fraction.
 
 an R0 value
+
+An ODE-compartmental structure diagram object of class html
 }
 \description{
 This class represents the SEIRD model, showing how populations of susceptible,
@@ -90,6 +95,8 @@ This function relies on the package deSolve.
 
 The R0 parameter is given by:
 \deqn{R_0 = \beta/(\gamma + \mu)}
+
+\item \code{ode_structure_diagram}: Prints a compartmental diagram for the SEIRD model
 }}
 
 \section{Slots}{

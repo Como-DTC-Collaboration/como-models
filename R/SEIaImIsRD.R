@@ -318,5 +318,17 @@ setMethod("R0", "SEIaImIsRD", function(model) {
   eigVals <- eigen(Fmat %*% (solve(Vmat)))$values
   R0 = max(abs(eigVals))
   return(R0)
-  })
+})
+
+
+#' @describeIn SEIaImIsRD Prints a compartmental diagram for the SEIaImIsRD model
+#'
+#' @param model an SEIaImIsRD model
+#'
+#' @return An ODE-compartmental structure diagram object of class html
+#' 
+#' @export
+setMethod("ode_structure_diagram", "SEIaImIsRD", function(model) {
+  htmltools::HTML(comomodels:::seiaimisrd_structure)
+})
 

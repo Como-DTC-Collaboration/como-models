@@ -89,3 +89,9 @@ test_that("R0 works for SEIRD_BD model", {
                                             lambda=lambda, delta=delta)
   expect_equal(R0(my_model), beta * kappa / (kappa + nu) * 1 / (gamma + mu + nu))
 })
+
+test_that("ode_model_structure works", {
+  model <- SEIRD_BD()
+  g <- ode_structure_diagram(model)
+  expect_s3_class(g, "html")
+})

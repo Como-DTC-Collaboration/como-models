@@ -260,3 +260,14 @@ setMethod("R0", "SEIRD", function(model) {
   mu <- model@transmission_parameters$mu
   beta / (gamma + mu)
 })
+
+#' @describeIn SEIRD Prints a compartmental diagram for the SEIRD model
+#'
+#' @param model an SEIRD model
+#'
+#' @return An ODE-compartmental structure diagram object of class html
+#' 
+#' @export
+setMethod("ode_structure_diagram", "SEIRD", function(model) {
+  htmltools::HTML(comomodels:::seird_structure)
+})
