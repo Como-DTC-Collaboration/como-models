@@ -79,7 +79,10 @@
 <span class="fu"><a href="run.html">run</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">times</span>, solve_method <span class="op">=</span> <span class="st">"lsoda"</span><span class="op">)</span>
 
 <span class="co"># S4 method for SEIRD_CT</span>
-<span class="fu"><a href="R0.html">R0</a></span><span class="op">(</span><span class="va">model</span><span class="op">)</span></code></pre></div>
+<span class="fu"><a href="R0.html">R0</a></span><span class="op">(</span><span class="va">model</span><span class="op">)</span>
+
+<span class="co"># S4 method for SEIRD_CT</span>
+<span class="fu"><a href="ode_structure_diagram.html">ode_structure_diagram</a></span><span class="op">(</span><span class="va">model</span><span class="op">)</span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -107,7 +110,8 @@ assigned.
 two dataframes: one with the time steps, age range, time series of S,
 E, I and R population fractions, and one with the time steps, age range,
 time series of incidences and deaths population fraction.
-an R0 value</p>
+an R0 value
+An ODE-compartmental structure diagram object of class html</p>
     </div>
     <div class="section level2">
     <h2 id="methods-by-generic-">Methods (by generic)<a class="anchor" aria-label="anchor" href="#methods-by-generic-"></a></h2>
@@ -141,6 +145,7 @@ $$\frac{dC(t)}{dt} = (beta (P(t) + I(t)) + beta_a A(t)) S(t)$$</p>
 <li><p><code>R0</code>: Calculates basic reproduction number for SEIRD_CT model</p>
 <p>The R0 parameter is given by:
 $$R_0 = \eta_a\beta_a/\gamma + (1 - \eta_a)(1 - \chi) [\beta/\psi + (1-\phi) \beta/(\gamma+\mu)]$$</p></li>
+<li><p><code>ode_structure_diagram</code>: Prints a compartmental diagram for the SEIRD_CT model</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="slots">Slots<a class="anchor" aria-label="anchor" href="#slots"></a></h2>

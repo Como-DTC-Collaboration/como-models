@@ -109,7 +109,10 @@ but can infect people from the other community.</p>
 <span class="fu"><a href="run.html">run</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">times</span>, solve_method <span class="op">=</span> <span class="st">"lsoda"</span><span class="op">)</span>
 
 <span class="co"># S4 method for SEIRD_RU</span>
-<span class="fu"><a href="R0.html">R0</a></span><span class="op">(</span><span class="va">model</span><span class="op">)</span></code></pre></div>
+<span class="fu"><a href="R0.html">R0</a></span><span class="op">(</span><span class="va">model</span><span class="op">)</span>
+
+<span class="co"># S4 method for SEIRD_RU</span>
+<span class="fu"><a href="ode_structure_diagram.html">ode_structure_diagram</a></span><span class="op">(</span><span class="va">model</span><span class="op">)</span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -128,7 +131,7 @@ seq(t_start, t_end, by=t_step). Default time series is seq(0, 100, by = 1).</p><
 for solving the ode system. Default is "lsoda" which is also the default for
 the ode function in the deSolve package used in this function.</p></dd>
 <dt>model</dt>
-<dd><p>a model of the class SEIRD_RU</p></dd>
+<dd><p>an SEIRD_RU model</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -142,7 +145,8 @@ assigned.
 a dataframe with the time steps, time series of S, E, I and R
 population fractions, and incidence numbers and deaths for both communities
 in the SEIRD_RU model.
-the value of R0</p>
+the value of R0
+An ODE-compartmental structure diagram object of class html</p>
     </div>
     <div class="section level2">
     <h2 id="methods-by-generic-">Methods (by generic)<a class="anchor" aria-label="anchor" href="#methods-by-generic-"></a></h2>
@@ -219,6 +223,8 @@ $$matV = \partial V_i(x_0)/\partial x_j$$
 where x_j are all the variables representing infected individuals.
 Finally, R0 is the spectral radius of the matrix FV^(-1). For a more
 detailed description of this method, see van den Driessche (2017).</p></li>
+<li><p><code>ode_structure_diagram</code>: Prints a compartmental diagram for the SEIRD_RU model</p>
+<p>Note that gamma is used in place of Y in subscripts for the rural model.</p></li>
 </ul></div>
     <div class="section level2">
     <h2 id="slots">Slots<a class="anchor" aria-label="anchor" href="#slots"></a></h2>
