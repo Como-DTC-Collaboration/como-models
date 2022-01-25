@@ -4,7 +4,7 @@
 \alias{run}
 \title{Solves ODEs for a given model}
 \usage{
-run(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
+run(object, times = seq(0, 100, by = 1), solve_method = "lsoda", ...)
 }
 \arguments{
 \item{object}{an object of a class within the comomodels}
@@ -15,6 +15,8 @@ the system of ODEs should be returned. Default time series is seq(0, 100, by = 1
 \item{solve_method}{(string) a string specifying the chosen numerical integration method
 for solving the ode system. Default is "lsoda" which is also the default for
 the ode function in the deSolve package used in this function}
+
+\item{...}{other parameters}
 }
 \value{
 a named list of two dataframes: 'states' which describes the time evolution of

@@ -10,6 +10,7 @@
 \alias{transmission_parameters<-,SEIRD-method}
 \alias{run,SEIRD-method}
 \alias{R0,SEIRD-method}
+\alias{ode_structure_diagram,SEIRD-method}
 \title{An S4 object representing the SEIRD.}
 \usage{
 \S4method{initial_conditions}{SEIRD}(object)
@@ -20,9 +21,11 @@
 
 \S4method{transmission_parameters}{SEIRD}(object) <- value
 
-\S4method{run}{SEIRD}(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
+\S4method{run}{SEIRD}(object, times, solve_method = "lsoda")
 
 \S4method{R0}{SEIRD}(model)
+
+\S4method{ode_structure_diagram}{SEIRD}(model)
 }
 \arguments{
 \item{object}{an object of the class SEIRD}
@@ -50,25 +53,27 @@ E, I and R population fractions, and one with the time steps, age range,
 time series of incidences and deaths population fraction.
 
 an R0 value
+
+An ODE-compartmental structure diagram object of class html
 }
 \description{
-This class represents the SEIR model, showing how populations of susceptible,
+This class represents the SEIRD model, showing how populations of susceptible,
 exposed, infectious and recovered individuals evolve over time.
 }
 \section{Methods (by generic)}{
 \itemize{
 \item \code{initial_conditions}: Retrieves initial conditions of SEIRD model.
 
-\item \code{transmission_parameters}: Retrieves transmission parameters of SEIR model.
+\item \code{transmission_parameters}: Retrieves transmission parameters of SEIRD model.
 
 \item \code{initial_conditions<-}: Setter method for initial conditions (S0, E0, I0 and R0)
-of the SEIR model.
+of the SEIRD model.
 
 All initial conditions must sum up to 1.
 If the initial conditions provided to do not sum to 1, an error is thrown.
 
 \item \code{transmission_parameters<-}: Set transmission parameters (beta, kappa, gamma and mu)
-of the SEIR model.
+of the SEIRD model.
 
 If the transmission parameters provided to are not 1-dimensional an error is
 thrown.
@@ -90,6 +95,8 @@ This function relies on the package deSolve.
 
 The R0 parameter is given by:
 \deqn{R_0 = \beta/(\gamma + \mu)}
+
+\item \code{ode_structure_diagram}: Prints a compartmental diagram for the SEIRD model
 }}
 
 \section{Slots}{

@@ -25,13 +25,15 @@
 
 \S4method{intervention_parameters}{SEIRDV}(object) <- value
 
-\S4method{run}{SEIRDV}(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
+\S4method{run}{SEIRDV}(object, times, solve_method = "lsoda")
 }
 \arguments{
 \item{object}{an object of the class SEIRDV}
 
 \item{value}{(list) list of intervention parameters: starts, stops and
-coverages.}
+coverages. tanh_slopes can also be provided (either one value or
+one for each intervention). If no tanh_slopes are provided,
+the default value of 1 will be used.}
 
 \item{times}{(double) a sequence of time points at which the solution to
 the system of ODEs should be returned. Must be of the form
@@ -56,7 +58,7 @@ time series of incidences and deaths population fraction.
 \description{
 This class represents the SEIRV model, showing how populations of susceptible,
 exposed, infectious and recovered individuals evolve over time. Vaccinated
-individuals are considered in their own compartment
+individuals are considered in their own compartment.
 }
 \section{Methods (by generic)}{
 \itemize{
@@ -64,7 +66,7 @@ individuals are considered in their own compartment
 
 \item \code{transmission_parameters}: Retrieves transmission parameters of SEIRV model.
 
-\item \code{initial_conditions<-}: Setter method for initial conditions (S0, E0, I0, R0 and V0)
+\item \code{initial_conditions<-}: Setter method for initial conditions (S0, E0, I0, R0, V0, VR0)
 of the SEIRV model.
 
 All initial conditions must sum up to 1.
@@ -87,11 +89,12 @@ which last several days at least and have several days between them; interventio
 for the time points specified in times and integration method specified in
 solve_method.
 
-\deqn{\frac{dS(t)}{dt} = - beta S(t) I(t) - nu Inter(t) S(t) + delta_V V(t) + delta_R R(t)}
+\deqn{\frac{dS(t)}{dt} = - beta S(t) I(t) - nu Inter(t) S(t) + delta_V V(t) + delta_R R(t) + delta_VR VR(t)}
 \deqn{\frac{dE(t)}{dt} =  beta S(t) I(t) - kappa E(t)}
 \deqn{\frac{dI(t)}{dt} = kappa E(t) - (gamma + mu) I(t)}
-\deqn{\frac{dR(t)}{dt} = gamma I(t) - delta_R R(t)}
+\deqn{\frac{dR(t)}{dt} = gamma I(t) - delta_R R(t) - nu Inter(t) R(t)}
 \deqn{\frac{dV(t)}{dt} = nu Inter(t) S(t) - delta_V V(t)}
+\deqn{\frac{dVR(t)}{dt} = nu Inter(t) R(t) - delta_VR VR(t)}
 \deqn{\frac{dC(t)}{dt} = beta S(t) I(t)}
 \deqn{\frac{dD(t)}{dt} = mu I(t)}
 
@@ -106,11 +109,11 @@ the intervention parameters. This function relies on the package deSolve.
 incidence.}
 
 \item{\code{initial_condition_names}}{list of names of initial conditions
-(characters). Default is list("S0", "E0", "I0", R0", "V0").}
+(characters). Default is list("S0", "E0", "I0", R0", "V0", "VR0").}
 
 \item{\code{transmission_parameter_names}}{list of names of transmission parameters
 (characters). Default is list("beta", "kappa", "gamma", "mu",  "nu",
-"delta_V", "delta_R").}
+"delta_V", "delta_R", "delta_VR").}
 
 \item{\code{intervention_parameter_names}}{list of names of intervention parameters
 (characters). Default is list ("starts", "stops", "coverages", "tanh_slopes")}

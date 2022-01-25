@@ -16,6 +16,7 @@
 \alias{country_demog<-,SEIRD_RU-method}
 \alias{run,SEIRD_RU-method}
 \alias{R0,SEIRD_RU-method}
+\alias{ode_structure_diagram,SEIRD_RU-method}
 \title{An S4 object representing the SEIRD_RU.}
 \usage{
 \S4method{initial_conditions}{SEIRD_RU}(object)
@@ -38,9 +39,11 @@
 
 \S4method{country_demog}{SEIRD_RU}(object) <- value
 
-\S4method{run}{SEIRD_RU}(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
+\S4method{run}{SEIRD_RU}(object, times, solve_method = "lsoda")
 
 \S4method{R0}{SEIRD_RU}(model)
+
+\S4method{ode_structure_diagram}{SEIRD_RU}(model)
 }
 \arguments{
 \item{object}{an object of the class SEIRD_RU}
@@ -56,7 +59,7 @@ seq(t_start, t_end, by=t_step). Default time series is seq(0, 100, by = 1).}
 for solving the ode system. Default is "lsoda" which is also the default for
 the ode function in the deSolve package used in this function.}
 
-\item{model}{a model of the class SEIRD_RU}
+\item{model}{an SEIRD_RU model}
 }
 \value{
 object of class SEIRD_RU with initial conditions assigned.
@@ -75,6 +78,8 @@ population fractions, and incidence numbers and deaths for both communities
 in the SEIRD_RU model.
 
 the value of R0
+
+An ODE-compartmental structure diagram object of class html
 }
 \description{
 This class represents the SEIR model, showing how populations of susceptible,
@@ -174,6 +179,10 @@ We compute the matrices matF and matV as
 where x_j are all the variables representing infected individuals.
 Finally, R0 is the spectral radius of the matrix FV^(-1). For a more
 detailed description of this method, see van den Driessche (2017).
+
+\item \code{ode_structure_diagram}: Prints a compartmental diagram for the SEIRD_RU model
+
+Note that gamma is used in place of Y in subscripts for the rural model.
 }}
 
 \section{Slots}{

@@ -9,6 +9,8 @@
 \alias{transmission_parameters,SEIRDAge-method}
 \alias{transmission_parameters<-,SEIRDAge-method}
 \alias{run,SEIRDAge-method}
+\alias{R0,SEIRDAge-method}
+\alias{ode_structure_diagram,SEIRDAge-method}
 \title{An S4 object representing the SEIRDAge.}
 \usage{
 \S4method{initial_conditions}{SEIRDAge}(object)
@@ -19,15 +21,24 @@
 
 \S4method{transmission_parameters}{SEIRDAge}(object) <- value
 
-\S4method{run}{SEIRDAge}(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
+\S4method{run}{SEIRDAge}(object, times, solve_method = "lsoda")
+
+\S4method{R0}{SEIRDAge}(model, population_fractions)
+
+\S4method{ode_structure_diagram}{SEIRDAge}(model)
 }
 \arguments{
 \item{object}{An object of the class SEIRDAge.}
 
 \item{value}{a named list of form list(b=, k=, g=, mu=)
 
-All rates of change between compartments are equal regardless of
-age group.}
+Here b is the rate of infection (S->I); k is the rate of transitioning from the
+infected to infectious compartment (E->I); g is the rate of recovery (I->R). The
+parameters b and k are numbers. The death rate
+mu and recovery rate g can either be a single number, in which case all ages
+are assumed to
+have the same rate; or it can be a vector of length equal to the number of
+age classes.}
 
 \item{times}{(vector) time sequence over which to solve the model.
 Must be of the form seq(t_start,t_end,by=t_step). Default time series
@@ -36,6 +47,10 @@ is seq(0, 100, by = 1).}
 \item{solve_method}{A string indicating the chosen numerical integration
 method for solving the ode system. Default is \code{lsoda} which is also the
 default for the ode function in the deSolve package used in this function.}
+
+\item{model}{an SEIRDAge model}
+
+\item{population_fractions}{the fraction of the population in each age group}
 }
 \value{
 Initial conditions of SEIRDAge model.
@@ -46,9 +61,13 @@ Transmission parameters of SEIRDAge model.
 
 Updated version of the age-structured SEIRD model.
 
-data frame containing the time vector and time series of S, R, I and
+data frame containing the time vector and time series of S, E, I, R and
 D population fractions for each age group outputs with incidence numbers
 for each age group.
+
+an R0 value
+
+An ODE-compartmental structure diagram object of class html
 }
 \description{
 Defines an age-structured SEIRD model and solves the set of
@@ -85,13 +104,31 @@ given by
 
 \deqn{\frac{dS_i(t)}{dt} = - \beta S_i(t) \Sigma_{j}C_{ij} I_j(t)}
 \deqn{\frac{dE_i(t)}{dt} = \beta S_i(t) \Sigma_{j}C_{ij} I_j(t) - \kappa E_i(t)}
-\deqn{\frac{dI_i(t)}{dt} = \kappa E_i(t) - \gamma I_i(t) - \mu I_i(t)}
+\deqn{\frac{dI_i(t)}{dt} = \kappa E_i(t) - \gamma I_i(t) - \mu_i I_i(t)}
 \deqn{\frac{dR_i(t)}{dt} = \gamma I_i(t)}
-\deqn{\frac{dD_i(t)}{dt} = \mu I_i(t)}
+\deqn{\frac{dD_i(t)}{dt} = \mu_i I_i(t)}
 where C is a contact matrix whose elements represents the
 contact between different age groups (rows) with age groups of
 people they come in contact with (columns). This function relies on the
 package deSolve to numerically integrate the set of equations above.
+
+\item \code{R0}: Calculates basic reproduction number for SEIRDAge model
+
+To calculate this parameter, we first calculate the next generation matrix
+G, where G_ij gives the expected number of infections of type i
+caused by a single infectious individual of type j, assuming that all
+of type i are susceptible. In the SEIRDAge model, the number of contacts
+resulting in infection per unit time in age group i is beta N_i C_ij, where
+N_i corresponds to the proportion of the population in that age group and
+C_ij is the contact matrix element. The average duration of infection is
+1 / (mu_j + gamma_j) for an individual in age group j. This means the average number of
+secondary infections of type i caused by an infectious individual of type j is
+g_ij = beta N_i C_ij / (mu_i + gamma_i). R0 is then given by the dominant
+eigenvalue of the G matrix.
+
+\item \code{ode_structure_diagram}: Prints a compartmental diagram for the SEIRDAge model
+
+This plot supposes the model comprises two age classes only.
 }}
 
 \section{Slots}{

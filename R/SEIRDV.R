@@ -6,15 +6,15 @@ NULL
 #'
 #' This class represents the SEIRV model, showing how populations of susceptible,
 #' exposed, infectious and recovered individuals evolve over time. Vaccinated
-#' individuals are considered in their own compartment
+#' individuals are considered in their own compartment.
 #'
 #' @slot output_names list of compartments name which are used by the model and
 #'       incidence.
 #' @slot initial_condition_names list of names of initial conditions
-#'       (characters). Default is list("S0", "E0", "I0", R0", "V0").
+#'       (characters). Default is list("S0", "E0", "I0", R0", "V0", "VR0").
 #' @slot transmission_parameter_names list of names of transmission parameters
 #'       (characters). Default is list("beta", "kappa", "gamma", "mu",  "nu",
-#'       "delta_V", "delta_R").
+#'       "delta_V", "delta_R", "delta_VR").
 #' @slot intervention_parameter_names list of names of intervention parameters
 #'       (characters). Default is list ("starts", "stops", "coverages", "tanh_slopes")
 #' @slot initial_conditions list of values for initial conditions (double).
@@ -43,14 +43,14 @@ SEIRDV <- setClass("SEIRDV",
                   # prototypes for the slots, automatically set parameter names and
                   # its data type
                   prototype = list(
-                    output_names = list("S", "E", "I", "R", "V", "D", "Incidence", "Deaths"),
-                    initial_condition_names = list("S0", "E0", "I0", "R0", "V0"),
+                    output_names = list("S", "E", "I", "R", "V", "VR", "D", "Incidence", "Deaths"),
+                    initial_condition_names = list("S0", "E0", "I0", "R0", "V0", "VR0"),
                     transmission_parameter_names = list("beta", "kappa", "gamma",
                                                         "mu", "nu", "delta_V",
-                                                        "delta_R"),
+                                                        "delta_R", "delta_VR"),
                     intervention_parameter_names = list("starts", "stops", "coverages", "tanh_slopes"),
-                    initial_conditions = vector(mode = "list", length = 5),
-                    transmission_parameters = vector(mode = "list", length = 7),
+                    initial_conditions = vector(mode = "list", length = 6),
+                    transmission_parameters = vector(mode = "list", length = 8),
                     intervention_parameters = vector(mode = "list", length = 4)
                   )
 )
@@ -71,14 +71,14 @@ setMethod("initial_conditions", "SEIRDV",
 setMethod("transmission_parameters", "SEIRDV",
           function(object) object@transmission_parameters)
 
-#' @describeIn SEIRDV Setter method for initial conditions (S0, E0, I0, R0 and V0)
+#' @describeIn SEIRDV Setter method for initial conditions (S0, E0, I0, R0, V0, VR0)
 #' of the SEIRV model.
 #'
 #' All initial conditions must sum up to 1.
 #' If the initial conditions provided to do not sum to 1, an error is thrown.
 #'
 #' @param object an object of the class SEIRDV
-#' @param value (list) list of initial conditions S0, E0, I0, R0, V0.
+#' @param value (list) list of initial conditions S0, E0, I0, R0, V0, VR0.
 #'
 #' @return object of class SEIRDV with initial conditions assigned.
 #' 
@@ -94,7 +94,7 @@ setMethod(
     
     # raise errors if age category dimensions do not match initial state vectors
     # also raise errors if initial state and parameter values are not doubles
-    for (p in list("S0", "E0", "I0", "R0", "V0")) {
+    for (p in list("S0", "E0", "I0", "R0", "V0", "VR0")) {
       if (!is.numeric(init_cond[[p]])) {
         stop(glue("{p} format must be numeric"))
       }
@@ -102,7 +102,7 @@ setMethod(
     
     # check that the initial conditions are properly normalized
     if (init_cond$S0 + init_cond$E0 + init_cond$I0 +
-        init_cond$R0 + init_cond$V0 != 1) {
+        init_cond$R0 + init_cond$V0 + init_cond$VR0 != 1) {
       stop("Invalid initial conditions. Must add up to 1.")
     }
     
@@ -142,7 +142,8 @@ setMethod(
         | length(trans_params$mu) != 1
         | length(trans_params$nu) != 1
         | length(trans_params$delta_V) != 1
-        | length(trans_params$delta_R) != 1) {
+        | length(trans_params$delta_R) != 1
+        | length(trans_params$delta_VR) != 1) {
       stop("The parameter values should be 1-dimensional.")
     }
     
@@ -155,14 +156,6 @@ setMethod(
 
 # SEIRDV class specific functions
 
-#' Retrieves intervention parameters of SEIRDV model.
-#'
-#' @param object An object of the class SEIRDV.
-#' 
-#' @export
-setGeneric("intervention_parameters",
-           function(object) standardGeneric("intervention_parameters"))
-
 
 #' @describeIn SEIRDV Retrieves intervention parameters of SEIRDV model.
 #'
@@ -172,23 +165,6 @@ setGeneric("intervention_parameters",
 setMethod("intervention_parameters", "SEIRDV",
           function(object) object@intervention_parameters)
 
-#' Set intervention parameters of the SEIRV model.
-#'
-#' Intervention parameters have same size. This class is designed for interventions
-#' which last several days at least and have several days between them.
-#'
-#' @param object an object of the class SEIRDV
-#' @param value (list) list of intervention parameters: starts, stops and
-#'              coverages.
-#'
-#' @return object of class SEIRDV with intervention parameters assigned.
-#' 
-#' @export
-setGeneric(
-  "intervention_parameters<-",
-  function(object, value) {
-    standardGeneric("intervention_parameters<-")
-  })
 
 #' @describeIn SEIRDV Setter method for intervention parameters of the SEIRV model.
 #'
@@ -252,11 +228,12 @@ setMethod(
 #' for the time points specified in times and integration method specified in
 #' solve_method.
 #'
-#' \deqn{\frac{dS(t)}{dt} = - beta S(t) I(t) - nu Inter(t) S(t) + delta_V V(t) + delta_R R(t)}
+#' \deqn{\frac{dS(t)}{dt} = - beta S(t) I(t) - nu Inter(t) S(t) + delta_V V(t) + delta_R R(t) + delta_VR VR(t)}
 #' \deqn{\frac{dE(t)}{dt} =  beta S(t) I(t) - kappa E(t)}
 #' \deqn{\frac{dI(t)}{dt} = kappa E(t) - (gamma + mu) I(t)}
-#' \deqn{\frac{dR(t)}{dt} = gamma I(t) - delta_R R(t)}
+#' \deqn{\frac{dR(t)}{dt} = gamma I(t) - delta_R R(t) - nu Inter(t) R(t)}
 #' \deqn{\frac{dV(t)}{dt} = nu Inter(t) S(t) - delta_V V(t)}
+#' \deqn{\frac{dVR(t)}{dt} = nu Inter(t) R(t) - delta_VR VR(t)}
 #' \deqn{\frac{dC(t)}{dt} = beta S(t) I(t)}
 #' \deqn{\frac{dD(t)}{dt} = mu I(t)}
 #'
@@ -296,6 +273,7 @@ setMethod(
                I = initial_conditions(object)$I0,
                R = initial_conditions(object)$R0,
                V = initial_conditions(object)$V0,
+               VR = initial_conditions(object)$VR0,
                C = 0,
                D = 0)
     # set transmission parameters vector
@@ -305,7 +283,8 @@ setMethod(
                     m = transmission_parameters(object)$mu,
                     n = transmission_parameters(object)$nu,
                     d_v = transmission_parameters(object)$delta_V,
-                    d_r = transmission_parameters(object)$delta_R)
+                    d_r = transmission_parameters(object)$delta_R,
+                    d_vr = transmission_parameters(object)$delta_VR)
     
     # set intervention parameters vector
     int_parms <- 
@@ -333,18 +312,20 @@ setMethod(
           i <- state[3]
           r <- state[4]
           v <- state[5]
-          c <- state[6]
-          d <- state[7]
+          vr <- state[6]
+          c <- state[7]
+          d <- state[8]
           # rate of change
-          ds <- -b * s * i - n * inter * s + d_v * v + d_r * r
+          ds <- -b * s * i - n * inter * s + d_v * v + d_r * r + d_vr * vr
           de <- b * s * i - k * e
           di <- k * e - (g + m ) * i
-          dr <- g * i - d_r * r
+          dr <- g * i - d_r * r - n * inter * r
           dv <- n * inter * s - d_v * v
+          dvr <- n * inter * r - d_vr * vr
           dc <- b * s * i
           d_death <- m * i
           # return the rate of change
-          list(c(ds, de, di, dr, dv, dc, d_death))
+          list(c(ds, de, di, dr, dv, dvr, dc, d_death))
         })
     }
     

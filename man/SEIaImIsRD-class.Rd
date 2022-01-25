@@ -10,6 +10,7 @@
 \alias{transmission_parameters<-,SEIaImIsRD-method}
 \alias{run,SEIaImIsRD-method}
 \alias{R0,SEIaImIsRD-method}
+\alias{ode_structure_diagram,SEIaImIsRD-method}
 \title{An S4 object representing the SEIaImIsRD.}
 \usage{
 \S4method{initial_conditions}{SEIaImIsRD}(object)
@@ -20,9 +21,11 @@
 
 \S4method{transmission_parameters}{SEIaImIsRD}(object) <- value
 
-\S4method{run}{SEIaImIsRD}(object, times = seq(0, 100, by = 1), solve_method = "lsoda")
+\S4method{run}{SEIaImIsRD}(object, times, solve_method = "lsoda")
 
 \S4method{R0}{SEIaImIsRD}(model)
+
+\S4method{ode_structure_diagram}{SEIaImIsRD}(model)
 }
 \arguments{
 \item{object}{An object of class SEIaImIsRD}
@@ -30,7 +33,6 @@
 \item{value}{A numeric named list of values for transmission parameters:
 beta - a named list of the effective contact rate from each infected group (i.e. rate at which an infected individual exposes susceptible), each element with value in \code{[0,1]}
 kappa - rate of progression from exposed to infectious (the reciprocal is the incubation period),
-omega - rate at which recovered individuals become susceptible,
 p_symptom - a named list of the probability of exposed individuals moving into each of the different infected groups,
 Here, only probabilities for the mild (p_symptom.mild) and severe (p_symptom.severe) groups need be specified and
 the asymptomatic probability is the remainder (1 - p_symptom.mild - p_symptom.severe). Thus we require
@@ -42,7 +44,7 @@ mu - a list of the rate of disease-caused mortality of each infected group, each
 
 \item{solve_method}{A string indicating which ode integrator to use. Default is set to 'lsoda'}
 
-\item{model}{A model of an SEIaImIsRD class object with initial_conditions and transmission_parameters set.}
+\item{model}{an SEIaImIsRD model}
 }
 \value{
 An object of class SEIaImIsRD with initial population and parameters
@@ -54,6 +56,8 @@ E, I_asymptomatic, I_mild, I_severe and R population fractions, and one with the
 time series of incidences and deaths population fraction
 
 An R0 value
+
+An ODE-compartmental structure diagram object of class html
 }
 \description{
 This class defines the SEIaImIsRD model, an extension of the SEIRD model.
@@ -82,15 +86,17 @@ of the SEIaImIsRD model.
 
 \item \code{run}: Solves the ode system.
 
-\deqn{\frac{dS(t)}{dt} = -S(t)(\beta.asymptomatic I_{asymptomatic}(t) + \beta.mild I_{mild}(t) + \beta.severe I_{severe}(t)) + \omega R(t)}
+\deqn{\frac{dS(t)}{dt} = -S(t)(\beta.asymptomatic I_{asymptomatic}(t) + \beta.mild I_{mild}(t) + \beta.severe I_{severe}(t))}
 \deqn{\frac{dE(t)}{dt} = S(t)(\beta.asymptomatic I_{asymptomatic}(t) + \beta.mild I_{mild}(t) + \beta.severe I_{severe}(t)) - \kappa E(t)}
 \deqn{\frac{dI_{asymptomatic}(t)}{dt} = p_symptom.asymptomatic \kappa E(t) - (\gamma.asymptomatic + \mu.asymptomatic) I_{asymptomatic}(t)}
 \deqn{\frac{dI_{mild}(t)}{dt} = p_symptom.mild\kappa E(t) - (\gamma.mild + \mu.mild) I_{mild}(t)}
 \deqn{\frac{dI_{severe}(t)}{dt} = p_symptom.severe\kappa E(t) - (\gamma.severe + \mu.severe) I_{severe}(t)}
-\deqn{\frac{dR(t)}{dt} = -\omega R(t) + \gamma.asymptomatic I_{asymptomatic}(t) + \gamma.mild I_{mild}(t) + \gamma.severe I_{severe}(t)}
+\deqn{\frac{dR(t)}{dt} =  \gamma.asymptomatic I_{asymptomatic}(t) + \gamma.mild I_{mild}(t) + \gamma.severe I_{severe}(t)}
 \deqn{\frac{dD(t)}{dt} =  \mu.asymptomatic I_{asymptomatic}(t) + \mu.mild I_{mild}(t) + \mu.severe I_{severe}(t)}
 
 \item \code{R0}: Calculate the basic reproduction number (\code{R_0}) of the system using the next generation matrix approach.
+
+\item \code{ode_structure_diagram}: Prints a compartmental diagram for the SEIaImIsRD model
 }}
 
 \section{Slots}{
