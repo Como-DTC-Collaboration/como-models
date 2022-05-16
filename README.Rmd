@@ -21,7 +21,7 @@ knitr::opts_chunk$set(
 
 The goal of `comomodels` is to provide pedagogical materials, chiefly a series of transmission dynamics models of increasing complexity, for understanding the spread of COVID-19. The Susceptible-Exposed-Infectious-Recovered-Dead (SEIRD) model is the basis of all the models included in the package. The SEIRD model is extended to model different age groups, groups of varying infectiousness, vaccination, distinct meta-populations amongst other areas. The schematic figure below shows the various models in the `comomodels` package. 
 
-<img src="man/figures/como-models-intro.png" width="100%" />
+<img src="man/figures/como-models-intro-white-background.png" width="100%" />
 
 The currently available models include:
 

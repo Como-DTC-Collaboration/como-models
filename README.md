@@ -18,7 +18,7 @@ vaccination, distinct meta-populations amongst other areas. The
 schematic figure below shows the various models in the `comomodels`
 package.
 
-<img src="man/figures/como-models-intro.png" width="100%" />
+<img src="man/figures/como-models-intro-white-background.png" width="100%" />
 
 The currently available models include:
 
