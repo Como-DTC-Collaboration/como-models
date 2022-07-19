@@ -46,6 +46,7 @@ check <-function(object) {
 #'       (double).
 #' @slot coverage list of values for effect levels of intervention intervals
 #'       (double).
+#' @slot tanh_slope list of values for tanh smoothing slope (double).
 #'
 #' @import tidyverse
 #'
@@ -54,7 +55,8 @@ InterventionParameters <-
   setClass("InterventionParameters",
            slots = c(start="numeric",
                      stop="numeric",
-                     coverage="numeric"),
+                     coverage="numeric",
+                     tanh_slope="numeric"),
            validity = check)
 
 #' An S4 object representing the SimulationParameters.
@@ -108,18 +110,16 @@ tanh_coverage_smoother <- function(t, start, stop, coverage, tanh_slope) {
 #' @param times times between which we simulate.
 #' @param int_parms parameters of the interventions as according to a InterventionParameters
 #'                  object.
-#' @param tanh_slope sharpness of the intervention waves used for function
-#'                   continuity purposes.
 #' 
 #' @import tidyverse
-stack_intervention_coverages <- function(times, int_parms, tanh_slope) {
+stack_intervention_coverages <- function(times, int_parms) {
   for(i in seq_along(int_parms@start)) {
     single_coverage <- map_dbl(
       times, ~tanh_coverage_smoother(.,
                                      int_parms@start[i],
                                      int_parms@stop[i],
                                      int_parms@coverage[i],
-                                     tanh_slope))
+                                     int_parms@tanh_slope[i]))
     if(i == 1)
       total_coverage <- single_coverage
     else
@@ -142,11 +142,8 @@ stack_intervention_coverages <- function(times, int_parms, tanh_slope) {
 #' 
 #' @export intervention_protocol
 intervention_protocol <- function(int_parms,
-                                  sim_parms,
-                                  tanh_slope) {
+                                  sim_parms) {
   times <- seq(sim_parms@start, sim_parms@stop, sim_parms@tstep)
-  coverage <- stack_intervention_coverages(times, int_parms, tanh_slope)
+  coverage <- stack_intervention_coverages(times, int_parms)
   tibble(time=times, coverage=coverage)
 }
-
-InterventionParameters(start=c(17, 35, 42),stop=c(25, 39, 49),coverage=c(1, 1, 1))

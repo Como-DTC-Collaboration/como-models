@@ -17,7 +17,7 @@ NULL
 #'       (characters). Default is list("beta", "kappa", "gamma", "mu",  "nu",
 #'       "delta_V", "delta_R", "delta_VR").
 #' @slot intervention_parameter_names list of names of parameters for each
-#'       intervention (characters). Default is list ("starts", "stops", "coverages").
+#'       intervention (characters). Default is list ("starts", "stops", "coverages", "tanh_slopes").
 #' @slot initial_conditions list of values for initial conditions (double).
 #' @slot transmission_parameters list of values for transmission parameters
 #'       (double).
@@ -64,7 +64,7 @@ SEIRDVAge <- setClass('SEIRDVAge',
                        transmission_parameter_names = list('beta', 'kappa', 'gamma',
                                                            'mu', 'nu', 'delta_V',
                                                            'delta_R', 'delta_VR'),
-                       intervention_parameter_names = list("starts", "stops", "coverages"),
+                       intervention_parameter_names = list("starts", "stops", "coverages", "tanh_slopes"),
                        initial_conditions = vector(mode = 'list', length = 7),
                        transmission_parameters = vector(mode = 'list', length = 8),
                        interventions = vector(mode = 'list'),
@@ -251,6 +251,11 @@ setMethod(
     if (length(value) != 1 &
        length(value) != object@n_age_categories){
       stop("Need one intervention must be for all age groups or one per age group.")
+    }
+    
+    # Add default tanh slope of 1 if it is not provided
+    if (!("tanh_slopes" %in% names(value))) {
+      value = append(value, list(tanh_slopes=c(1)))
     }
     
     for (i in seq_along(value)){

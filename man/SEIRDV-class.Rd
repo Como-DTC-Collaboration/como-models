@@ -31,7 +31,9 @@
 \item{object}{an object of the class SEIRDV}
 
 \item{value}{(list) list of intervention parameters: starts, stops and
-coverages.}
+coverages. tanh_slopes can also be provided (either one value or
+one for each intervention). If no tanh_slopes are provided,
+the default value of 1 will be used.}
 
 \item{times}{(double) a sequence of time points at which the solution to
 the system of ODEs should be returned. Must be of the form
@@ -114,7 +116,7 @@ incidence.}
 "delta_V", "delta_R", "delta_VR").}
 
 \item{\code{intervention_parameter_names}}{list of names of intervention parameters
-(characters). Default is list ("starts", "stops", "coverages")}
+(characters). Default is list ("starts", "stops", "coverages", "tanh_slopes")}
 
 \item{\code{initial_conditions}}{list of values for initial conditions (double).}
 

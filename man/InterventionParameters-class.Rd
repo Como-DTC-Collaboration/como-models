@@ -20,5 +20,7 @@ for a SEIRD-class type of model.
 
 \item{\code{coverage}}{list of values for effect levels of intervention intervals
 (double).}
+
+\item{\code{tanh_slope}}{list of values for tanh smoothing slope (double).}
 }}
 

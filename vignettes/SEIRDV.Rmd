@@ -125,13 +125,14 @@ be taken into account in our modeling.
 
 Below we can see a plot of the level of interventions that occur at each time step.
 ```{r, fig.height = 5, fig.width = 7}
-int_parms <- InterventionParameters(start=c(17, 110, 150),
-                                    stop=c(90, 139, 209),
-                                    coverage=c(1, 1, 1))
+int_parms <- InterventionParameters(start=c(17, 35, 42),
+                                    stop=c(25, 39, 49),
+                                    coverage=c(1, 1, 1),
+                                    tanh_slope=c(1, 1, 1))
 
 sim_parms <- SimulationParameters(start=0, stop=200, tstep = 0.1)
 
-intervention_protocol(int_parms, sim_parms, 1) %>%
+intervention_protocol(int_parms, sim_parms) %>%
   ggplot(aes(x=time, y=coverage)) +
   geom_line() +
   scale_color_brewer(palette = "Dark2") +
@@ -193,8 +194,8 @@ run_seirdv <- function(delta_V_val) {
                 stops=c(90, 139, 209),
                 coverages=c(1, 1, 1))
   model <- SEIRDV(initial_conditions = inits,
-                transmission_parameters=params,
-                intervention_parameters = interv)
+                transmission_parameters=params)
+  intervention_parameters(model) <- interv
   times <- seq(0, 200, by = 1)
   out_df <- run(model, times)
   out_df$changes
@@ -237,8 +238,8 @@ run_seirdv <- function(nu_val) {
                 stops=c(90, 139, 209),
                 coverages=c(1, 1, 1))
   model <- SEIRDV(initial_conditions = inits,
-                transmission_parameters=params,
-                intervention_parameters = interv)
+                transmission_parameters=params)
+  intervention_parameters(model) <- interv
   times <- seq(0, 200, by = 1)
   out_df <- run(model, times)
   out_df$changes
@@ -281,8 +282,8 @@ run_seirdv <- function(start_val) {
                 stops=100,
                 coverages=1)
   model <- SEIRDV(initial_conditions = inits,
-                transmission_parameters=params,
-                intervention_parameters = interv)
+                transmission_parameters=params)
+  intervention_parameters(model) <- interv
   times <- seq(0, 200, by = 1)
   out_df <- run(model, times)
   out_df$changes
